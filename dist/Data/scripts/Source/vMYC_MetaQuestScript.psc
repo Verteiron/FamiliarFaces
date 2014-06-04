@@ -101,7 +101,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	EndIf
 	If JContainers.APIVersion() < 2
 		If !_ShowedJContainersWarning
-			Debug.MessageBox("The SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.63 or higher and will now shut down. This message will not be displayed again.")
+			Debug.MessageBox("The SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.66 or higher and will now shut down. This message will not be displayed again.")
 		_ShowedJContainersWarning = True
 		EndIf
 		DoShutdown()
