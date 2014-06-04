@@ -133,6 +133,10 @@ Function CheckVars()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) _kActorBase is empty, filling it...")
 		_kActorBase = GetActorBase()
 	EndIf
+	If _kActorBase != GetActorBase()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) ActorBase has CHANGED, this should NEVER happen! _kActorBase: " + _kActorBase + ", current is: " + GetActorBase())
+		_kActorBase = GetActorBase()
+	EndIf
 	If !CharacterName
 		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterName is missing, getting it from CharacterManager...")
 		CharacterName = CharacterManager.GetCharacterNameFromActorBase(_kActorBase)
@@ -162,16 +166,19 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	GotoState("Busy")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
 	SetNonpersistent()
 	_bNeedRefresh = True
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
 	GotoState("")
 EndFunction
 
 Function SetNonpersistent()
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	_kActorBase.SetName(CharacterName)
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
@@ -244,9 +251,14 @@ Function RefreshMesh()
 	_bSwitchedRace = False
 	
 	SetRace(DummyRace)
-	While !_bSwitchedRace
+	iSafetyTimer = 20
+	While !_bSwitchedRace && iSafetyTimer > 0
+		iSafetyTimer -= 1
 		Wait(0.25)
 	EndWhile
+	If !iSafetyTimer
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace timed out, that's usually not good.")
+	EndIf
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Finished SetRace!")
 	;vMYC_CharGenLoading.Mod(-1)
 	
@@ -273,9 +285,14 @@ Function RefreshMesh()
 	_bSwitchedRace = False
 	Bool bSuccess =	CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bsuccess + " from LoadCharacter!")
-	While !_bSwitchedRace
+	iSafetyTimer = 20
+	While !_bSwitchedRace && iSafetyTimer > 0
+		iSafetyTimer -= 1
 		Wait(0.25)
 	EndWhile
+	If !iSafetyTimer
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace timed out, that's usually not good.")
+	EndIf
 	;vMYC_CharGenLoading.Mod(-1)
 	Form kHairEquipment = GetWornForm(0x00000002)
 	Form kLongHairEquipment = GetWornForm(0x00000800)
@@ -315,6 +332,7 @@ Function RefreshMesh()
 	;EndIf
 ;	SetAlpha(1.0,False)
 ;	Wait(1.0)
+	_kActorBase.SetName(CharacterName)
 	_kActorBase.SetInvulnerable(False)
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
@@ -372,8 +390,8 @@ State Busy
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad called in Busy state!")
 	EndEvent
 
-	Function DoUpkeep(Bool bInBackground = True)
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) DoUpkeep called in Busy state!")
-	EndFunction
+	;Function DoUpkeep(Bool bInBackground = True)
+	;	Debug.Trace("MYC: (" + CharacterName + "/Actor) DoUpkeep called in Busy state!")
+	;EndFunction
 
 EndState
