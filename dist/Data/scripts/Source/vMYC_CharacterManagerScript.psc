@@ -201,6 +201,8 @@ Bool _bBusyLoading = False
 
 Bool _bBusyEquipment = False
 
+Bool _bFreeActorBaseBusy
+
 ActorBase[] _kDummyActors
 
 ;Because Formlists can't be trusted to stay in any sort of order
@@ -594,19 +596,25 @@ EndFunction
 
 ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
+	While _bFreeActorBaseBusy
+		Debug.Trace("MYC: Waiting for GetFreeActorBase...")
+		Wait(0.5)
+	EndWhile
+	_bFreeActorBaseBusy = True
 	Int jActorBaseMap = JValue.solveObj(_jMYC,".ActorBaseMap")
 	Int i = 0
 	While i < _kDummyActors.Length
 		If _kDummyActors[i]
 			If _kDummyActors[i].GetSex() == iSex
 				If !JFormMap.hasKey(jActorBaseMap,_kDummyActors[i])
+					_bFreeActorBaseBusy = False
 					Return _kDummyActors[i]
 				EndIf
 			EndIf
 		EndIf
 		i += 1
 	EndWhile
-
+	_bFreeActorBaseBusy = False
 EndFunction
 
 ActorBase Function GetCharacterDummy(String sCharacterName)
