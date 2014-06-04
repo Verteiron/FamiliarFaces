@@ -393,14 +393,14 @@ Function SavePlayer(Bool abForceSave = False)
 		;_kInvisibleActors[i].UnequipAll()
 	EndWhile
 	i = _kInvisibleActors.Length
-	AudioCategorySFX.SetFrequency(0.1)
+	AudioCategorySFX.SetFrequency(0.1) ; This hides the "whoosh" sound from the Ascend animation on the invisible actors
 	While i > 0
 		i -= 1
 		_kInvisibleActors[i].PlayIdle(kAscendIdle)
 	EndWhile
 	Wait(1.0)
 	vMYC_ShrineLightISMD.ApplyCrossFade(8.0)
-	AudioCategorySFX.SetFrequency(1.0)
+	AudioCategorySFX.SetFrequency(1.0) ; Restore sound to normal
 	;Finish in OnAnimationEvent
 EndFunction
 
@@ -448,7 +448,6 @@ Event OnAnimationEvent(ObjectReference akSource, string asEventName)
 		_Book.IsGlowing = False
 		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,PlayerREF.GetActorBase().GetName())
 		RegisterForSingleUpdate(0.1)
-		Debug.ToggleCollisions()
 		vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds 
 		SendModEvent("vMYC_ForceBookUpdate","",ShrineIndex)
 		QSTMQ206TimeTravel2DSound.Play(_Book)
@@ -459,6 +458,9 @@ Event OnAnimationEvent(ObjectReference akSource, string asEventName)
 		PlayerREF.PlayIdle(IdleStop_loose)
 		Wait(0.1)
 		vMYC_ValorFX.Stop(PlayerREF)
+		PlayerREF.StopTranslation()
+		Wait(0.1)
+		Debug.ToggleCollisions()
 		Debug.SendAnimationEvent(PlayerREF,"IdleStaticPoseAStart")
 		Debug.SendAnimationEvent(PlayerREF,"BleedOutStart")
 		Wait(3.0)
