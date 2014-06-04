@@ -1,0 +1,12 @@
+Log: Archive.log
+New Archive
+Check: Sounds
+Check: Misc
+Check: Textures
+Check: Shaders
+Check: Voices
+Check: Retain Directory Names
+Check: Retain File Names
+Set File Group Root: Data\
+Add File Group: filelist.txt
+Save Archive: Data\vMYC_MeetYourCharacters.bsa
