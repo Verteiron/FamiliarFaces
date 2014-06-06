@@ -1,0 +1,8 @@
+*.pex
+*.swf
+*.bak
+*.bsa
+*.bsl
+Archive.log
+Archive.exe
+filelist.txt
