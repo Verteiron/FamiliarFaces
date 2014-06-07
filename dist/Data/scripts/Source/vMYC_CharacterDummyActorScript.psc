@@ -43,7 +43,6 @@ Formlist Property vMYC_CombatStyles Auto
 
 ActorBase _kActorBase
 
-
 Bool _bFirstLoad = True
 
 Bool _bRefreshing = False
@@ -71,6 +70,7 @@ EndEvent
 
 Event OnLoad()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
+	SetNameIfNeeded()
 	CheckVars()
 	If _bFirstLoad
 		_bNeedRefresh = True
@@ -195,6 +195,7 @@ EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 {Run whenever the player loads up the game. Sets the name and such.}
+	SetNameIfNeeded()
 	If bInBackground
 		_bDoUpkeep = True
 		RegisterForSingleUpdate(0.1)
@@ -215,7 +216,7 @@ EndFunction
 
 Function SetNonpersistent()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
-	_kActorBase.SetName(CharacterName)
+	SetNameIfNeeded()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
 	If GetFactionRank(PotentialFollowerFaction) <= -2
@@ -378,7 +379,7 @@ Function RefreshMesh()
 	;EndIf
 ;	SetAlpha(1.0,False)
 ;	Wait(1.0)
-	_kActorBase.SetName(CharacterName)
+	SetNameIfNeeded()
 	;EnableAI(bAIEnabled)
 	_kActorBase.SetInvulnerable(False)
 	SendModEvent("vMYC_CharacterReady",CharacterName)
@@ -438,6 +439,48 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 	EndWhile
 	SetAV("Confidence",3)
 	SetAV("Assistance",2)
+EndFunction
+
+Function SetNameIfNeeded(Bool abForce = False)
+	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
+		_kActorBase.SetName(CharacterName)
+		Int i = GetNumReferenceAliases()
+		While i > 0
+			i -= 1
+			ReferenceAlias kThisRefAlias = GetNthReferenceAlias(i)
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) Resetting RefAlias " + kThisRefAlias + "!")
+			kThisRefAlias.Clear()
+			kThisRefAlias.ForceRefTo(Self)
+		EndWhile
+		
+		;=== This updates the character's name in EFF's widget, if it's installed
+		;    Expired has said he'll add a ModEvent we can use to do this in future, which should be much simpler
+		If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
+			SKI_WidgetManager WidgetManager = GetFormFromFile(0x00000824,"SkyUI.esp") as SKI_WidgetManager
+			XFLScript XFLMain = (Game.GetFormFromFile(0x48C9, "XFLMain.esm") as XFLScript)
+			If XFLMain.XFL_FollowerList.HasForm(Self) ; check if we're being tracked by EFF
+				SKI_WidgetBase[] WidgetList = WidgetManager.GetWidgets()
+				i = WidgetList.Length
+				While i > 0
+					i -= 1
+					If WidgetList[i]
+						Debug.Trace("MYC: Widget " + i + " is type " + WidgetList[i].getWidgetType())
+						If WidgetList[i].getWidgetType() == "XFLPanel"
+							Debug.Trace("MYC: Resetting widget " + i + "...")
+							
+							if XFLMain
+								(WidgetList[i] as xflpanel).RemoveActors(XFLMain.XFL_FollowerList)
+								(WidgetList[i] as xflpanel).AddActors(XFLMain.XFL_FollowerList)
+							endIf
+						EndIf
+					EndIf
+				EndWhile
+			EndIf
+		EndIf
+		;===
+		
+	EndIf
 EndFunction
 
 State Busy
