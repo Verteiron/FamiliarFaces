@@ -43,7 +43,6 @@ Formlist Property vMYC_CombatStyles Auto
 
 ActorBase _kActorBase
 
-ColorForm	_kHairColor
 
 Bool _bFirstLoad = True
 
@@ -302,17 +301,6 @@ Function RefreshMesh()
 	;SetRace(CharacterRace)
 	;Wait(0.1)
 ;	EndIf
-	If !_kHairColor
-		_kHairColor = CharacterManager.getCharacterForm(CharacterName,"Appearance.HairColor") as ColorForm
-	EndIf
-	ColorForm MyHairColor = _kActorBase.GetHairColor()
-	Debug.Trace("(" + CharacterName + "/Actor) MyHairColor (Pre-LoadCharacter) is R:" + MyHairColor.GetRed() + " G:" + MyHairColor.GetGreen() + " B:" + MyHairColor.GetBlue() + " H:" + MyHairColor.GetHue() + " S:" + MyHairColor.GetSaturation() + " V:" + MyHairColor.GetValue())
-	If _kHairColor
-		Debug.Trace("(" + CharacterName + "/Actor) _kHairColor is R:" + _kHairColor.GetRed() + " G:" + _kHairColor.GetGreen() + " B:" + _kHairColor.GetBlue() + " H:" + _kHairColor.GetHue() + " S:" + _kHairColor.GetSaturation() + " V:" + _kHairColor.GetValue())
-		_kActorBase.SetHairColor(_kHairColor)
-		;QueueNINodeUpdate()
-		;Wait(0.5)
-	EndIf
 	;vMYC_CharGenLoading.Mod(1)
 	;While vMYC_CharGenLoading.GetValue() > 1
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for CharGen to become available...")
@@ -360,7 +348,6 @@ Function RefreshMesh()
 	Else
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(")
 	EndIf
-	Debug.Trace("(" + CharacterName + "/Actor) MyHairColor (Post-LoadCharacter) is R:" + MyHairColor.GetRed() + " G:" + MyHairColor.GetGreen() + " B:" + MyHairColor.GetBlue() + " H:" + MyHairColor.GetHue() + " S:" + MyHairColor.GetSaturation() + " V:" + MyHairColor.GetValue())
 	vMYC_CharGenLoading.SetValue(0)
 	;If CharacterManager.GetLocalInt(CharacterName,"InShrine")
 		;SetScale(1.2)
