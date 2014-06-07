@@ -128,6 +128,36 @@ EndEvent
 Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
+Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, Form sender)
+	If strArg != CharacterName
+		Return
+	EndIf
+	Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
+	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
+	
+	Int i = JArray.Count(jSpells)
+	While i > 0
+		i -= 1
+		Spell kSpell = JArray.getForm(jSpells,i) As Spell
+		String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
+		Bool bSpellIsAllowed = False
+		If sMagicSchool
+			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllow" + sMagicSchool)
+		Else
+			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllowOther")
+		EndIf
+		If bSpellIsAllowed
+			If AddSpell(kSpell,False)
+				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
+			EndIf
+		Else
+			If RemoveSpell(kSpell)
+				Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
+			EndIf
+		EndIf
+	EndWhile
+EndEvent
+
 Function CheckVars()
 	If !_kActorBase
 		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) _kActorBase is empty, filling it...")
@@ -170,6 +200,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
 	SetNonpersistent()
+	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	_bNeedRefresh = True
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")

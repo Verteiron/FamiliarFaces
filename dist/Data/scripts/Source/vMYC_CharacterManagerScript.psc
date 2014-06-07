@@ -864,6 +864,19 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
 	kDeadActor.Delete()
 EndFunction
 
+Int Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool abConjuration = True, Bool abDestruction = True, Bool abIllusion = True, Bool abRestoration = True, Bool abOther = True)
+	
+	SetLocalInt(sCharacterName,"MagicAllowAlteration",abAlteration as Int)
+	SetLocalInt(sCharacterName,"MagicAllowConjuration",abConjuration as Int)
+	SetLocalInt(sCharacterName,"MagicAllowDestruction",abDestruction as Int)
+	SetLocalInt(sCharacterName,"MagicAllowIllusion",abIllusion as Int)
+	SetLocalInt(sCharacterName,"MagicAllowRestoration",abRestoration as Int)
+	SetLocalInt(sCharacterName,"MagicAllowOther",abOther as Int)
+	
+	SendModEvent("vMYC_UpdateCharacterSpellList",sCharacterName)
+	
+EndFunction
+
 Bool Function LoadCharacter(String sCharacterName)
 	Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter called!")
 	Int i = 0
@@ -1065,15 +1078,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	
 	;----Add spells--------------	
 
-	Int jSpells = JMap.getObj(jCharacterData,"Spells")
-	
-	;Debug.Trace("MYC: (" + sCharacterName + ") Teaching some spells...")
-	i = JArray.Count(jSpells)
-	While i > 0
-		i -= 1
-		PlayerDupe.AddSpell(JArray.getForm(jSpells,i) As Spell)
-	EndWhile
-
+	SetAllowedSpells(sCharacterName)
 
 	;;Debug.Trace("MYC: (" + sCharacterName + ") Setting the dummy's actor values...")
 	;i = 0
