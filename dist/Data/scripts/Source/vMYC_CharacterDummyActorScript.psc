@@ -135,6 +135,9 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
+	Int iAdded
+	Int iRemoved
+	
 	Int i = JArray.Count(jSpells)
 	While i > 0
 		i -= 1
@@ -148,14 +151,17 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 		If bSpellIsAllowed
 			If AddSpell(kSpell,False)
-				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
+				iAdded += 1
 			EndIf
 		Else
 			If RemoveSpell(kSpell)
-				Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
+				iRemoved += 1
 			EndIf
 		EndIf
 	EndWhile
+	Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 EndEvent
 
 Function CheckVars()

@@ -864,7 +864,7 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
 	kDeadActor.Delete()
 EndFunction
 
-Int Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool abConjuration = True, Bool abDestruction = True, Bool abIllusion = True, Bool abRestoration = True, Bool abOther = True)
+Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool abConjuration = True, Bool abDestruction = True, Bool abIllusion = True, Bool abRestoration = True, Bool abOther = True)
 	
 	SetLocalInt(sCharacterName,"MagicAllowAlteration",abAlteration as Int)
 	SetLocalInt(sCharacterName,"MagicAllowConjuration",abConjuration as Int)
