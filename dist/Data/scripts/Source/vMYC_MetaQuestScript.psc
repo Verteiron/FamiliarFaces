@@ -110,7 +110,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		_ShowedJContainersWarning = False
 	EndIf
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 2
+	_CurrentVersion = 13
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 	String sErrorMessage
 	SendModEvent("vMYC_UpkeepBegin")
@@ -127,7 +127,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		EndIf
 	ElseIf ModVersion < _CurrentVersion
 		Debug.Trace("MYC: Installed version is older. Starting the upgrade...")
-		DoUpgrade()
+		DoUpgrade() ; this should also fire DoUpkeep
 		If ModVersion != _CurrentVersion
 			Debug.Trace("MYC: WARNING! Upgrade failed!")
 			Debug.MessageBox("WARNING! " + ModName + " upgrade failed for some reason. You should report this to the mod author.")
@@ -180,13 +180,31 @@ EndFunction
 
 Function DoUpgrade()
 	_Running = False
+	;version-specific upgrade code
+	If ModVersion < 13
+		Debug.Trace("MYC: Upgrading to " + ((13 as Float) / 100.0) + "...")
+		CharacterManager.DoUpkeep()
+		String[] sCharacterNames = CharacterManager.CharacterNames
+		Int i = sCharacterNames.Length
+		While i > 0
+			i -= 1
+			If sCharacterNames[i]
+				CharacterManager.PopulateInventory(sCharacterNames[i])
+			EndIf
+		EndWhile
+		ShrineOfHeroes.DoUpkeep()
+		Debug.Trace("MYC: Upgrade to " + ((13 as Float) / 100.0) + " complete!")
+		ModVersion = 13
+	EndIf
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
-		Debug.Trace("MYC: Upgrading to " + GetVersionString(_CurrentVersion) + "...")
+		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
 		;FIXME: Do upgrade stuff!
 		CharacterManager.RepairSaves()
+		CharacterManager.DoUpkeep()
+		ShrineOfHeroes.DoUpkeep()
 		ModVersion = _CurrentVersion
-		Debug.Trace("MYC: Upgrading to " + GetVersionString(_CurrentVersion) + " complete!")
+		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
 	EndIf
 	_Running = True
 	Debug.Trace("MYC: Upgrade complete!")
