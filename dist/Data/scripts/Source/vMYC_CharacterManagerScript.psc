@@ -877,6 +877,48 @@ Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool 
 	
 EndFunction
 
+Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
+	Form kEquippedAmmo
+	
+	;Debug.Trace("MYC: (" + sCharacterName + ") Creating dummy's inventory...")
+	Int jCharacterInventory = GetCharacterObj(sCharacterName,"Inventory")
+	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
+	Int i = JFormMap.Count(jCharacterInventory)
+	Int jInvForms = JFormMap.allKeys(jCharacterInventory)
+	Int jInvCounts = JFormMap.allValues(jCharacterInventory)
+	Int iLastGoldValue = 0
+		
+	If abResetAll
+		kCharacterActor.RemoveAllItems()
+	EndIf
+	While i > 0
+		i -= 1
+		Form kItem = JArray.getForm(jInvForms,i)
+		If kItem
+			Int iType = kItem.GetType()
+			If iType == 42 ; Ammo
+				Int iItemCount = kCharacterActor.GetItemCount(kItem)
+				If iItemCount
+					kCharacterActor.RemoveItem(kItem,iItemCount)
+					kCharacterActor.AddItem(kItem,iItemCount)
+				Else 
+					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
+				EndIf
+				;Debug.Trace("MYC: (" + sCharacterName + ") Ammo " + kItem.GetName() + " value is " + kItem.GetGoldValue() + ", iLastGoldValue is " + iLastGoldValue)
+				If kItem.GetGoldValue() > iLastGoldValue
+					kEquippedAmmo = kItem
+					SetLocalForm(sCharacterName,"AmmoDefault",kEquippedAmmo)
+					iLastGoldValue = kItem.GetGoldValue()
+				EndIf
+			EndIf
+		EndIf
+	EndWhile
+	If kEquippedAmmo
+		kCharacterActor.EquipItem(kEquippedAmmo) ; Equip ammo but allow character to remove it, otherwise bow behavior gets messed up
+	EndIf
+	Debug.Trace("MYC: (" + sCharacterName + ") Ammo equipped: " + kEquippedAmmo.GetName())
+EndFunction
+
 Bool Function LoadCharacter(String sCharacterName)
 	Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter called!")
 	Int i = 0
@@ -985,6 +1027,10 @@ Bool Function LoadCharacter(String sCharacterName)
 	
 	;Debug.Trace("MYC: (" + sCharacterName + ") Setting voicetype to " + JValue.solveForm(jCharacterData,".Race") as VoiceType)
 	DummyActorBase.SetVoiceType(JValue.solveForm(jCharacterData,".Race") as VoiceType)
+
+	Int idx = _kLoadedCharacters.Find(None)
+	_kLoadedCharacters[idx] = PlayerDupe
+
 	CharacterDummy.DoInit()
 	_bBusyLoading = False
 	
@@ -1050,31 +1096,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	_bBusyEquipment = False
 	;----Populate inventory--------------
 	
-	Form kEquippedAmmo
-	
-	;Debug.Trace("MYC: (" + sCharacterName + ") Creating dummy's inventory...")
-	Int jCharacterInventory = JValue.solveObj(jCharacterData,".Inventory")
-	i = JFormMap.Count(jCharacterInventory)
-	Int jInvForms = JFormMap.allKeys(jCharacterInventory)
-	Int jInvCounts = JFormMap.allValues(jCharacterInventory)
-	Int iLastGoldValue = 0
-	While i > 0
-		i -= 1
-		Form kItem = JArray.getForm(jInvForms,i)
-		If kItem
-			Int iType = kItem.GetType()
-			If iType == 42 ; Ammo
-				PlayerDupe.AddItem(kItem,JArray.getInt(jInvCounts,i))
-				;Debug.Trace("MYC: (" + sCharacterName + ") Ammo " + kItem.GetName() + " value is " + kItem.GetGoldValue() + ", iLastGoldValue is " + iLastGoldValue)
-				If kItem.GetGoldValue() > iLastGoldValue
-					PlayerDupe.EquipItem(kItem)
-					kEquippedAmmo = kItem
-					;Debug.Trace("MYC: (" + sCharacterName + ") Ammo equipped: " + kItem.GetName())
-					iLastGoldValue = kItem.GetGoldValue()
-				EndIf
-			EndIf
-		EndIf
-	EndWhile
+	PopulateInventory(sCharacterName)
 	
 	;----Add spells--------------	
 
@@ -1206,14 +1228,12 @@ Bool Function LoadCharacter(String sCharacterName)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Equipping power!")
 	PlayerDupe.EquipItemEx(JValue.solveForm(jCharacterData,".Equipment.Voice"),0)
 
-	If GetLocalInt(sCharacterName,"BowEquipped") == 0
-		PlayerDupe.UnEquipItem(kEquippedAmmo)
+	_bBusyEquipment = False
+
+	If GetLocalInt(sCharacterName,"BowEquipped") == 0 && GetLocalForm(sCharacterName,"AmmoDefault")
+		PlayerDupe.UnEquipItem(GetLocalForm(sCharacterName,"AmmoDefault"))
 	EndIf
 	
-	_bBusyEquipment = False
-	
-	Int idx = _kLoadedCharacters.Find(None)
-	_kLoadedCharacters[idx] = PlayerDupe
 	SetLocalInt(sCharacterName,"Enabled", 1)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Enabling dummy...")
 	
