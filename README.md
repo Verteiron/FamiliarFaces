@@ -53,7 +53,9 @@ If your current mod setup is stable, feel free to use it with Familiar Faces. Pl
 
 If you find a bug, it will be really helpful to have a Papyrus log to send me so I can try to figure out what happened. Make sure the following settings are present in your Skyrim.ini:
 [Papyrus] 
-EnableLogging=1 bEnableTrace=1 bLoadDebugInformation=1
+EnableLogging=1 
+EnableTrace=1 
+LoadDebugInformation=1
 
 The Papyrus logs will be located in your Documents folders under My Games/Skyrim/Logs/Script/ and will be named Papyrus.0.log.
 Installation
@@ -81,19 +83,19 @@ What to test first (aka the sanity check)
 
 This early release basically serves to make sure the core functionality is working across multiple computer and mod setups (within reason). Please check for all of the following and report if ANY of them aren't working properly:
 
-    The Portal Stone is placed in your inventory shortly after starting or loading a game. This may take a minute, see Quirks.
-    The Portal Stone warps you into the Shrine, and the central portal of the Shrine warps you back to where you used the stone. An animation should play in both instances.
-    The books allow you to save your character.
-    The save animation is relatively smooth and does not take longer than about 60 seconds.
-    After saving, various trophies should appear in the shrine based on what side-quests you have completed. Most of these should be obvious. A complete list is given below.
-    Character statues should be an exact duplicate of the player. Face tattoos, dirt, scars, eye color, hair style and color (including mod-provided styles and custom colors from RaceMenu), and skin tones should match exactly. The Shrine statues are oversized on purpose, but when brought into the world the character should be the correct height.
-    If you have customized/named armor and weapons equipped, they should be duplicated exactly as well, with tempering and any custom enchantments intact. This can be checked by recruiting the character and opening the trade menu. Or make them non-essential, kill them, and loot them. You monster. Equipped armor and weapons provided by installed mods should also be duplicated.
-    The character should have all the same ammo and most of the same spells as the player.
-    Upon entering the Shrine from another saved game, all saved characters should look correct and be loaded in the same alcove they were saved in.
-    Characters can be summoned into the world via the book from other saves. The book should open and the character should vanish from the Shrine.
-    You should get a quest called Familiar Faces, with a marker pointing to your character's location. This marker should vanish once they have been recruited.
-    Characters can be recruited as Followers once located in the world. If the recruiting dialog doesn't appear, see the Known Problems section before reporting a bug.
-    Characters can be "banished" back to the shrine by closing their book again. This should remove them from the world and place them back in their Shrine in a mannequin pose.
-    SkyUI's MCM can be used to control the character's class (how their points get distributed based on the player's level), spawn point, and voicetype. You can also use the MCM to warp to the character's location to speed things up.
+*   The Portal Stone is placed in your inventory shortly after starting or loading a game. This may take a minute, see Quirks.
+*   The Portal Stone warps you into the Shrine, and the central portal of the Shrine warps you back to where you used the stone. An animation should play in both instances.
+*   The books allow you to save your character.
+*   The save animation is relatively smooth and does not take longer than about 60 seconds.
+*   After saving, various trophies should appear in the shrine based on what side-quests you have completed. Most of these should be obvious. A complete list is given below.
+*   Character statues should be an exact duplicate of the player. Face tattoos, dirt, scars, eye color, hair style and color (including mod-provided styles and custom colors from RaceMenu), and skin tones should match exactly. The Shrine statues are oversized on purpose, but when brought into the world the character should be the correct height.
+*   If you have customized/named armor and weapons equipped, they should be duplicated exactly as well, with tempering and any custom enchantments intact. This can be checked by recruiting the character and opening the trade menu. Or make them non-essential, kill them, and loot them. You monster. Equipped armor and weapons provided by installed mods should also be duplicated.
+*   The character should have all the same ammo and most of the same spells as the player.
+*   Upon entering the Shrine from another saved game, all saved characters should look correct and be loaded in the same alcove they were saved in.
+*   Characters can be summoned into the world via the book from other saves. The book should open and the character should vanish from the Shrine.
+*   You should get a quest called Familiar Faces, with a marker pointing to your character's location. This marker should vanish once they have been recruited.
+*   Characters can be recruited as Followers once located in the world. If the recruiting dialog doesn't appear, see the Known Problems section before reporting a bug.
+*   Characters can be "banished" back to the shrine by closing their book again. This should remove them from the world and place them back in their Shrine in a mannequin pose.
+*   SkyUI's MCM can be used to control the character's class (how their points get distributed based on the player's level), spawn point, and voicetype. You can also use the MCM to warp to the character's location to speed things up.
 
 If the mod does all of the above, everything is working as it should! Please let me know if this is the case, and continue to play with the mod to find bugs or issues!
