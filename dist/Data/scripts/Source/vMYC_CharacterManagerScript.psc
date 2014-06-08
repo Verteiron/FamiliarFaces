@@ -1067,7 +1067,7 @@ Bool Function LoadCharacter(String sCharacterName)
 				PlayerDupe.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				;Debug.Trace("MYC: (" + sCharacterName + ") Ammo " + kItem.GetName() + " value is " + kItem.GetGoldValue() + ", iLastGoldValue is " + iLastGoldValue)
 				If kItem.GetGoldValue() > iLastGoldValue
-					PlayerDupe.EquipItem(kItem,True)
+					PlayerDupe.EquipItem(kItem)
 					kEquippedAmmo = kItem
 					;Debug.Trace("MYC: (" + sCharacterName + ") Ammo equipped: " + kItem.GetName())
 					iLastGoldValue = kItem.GetGoldValue()
