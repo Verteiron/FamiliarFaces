@@ -110,7 +110,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		_ShowedJContainersWarning = False
 	EndIf
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 13
+	_CurrentVersion = 14
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 	String sErrorMessage
 	SendModEvent("vMYC_UpkeepBegin")
@@ -195,6 +195,15 @@ Function DoUpgrade()
 		ShrineOfHeroes.DoUpkeep()
 		Debug.Trace("MYC: Upgrade to " + ((13 as Float) / 100.0) + " complete!")
 		ModVersion = 13
+	EndIf
+	If ModVersion < 14
+	Debug.Trace("MYC: Upgrading to " + ((14 as Float) / 100.0) + "...")
+		CharacterManager.DoUpkeep(False) 	; Wait for upkeep to finish
+		ShrineOfHeroes.SyncShrineData(True) ; Force reload from file
+		Wait(2)
+		ShrineOfHeroes.DoUpkeep()
+		Debug.Trace("MYC: Upgrade to " + ((14 as Float) / 100.0) + " complete!")
+		ModVersion = 14
 	EndIf
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
