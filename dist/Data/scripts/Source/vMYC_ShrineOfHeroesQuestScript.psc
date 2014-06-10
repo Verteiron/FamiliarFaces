@@ -155,6 +155,7 @@ EndFunction
 Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
 	JMap.setInt(_jShrinesData,"DataSerial",ShrineDataSerial)
 	Int jSavedShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
+	JValue.Retain(jSavedShrineData)
 	Int iSavedDataSerial
 	If jSavedShrineData 
 		Debug.Trace("MYC/ShrineOfHeroes: Found saved data!")
@@ -172,7 +173,8 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 		EndIf
 		If iSavedDataSerial > ShrineDataSerial
 			Debug.Trace("MYC/ShrineOfHeroes: Our data is old, updating it to saved version!")
-			_jShrinesData = jSavedShrineData
+			JMap.setObj(_jMYC,"ShrineOfHeroes",jSavedShrineData)
+			_jShrinesData = JMap.getObj(_jMYC,"ShrineOfHeroes")
 		ElseIf iSavedDataSerial < ShrineDataSerial
 			Debug.Trace("MYC/ShrineOfHeroes: Our data is newer than the saved data, so we'll save it to the file.")
 			JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
@@ -190,6 +192,7 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 		TickDataSerial()
 		JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
 	EndIf
+	JValue.Release(jSavedShrineData)
 	If ShrineDataSerial != iSavedDataSerial
 		Debug.Trace("MYC/ShrineOfHeroes: Data serial mismatch, shrines need to be updated!")
 		ShrineDataSerial = iSavedDataSerial
