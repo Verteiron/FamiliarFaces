@@ -198,6 +198,7 @@ Function DoUpgrade()
 	EndIf
 	If ModVersion < 14
 	Debug.Trace("MYC: Upgrading to " + ((14 as Float) / 100.0) + "...")
+		Debug.MessageBox("WARNING! Between version 0.13 and 0.14, JContainers was updated from 0.66 to 0.67.1. Unfortunately this means old files don't all get read properly. You'll need to re-save your characters in the Shrine, otherwise weird stuff will happen.")
 		CharacterManager.DoUpkeep(False) 	; Wait for upkeep to finish
 		ShrineOfHeroes.SyncShrineData(True) ; Force reload from file
 		Wait(2)
