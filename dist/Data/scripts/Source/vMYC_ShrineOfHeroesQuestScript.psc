@@ -8,6 +8,17 @@ Import Game
 
 ;--=== Properties ===--
 
+Int	Property ShrineDataSerial Auto Hidden
+;{Serial of the shrine data, ticked whenever data gets changed.}
+;	Int Function Get()
+;		Return _iShrineDataSerial
+;	EndFunction
+;	Function Set(Int iShrineDataSerial)
+;		_iShrineDataSerial = iShrineDataSerial
+;		SyncShrineData()
+;	EndFunction
+;EndProperty
+
 Bool Property Ready Auto Hidden
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
@@ -31,6 +42,8 @@ Actor Property PlayerRef Auto
 
 Int		_jShrinesData
 Int		_jMYC
+
+Int		_iShrineDataSerial
 
 Bool	_bDoInit
 Bool	_bDoUpkeep
@@ -84,22 +97,43 @@ EndEvent
 
 Function DoUpkeep(Bool bInBackground = True)
 	If bInBackground
-		Debug.Trace("MYC: " + Self + " ShrineOfHeroes: DoUpkeep will launch in a separate thread.")
+		Debug.Trace("MYC/ShrineOfHeroes: DoUpkeep will launch in a separate thread.")
 		_bDoUpkeep = True
 		RegisterForSingleUpdate(0.1)
 		Return
 	EndIf
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvent("vMYC_ShrineStatusUpdate","OnShrineStatusUpdate")
+	If SyncShrineData()
+		UpdateShrineNames()
+	EndIf
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
 Function SetShrineCharacterName(Int iShrineIndex, String sCharacterName)
-	Debug.Trace("MYC: " + Self + " ShrineOfHeroes: Setting Shrine #" + iShrineIndex + " to character " + sCharacterName + "!")
-	JMap.setStr(JValue.solveObj(_jMYC,".ShrineOfHeroes.Shrine" + iShrineIndex),"CharacterName",sCharacterName)
-	Wait(0.1)
-	JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
-	;JDB.WriteToFile("data/vMYC/jdb.json")
+	Debug.Trace("MYC/ShrineOfHeroes: Setting Shrine #" + iShrineIndex + " to character " + sCharacterName + "!")
+	Int jShrine = JValue.solveObj(_jMYC,".ShrineOfHeroes.Shrine" + iShrineIndex)
+	String sOldName = JMap.getStr(jShrine,"CharacterName")
+	JMap.setStr(jShrine,"CharacterName",sCharacterName)
+	If sCharacterName != sOldName
+		TickDataSerial()
+	EndIf
+EndFunction
+
+Function UpdateShrineNames()
+	Int jShrineArray = JMap.getObj(_jShrinesData,"ShrineForms")
+	Int i = JArray.Count(jShrineArray)
+	While i > 0
+		i -= 1
+		String sCharacterName = JValue.solveStr(_jShrinesData,".Shrine" + i + ".CharacterName")
+		Debug.Trace("MYC/ShrineOfHeroes: Shrine" + i + ".Form is " + JValue.solveForm(_jShrinesData,".Shrine" + i + ".Form") + "!")
+		JArray.getForm(jShrineArray,i)
+		vMYC_ShrineActivatorScript kShrine = JArray.getForm(jShrineArray,i) as vMYC_ShrineActivatorScript
+		Debug.Trace("MYC/ShrineOfHeroes: Shrine" + i + " CharacterName (from shrine) is " + kShrine.CharacterName + " and should be " + sCharacterName + "!")
+		If sCharacterName != kShrine.CharacterName
+			kShrine.CharacterName = sCharacterName
+		EndIf
+	EndWhile
 EndFunction
 
 String Function GetShrineCharacterName(Int iShrineIndex)
@@ -118,26 +152,73 @@ Int Function GetShrineIndex(String asCharacterName)
 	Return -1
 EndFunction
 
+Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
+	JMap.setInt(_jShrinesData,"DataSerial",ShrineDataSerial)
+	Int jSavedShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
+	Int iSavedDataSerial
+	If jSavedShrineData 
+		Debug.Trace("MYC/ShrineOfHeroes: Found saved data!")
+		If JMap.hasKey(jSavedShrineData,"DataSerial")
+			iSavedDataSerial = JMap.getInt(jSavedShrineData,"DataSerial")
+		Else
+			Debug.Trace("MYC/ShrineOfHeroes: Shrine data is from an older version, forcing an update...")
+			abForceLoadFile = True
+			abRewriteFile = True
+		EndIf
+		Debug.Trace("MYC/ShrineOfHeroes: Saved data serial is " + iSavedDataSerial + ", our data serial is " + ShrineDataSerial)
+		If abForceLoadFile
+			Debug.Trace("MYC/ShrineOfHeroes: ForceLoadFile set, loading from file regardless...")
+			iSavedDataSerial = ShrineDataSerial + 1
+		EndIf
+		If iSavedDataSerial > ShrineDataSerial
+			Debug.Trace("MYC/ShrineOfHeroes: Our data is old, updating it to saved version!")
+			_jShrinesData = jSavedShrineData
+		ElseIf iSavedDataSerial < ShrineDataSerial
+			Debug.Trace("MYC/ShrineOfHeroes: Our data is newer than the saved data, so we'll save it to the file.")
+			JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
+			iSavedDataSerial = ShrineDataSerial
+		Else
+			Debug.Trace("MYC/ShrineOfHeroes: Data is already synced. Sunc?")
+		EndIf
+	ElseIf JValue.hasPath(_jMYC,".ShrineOfHeroes")
+		Debug.Trace("MYC/ShrineOfHeroes: No saved data, but found data in _jMYC!",1)
+		_jShrinesData = JValue.solveObj(_jMYC,".ShrineOfHeroes")
+		JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
+		iSavedDataSerial = ShrineDataSerial
+	EndIf
+	If abRewriteFile
+		TickDataSerial()
+		JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
+	EndIf
+	If ShrineDataSerial != iSavedDataSerial
+		Debug.Trace("MYC/ShrineOfHeroes: Data serial mismatch, shrines need to be updated!")
+		ShrineDataSerial = iSavedDataSerial
+		Return True
+	EndIf
+	Return False
+EndFunction
+
+Function TickDataSerial()
+	ShrineDataSerial += 1
+	JMap.setInt(_jShrinesData,"DataSerial",ShrineDataSerial)
+;	SyncShrineData()
+EndFunction
+
 Function DoInit(Bool abForce = False)
 	ShrineState = New Int[12]
 	_jMYC = CharacterManager.jMYC
-	_jShrinesData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
-	If _jShrinesData 
-		Debug.Trace("MYC: " + Self + " ShrineOfHeroes: Found saved data!")
-	ElseIf JValue.hasPath(_jMYC,".ShrineOfHeroes")
-		Debug.Trace("MYC: " + Self + " ShrineOfHeroes: No saved data, but found data in _jMYC!",1)
-		_jShrinesData = JValue.solveObj(_jMYC,".ShrineOfHeroes")
-	EndIf
+	Bool bSyncResult = SyncShrineData()
+	;SetShrineCharacterNames()
 	If _jShrinesData && abForce
-		Debug.Trace("MYC: " + Self + " ShrineOfHeroes: abForce == True, data exists but will be overwritten!",1)
+		Debug.Trace("MYC/ShrineOfHeroes: abForce == True, data exists but will be overwritten!",1)
 	EndIf
 	If !_jShrinesData || abForce
-		Debug.Trace("MYC: " + Self + " ShrineOfHeroes: No saved data, initializing from scratch!")	
+		Debug.Trace("MYC/ShrineOfHeroes: No saved data, initializing from scratch!")	
 		InitShrineData()
 	EndIf
 	JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrinesData)
 	UpdateShrineRefs()
-	JValue.WriteToFile(_jShrinesData,"Data/vMYC/_ShrineOfHeroes.json")
+	TickDataSerial()
 	JValue.WriteToFile(_jMYC,"Data/vMYC/_jMYC.json")
 EndFunction
 
@@ -145,14 +226,31 @@ Function UpdateShrineRefs()
 	Int jShrineRefs = JMap.getObj(_jShrinesData,"ShrineForms")
 	Int i = Shrines.Length
 	If i != JArray.count(jShrineRefs)
-		Debug.Trace("MYC: " + Self + " ShrineOfHeroes: Current Shrine count doesn't equal saved count!",1)
+		Debug.Trace("MYC/ShrineOfHeroes: Current Shrine count doesn't equal saved count!",1)
 		;FIXME: Handle this gracefully!
 	EndIf
-	Debug.Trace("MYC: " + Self + " ShrineOfHeroes: Setting initial shrine data...")
+	Debug.Trace("MYC/ShrineOfHeroes: Setting initial shrine data...")
 	i = Shrines.Length
 	While i > 0
 		i -= 1
 		(JArray.getForm(jShrineRefs,i) as vMYC_ShrineActivatorScript).ShrineIndex = JValue.solveInt(_jShrinesData,".Shrine" + i + ".Index")
+	EndWhile
+EndFunction
+
+Function SetShrineCharacterNames()
+	String[] sCharacterNames = CharacterManager.CharacterNames
+	Int i = Shrines.Length
+	If i > sCharacterNames.Length
+		i = sCharacterNames.Length
+	EndIf
+	While i > 0
+		i -= 1
+		Int jShrine = JValue.solveObj(_jMYC,".ShrineOfHeroes.Shrine" + i)
+		JMap.setStr(jShrine,"CharacterName",sCharacterNames[i])
+		vMYC_ShrineActivatorScript kShrineAlcove = JMap.getForm(jShrine,"Form") as vMYC_ShrineActivatorScript
+		If kShrineAlcove.CharacterName != sCharacterNames[i]
+			kShrineAlcove.CharacterName = sCharacterNames[i]
+		EndIf
 	EndWhile
 EndFunction
 
@@ -171,14 +269,5 @@ Function InitShrineData()
 		JMap.setStr(jShrine,"CharacterName","")
 		JMap.setObj(_jShrinesData,"Shrine" + i,jShrine)
 	EndWhile
-	String[] sCharacterNames = CharacterManager.CharacterNames
-	i = Shrines.Length
-	If i > sCharacterNames.Length
-		i = sCharacterNames.Length
-	EndIf
-	While i > 0
-		i -= 1
-		Int jShrine = JValue.solveObj(_jMYC,".ShrineOfHeroes.Shrine" + i)
-		JMap.setStr(jShrine,"CharacterName",sCharacterNames[i])
-	EndWhile
+	SetShrineCharacterNames()
 EndFunction

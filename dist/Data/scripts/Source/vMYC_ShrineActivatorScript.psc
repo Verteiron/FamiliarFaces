@@ -26,6 +26,10 @@ String	Property CharacterName Hidden
 		Return _sCharacterName
 	EndFunction
 	Function Set(String sCharacterName)
+		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
+		If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
+			
+		EndIf
 		_sCharacterName = sCharacterName
 		If !_sCharacterName
 			_kCharacter = None
