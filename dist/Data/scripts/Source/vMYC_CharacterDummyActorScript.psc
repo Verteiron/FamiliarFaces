@@ -20,6 +20,7 @@ EndProperty
 
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
+vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 
 Faction Property CurrentFollowerFaction Auto
 Faction Property PotentialFollowerFaction Auto
@@ -331,8 +332,14 @@ Function RefreshMesh()
 	;EndWhile
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
 	_bSwitchedRace = False
-	Bool bSuccess =	CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bsuccess + " from LoadCharacter!")
+	iSafetyTimer = 10
+	Bool bSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+	While !bSuccess && iSafetyTimer > 0
+		iSafetyTimer -= 1
+		Wait(0.5)
+		bSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+	EndWhile
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bSuccess + " from LoadCharacter!")
 	iSafetyTimer = 20
 	While !_bSwitchedRace && iSafetyTimer > 0
 		iSafetyTimer -= 1
@@ -445,13 +452,16 @@ Function SetNameIfNeeded(Bool abForce = False)
 	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
 		_kActorBase.SetName(CharacterName)
+
 		Int i = GetNumReferenceAliases()
 		While i > 0
 			i -= 1
 			ReferenceAlias kThisRefAlias = GetNthReferenceAlias(i)
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) Resetting RefAlias " + kThisRefAlias + "!")
-			kThisRefAlias.Clear()
-			kThisRefAlias.ForceRefTo(Self)
+			If kThisRefAlias.GetOwningQuest() != CharacterManager && kThisRefAlias.GetOwningQuest() != ShrineOfHeroes
+				Debug.Trace("MYC: (" + CharacterName + "/Actor) Resetting RefAlias " + kThisRefAlias + "!")
+				kThisRefAlias.Clear()
+				kThisRefAlias.ForceRefTo(Self)
+			EndIf
 		EndWhile
 		
 		;=== This updates the character's name in EFF's widget, if it's installed
