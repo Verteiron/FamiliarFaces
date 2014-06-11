@@ -118,6 +118,7 @@ Function ShowTrophies(Bool abPlayFX = True)
 			iLoadSafety -= 1
 			Wait(0.1)
 		EndWhile
+		kLinkedObject.SetMotionType(MOTION_KEYFRAMED)
 		;Debug.Trace("MYC: " + Self + " ShrineTrophyFX: kLinkedObject took " + ((100.0 - iLoadSafety) / 10.0) + "s to load!")
 		iSafety -= 1
 		If TrophyVFX && abPlayFX
