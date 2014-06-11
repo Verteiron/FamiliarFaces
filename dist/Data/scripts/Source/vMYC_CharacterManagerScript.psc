@@ -736,7 +736,7 @@ Function SetCharacterEnabled(String asCharacterName, Bool abEnabled)
 EndFunction
 
 VoiceType Function GetCharacterVoiceType(String asCharacterName)
-	GetLocalForm(asCharacterName,"VoiceType")
+	Return GetLocalForm(asCharacterName,"VoiceType") as VoiceType
 EndFunction
 
 Bool Function SetCharacterVoiceType(String asCharacterName, VoiceType akVoiceType)
