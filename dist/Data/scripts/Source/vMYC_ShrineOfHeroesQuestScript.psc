@@ -49,6 +49,8 @@ Bool	_bDoInit
 Bool	_bDoUpkeep
 Bool 	_bReady
 
+Bool 	_bNeedSync
+
 ;--=== Events ===--
 
 Event OnInit()
@@ -69,6 +71,10 @@ Event OnUpdate()
 	If _bDoUpkeep
 		_bDoUpkeep = False
 		DoUpkeep(False)
+	EndIf
+	If _bNeedSync
+		_bNeedSync = False
+		SyncShrineData()
 	EndIf
 EndEvent
 
@@ -201,10 +207,17 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	Return False
 EndFunction
 
-Function TickDataSerial()
+Function TickDataSerial(Bool abForceSync = False)
 	ShrineDataSerial += 1
 	JMap.setInt(_jShrinesData,"DataSerial",ShrineDataSerial)
-;	SyncShrineData()
+	Debug.Trace("MYC/ShrineOfHeroes: Ticking Shrine Data from " + (ShrineDataSerial - 1) + " to " + ShrineDataSerial)
+	If abForceSync
+		SyncShrineData()
+	Else
+		_bNeedSync = True
+		RegisterForSingleUpdate(5)
+	EndIf
+	;	SyncShrineData()
 EndFunction
 
 Function DoInit(Bool abForce = False)
