@@ -210,6 +210,7 @@ EndFunction
 Function TickDataSerial(Bool abForceSync = False)
 	ShrineDataSerial += 1
 	JMap.setInt(_jShrinesData,"DataSerial",ShrineDataSerial)
+	Debug.Trace("MYC/ShrineOfHeroes: Ticking Shrine Data from " + (ShrineDataSerial - 1) + " to " + ShrineDataSerial)
 	If abForceSync
 		SyncShrineData()
 	Else

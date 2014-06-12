@@ -236,18 +236,25 @@ Event OnSetShrineCharacterName(string eventName, string strArg, float numArg, Fo
 		Return
 	EndIf
 	String sCharacterName = strArg
+	Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
 	If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
-		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
-		_sCharacterName = sCharacterName
-	ElseIf !_sCharacterName
-		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to empty!")
-		_sCharacterName = sCharacterName
-		_kCharacter = None
-		HideTrophies()
-	Else
-		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from empty to " + _sCharacterName + "!")
+		Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+	ElseIf !_sCharacterName && sCharacterName
+		Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from empty to " + sCharacterName + "!")
+		_sCharacterName = sCharacterName
+		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+	ElseIf _sCharacterName && !sCharacterName
+		Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to empty!")
+		_sCharacterName = sCharacterName
+		ShrineLightState = 0
+		_kCharacter.Disable(True)
+		_kCharacter = None
+		HideTrophies()
+		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+	Else
+		;No change
 	EndIf
 	OnActivate(Self)
 EndEvent
@@ -683,7 +690,7 @@ Function UpdateShrine()
 	;GotoState("Inactive")
 	ShrineLightState = 1
 	String sCharacterName = CharacterName
-	EraseShrine()
+	EraseShrine(abNoLightChange = True)
 	Wait(0.1)
 	CharacterManager.EraseCharacter(sCharacterName,True)
 	;Wait(0.1)
@@ -693,7 +700,10 @@ Function UpdateShrine()
 	;GoToState("Active")
 EndFunction
 
-Function EraseShrine()
+Function EraseShrine(Bool abNoLightChange = False)
+	If !abNoLightChange
+		ShrineLightState = 0
+	EndIf
 	String sCharacterName = CharacterName
 	CharacterName = ""
 	;Wait(0.1)
