@@ -26,17 +26,8 @@ String	Property CharacterName Hidden
 		Return _sCharacterName
 	EndFunction
 	Function Set(String sCharacterName)
-		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
-		If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
-			
-		EndIf
-		_sCharacterName = sCharacterName
-		If !_sCharacterName
-			_kCharacter = None
-			HideTrophies()
-		EndIf
-		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
-		OnActivate(Self)
+		RegisterForModEvent("vMYC_SetShrineCharacterName","OnSetShrineCharacterName")
+		SendModEvent("vMYC_SetShrineCharacterName",sCharacterName)
 	EndFunction
 EndProperty
 
@@ -240,6 +231,27 @@ Event OnShrineLightingPriority(string eventName, string strArg, float numArg, Fo
 	
 EndEvent
 
+Event OnSetShrineCharacterName(string eventName, string strArg, float numArg, Form sender)
+	If sender != Self
+		Return
+	EndIf
+	String sCharacterName = strArg
+	If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
+		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
+		_sCharacterName = sCharacterName
+	ElseIf !_sCharacterName
+		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to empty!")
+		_sCharacterName = sCharacterName
+		_kCharacter = None
+		HideTrophies()
+	Else
+		Debug.Trace("MYC: " + Self + " Shrine" + _iShrineIndex + ": CharacterName changed from empty to " + _sCharacterName + "!")
+		_sCharacterName = sCharacterName
+		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+	EndIf
+	OnActivate(Self)
+EndEvent
+	
 Event OnCellAttach()
 EndEvent
 
