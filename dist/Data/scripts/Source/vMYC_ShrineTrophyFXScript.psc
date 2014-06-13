@@ -8,7 +8,7 @@ Import Game
 
 ;--=== Properties ===--
 
-Int				Property	ShrineIndex		Auto Hidden
+Int				Property	AlcoveIndex		Auto Hidden
 
 Activator	 	Property 	TrophyFXActi	Auto
 EffectShader 	Property 	TrophyShader 	Auto
@@ -25,7 +25,7 @@ Float 			Property	FXActiTime =  5.0	Auto
 Bool	_bCellAttached
 Bool	_bIsLight
 String 	_sCharacterName
-Int		_iShrineIndex
+Int		_iAlcoveIndex
 ObjectReference _kFXActi
 
 Cell	_kMycell
@@ -38,15 +38,15 @@ EndEvent
 
 Event OnLoad()
 	;Debug.Trace("MYC: " + Self + " OnLoad!")
-	RegisterForModEvent("vMYC_ShrineLightingPriority","OnShrineLightingPriority")
+	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
 	Wait(StartDelay)
 	ShowTrophies()
 EndEvent
 
-Event OnShrineLightingPriority(string eventName, string strArg, float numArg, Form sender)
-	;strArg = numArg = ShrineIndex of sender
+Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
+	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
-	If iRequestingIndex != ShrineIndex
+	If iRequestingIndex != AlcoveIndex
 		HideTrophies()
 		Wait(5)
 		ShowTrophies(False)
@@ -79,8 +79,8 @@ EndEvent
 Event OnUnload()
 	;Debug.Trace("MYC: " + Self + " OnUnload!")
 	; Only hide trophies if unloaded while cell is attached. 
-	; Otherwise the trophy animation will play every time the player enters the shrine. 
-	; Any unload we get while the cell is attached has to be the player resetting the shrine.
+	; Otherwise the trophy animation will play every time the player enters the Alcove. 
+	; Any unload we get while the cell is attached has to be the player resetting the Alcove.
 	If _bCellAttached 
 		HideTrophies()
 	EndIf
@@ -92,7 +92,7 @@ Function HideTrophies()
 	Int iSafety = 10
 	While kLinkedObject && iSafety > 0
 		iSafety -= 1
-		;Debug.Trace("MYC: " + Self + " ShrineTrophyFX: kLinkedObject is " + kLinkedObject)
+		;Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: kLinkedObject is " + kLinkedObject)
 		kLinkedObject.DisableNoWait(True)
 		kLinkedObject = kLinkedObject.GetLinkedRef()
 	EndWhile
@@ -103,7 +103,7 @@ Function ShowTrophies(Bool abPlayFX = True)
 	kLinkedObject = GetLinkedRef()
 	Int iSafety = 10
 	While kLinkedObject && iSafety > 0
-		;Debug.Trace("MYC: " + Self + " ShrineTrophyFX: kLinkedObject is " + kLinkedObject)
+		;Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: kLinkedObject is " + kLinkedObject)
 		_bIsLight = False
 		If kLinkedObject.GetType() == 31 ; Light
 			_bIsLight = True
@@ -119,7 +119,7 @@ Function ShowTrophies(Bool abPlayFX = True)
 			Wait(0.1)
 		EndWhile
 		kLinkedObject.SetMotionType(MOTION_KEYFRAMED)
-		;Debug.Trace("MYC: " + Self + " ShrineTrophyFX: kLinkedObject took " + ((100.0 - iLoadSafety) / 10.0) + "s to load!")
+		;Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: kLinkedObject took " + ((100.0 - iLoadSafety) / 10.0) + "s to load!")
 		iSafety -= 1
 		If TrophyVFX && abPlayFX
 			TrophyVFX.Play(kLinkedObject,VFXTime)
@@ -130,7 +130,7 @@ Function ShowTrophies(Bool abPlayFX = True)
 		kLinkedObject = kLinkedObject.GetLinkedRef()
 	EndWhile
 	If iSafety == 0
-		;Debug.Trace("MYC: " + Self + " ShrineTrophyFX: Reached safety limit!",1)
+		;Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: Reached safety limit!",1)
 	EndIf
 	;Debug.Trace("MYC: " + Self + " Done!")
 EndFunction
