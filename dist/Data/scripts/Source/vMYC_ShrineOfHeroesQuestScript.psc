@@ -158,6 +158,10 @@ Int Function GetShrineIndex(String asCharacterName)
 	Return -1
 EndFunction
 
+vMYC_ShrineActivatorScript Function GetShrineByIndex(Int iShrineIndex)
+	Return JValue.solveForm(_jShrinesData,".Shrine" + iShrineIndex + ".Form") as vMYC_ShrineActivatorScript
+EndFunction
+
 Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
 	JMap.setInt(_jShrinesData,"DataSerial",ShrineDataSerial)
 	Int jSavedShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
