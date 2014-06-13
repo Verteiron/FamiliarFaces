@@ -183,6 +183,8 @@ String			_sCharacterName
 Int				_iQSTMG07MagnusStormCollegeMediumLPM
 Int				_iQSTBeamMeridiaStatueLP
 
+Int 			_iShrineToSwap = -1
+
 ;--=== Events ===--
 
 Event OnInit()
@@ -236,27 +238,34 @@ Event OnSetShrineCharacterName(string eventName, string strArg, float numArg, Fo
 		Return
 	EndIf
 	String sCharacterName = strArg
-	Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
 	If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
 		Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
+		WaitForCharacterReady()
+		HideTrophies()
+		Wait(1)
+		Actor kNewCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
 		_sCharacterName = sCharacterName
-		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+		kNewCharacter.MoveTo(_StatueMarker)
+		ShowTrophies()
+		Wait(5)
+		_kCharacter = kNewCharacter
 	ElseIf !_sCharacterName && sCharacterName
 		Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from empty to " + sCharacterName + "!")
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+		OnActivate(Self)
 	ElseIf _sCharacterName && !sCharacterName
 		Debug.Trace("MYC: " + Self + " OnSetShrineCharacterName - Shrine" + _iShrineIndex + ": CharacterName changed from " + _sCharacterName + " to empty!")
 		_sCharacterName = sCharacterName
 		ShrineLightState = 0
+		HideTrophies()
 		_kCharacter.Disable(True)
 		_kCharacter = None
-		HideTrophies()
 		ShrineOfHeroes.SetShrineCharacterName(_iShrineIndex,_sCharacterName)
+		OnActivate(Self)
 	Else
 		;No change
 	EndIf
-	OnActivate(Self)
 EndEvent
 	
 Event OnCellAttach()
@@ -686,7 +695,6 @@ Function WaitForCharacterReady(Int iSafety = 30)
 EndFunction
 
 Function UpdateShrine()
-	;EraseShrine()
 	;GotoState("Inactive")
 	ShrineLightState = 1
 	String sCharacterName = CharacterName
@@ -708,6 +716,7 @@ Function EraseShrine(Bool abNoLightChange = False)
 	CharacterName = ""
 	;Wait(0.1)
 	SendModEvent("vMYC_ForceBookUpdate","",ShrineIndex)
+	SendModEvent("vMYC_ShrineStatusUpdate",0)
 EndFunction
 
 Function PlayerActivate()
