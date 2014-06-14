@@ -10,7 +10,7 @@ Import Game
 
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
 vMYC_ShrineOfHeroesQuestScript 	Property ShrineOfHeroes 	Auto
-vMYC_ShrineActivatorScript		Property ShrineActivator	Auto Hidden
+vMYC_ShrineAlcoveController		Property AlcoveController	Auto Hidden
 
 Actor 			Property 	PlayerREF					Auto
 
@@ -34,13 +34,14 @@ Sound 			Property 	vMYC_BookWhooshSM	Auto
 
 Static 			Property	HighPolySkyrimBook			Auto
 
-Int	Property ShrineIndex Hidden
-{Which shrine do I belong to?}
+Int	Property AlcoveIndex Hidden
+{Which Alcove do I belong to?}
 	Int Function Get()
-		Return _iShrineIndex
+		Return _iAlcoveIndex
 	EndFunction
-	Function Set(Int iShrineIndex)
-		_iShrineIndex = iShrineIndex
+	Function Set(Int iAlcoveIndex)
+		_iAlcoveIndex = iAlcoveIndex
+		Debug.Trace("MYC/Shrine/Book" + _iAlcoveIndex + ": I am alcove book #" + _iAlcoveIndex + "!")
 	EndFunction
 EndProperty
 
@@ -92,7 +93,7 @@ Bool	_bIsGlowing
 Bool	_bFlipPages
 
 String 	_sCharacterName
-Int		_iShrineIndex
+Int		_iAlcoveIndex = -1
 
 ObjectReference		_BookShine
 ObjectReference		_BookStatic
@@ -104,8 +105,8 @@ EndEvent
 
 Event OnLoad()
 	;Debug.Trace("MYC: " + Self + " OnLoad!")
-	If !ShrineActivator
-		ShrineActivator = GetLinkedRef() as vMYC_ShrineActivatorScript
+	If !AlcoveController
+		AlcoveController = GetLinkedRef() as vMYC_ShrineAlcoveController
 	EndIf
 	BlockActivation(True)
 	If !_BookStatic
@@ -119,64 +120,64 @@ Event OnLoad()
 EndEvent
 
 Event OnActivate(ObjectReference akTriggerRef)
-	If !ShrineActivator
-		ShrineActivator = GetLinkedRef() as vMYC_ShrineActivatorScript
+	If !AlcoveController
+		AlcoveController = GetLinkedRef() as vMYC_ShrineAlcoveController
 	EndIf
-	_iShrineIndex = ShrineActivator.ShrineIndex
-	_sCharacterName = ShrineActivator.CharacterName
+	_iAlcoveIndex = AlcoveController.AlcoveIndex
+	_sCharacterName = AlcoveController.CharacterName
 	If _sCharacterName
 		ShrineOfHeroes.ShrineOwner.ForceRefTo(CharacterManager.GetCharacterActorByName(_sCharacterName))
 	EndIf
 	If !_sCharacterName
-		Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Activated but has no character living in shrine. Were we activated by the player?")
+		Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Activated but has no character living in shrine. Were we activated by the player?")
 		If akTriggerRef == PlayerREF
-			Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": ... yeap, it was the player. Okay, so does the player already have his character saved somewhere?")
-			If ShrineOfHeroes.GetShrineIndex(PlayerREF.GetActorBase().GetName()) == -1
-				Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Apparently not! Soooo... we'll save the current player to this shrine!")
+			Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": ... yeap, it was the player. Okay, so does the player already have his character saved somewhere?")
+			If ShrineOfHeroes.GetAlcoveIndex(PlayerREF.GetActorBase().GetName()) == -1
+				Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Apparently not! Soooo... we'll save the current player to this shrine!")
 				Int iResult = vMYC_ShrineBookSelfNewSaveMenu.Show()
 				If iResult == 0
-					ShrineActivator.SavePlayer()
+					AlcoveController.SavePlayer()
 				EndIf
 				Return
 			Else
-				Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Yeap, so we'll tell them to bug off!")
+				Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Yeap, so we'll tell them to bug off!")
 				vMYC_ShrineBookSelfWrongShrineMenu.Show()
 				Return
 			EndIf
 		Else
-			Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Nope. This is probably the init activation, but we have no-one home. Oh well. Aborting!")
+			Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Nope. This is probably the init activation, but we have no-one home. Oh well. Aborting!")
 		EndIf
 		Return
 	ElseIf _sCharacterName && akTriggerRef == PlayerREF
-		Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Activated by the Player and we have a character living here! Is this the Player's shrine?")
+		Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Activated by the Player and we have a character living here! Is this the Player's shrine?")
 		If _sCharacterName == PlayerREF.GetActorBase().GetName()
-			Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Yeap! So we'll ask the player if they want to update their shrine.")
+			Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Yeap! So we'll ask the player if they want to update their shrine.")
 			;FIXME: Update shrine info
 			Int iResult = vMYC_ShrineBookSelfUpdateSaveMenu.Show()
 			If iResult == 0 ; Update it!
 				If vMYC_ShrineBookSelfUpdateSaveConfirmMenu.Show() == 0
-					ShrineActivator.UpdateShrine()
+					AlcoveController.UpdateAlcove()
 				EndIf
 			ElseIf iResult == 1 ;Leave it alone
 				;Do nothing
 			ElseIf iResult == 2 ;erase it!
 				If vMYC_ShrineBookSelfEraseConfirmMenu.Show() == 0
-					ShrineActivator.EraseShrine()
+					AlcoveController.EraseAlcove()
 				EndIf
 			EndIf
 		Else
-			Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Nope. So we'll tell them about THIS shrine's character!")
+			Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Nope. So we'll tell them about THIS shrine's character!")
 			If !IsOpen
 				Int iResult = vMYC_ShrineBookAltTakeItMenu.Show()
 				If iResult == 0 ; Open the book
-					ShrineActivator.SummonCharacter()
+					AlcoveController.SummonCharacter()
 				Else ; leave it
 					;Do nothing 
 				EndIf
 			Else ;Book is already open
 				Int iResult = vMYC_ShrineBookAltReturnItMenu.Show()
 				If iResult == 1 ; Close the book
-					ShrineActivator.BanishCharacter()
+					AlcoveController.BanishCharacter()
 				Else ; leave it
 					;Do nothing 
 				EndIf
@@ -184,7 +185,7 @@ Event OnActivate(ObjectReference akTriggerRef)
 		EndIf
 		Return
 	Else
-		Debug.Trace("MYC: " + Self + " ShrineBook" + _iShrineIndex + ": Activated by a non-player. This should only happen at init, so we'll proceed...")
+		Debug.Trace("MYC: " + Self + " AlcoveBook" + _iAlcoveIndex + ": Activated by a non-player. This should only happen at init, so we'll proceed...")
 	EndIf
 EndEvent
 
