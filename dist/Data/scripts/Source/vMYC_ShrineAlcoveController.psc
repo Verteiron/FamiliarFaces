@@ -15,7 +15,7 @@ Int	Property AlcoveIndex Hidden
 	EndFunction
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": I am Alcove #" + _iAlcoveIndex + "!")
+		Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
 		RegisterForSingleUpdate(1)
 	EndFunction
 EndProperty
@@ -28,6 +28,17 @@ String	Property CharacterName Hidden
 	Function Set(String sCharacterName)
 		RegisterForModEvent("vMYC_SetAlcoveCharacterName","OnSetAlcoveCharacterName")
 		SendModEvent("vMYC_SetAlcoveCharacterName",sCharacterName)
+	EndFunction
+EndProperty
+
+Int Property AlcoveStatueState Hidden
+{0 = None, 1 = Loading, 2 = Loaded and placed}
+	Int Function Get()
+		Return _iAlcoveStatueState
+	EndFunction
+	Function Set(Int iAlcoveStatueState)
+		RegisterForModEvent("vMYC_ShrineStatueStateChange","OnAlcoveStatueStateChange")
+		SendModEvent("vMYC_ShrineStatueStateChange","",iAlcoveStatueState)
 	EndFunction
 EndProperty
 
@@ -164,7 +175,9 @@ Int				_jMYC
 
 Int				_iAlcoveIndex = -1
 Int				_iInvisibleActorIndex
-Int				_iAlcoveLightState = 0 ; 0 = empty, 1 = lights on
+Int				_iAlcoveLightState = 0 	; 0 = empty, 1 = lights on, 2 = torches
+Int				_iAlcoveStatueState = 0	; 0 = None, 1 = loading, 2 = ready
+
 
 Float 			_LightX
 Float 			_LightY
@@ -208,7 +221,9 @@ EndEvent
 Event OnLoad()
 	CheckVars()
 	If !CharacterName
-		SendModEvent("vMYC_ShrineStatusUpdate",0)
+		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+	ElseIf AlcoveStatueState == 0
+		ActivateAlcove()
 	EndIf
 	RegisterForModEvent("vMYC_ShrineLightingPriority","OnAlcoveLightingPriority")
 EndEvent
@@ -234,15 +249,21 @@ EndEvent
 Function SetAlcoveCharacterName(string sCharacterName)
 {This (un)sets the Alcove's character name}
 	If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - Alcove" + _iAlcoveIndex + ": CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
+		DeactivateAlcove()
+		_sCharacterName = sCharacterName
+		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
+		ActivateAlcove()
 	ElseIf !_sCharacterName && sCharacterName
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - Alcove" + _iAlcoveIndex + ": CharacterName changed from empty to " + sCharacterName + "!")
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from empty to " + sCharacterName + "!")
 		_sCharacterName = sCharacterName
-		ShrineOfHeroes.SetAlcoveString(_iAlcoveIndex,"CharacterName",_sCharacterName)
+		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
+		ActivateAlcove()
 	ElseIf _sCharacterName && !sCharacterName
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - Alcove" + _iAlcoveIndex + ": CharacterName changed from " + _sCharacterName + " to empty!")
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from " + _sCharacterName + " to empty!")
 		_sCharacterName = sCharacterName
-		ShrineOfHeroes.SetAlcoveString(_iAlcoveIndex,"CharacterName",_sCharacterName)
+		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
+		DeactivateAlcove()
 	Else
 		;No change
 	EndIf
@@ -256,7 +277,7 @@ EndEvent
 
 Event OnUpdate()
 	If ShrineOfHeroes.Ready
-		CharacterName = ShrineOfHeroes.GetAlcoveString(AlcoveIndex,"CharacterName")
+		CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
 		CheckVars()
 		_Book.AlcoveIndex = AlcoveIndex
 		InitTrophies()
@@ -352,6 +373,105 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	SendModEvent("vMYC_ShrineLightStateComplete","",_iAlcoveLightState)
 EndEvent
 
+Event OnAlcoveStatueStateChange(string eventName, string strArg, float numArg, Form sender)
+{numArg: 0 = Dark, 1 = Full light, 2 = Torch light}
+	If sender != Self || numArg as Int == _iAlcoveStatueState
+		Return
+	EndIf
+	Int iStatueState = numArg as Int
+	_iAlcoveStatueState = iStatueState ; Set internal property value 
+	SendModEvent("vMYC_AlcoveStatueStateComplete","",_iAlcoveStatueState)
+EndEvent
+
+;==== Functions/Events for loading the character statue ====----
+
+Function ActivateAlcove()
+	If !_sCharacterName
+		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
+		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		Return
+	EndIf
+	SendModEvent("vMYC_AlcoveStatusUpdate",1)
+	AlcoveLightState = 1
+	AlcoveStatueState = 1
+	If !CharacterManager.LoadCharacter(_sCharacterName)
+		SendModEvent("vMYC_AlcoveStatusUpdate",4)
+		While AlcoveLightState != 1
+			Wait(1.0)
+		EndWhile
+		AlcoveLightState = 0
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": " + _sCharacterName + " could not be loaded from CharacterManager.",1)
+		CharacterName = ""
+		Return
+	EndIf
+	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
+	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
+	_kCharacter.SetGhost(True)
+	_kCharacter.SetScale(1.2)
+	_kCharacter.EnableAI(True)
+	_kCharacter.Moveto(_StatueMarker)
+	RegisterForModEvent("vMYC_CharacterReady","OnCharacterReady")
+	_kCharacter.EnableNoWait()
+	_bPoseCharacter = True
+	ShowTrophies()
+	SendModEvent("vMYC_AlcoveStatusUpdate",2)
+EndFunction
+
+Function DeactivateAlcove()
+	If !_sCharacterName
+		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
+		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		Return
+	EndIf
+	SendModEvent("vMYC_AlcoveStatusUpdate",1)
+	AlcoveLightState = 1
+	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
+	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
+	_kCharacter.DisableNoWait()
+	HideTrophies()
+	SendModEvent("vMYC_AlcoveStatusUpdate",0)
+	AlcoveStatueState = 0
+	AlcoveLightState = 0
+EndFunction
+
+Event OnCharacterReady(string eventName, string strArg, float numArg, Form sender)
+	If strArg == _sCharacterName
+		_bCharacterReady = True
+	EndIf
+	If strArg == _sCharacterName && _bPoseCharacter
+		_bPoseCharacter = False
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")	
+		vMYC_BlindingLightInwardParticles.Play(_kCharacter,0.5)
+
+		Debug.SendAnimationEvent(_kCharacter,"IdleStaticPoseAStart") ;_kCharacter.PlayIdle(IdleStaticPoseA)
+		Wait(0.25)
+		_kCharacter.SetGhost(True)
+		_kCharacter.EnableAI(False)
+
+		AlcoveStatueState = 2
+		AlcoveLightState = 2
+	EndIf
+EndEvent
+
+Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
+	While !kObjectRef.Is3DLoaded() && iSafety > 0
+		iSafety -= 1
+		Wait(0.1)
+	EndWhile
+	Return iSafety as Bool
+EndFunction
+
+Function WaitForCharacterReady(Int iSafety = 30)
+	_bCharacterReady = False
+	RegisterForModEvent("vMYC_CharacterReady","OnCharacterReady")
+	While !_bCharacterReady && iSafety > 0
+		iSafety -= 1
+		Wait(0.1)
+	EndWhile
+EndFunction
+
+;==== Functions/Events for the character save process ====----
+
 Function SavePlayer(Bool abForceSave = False)
 	_bForceSave = abForceSave
 	_bPlayerIsSaving = True
@@ -413,52 +533,81 @@ Function SavePlayer(Bool abForceSave = False)
 	;Finish in OnAnimationEvent
 EndFunction
 
+;Save process continues in this event
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)
 	If asEventName == "T02Ascend" ; Player is floating
+
 		UnregisterForAnimationEvent(PlayerREF,"T02Ascend")
 		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player is floating!")
-		Debug.ToggleCollisions() ; Keep the invisible actors from bouncing around during the next bit
-		vMYC_QSTTG09BeamAbilitiesColumnStartSM.Play(PlayerREF)
-		vMYC_ValorFX.Play(PlayerREF,-1)
-		vMYC_BlindingLightSkinOnly.Play(PlayerREF,-1)
-		_Book.IsGlowing = True
-		_Book.FlipPages = True
-		PlayerRef.TranslateToRef(_Book.GetLinkedRef(vMYC_ShrineBook),100) ; book is linked to player target through this keyword
-		Wait(1)
-		MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
-		_Curtain.EnableNoWait(True)
-		vMYC_SpellAbsorbTargetVFX.Play(PlayerREF,-1,_StatueMarker)
-		CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
-		_bForceSave = False
-		vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
-		Wait(1.0)
-		_Book.FlipPages = False
-		_Book.IsGlowing = False
-		ShrineOfHeroes.SetAlcoveString(_iAlcoveIndex,"CharacterName",PlayerREF.GetActorBase().GetName())
-		RegisterForSingleUpdate(0.1)
-		vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds 
-		SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
-		QSTMQ206TimeTravel2DSound.Play(_Book)
-		Wait(2.0)
-		vMYC_BlindingLightSkinOnly.Stop(PlayerREF)
-		PlayerRef.TranslateToRef(_Book.GetLinkedRef(vMYC_ShrineBook).GetLinkedRef(),999999)
-		Wait(0.1)
-		PlayerREF.PlayIdle(IdleStop_loose)
-		Wait(0.1)
-		vMYC_ValorFX.Stop(PlayerREF)
-		PlayerREF.StopTranslation()
-		Wait(0.1)
-		Debug.ToggleCollisions()
-		Debug.SendAnimationEvent(PlayerREF,"IdleStaticPoseAStart")
-		Debug.SendAnimationEvent(PlayerREF,"BleedOutStart")
-		Wait(3.0)
-		EnablePlayerControls()
-		Debug.SendAnimationEvent(PlayerREF,"BleedOutStop")
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player should be released, Alcove should be loaded/loading!")
-		Wait(3.0)
-		_Book.IsOpen = False
+		DoSaveAnimation()
 	EndIf
 EndEvent
+
+;Last part of save process
+Function DoSaveAnimation()
+{Play VFX and actually save the player character}
+	;We turn off collisions here. 
+	Debug.ToggleCollisions() ; Keep the invisible actors from bouncing around during the next bit
+	
+	;VFX
+	vMYC_QSTTG09BeamAbilitiesColumnStartSM.Play(PlayerREF)
+	vMYC_ValorFX.Play(PlayerREF,-1)
+	vMYC_BlindingLightSkinOnly.Play(PlayerREF,-1)
+	_Book.IsGlowing = True
+	PlayerRef.TranslateToRef(_Book.GetLinkedRef(vMYC_ShrineBook),100) ; book is linked to player target through this keyword
+	Wait(1)
+	MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
+	vMYC_SpellAbsorbTargetVFX.Play(PlayerREF,-1,_StatueMarker)
+	
+	;Turn on opaque white object to make the shrine look super-bright
+	_Curtain.EnableNoWait(True)
+
+	;Save the player
+	_Book.FlipPages = True
+	CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
+	_bForceSave = False
+	vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
+	Wait(1.0)
+	_Book.FlipPages = False
+	ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",PlayerREF.GetActorBase().GetName())
+	RegisterForSingleUpdate(0.1)
+
+	;Saving is done, return the character to the ground
+	vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds 
+	
+	;Force the book to update with the player's name
+	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
+	
+	;Break the character out of the floating pose. There's no smooth way to do it, which is why we hide it behind a fade-to-white and some sound effects
+	QSTMQ206TimeTravel2DSound.Play(_Book)
+	Wait(2.0)
+	_Book.IsGlowing = False
+	vMYC_BlindingLightSkinOnly.Stop(PlayerREF)
+	MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
+	PlayerRef.TranslateToRef(_Book.GetLinkedRef(vMYC_ShrineBook).GetLinkedRef(),999999)
+	Wait(0.1)
+	PlayerREF.PlayIdle(IdleStop_loose)
+	Wait(0.1)
+	vMYC_ValorFX.Stop(PlayerREF)
+	PlayerREF.StopTranslation()
+	Wait(0.1)
+	
+	;We turn collisions back on here. 
+	Debug.ToggleCollisions()
+
+	;Actually make the player stop playing the float animation
+	Debug.SendAnimationEvent(PlayerREF,"IdleStaticPoseAStart")
+
+	;Leave them on the floor
+	Debug.SendAnimationEvent(PlayerREF,"BleedOutStart")
+	
+	Wait(3.0)
+	EnablePlayerControls()
+	Debug.SendAnimationEvent(PlayerREF,"BleedOutStop")
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player should be released, Alcove should be loaded/loading!")
+	Wait(3.0)
+	_Book.IsOpen = False
+EndFunction
 
 Event OnEquipmentSaveEnd(string eventName, string strArg, float numArg, Form sender)
 {Cleanup invisible actors after all equipment is saved.}
@@ -561,12 +710,15 @@ Event OnItemSaved(string eventName, string strArg, float numArg, Form sender)
 ;	EndIf
 EndEvent
 
+;==== Functions/Events for character summoning/banishing ====----
+
 Function SummonCharacter()
 {Summon the character from Alcove into Tamriel}
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": SummonCharacter!")
 	GoToState("Busy")
 	_Book = GetLinkedRef(vMYC_ShrineBook) as vMYC_CharacterBookActiScript
 	_Book.IsOpen = True
+	_Book.IsGlowing = True
 	;_kCharacter.SetActorValue("Variable10",0)
 	Wait(0.5)
 	_kCharacter.EnableAI(True)
@@ -592,18 +744,11 @@ Function SummonCharacter()
 	_kCharacter.EvaluatePackage()
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	_kCharacter.MoveToPackageLocation()
+	_Book.IsGlowing = False
 	Wait(1.0)
 	_kCharacter.SetAlpha(1.0)
-	SendModEvent("vMYC_ShrineStatusUpdate",3)
+	SendModEvent("vMYC_AlcoveStatusUpdate",3)
 	GoToState("Active")
-EndFunction
-
-Bool Function WaitFor3DLoad(Form kForm, Int iSafety = 20)
-	While !_kCharacter.Is3DLoaded() && iSafety > 0
-		iSafety -= 1
-		Wait(0.1)
-	EndWhile
-	Return iSafety as Bool
 EndFunction
 
 Function BanishCharacter()
@@ -611,6 +756,7 @@ Function BanishCharacter()
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": BanishCharacter!")
 	GoToState("Busy")
 	_Book.IsOpen = False
+	_Book.IsGlowing = True
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling character tracking...")
 	CharacterManager.SetCharacterTracking(CharacterName,False)
 	;_kCharacter.DisableNoWait(False)
@@ -633,24 +779,18 @@ Function BanishCharacter()
 	EndIf
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Fading in character...")
 	_kCharacter.SetAlpha(1.0,True)
+	_Book.IsGlowing = False
 	Wait(3.0)
 	_kCharacter.PlayIdle(IdleStaticPoseA)
 	;_kCharacter.DrawWeapon()
 	Wait(0.25)
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Freezing character!")
 	_kCharacter.EnableAI(False)
-	SendModEvent("vMYC_ShrineStatusUpdate",2)
+	SendModEvent("vMYC_AlcoveStatusUpdate",2)
 	GoToState("Active")
 EndFunction
 
-Function WaitForCharacterReady(Int iSafety = 30)
-	_bCharacterReady = False
-	RegisterForModEvent("vMYC_CharacterReady","OnCharacterReady")
-	While !_bCharacterReady && iSafety > 0
-		iSafety -= 1
-		Wait(0.1)
-	EndWhile
-EndFunction
+;==== Utility functions ====----
 
 Function UpdateAlcove()
 	;GotoState("Inactive")
@@ -674,12 +814,14 @@ Function EraseAlcove(Bool abNoLightChange = False)
 	CharacterName = ""
 	;Wait(0.1)
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
-	SendModEvent("vMYC_ShrineStatusUpdate",0)
+	SendModEvent("vMYC_AlcoveStatusUpdate",0)
 EndFunction
 
 Function PlayerActivate()
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Got PlayerActivate in null state!")
 EndFunction
+
+;==== Functions/Events for trophies ====----
 
 Function InitTrophies()
 	Int i = vMYC_TrophyKeywords.GetSize()
@@ -696,28 +838,11 @@ Function HideTrophies()
 	Int i = vMYC_TrophyKeywords.GetSize()
 	While i > 0
 		i -= 1
-		vMYC_ShrineTrophyFXScript kTrophy = GetLinkedRef(vMYC_TrophyKeywords.GetAt(i) as Keyword) as vMYC_ShrineTrophyFXScript
+		ObjectReference kTrophy = GetLinkedRef(vMYC_TrophyKeywords.GetAt(i) as Keyword) as ObjectReference
 		If kTrophy
 			kTrophy.DisableNoWait()
 		EndIf
 	EndWhile
-;		GetLinkedRef(vMYC_ShrineTrophyHero).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyCompanion).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyMage).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyThief).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyDBRestored).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyDBDestroyed).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyImperial).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyStormcloak).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyBard).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyGreybeard).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyBlade).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyWerewolfSymbol).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyVampireSymbol).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyDLC1Vampire).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyDLC1Dawnguard).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyDLC1Complete).DisableNoWait(True)
-;		GetLinkedRef(vMYC_ShrineTrophyDLC2Miraak).DisableNoWait(True)
 EndFunction
 
 Function ShowTrophies()
@@ -775,78 +900,3 @@ Function ShowTrophies()
 		GetLinkedRef(vMYC_ShrineTrophyDLC2Miraak).EnableNoWait()
 	EndIf
 EndFunction
-
-Event OnCharacterReady(string eventName, string strArg, float numArg, Form sender)
-	If strArg == _sCharacterName
-		_bCharacterReady = True
-	EndIf
-	If strArg == _sCharacterName && _bPoseCharacter
-		_bPoseCharacter = False
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")	
-		vMYC_BlindingLightInwardParticles.Play(_kCharacter,0.5)
-		;---=== using SendAnimationevent instead of PlayIdle because PlayIdle doesn't actually work off-camera
-		Debug.SendAnimationEvent(_kCharacter,"IdleStaticPoseAStart") ;_kCharacter.PlayIdle(IdleStaticPoseA)
-		Wait(0.25)
-		_kCharacter.SetGhost(True)
-		_kCharacter.EnableAI(False)
-		;_kCharacter.SheatheWeapon()
-		GotoState("Active")
-		
-		
-		;---=== this stuff is for my attempt at making the poses more interesting. Doesn't work reliably because Bethesda. Fix it later
-		;If CharacterManager.GetLocalInt(_sCharacterName,"BowEquipped") == 1
-			;_kCharacter.SetActorValue("Variable10",2)
-		;Else
-			;_kCharacter.SetActorValue("Variable10",1)
-		;EndIf
-		
-		;RegisterForAnimationEvent(_kCharacter,"PickNewIdle")
-		;RegisterForAnimationEvent(_kCharacter,"IdleStop")
-		;Debug.SendAnimationEvent(_kCharacter,"PickNewIdle")
-		_kCharacter.EvaluatePackage()
-		;AlcoveLightState = 2
-		;Wait(1.0)
-		;RegisterForAnimationEvent(_kCharacter,"PickNewIdle")
-		;RegisterForAnimationEvent(_kCharacter,"IdleStop")
-		;_bPoseCharacter = True
-		;While _bPoseCharacter
-			;If _kCharacter.PlayIdle(CombatIdleStretching)
-				;_bFreezeCharacter = True
-			;EndIf
-			;Wait(1.0)
-		;EndWhile
-	EndIf
-EndEvent
-
-Function PlaceCharacterStatue()
-	If !_sCharacterName
-		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
-		SendModEvent("vMYC_ShrineStatusUpdate",0)
-		Return
-	EndIf
-	GotoState("Busy")
-	SendModEvent("vMYC_ShrineStatusUpdate",1)
-	AlcoveLightState = 1
-	If !CharacterManager.LoadCharacter(_sCharacterName)
-		SendModEvent("vMYC_ShrineStatusUpdate",4)
-		While AlcoveLightState != 1
-			Wait(1.0)
-		EndWhile
-		AlcoveLightState = 0
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": " + _sCharacterName + " could not be loaded from CharacterManager.",1)
-		CharacterName = ""
-		Return
-	EndIf
-	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
-	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
-	_kCharacter.SetGhost(True)
-	_kCharacter.SetScale(1.2)
-	_kCharacter.EnableAI(True)
-	_kCharacter.Moveto(_StatueMarker)
-	_kCharacter.EnableNoWait()
-	_bPoseCharacter = True
-	ShowTrophies()
-	RegisterForModEvent("vMYC_CharacterReady","OnCharacterReady")
-	SendModEvent("vMYC_ShrineStatusUpdate",2)
-EndFunction
-
