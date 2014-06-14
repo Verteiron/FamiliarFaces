@@ -41,6 +41,7 @@ Int	Property AlcoveIndex Hidden
 	EndFunction
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
+		Debug.Trace("MYC/Shrine/Book" + _iAlcoveIndex + ": I am alcove book #" + _iAlcoveIndex + "!")
 	EndFunction
 EndProperty
 
@@ -92,7 +93,7 @@ Bool	_bIsGlowing
 Bool	_bFlipPages
 
 String 	_sCharacterName
-Int		_iAlcoveIndex
+Int		_iAlcoveIndex = -1
 
 ObjectReference		_BookShine
 ObjectReference		_BookStatic

@@ -86,13 +86,14 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 		Return
 	EndIf
 	AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = strArg as Int
-	Int i = AlcoveState.Length
+	Int iCount = AlcoveState.Length
 	Bool bAllReady = True
-	While i > 0
-		i -= 1
+	Int i = 0
+	While i < iCount
 		If AlcoveState[i] == 1 ; Shrine is loading 
 			bAllReady = False
 		EndIf
+		i += 1
 	EndWhile
 	If bAllReady
 		SendModEvent("vMYC_AllAlcovesReady",1,CharacterManager.CharacterNames.Length)
@@ -124,38 +125,39 @@ EndFunction
 
 Function UpdateShrineNames()
 	Int jShrineArray = JMap.getObj(_jShrineData,"AlcoveForms")
-	Int i = JArray.Count(jShrineArray)
-	While i > 0
-		i -= 1
+	Int i = 0 
+	Int iCount = JArray.Count(jShrineArray)
+	While i < iCount
 		String sCharacterName = JValue.solveStr(_jShrineData,".Alcove" + i + ".CharacterName")
-		Debug.Trace("MYC/Shrine: Alcove" + i + ".Form is " + JValue.solveForm(_jShrineData,".Alcove" + i + ".Form") + "!")
-		JArray.getForm(jShrineArray,i)
+		Debug.Trace("MYC/Shrine: Alcove" + i + ".Controller is " + JValue.solveForm(_jShrineData,".Alcove" + i + ".Controller") + "!")
 		vMYC_ShrineAlcoveController kShrine = JArray.getForm(jShrineArray,i) as vMYC_ShrineAlcoveController
-		Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from shrine) is " + kShrine.CharacterName + " and should be " + sCharacterName + "!")
+		Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from alcove) is " + kShrine.CharacterName + " and should be " + sCharacterName + "!")
 		If sCharacterName != kShrine.CharacterName
 			kShrine.CharacterName = sCharacterName
 		EndIf
+		i += 1
 	EndWhile
 EndFunction
 
 String Function GetShrineCharacterName(Int iAlcoveIndex)
-	Return JValue.solveStr(_jShrineData,".Shrine" + iAlcoveIndex + ".CharacterName")
+	Return JValue.solveStr(_jShrineData,".Alcove" + iAlcoveIndex + ".CharacterName")
 EndFunction
 
 Int Function GetAlcoveIndex(String asCharacterName)
-	Int i = JMap.Count(_jShrineData)
-	While i > 0
-		i -= 1
-		String sCharacterName = JValue.solveStr(_jShrineData,".Shrine" + i + ".CharacterName")
+	Int i = 0
+	Int iCount = JMap.Count(_jShrineData)
+	While i < iCount
+		String sCharacterName = JValue.solveStr(_jShrineData,".Alcove" + i + ".CharacterName")
 		If sCharacterName == asCharacterName
 			Return i
 		EndIf
+		i += 1
 	EndWhile
 	Return -1
 EndFunction
 
 vMYC_ShrineAlcoveController Function GetAlcoveByIndex(Int iAlcoveIndex)
-	Return JValue.solveForm(_jShrineData,".Shrine" + iAlcoveIndex + ".Form") as vMYC_ShrineAlcoveController
+	Return JValue.solveForm(_jShrineData,".Alcove" + iAlcoveIndex + ".Controller") as vMYC_ShrineAlcoveController
 EndFunction
 
 Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
@@ -233,54 +235,59 @@ Function DoInit(Bool abForce = False)
 	EndIf
 	JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 	TickDataSerial(True)
+	UpdateAlcoveControllers()
 EndFunction
 
 Function InitShrineData()
 	_jShrineData = JMap.Object()
 	Int jAlcoveRefs = JArray.Object()
 	JMap.setObj(_jShrineData,"AlcoveForms",jAlcoveRefs)
-	Int i = Alcoves.Length
-	While i > 0
-		i -= 1
+	Int i 
+	Int iCount = Alcoves.Length
+	While i < iCount
 		JArray.addForm(jAlcoveRefs,Alcoves[i].GetReference() as vMYC_ShrineAlcoveController)
 		SetAlcoveInt(i,"Index",i)
 		SetAlcoveInt(i,"State",0)
 		SetAlcoveForm(i,"Controller",Alcoves[i].GetReference() as vMYC_ShrineAlcoveController)
 		SetAlcoveStr(i,"CharacterName","")
 		(Alcoves[i].GetReference() as vMYC_ShrineAlcoveController).AlcoveIndex = i
+		i += 1
 	EndWhile
-	SetShrineCharacterNames()
+	SetAlcoveCharacterNames()
 EndFunction
 
-Function SetShrineCharacterNames()
+Function SetAlcoveCharacterNames()
 	String[] sCharacterNames = CharacterManager.CharacterNames
-	Int i = Alcoves.Length
-	If i > sCharacterNames.Length
-		i = sCharacterNames.Length
+	Int i = 0
+	Int iCount = Alcoves.Length
+	If iCount > sCharacterNames.Length
+		iCount = sCharacterNames.Length
 	EndIf
-	While i > 0
-		i -= 1
+	While i < iCount
 		SetAlcoveStr(i,"CharacterName",sCharacterNames[i])
 		Debug.Trace("MYC/Shrine: kAlcove " + i + " is " + GetAlcoveForm(i,"Controller"))
 		vMYC_ShrineAlcoveController kAlcove = GetAlcoveForm(i,"Controller") as vMYC_ShrineAlcoveController
 		If kAlcove.CharacterName != sCharacterNames[i]
 			kAlcove.CharacterName = sCharacterNames[i]
 		EndIf
+		i += 1
 	EndWhile
 EndFunction
 
-Function UpdateAlcoveRefs()
+Function UpdateAlcoveControllers()
 	Int jAlcoveRefs = JMap.getObj(_jShrineData,"AlcoveForms")
-	Int i = Alcoves.Length
-	If i != JArray.count(jAlcoveRefs)
-		Debug.Trace("MYC/Shrine: Current Shrine count doesn't equal saved count!",1)
+	Int iCount = Alcoves.Length
+	If iCount != JArray.count(jAlcoveRefs)
+		Debug.Trace("MYC/Shrine: Current Alcove count doesn't equal saved count!",1)
 		;FIXME: Handle this gracefully!
 	EndIf
-	Debug.Trace("MYC/Shrine: Setting initial shrine data...")
-	i = Alcoves.Length
-	While i > 0
-		i -= 1
-		(JArray.getForm(jAlcoveRefs,i) as vMYC_ShrineAlcoveController).AlcoveIndex = JValue.solveInt(_jShrineData,".Shrine" + i + ".Index")
+	Debug.Trace("MYC/Shrine: Setting Alcove data...")
+	Int i = 0
+	While i < iCount
+		vMYC_ShrineAlcoveController kAlcove = GetAlcoveForm(i,"Controller") as vMYC_ShrineAlcoveController
+		kAlcove.AlcoveIndex = GetAlcoveInt(i,"Index")
+		kAlcove.CharacterName = GetAlcoveStr(i,"CharacterName")
+		i += 1
 	EndWhile
 EndFunction
 

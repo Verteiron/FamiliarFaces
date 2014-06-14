@@ -198,20 +198,27 @@ Int 			_iAlcoveToSwap = -1
 Function CheckVars()
 	_FogEmpty = GetLinkedRef(vMYC_ShrineFog)
 	_FogBlowing = _FogEmpty.GetLinkedRef(vMYC_ShrineFog)
-	_Light = GetLinkedRef(vMYC_ShrineLight)
-	_LightAmbientTarget	= _Light.GetLinkedRef()
 	_Torches = GetLinkedRef(vMYC_ShrineTorches)
 	_StatueMarker = GetLinkedRef(vMYC_ShrineFurnishing)
 	_Curtain = GetLinkedRef(vMYC_ShrineCurtain)
-	_kInvisibleActors = New Actor[32]
-	_iInvisibleActorIndex = _kInvisibleActors.Length
-	_Book = GetLinkedRef(vMYC_ShrineBook) as vMYC_CharacterBookActiScript
-	_LightX = _Light.GetPositionX()
-	_LightY = _Light.GetPositionY()
-	_LightZ = _Light.GetPositionZ()
-	_LightAmbientTarget	= _Light.GetLinkedRef()
-	_Light = GetLinkedRef(vMYC_ShrineLight)
-	_Light.MoveTo(_LightAmbientTarget)
+	If !_kInvisibleActors
+		_kInvisibleActors = New Actor[32]
+		_iInvisibleActorIndex = _kInvisibleActors.Length
+	EndIf
+	If !_Book
+		_Book = GetLinkedRef(vMYC_ShrineBook) as vMYC_CharacterBookActiScript
+	EndIf
+	If _Book.AlcoveIndex != AlcoveIndex
+		_Book.AlcoveIndex = AlcoveIndex
+	EndIf
+	If !_Light
+		_Light = GetLinkedRef(vMYC_ShrineLight)
+		_LightX = _Light.GetPositionX()
+		_LightY = _Light.GetPositionY()
+		_LightZ = _Light.GetPositionZ()
+		_LightAmbientTarget	= _Light.GetLinkedRef()
+		_Light.MoveTo(_LightAmbientTarget)
+	EndIf
 EndFunction
 
 Event OnInit()
@@ -261,9 +268,9 @@ Function SetAlcoveCharacterName(string sCharacterName)
 		ActivateAlcove()
 	ElseIf _sCharacterName && !sCharacterName
 		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from " + _sCharacterName + " to empty!")
+		DeactivateAlcove()
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
-		DeactivateAlcove()
 	Else
 		;No change
 	EndIf
@@ -370,6 +377,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		OnAlcoveLightStateChange(eventName, strArg, numArg, sender)
 	EndIf
 	_iAlcoveLightState = iLightState ; Set internal property value 
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
 	SendModEvent("vMYC_ShrineLightStateComplete","",_iAlcoveLightState)
 EndEvent
 
@@ -418,15 +426,12 @@ Function ActivateAlcove()
 EndFunction
 
 Function DeactivateAlcove()
-	If !_sCharacterName
-		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
-		SendModEvent("vMYC_AlcoveStatusUpdate",0)
-		Return
-	EndIf
 	SendModEvent("vMYC_AlcoveStatusUpdate",1)
 	AlcoveLightState = 1
+	While AlcoveLightState != 1
+		WaitMenuMode(1)
+	EndWhile
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
-	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
 	_kCharacter.DisableNoWait()
 	HideTrophies()
 	SendModEvent("vMYC_AlcoveStatusUpdate",0)

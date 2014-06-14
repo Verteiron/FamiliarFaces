@@ -32,8 +32,8 @@ Event OnForceBookUpdate(string eventName, string strArg, float numArg, Form send
 		_Book = GetLinkedRef()
 		_BookScript = _Book as vMYC_CharacterBookActiScript
 	EndIf
-	Int iShrineIndex = _BookScript.ShrineIndex
-	If iShrineIndex == numArg
+	Int iAlcoveIndex = _BookScript.AlcoveIndex
+	If iAlcoveIndex == numArg
 		OnTriggerEnter(PlayerREF)
 	EndIf
 EndEvent
@@ -42,10 +42,10 @@ Event OnTriggerEnter(ObjectReference akActionRef)
 	_Book = GetLinkedRef()
 	If akActionRef == PlayerREF && _Book
 		_BookScript = _Book as vMYC_CharacterBookActiScript
-		Int iShrineIndex = _BookScript.ShrineIndex
-		String sCharacterName = ShrineOfHeroes.GetShrineCharacterName(iShrineIndex)
+		Int iAlcoveIndex = _BookScript.AlcoveIndex
+		String sCharacterName = ShrineOfHeroes.GetShrineCharacterName(iAlcoveIndex)
 		Actor kCharacterActor = CharacterManager.GetCharacterActorByName(sCharacterName)
-		Debug.Trace("MYC: " + Self + " I am Book #" + _BookScript.ShrineIndex + ", shrine character is " + ShrineOfHeroes.GetShrineCharacterName(_BookScript.ShrineIndex) + ", shrine actor is " + CharacterManager.GetCharacterActorByName(ShrineOfHeroes.GetShrineCharacterName(_BookScript.ShrineIndex)) + "!")
+		Debug.Trace("MYC: " + Self + " I am Book #" + _BookScript.AlcoveIndex + ", shrine character is " + ShrineOfHeroes.GetShrineCharacterName(_BookScript.AlcoveIndex) + ", shrine actor is " + CharacterManager.GetCharacterActorByName(ShrineOfHeroes.GetShrineCharacterName(_BookScript.AlcoveIndex)) + "!")
 		If kCharacterActor
 			ShrineOwner.ForceRefTo(kCharacterActor)
 			ShrineBook.ForceRefTo(_Book)
