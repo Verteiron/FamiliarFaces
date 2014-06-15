@@ -206,6 +206,8 @@ Bool _bBusyEquipment = False
 
 Bool _bFreeActorBaseBusy
 
+Bool _bApplyPerksBusy = False
+
 ActorBase[] _kDummyActors
 
 ;Because Formlists can't be trusted to stay in any sort of order
@@ -880,6 +882,26 @@ Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool 
 	
 EndFunction
 
+Function ApplyCharacterPerks(String sCharacterName)
+	While _bApplyPerksBusy
+		WaitMenuMode(0.5)
+	EndWhile
+	_bApplyPerksBusy = True
+	vMYC_Perklist.Revert()
+	Int jCharacterPerks = GetCharacterObj(sCharacterName,"Perks")
+	Int i = JArray.Count(jCharacterPerks)
+	While i > 0
+		i -= 1
+		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
+		Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+		vMYC_PerkList.AddForm(kPerk)
+	EndWhile
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	CharGen.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
+	WaitMenuMode(0.1)
+	_bApplyPerksBusy = False
+EndFunction
+
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	Form kEquippedAmmo
 	
@@ -1009,42 +1031,10 @@ Bool Function LoadCharacter(String sCharacterName)
 	DummyActorBase.SetEssential(True)
 	DummyActorBase.SetName(sCharacterName)
 	PlayerDupe = GetCharacterActor(DummyActorBase)
-
-	vMYC_Perklist.Revert()
-	Int jCharacterPerks = JMap.getObj(jCharacterData,"Perks")
-	i = JArray.Count(jCharacterPerks)
-	While i > 0
-		i -= 1
-		vMYC_PerkList.AddForm(JArray.getForm(jCharacterPerks,i) as Perk)
-	EndWhile
-
-;	i = JArray.Count(jCharacterPerks)
-;	While i > 0
-;		i -= 1
-;		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
-;		Int iNumEntries = kPerk.GetNumEntries()
-;		String sPerkName = kPerk.GetName()
-;		Debug.Trace("MYC: (" + sCharacterName + ") ---=== Perk " + kPerk + " is " + sPerkName + " and has " + iNumEntries + " entries ===---")
-;		Int j = 0
-;		While j < iNumEntries
-;			Debug.Trace("MYC: (" + sCharacterName + ")       |Entry: " + j + " rank is " + kPerk.GetNthEntryRank(j) + ", priority is " + kPerk.GetNthEntryPriority(j))
-;			If kPerk.GetNthEntryQuest(j)
-;			Debug.Trace("MYC: (" + sCharacterName + ")                Quest is " + kPerk.GetNthEntryQuest(j) + ", " + kPerk.GetNthEntryQuest(j).GetName())
-;			EndIf
-;			If kPerk.GetNthEntrySpell(j)
-;			Debug.Trace("MYC: (" + sCharacterName + ")                Spell is " + kPerk.GetNthEntrySpell(j) + ", " + kPerk.GetNthEntrySpell(j).GetName())
-;			EndIf
-;			If kPerk.GetNthEntryText(j) || kPerk.GetNthEntryValue(j,0)
-;			Debug.Trace("MYC: (" + sCharacterName + ")                Entry is " + kPerk.GetNthEntryText(j) + ", value: " + kPerk.GetNthEntryValue(j,0))
-;			EndIf
-;			j += 1
-;		EndWhile
-;		Debug.Trace("MYC: (" + sCharacterName + ") ---=== End of Perk " + kPerk + " ===---")
-;	EndWhile
+	
+	ApplyCharacterPerks(sCharacterName)
 	
 	If !PlayerDupe
-		;Apply perk list BEFORE creating the character!
-		CharGen.LoadCharacterPerks(DummyActorBase,vMYC_Perklist)
 		PlayerDupe = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
 	EndIf
 	Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + PlayerDupe)
@@ -1694,7 +1684,7 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 
 	vMYC_PerkList.Revert()
 	Int iAdvSkills = 6
-	While iAdvSkills < 18
+	While iAdvSkills < 24
 		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAdvSkills)
 		AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
 		iAdvSkills += 1
