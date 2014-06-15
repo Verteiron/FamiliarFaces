@@ -82,6 +82,7 @@ Event OnLoad()
 		UpdateCombatStyle()
 	EndIf
 	RegisterForSingleUpdate(0.5)
+	CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
 EndEvent
 
 Event OnCellAttach()
@@ -220,6 +221,8 @@ Function SetNonpersistent()
 	SetNameIfNeeded()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	CharacterManager.ApplyCharacterPerks(CharacterName)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Adding NIO overlays...")
+	NIOverride.AddOverlays(Self)
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
 	If GetFactionRank(PotentialFollowerFaction) <= -2

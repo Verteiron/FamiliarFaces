@@ -1037,6 +1037,12 @@ Bool Function LoadCharacter(String sCharacterName)
 	If !PlayerDupe
 		PlayerDupe = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
 	EndIf
+	
+	;-----==== NIOverride support ====-----
+	NIOverride.AddOverlays(PlayerDupe)
+	;-----====                    ====-----
+	
+	
 	Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + PlayerDupe)
 	SetLocalForm(sCharacterName,"Actor",PlayerDupe)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Made it through SetLocalForm...")
@@ -1709,6 +1715,92 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	_bSavedPerks = True
 EndEvent
 
+Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount)
+	Int i 
+	Int jOverlayData = JArray.Object()
+	While i < iTintCount
+		String nodeName = sTintTemplate + i + "]"
+		Int iRGB = 0
+		Int iGlow = 0
+		Float fMultiple = 0.0
+		Float fAlpha = 0
+		String sTexture = ""
+		If NetImmerse.HasNode(PlayerREF, nodeName, false) ; Actor has the node, get the immediate property
+			iRGB = NiOverride.GetNodePropertyInt(PlayerREF, false, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodePropertyInt(PlayerREF, false, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodePropertyFloat(PlayerREF, false, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodePropertyString(PlayerREF, false, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodePropertyFloat(PlayerREF, false, nodeName, 1, -1)
+		Else ; Doesn't have the node, get it from the override
+			bool isFemale = PlayerREF.GetActorBase().GetSex() as bool
+			iRGB = NiOverride.GetNodeOverrideInt(PlayerREF, isFemale, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodeOverrideInt(PlayerREF, isFemale, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodeOverrideFloat(PlayerREF, isFemale, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodeOverrideString(PlayerREF, isFemale, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodeOverrideFloat(PlayerREF, isFemale, nodeName, 1, -1)
+		Endif
+		Int iColor = Math.LogicalOr(Math.LogicalAnd(iRGB, 0xFFFFFF), Math.LeftShift((fAlpha * 255) as Int, 24))
+		Int iGlowData = Math.LogicalOr(Math.LeftShift(((fMultiple * 10.0) as Int), 24), iGlow)
+		If sTexture == ""
+			sTexture = "Actors\\Character\\Overlays\\Default.dds"
+		Endif
+		Int jLayer = JMap.Object()
+		JMap.setInt(jLayer,"RGB",iRGB)
+		JMap.setInt(jLayer,"Glow",iGlow)
+		JMap.setInt(jLayer,"GlowData",iGlowData)
+		JMap.setFlt(jLayer,"Alpha",fAlpha)
+		JMap.setFlt(jLayer,"Multiple",fMultiple)
+		JMap.setInt(jLayer,"Color",iColor)
+		JMap.setStr(jLayer,"Texture",sTexture)
+		JArray.AddObj(jOverlayData,jLayer)
+		i += 1
+	EndWhile
+	Return jOverlayData
+EndFunction
+
+Function NIO_DoApplyOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
+	Int iLayerCount = JArray.Count(jLayers)
+	Int i = 0
+	Bool bIsFemale = kCharacter.GetActorBase().GetSex()
+	While i < iLayerCount
+		Int jLayer = JArray.GetObj(jLayers,i)
+		String sNodeName = sNodeTemplate + i + "]"
+		
+		;rgb = NiOverride.GetNodePropertyInt(_targetActor, false, nodeName, 7, -1)
+		;glow = NiOverride.GetNodePropertyInt(_targetActor, false, nodeName, 0, -1)
+		;alpha = NiOverride.GetNodePropertyFloat(_targetActor, false, nodeName, 8, -1)
+		;texture = NiOverride.GetNodePropertyString(_targetActor, false, nodeName, 9, 0)
+		;multiple = NiOverride.GetNodePropertyFloat(_targetActor, false, nodeName, 1, -1)
+
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 7, -1, JMap.GetInt(jLayer,"RGB"), true) ; Set the tint color
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, JMap.GetInt(jLayer,"Glow"), true) ; Set the glow
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), true) ; Set the alpha
+		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), true) ; Set the tint texture
+		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 1, 0, JMap.GetFlt(jLayer,"Multiple"), true) ; Set the emissive multiple
+		
+		Int iGlowData = JMap.GetInt(jLayer,"GlowData")
+		Int iGlowColor = iGlowData
+		Int iGlowEmissive = Math.RightShift(iGlowColor, 24)
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, iGlowColor, true) ; Set the emissive color
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 1, -1, iGlowEmissive / 10.0, true) ; Set the emissive multiple
+		i += 1
+	EndWhile
+EndFunction
+
+Function NIO_ApplyCharacterOverlays(String sCharacterName)
+	Int jOverlayData = GetCharacterObj(sCharacterName,"NIOverrideData")
+	If !jOverlayData
+		Return
+	EndIf
+	Actor kCharacter = GetCharacterActorByName(sCharacterName)
+	NiOverride.AddOverlays(kCharacter)
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
+	
+EndFunction
+
 Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment = True, Bool bSaveInventory = True, Bool bSaveFullInventory = True, Bool bSavePluginItems = False, Bool bForceSave = False)
 	_bSavedPerks = False
 	_bSavedSpells = False
@@ -1845,6 +1937,17 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	
 	JMap.SetForm(jPlayerData,"VoiceType",None)
 
+	;-----==== Support for NIOverride ====-----
+	
+	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
+		Int jNIOData = JMap.Object()
+		JMap.SetObj(jPlayerData,"NIOverrideData",jNIOData)
+		JMap.setObj(jNIOData,"BodyOverlays",NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays()))
+		JMap.setObj(jNIOData,"HandOverlays",NIO_GetOverlayData("Hand [Ovl",NIOverride.GetNumHandOverlays()))
+		JMap.setObj(jNIOData,"FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumFeetOverlays()))
+		JMap.setObj(jNIOData,"FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumFaceOverlays()))
+	EndIf
+	
 	;-----==== None of this is needed anymore thanks to the new chargen 
 	;  function, but it doesn't take long to collect so why not ====-----
 	
@@ -1907,7 +2010,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	Int jPlayerFaceMorphs = JArray.Object()
 	JMap.SetObj(jPlayerFace,"Morphs",jPlayerFaceMorphs)
 	i = 0
-	While i < PlayerBase.GetNumHeadParts() * 4
+	While i < 20 ; PlayerBase.GetNumHeadParts() * 4
 		Float fFaceMorph = PlayerBase.GetFaceMorph(i)
 		JArray.AddFlt(jPlayerFaceMorphs,fFaceMorph)
 		i += 1
