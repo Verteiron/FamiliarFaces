@@ -218,6 +218,8 @@ EndFunction
 Function SetNonpersistent()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	SetNameIfNeeded()
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
+	CharacterManager.ApplyCharacterPerks(CharacterName)
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
 	If GetFactionRank(PotentialFollowerFaction) <= -2
