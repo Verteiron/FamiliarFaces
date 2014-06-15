@@ -164,8 +164,11 @@ Formlist Property vMYC_DummyActorsMList Auto
 Formlist Property vMYC_DummyActorsFList Auto
 {Formlist containing the female dummy actors}
 
-Formlist Property vMYC_PerkList Auto
+Formlist Property vMYC_PerkCheckList Auto
 {A list of all the perks we want to check for.}
+
+Formlist Property vMYC_PerkList Auto
+{A list of all perks as found by ActorValueInfo.}
 
 Formlist Property vMYC_VoiceTypesFollowerList Auto
 {A list of voicetypes that can be followers.}
@@ -202,6 +205,8 @@ Bool _bBusyLoading = False
 Bool _bBusyEquipment = False
 
 Bool _bFreeActorBaseBusy
+
+Bool _bApplyPerksBusy = False
 
 ActorBase[] _kDummyActors
 
@@ -877,6 +882,26 @@ Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool 
 	
 EndFunction
 
+Function ApplyCharacterPerks(String sCharacterName)
+	While _bApplyPerksBusy
+		WaitMenuMode(0.5)
+	EndWhile
+	_bApplyPerksBusy = True
+	vMYC_Perklist.Revert()
+	Int jCharacterPerks = GetCharacterObj(sCharacterName,"Perks")
+	Int i = JArray.Count(jCharacterPerks)
+	While i > 0
+		i -= 1
+		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
+		Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+		vMYC_PerkList.AddForm(kPerk)
+	EndWhile
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	CharGen.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
+	WaitMenuMode(0.1)
+	_bApplyPerksBusy = False
+EndFunction
+
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	Form kEquippedAmmo
 	
@@ -1006,6 +1031,9 @@ Bool Function LoadCharacter(String sCharacterName)
 	DummyActorBase.SetEssential(True)
 	DummyActorBase.SetName(sCharacterName)
 	PlayerDupe = GetCharacterActor(DummyActorBase)
+	
+	ApplyCharacterPerks(sCharacterName)
+	
 	If !PlayerDupe
 		PlayerDupe = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
 	EndIf
@@ -1033,7 +1061,7 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	CharacterDummy.DoInit()
 	_bBusyLoading = False
-	
+
 	;----Load and equip armor--------------	
 	
 	While _bBusyEquipment
@@ -1652,22 +1680,30 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
 
 	SendModEvent("vMYC_PerksSaveBegin")
-	JMap.SetObj(jPlayerData,"Perks",JArray.Object())
+	
 
-	Int i = vMYC_PerkList.GetSize()
+	vMYC_PerkList.Revert()
+	Int iAdvSkills = 6
+	While iAdvSkills < 24
+		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAdvSkills)
+		AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
+		iAdvSkills += 1
+	EndWhile
+
 	Int iAddedCount = 0
+	Int jPerks = JArray.Object() 
+	JMap.SetObj(jPlayerData,"Perks",jPerks)
+	Int i = vMYC_PerkList.GetSize()
 	While i > 0
 		i -= 1
 		Perk kPerk = vMYC_PerkList.GetAt(i) as Perk
-		If PlayerREF.HasPerk(kPerk)
-			;Debug.Trace("MYC: Player has Perk " + kPerk.GetName())
-			iAddedCount += 1
-			If iAddedCount % 2 == 0
-				kPerk.SendModEvent("vMYC_PerkSaved")
-			EndIf
-			JArray.AddForm(JValue.SolveObj(jPlayerData,".Perks"),kPerk)
+		JArray.addForm(jPerks,kPerk)
+		If iAddedCount % 3 == 0 
+			SendModEvent("vMYC_PerkSaved")
 		EndIf
+		iAddedCount += 1
 	EndWhile
+
 	SendModEvent("vMYC_PerksSaveEnd",iAddedCount)
 	
 	_bSavedPerks = True
