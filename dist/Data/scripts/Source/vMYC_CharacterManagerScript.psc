@@ -220,6 +220,12 @@ String[] _sCharacterNames
 
 Int _jMYC
 
+Location	_kLastPlayerLocation
+Cell		_kLastPlayerCell
+Float		_fLastPlayerPosX
+Float		_fLastPlayerPosY
+Float		_fLastPlayerPosZ
+
 ;--=== Events ===--
 
 
@@ -399,7 +405,38 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnSetLastPlayerLocation(string eventName, string strArg, float numArg, Form sender)
+	If sender as Location
+		_kLastPlayerLocation = sender as Location
+	EndIf
+	Debug.Trace("MYC: LastPlayerLocation is " + sender as Location + "(" + sender.GetName() + ")")
+EndEvent
+
+Event OnSetLastPlayerCell(string eventName, string strArg, float numArg, Form sender)
+	If sender as Cell
+		JMap.setForm(_jMYC,"LastCell",sender as Cell)
+		_kLastPlayerCell = sender as Cell
+	EndIf
+	Debug.Trace("MYC: LastPlayerCell is " + sender as Cell + "(" + sender.GetName() + ")")
+EndEvent
+
+Event OnSetLastPlayerPos(string eventName, string strArg, float numArg, Form sender)
+	If strArg == "x"
+		_fLastPlayerPosX = numArg
+	ElseIf strArg == "y"
+		_fLastPlayerPosY = numArg
+	ElseIf strArg == "z"
+		_fLastPlayerPosZ = numArg
+	EndIf
+	Debug.Trace("MYC: LastPlayerPos is " + _fLastPlayerPosX + "," + _fLastPlayerPosY + "," + _fLastPlayerPosZ)
+EndEvent
 ;--=== Functions ===--
+
+Function RegisterForModEvents()
+	RegisterForModEvent("vMYC_SetLastPlayerLocation","OnSetLastPlayerLocation")
+	RegisterForModEvent("vMYC_SetLastPlayerCell","OnSetLastPlayerCell")
+	RegisterForModEvent("vMYC_SetLastPlayerPos","OnSetLastPlayerPos")
+EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 	If bInBackground
@@ -408,11 +445,10 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	SendModEvent("vMYC_UpkeepBegin")
+	RegisterForModEvents()
 	LoadCharacterFiles()
 	RefreshCharacters()
 	SendModEvent("vMYC_UpkeepEnd")
-	JDB.writeToFile("Data/vMYC/jdb_postupkeep.json")
-	JValue.writeToFile(_jMYC,"Data/vMYC/jMYC_postupkeep.json")
 EndFunction
 
 Function DoInit()
@@ -423,7 +459,7 @@ Function DoInit()
 		_jMYC = JMap.object()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
-	
+	RegisterForModEvents()	
 	_kDummyActors = New ActorBase[128]
 	_kLoadedCharacters = New Actor[128]
 	Int i = vMYC_DummyActorsFList.GetSize()
@@ -1868,11 +1904,21 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
 	JMap.SetForm(jPlayerData,"Race",PlayerREF.GetActorBase().GetRace())
-	JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
 	If kLastPlayerLocation.GetLocation()
-		JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
+		JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
+		If kLastPlayerLocation.GetLocation()
+			JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
+		EndIf
 	EndIf
-	
+	If _kLastPlayerLocation as Location
+		JMap.SetForm(jPlayerData,"LastLocation",_kLastPlayerLocation as Location)
+	EndIf
+	If _kLastPlayerCell as Cell
+		JMap.SetForm(jPlayerData,"LastCell",JMap.getForm(_jMYC,"LastCell"))
+		;JMap.SetForm(jPlayerData,"LastCell",_kLastPlayerCell as Cell)
+	EndIf
+	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + _fLastPlayerPosX + ", \"y\": " + _fLastPlayerPosY + ", \"z\": " + _fLastPlayerPosZ + " }")
+	JMap.SetObj(jPlayerData,"LastPosition",jPlayerPos)
 	
 	;-----==== Save some metainfo. Some is duplicated for reasons that made sense at the time. I swear I wasn't drunk
 	
