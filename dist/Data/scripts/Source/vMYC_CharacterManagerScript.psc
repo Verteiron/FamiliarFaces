@@ -1039,7 +1039,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	EndIf
 	
 	;-----==== NIOverride support ====-----
-	NIOverride.AddOverlays(PlayerDupe)
+	
 	;-----====                    ====-----
 	
 	
@@ -1715,7 +1715,10 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	_bSavedPerks = True
 EndEvent
 
-Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount)
+Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount, Actor kTargetActor = None)
+	If !kTargetActor
+		kTargetActor = PlayerREF
+	EndIf
 	Int i 
 	Int jOverlayData = JArray.Object()
 	While i < iTintCount
@@ -1725,34 +1728,36 @@ Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount)
 		Float fMultiple = 0.0
 		Float fAlpha = 0
 		String sTexture = ""
-		If NetImmerse.HasNode(PlayerREF, nodeName, false) ; Actor has the node, get the immediate property
-			iRGB = NiOverride.GetNodePropertyInt(PlayerREF, false, nodeName, 7, -1)
-			iGlow = NiOverride.GetNodePropertyInt(PlayerREF, false, nodeName, 0, -1)
-			fAlpha = NiOverride.GetNodePropertyFloat(PlayerREF, false, nodeName, 8, -1)
-			sTexture = NiOverride.GetNodePropertyString(PlayerREF, false, nodeName, 9, 0)
-			fMultiple = NiOverride.GetNodePropertyFloat(PlayerREF, false, nodeName, 1, -1)
+		If NetImmerse.HasNode(kTargetActor, nodeName, false) ; Actor has the node, get the immediate property
+			iRGB = NiOverride.GetNodePropertyInt(kTargetActor, false, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodePropertyInt(kTargetActor, false, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodePropertyFloat(kTargetActor, false, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodePropertyString(kTargetActor, false, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodePropertyFloat(kTargetActor, false, nodeName, 1, -1)
 		Else ; Doesn't have the node, get it from the override
-			bool isFemale = PlayerREF.GetActorBase().GetSex() as bool
-			iRGB = NiOverride.GetNodeOverrideInt(PlayerREF, isFemale, nodeName, 7, -1)
-			iGlow = NiOverride.GetNodeOverrideInt(PlayerREF, isFemale, nodeName, 0, -1)
-			fAlpha = NiOverride.GetNodeOverrideFloat(PlayerREF, isFemale, nodeName, 8, -1)
-			sTexture = NiOverride.GetNodeOverrideString(PlayerREF, isFemale, nodeName, 9, 0)
-			fMultiple = NiOverride.GetNodeOverrideFloat(PlayerREF, isFemale, nodeName, 1, -1)
+			bool isFemale = kTargetActor.GetActorBase().GetSex() as bool
+			iRGB = NiOverride.GetNodeOverrideInt(kTargetActor, isFemale, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodeOverrideInt(kTargetActor, isFemale, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodeOverrideFloat(kTargetActor, isFemale, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodeOverrideString(kTargetActor, isFemale, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodeOverrideFloat(kTargetActor, isFemale, nodeName, 1, -1)
 		Endif
 		Int iColor = Math.LogicalOr(Math.LogicalAnd(iRGB, 0xFFFFFF), Math.LeftShift((fAlpha * 255) as Int, 24))
 		Int iGlowData = Math.LogicalOr(Math.LeftShift(((fMultiple * 10.0) as Int), 24), iGlow)
 		If sTexture == ""
 			sTexture = "Actors\\Character\\Overlays\\Default.dds"
 		Endif
-		Int jLayer = JMap.Object()
-		JMap.setInt(jLayer,"RGB",iRGB)
-		JMap.setInt(jLayer,"Glow",iGlow)
-		JMap.setInt(jLayer,"GlowData",iGlowData)
-		JMap.setFlt(jLayer,"Alpha",fAlpha)
-		JMap.setFlt(jLayer,"Multiple",fMultiple)
-		JMap.setInt(jLayer,"Color",iColor)
-		JMap.setStr(jLayer,"Texture",sTexture)
-		JArray.AddObj(jOverlayData,jLayer)
+		If !(iRGB + iGlow + fAlpha + fMultiple == 0 && StringUtil.Find(sTexture,"Default.dds") > -1) || (iRGB && iRGB != -1 && iRGB != 16777215) || iGlow || (fAlpha && fAlpha != 1.0) || (fMultiple && fMultiple != 1.0) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
+			Int jLayer = JMap.Object()
+			JMap.setInt(jLayer,"RGB",iRGB)
+			JMap.setInt(jLayer,"Glow",iGlow)
+			JMap.setInt(jLayer,"GlowData",iGlowData)
+			JMap.setFlt(jLayer,"Alpha",fAlpha)
+			JMap.setFlt(jLayer,"Multiple",fMultiple)
+			JMap.setInt(jLayer,"Color",iColor)
+			JMap.setStr(jLayer,"Texture",sTexture)
+			JArray.AddObj(jOverlayData,jLayer)
+		EndIf
 		i += 1
 	EndWhile
 	Return jOverlayData
@@ -1772,17 +1777,17 @@ Function NIO_DoApplyOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
 		;texture = NiOverride.GetNodePropertyString(_targetActor, false, nodeName, 9, 0)
 		;multiple = NiOverride.GetNodePropertyFloat(_targetActor, false, nodeName, 1, -1)
 
-		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 7, -1, JMap.GetInt(jLayer,"RGB"), true) ; Set the tint color
-		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, JMap.GetInt(jLayer,"Glow"), true) ; Set the glow
-		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), true) ; Set the alpha
-		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), true) ; Set the tint texture
-		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 1, 0, JMap.GetFlt(jLayer,"Multiple"), true) ; Set the emissive multiple
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 7, -1, JMap.GetInt(jLayer,"RGB"), True) ; Set the tint color
+		;NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, JMap.GetInt(jLayer,"Glow"), True) ; Set the glow
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), True) ; Set the alpha
+		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), True) ; Set the tint texture
+		;NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 1, -1, JMap.GetFlt(jLayer,"Multiple"), True) ; Set the emissive multiple
 		
 		Int iGlowData = JMap.GetInt(jLayer,"GlowData")
 		Int iGlowColor = iGlowData
 		Int iGlowEmissive = Math.RightShift(iGlowColor, 24)
-		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, iGlowColor, true) ; Set the emissive color
-		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 1, -1, iGlowEmissive / 10.0, true) ; Set the emissive multiple
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, iGlowColor, True) ; Set the emissive color
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 1, -1, iGlowEmissive / 10.0, True) ; Set the emissive multiple
 		i += 1
 	EndWhile
 EndFunction
@@ -1793,7 +1798,10 @@ Function NIO_ApplyCharacterOverlays(String sCharacterName)
 		Return
 	EndIf
 	Actor kCharacter = GetCharacterActorByName(sCharacterName)
-	NiOverride.AddOverlays(kCharacter)
+	If !NiOverride.HasOverlays(kCharacter)
+		NiOverride.AddOverlays(kCharacter)
+	EndIf
+	NiOverride.RevertOverlays(kCharacter)	
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
@@ -1956,9 +1964,10 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	ColorForm kHairColor = PlayerBase.GetHairColor()
 	JMap.SetForm(jPlayerAppearance,"Haircolor",kHairColor)
-	int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
-	;Debug.Trace("(" + CharacterName + "/Actor) kHairColor (Post-LoadCharacter) is R:" + kHairColor.GetRed() + " G:" + kHairColor.GetGreen() + " B:" + kHairColor.GetBlue() + " H:" + kHairColor.GetHue() + " S:" + kHairColor.GetSaturation() + " V:" + kHairColor.GetValue())
-	JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
+	If kHairColor
+		Int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
+		JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
+	EndIf
 	JMap.SetForm(jPlayerAppearance,"Skin",PlayerBase.GetSkin())
 	JMap.SetForm(jPlayerAppearance,"SkinFar",PlayerBase.GetSkinFar())
 	

@@ -73,6 +73,7 @@ Event OnLoad()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
 	SetNameIfNeeded()
 	CheckVars()
+	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
 		_bNeedRefresh = True
 		;DoUpkeep()
@@ -82,7 +83,6 @@ Event OnLoad()
 		UpdateCombatStyle()
 	EndIf
 	RegisterForSingleUpdate(0.5)
-	CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
 EndEvent
 
 Event OnCellAttach()
@@ -90,7 +90,7 @@ Event OnCellAttach()
 EndEvent
 
 Event OnAttachedToCell()
-;	_bNeedRefresh = True
+	;_bNeedRefresh = True
 EndEvent
 
 Event OnUpdate()
@@ -114,7 +114,7 @@ Event OnPackageChange(Package akOldPackage)
 EndEvent
 
 Event OnUnload()
-	;_bNeedRefresh = True
+	_bNeedRefresh = True
 ;	UnregisterForUpdate()
 EndEvent
 
@@ -221,8 +221,13 @@ Function SetNonpersistent()
 	SetNameIfNeeded()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	CharacterManager.ApplyCharacterPerks(CharacterName)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Adding NIO overlays...")
-	NIOverride.AddOverlays(Self)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying haircolor...")
+	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") as ColorForm
+	_kActorBase.SetHairColor(kHairColor)
+	If !NIOverride.HasOverlays(Self)
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Adding NIO overlays...")
+		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
+	EndIf
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
 	If GetFactionRank(PotentialFollowerFaction) <= -2
@@ -394,6 +399,8 @@ Function RefreshMesh()
 	SetNameIfNeeded()
 	;EnableAI(bAIEnabled)
 	_kActorBase.SetInvulnerable(False)
+	;CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
+	;DumpNIOData(CharacterName + "_RefreshMesh_" + GetCurrentRealTime())
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
 EndFunction
@@ -498,12 +505,29 @@ Function SetNameIfNeeded(Bool abForce = False)
 	EndIf
 EndFunction
 
+Function DumpNIOData(String sFilename)
+	Int jNIOData = JMap.Object()
+	JMap.setObj(jNIOData,"BodyOverlays",CharacterManager.NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays(),Self))
+	JMap.setObj(jNIOData,"HandOverlays",CharacterManager.NIO_GetOverlayData("Hand [Ovl",NIOverride.GetNumHandOverlays(),Self))
+	JMap.setObj(jNIOData,"FeetOverlays",CharacterManager.NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumFeetOverlays(),Self))
+	JMap.setObj(jNIOData,"FaceOverlays",CharacterManager.NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumFaceOverlays(),Self))
+	JValue.WriteToFile(jNIOData,"Data/vMYC/" + sFilename + ".json")
+EndFunction
+
 State Busy
 
 	Event OnLoad()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad called in Busy state!")
 	EndEvent
 
+	Event OnAttachedToCell()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnAttachedToCell called in Busy state!")
+	EndEvent
+	
+	Event OnUnload()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnUnload called in Busy state!")
+	EndEvent
+	
 	;Function DoUpkeep(Bool bInBackground = True)
 	;	Debug.Trace("MYC: (" + CharacterName + "/Actor) DoUpkeep called in Busy state!")
 	;EndFunction
