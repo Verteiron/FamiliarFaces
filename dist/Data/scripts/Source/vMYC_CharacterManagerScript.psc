@@ -882,10 +882,11 @@ Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool 
 	
 EndFunction
 
-Function ApplyCharacterPerks(String sCharacterName)
-	While _bApplyPerksBusy
-		WaitMenuMode(0.5)
-	EndWhile
+Int Function ApplyCharacterPerks(String sCharacterName)
+{Apply perks to named character. Return -1 for failure, or number of perks applied for success.}
+	If _bApplyPerksBusy
+		Return -1
+	EndIf
 	_bApplyPerksBusy = True
 	vMYC_Perklist.Revert()
 	Int jCharacterPerks = GetCharacterObj(sCharacterName,"Perks")
@@ -893,13 +894,18 @@ Function ApplyCharacterPerks(String sCharacterName)
 	While i > 0
 		i -= 1
 		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
-		Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 		vMYC_PerkList.AddForm(kPerk)
 	EndWhile
 	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	If vMYC_PerkList.GetSize() != JArray.Count(jCharacterPerks)
+		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		Return -1
+	EndIf
 	CharGen.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
 	_bApplyPerksBusy = False
+	Return vMYC_PerkList.GetSize()
 EndFunction
 
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)

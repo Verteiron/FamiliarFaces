@@ -75,7 +75,7 @@ Event OnLoad()
 	CheckVars()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
-		_bNeedRefresh = True
+;		_bNeedRefresh = True
 		;DoUpkeep()
 		_bFirstLoad = False
 	EndIf
@@ -220,7 +220,11 @@ Function SetNonpersistent()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	SetNameIfNeeded()
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
-	CharacterManager.ApplyCharacterPerks(CharacterName)
+	Int iSafetyTimer = 10
+	While CharacterManager.ApplyCharacterPerks(CharacterName) < 0 && iSafetyTimer
+		iSafetyTimer -= 1
+		Wait(0.5)
+	EndWhile
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying haircolor...")
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") as ColorForm
 	_kActorBase.SetHairColor(kHairColor)
