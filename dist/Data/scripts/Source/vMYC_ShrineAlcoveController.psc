@@ -271,6 +271,9 @@ Function SetAlcoveCharacterName(string sCharacterName)
 		DeactivateAlcove()
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
+	ElseIf !_sCharacterName && !sCharacterName
+		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		;No change
 	Else
 		;No change
 	EndIf
