@@ -318,8 +318,8 @@ Event OnInit()
 ;	_sAVNames[84] = "LastBribedIntimidated"
 ;	_sAVNames[85] = "LastFlattered"
 
-	sHangoutNames = New String[18]
-	kHangoutRefAliases = New ReferenceAlias[18]
+	sHangoutNames = New String[32]
+	kHangoutRefAliases = New ReferenceAlias[32]
 	
 	sHangoutNames[0] = "$Winterhold College"
 	sHangoutNames[1] = "$The Ragged Flagon"
@@ -731,10 +731,11 @@ String[] Function GetCharacterSpawnPoints(String asCharacterName)
 	Return sSpawnPoints
 EndFunction
 
-Function AddCustomLocation(Location kLocation)
+Function AddCustomLocation(Location kLocation, String sLocationName)
 	If !kLocation
 		Return
 	EndIf
+	Debug.Trace("MYC: Adding custom location: " + kLocation + "(" + kLocation.GetName() + ")...")
 	Int i = kCustomLocations.Length
 	Int iEmptyIndex = -1
 	While i > 0
@@ -748,6 +749,12 @@ Function AddCustomLocation(Location kLocation)
 	EndWhile
 	;--- If we got this far, then the new location is not on the list.
 	kCustomLocations[i].ForceLocationTo(kLocation)
+	Debug.Trace("MYC:   " + kLocation + " added at position " + i + " and is now " + kCustomLocations[i] + "!")
+	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
+	Int iHOidx = sHangoutNames.Find("")
+	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[i]
+	sHangoutNames[iHOidx] = sLocationName
+	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
 EndFunction
 
 String Function GetCharacterNameFromActorBase(ActorBase akActorBase)
@@ -1022,7 +1029,14 @@ Bool Function LoadCharacter(String sCharacterName)
 	
 	Location kCustomLocation = JMap.getForm(jCharacterData,"Location") as Location
 	If kCustomLocation
-		AddCustomLocation(kCustomLocation)
+		String sLocationName = kCustomLocation.GetName()
+		If !sLocationName
+			sLocationName = JMap.getForm(jCharacterData,"LastCell").GetName()
+		EndIf
+		If !sLocationName
+			sLocationName = sCharacterName + "'s save point"
+		EndIf
+		AddCustomLocation(kCustomLocation,sLocationName)
 	EndIf
 	;----Load or create ActorBaseMap--------------
 	
