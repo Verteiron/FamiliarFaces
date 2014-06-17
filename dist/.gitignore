@@ -3,6 +3,7 @@
 *.bak
 *.bsa
 *.bsl
+*.7z
 Archive.log
 Archive.exe
 filelist.txt
