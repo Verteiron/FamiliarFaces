@@ -271,6 +271,9 @@ Function SetAlcoveCharacterName(string sCharacterName)
 		DeactivateAlcove()
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
+	ElseIf !_sCharacterName && !sCharacterName
+		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		;No change
 	Else
 		;No change
 	EndIf
@@ -669,32 +672,22 @@ EndEvent
 Event OnPerkSaved(string eventName, string strArg, float numArg, Form sender)
 	If _bPlayerIsSaving ;&& (sender as Armor)
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnPerkSaved(" + eventName + "," + sender + ")")
-		ObjectReference PerkGlow = PlayerREF.PlaceAtMe(vMYC_PerkGlow,abInitiallyDisabled = True)
-		PerkGlow.SetScale(0.5)
-		PerkGlow.MoveToNode(PlayerRef,"NPC Head [Head]")
-		PerkGlow.SetAngle(RandomInt(-10,10),RandomInt(-10,10),RandomInt(0,359))
-		PerkGlow.EnableNoWait(True)
-		Wait(0.5)
-		;PerkGlow.PlayGamebryoAnimation("animTrans01")
-		Wait(1.0)
-		PerkGlow.SplineTranslateTo(_StatueMarker.GetPositionX(),_StatueMarker.GetPositionY(),_StatueMarker.GetPositionZ() + 50,RandomFloat(-180,180),RandomFloat(-180,180),RandomFloat(-180,180),RandomFloat(500,800),RandomFloat(350,450))
+		vMYC_PerkGlowScript PerkGlow = _StatueMarker.PlaceAtMe(vMYC_PerkGlow,abInitiallyDisabled = True) as vMYC_PerkGlowScript
+		PerkGlow.StartNode = "NPC Head [Head]"
+		PerkGlow.Target = _StatueMarker
 	EndIf
 EndEvent
 
 Event OnSpellSaved(string eventName, string strArg, float numArg, Form sender)
 	If _bPlayerIsSaving ;&& (sender as Armor)
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSpellSaved(" + eventName + "," + sender + ")")
-		ObjectReference PerkGlow = PlayerREF.PlaceAtMe(vMYC_PerkGlow,abInitiallyDisabled = True)
-		PerkGlow.SetScale(0.5)
+		vMYC_PerkGlowScript PerkGlow = _StatueMarker.PlaceAtMe(vMYC_PerkGlow,abInitiallyDisabled = True) as vMYC_PerkGlowScript
 		If RandomInt(0,1)
-			PerkGlow.MoveToNode(PlayerRef,"NPC L Hand [LHnd]")
+			PerkGlow.StartNode = "NPC L Hand [LHnd]"
 		Else
-			PerkGlow.MoveToNode(PlayerRef,"NPC R Hand [RHnd]")
+			PerkGlow.StartNode = "NPC R Hand [RHnd]"
 		EndIf
-;		PerkGlow.MoveTo(PerkGlow,0,0,-20)
-		PerkGlow.EnableNoWait(True)
-		Wait(1.0)
-		PerkGlow.SplineTranslateToRef(_StatueMarker,RandomFloat(500,800),RandomFloat(350,450))
+		PerkGlow.Target = _StatueMarker
 	EndIf
 EndEvent
 

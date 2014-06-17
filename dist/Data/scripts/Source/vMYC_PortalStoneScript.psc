@@ -50,16 +50,18 @@ EndEvent
 
 Event OnEquipped(Actor akActor)
 	Debug.Trace("MYC/PortalStoneScript: PortalStone equipped by " + akActor)
-	String sCantEquipGeneric = GetGameSettingString("sCantEquipGeneric")
-	SetGameSettingString("sCantEquipGeneric"," ")
-	If PlayerREF.GetParentCell() == vMYC_ShrineOfHeroes
-		SetGameSettingString("sCantEquipGeneric"," ")
-		Return
+	If PlayerREF.GetCurrentLocation()
+		kLastPlayerLocation.ForceLocationTo(PlayerREF.GetCurrentLocation())
+		PlayerREF.GetCurrentLocation().SendModEvent("vMYC_SetLastPlayerLocation")
 	EndIf
-	kLastPlayerLocation.ForceLocationTo(PlayerREF.GetCurrentLocation())
+	PlayerREF.GetParentCell().SendModEvent("vMYC_SetLastPlayerCell")
+	PlayerREF.SendModEvent("vMYC_SetLastPlayerPos","x",PlayerREF.GetPositionX())
+	PlayerREF.SendModEvent("vMYC_SetLastPlayerPos","y",PlayerREF.GetPositionY())
+	PlayerREF.SendModEvent("vMYC_SetLastPlayerPos","z",PlayerREF.GetPositionZ())
 	If akActor == PlayerREF
 		DisablePlayerControls(abMovement = false, abFighting = true, abCamSwitch = true, abLooking = false, abSneaking = true, abMenu = true, abActivate = true, abJournalTabs = false)
 		ForceThirdPerson()
+		Game.SetHudCartMode()
 		Wait(0.25)
 		vMYC_PortalReturnMarker.MoveTo(PlayerREF)
 		vMYC_ValorFX.Play(PlayerREF,3)
@@ -91,6 +93,7 @@ Event OnEquipped(Actor akActor)
 		FadeToWhiteHoldImod.PopTo(FadeToWhiteBackImod)
 		PlayerREF.SetAlpha(1.0,True)
 		Wait(2.0)
+		Game.SetHudCartMode(False)
 		EnablePlayerControls()
 		Return
 	EndIf

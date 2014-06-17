@@ -220,6 +220,12 @@ String[] _sCharacterNames
 
 Int _jMYC
 
+Location	_kLastPlayerLocation
+Cell		_kLastPlayerCell
+Float		_fLastPlayerPosX
+Float		_fLastPlayerPosY
+Float		_fLastPlayerPosZ
+
 ;--=== Events ===--
 
 
@@ -312,8 +318,8 @@ Event OnInit()
 ;	_sAVNames[84] = "LastBribedIntimidated"
 ;	_sAVNames[85] = "LastFlattered"
 
-	sHangoutNames = New String[18]
-	kHangoutRefAliases = New ReferenceAlias[18]
+	sHangoutNames = New String[32]
+	kHangoutRefAliases = New ReferenceAlias[32]
 	
 	sHangoutNames[0] = "$Winterhold College"
 	sHangoutNames[1] = "$The Ragged Flagon"
@@ -399,7 +405,38 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnSetLastPlayerLocation(string eventName, string strArg, float numArg, Form sender)
+	If sender as Location
+		_kLastPlayerLocation = sender as Location
+	EndIf
+	Debug.Trace("MYC: LastPlayerLocation is " + sender as Location + "(" + sender.GetName() + ")")
+EndEvent
+
+Event OnSetLastPlayerCell(string eventName, string strArg, float numArg, Form sender)
+	If sender as Cell
+		JMap.setForm(_jMYC,"LastCell",sender as Cell)
+		_kLastPlayerCell = sender as Cell
+	EndIf
+	Debug.Trace("MYC: LastPlayerCell is " + sender as Cell + "(" + sender.GetName() + ")")
+EndEvent
+
+Event OnSetLastPlayerPos(string eventName, string strArg, float numArg, Form sender)
+	If strArg == "x"
+		_fLastPlayerPosX = numArg
+	ElseIf strArg == "y"
+		_fLastPlayerPosY = numArg
+	ElseIf strArg == "z"
+		_fLastPlayerPosZ = numArg
+	EndIf
+	Debug.Trace("MYC: LastPlayerPos is " + _fLastPlayerPosX + "," + _fLastPlayerPosY + "," + _fLastPlayerPosZ)
+EndEvent
 ;--=== Functions ===--
+
+Function RegisterForModEvents()
+	RegisterForModEvent("vMYC_SetLastPlayerLocation","OnSetLastPlayerLocation")
+	RegisterForModEvent("vMYC_SetLastPlayerCell","OnSetLastPlayerCell")
+	RegisterForModEvent("vMYC_SetLastPlayerPos","OnSetLastPlayerPos")
+EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 	If bInBackground
@@ -408,11 +445,10 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	SendModEvent("vMYC_UpkeepBegin")
+	RegisterForModEvents()
 	LoadCharacterFiles()
 	RefreshCharacters()
 	SendModEvent("vMYC_UpkeepEnd")
-	JDB.writeToFile("Data/vMYC/jdb_postupkeep.json")
-	JValue.writeToFile(_jMYC,"Data/vMYC/jMYC_postupkeep.json")
 EndFunction
 
 Function DoInit()
@@ -423,7 +459,7 @@ Function DoInit()
 		_jMYC = JMap.object()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
-	
+	RegisterForModEvents()	
 	_kDummyActors = New ActorBase[128]
 	_kLoadedCharacters = New Actor[128]
 	Int i = vMYC_DummyActorsFList.GetSize()
@@ -695,10 +731,11 @@ String[] Function GetCharacterSpawnPoints(String asCharacterName)
 	Return sSpawnPoints
 EndFunction
 
-Function AddCustomLocation(Location kLocation)
+Function AddCustomLocation(Location kLocation, String sLocationName)
 	If !kLocation
 		Return
 	EndIf
+	Debug.Trace("MYC: Adding custom location: " + kLocation + "(" + kLocation.GetName() + ")...")
 	Int i = kCustomLocations.Length
 	Int iEmptyIndex = -1
 	While i > 0
@@ -711,7 +748,13 @@ Function AddCustomLocation(Location kLocation)
 		EndIf
 	EndWhile
 	;--- If we got this far, then the new location is not on the list.
-	kCustomLocations[i].ForceLocationTo(kLocation)
+	kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
+	Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
+	Int iHOidx = sHangoutNames.Find("")
+	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
+	sHangoutNames[iHOidx] = sLocationName
+	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
 EndFunction
 
 String Function GetCharacterNameFromActorBase(ActorBase akActorBase)
@@ -882,10 +925,11 @@ Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool 
 	
 EndFunction
 
-Function ApplyCharacterPerks(String sCharacterName)
-	While _bApplyPerksBusy
-		WaitMenuMode(0.5)
-	EndWhile
+Int Function ApplyCharacterPerks(String sCharacterName)
+{Apply perks to named character. Return -1 for failure, or number of perks applied for success.}
+	If _bApplyPerksBusy
+		Return -1
+	EndIf
 	_bApplyPerksBusy = True
 	vMYC_Perklist.Revert()
 	Int jCharacterPerks = GetCharacterObj(sCharacterName,"Perks")
@@ -893,13 +937,18 @@ Function ApplyCharacterPerks(String sCharacterName)
 	While i > 0
 		i -= 1
 		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
-		Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 		vMYC_PerkList.AddForm(kPerk)
 	EndWhile
 	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	If vMYC_PerkList.GetSize() != JArray.Count(jCharacterPerks)
+		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		Return -1
+	EndIf
 	CharGen.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
 	_bApplyPerksBusy = False
+	Return vMYC_PerkList.GetSize()
 EndFunction
 
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
@@ -980,7 +1029,14 @@ Bool Function LoadCharacter(String sCharacterName)
 	
 	Location kCustomLocation = JMap.getForm(jCharacterData,"Location") as Location
 	If kCustomLocation
-		AddCustomLocation(kCustomLocation)
+		String sLocationName = kCustomLocation.GetName()
+		If !sLocationName
+			sLocationName = JMap.getForm(jCharacterData,"LastCell").GetName()
+		EndIf
+		If !sLocationName
+			sLocationName = sCharacterName + "'s save point"
+		EndIf
+		AddCustomLocation(kCustomLocation,sLocationName)
 	EndIf
 	;----Load or create ActorBaseMap--------------
 	
@@ -1037,6 +1093,12 @@ Bool Function LoadCharacter(String sCharacterName)
 	If !PlayerDupe
 		PlayerDupe = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
 	EndIf
+	
+	;-----==== NIOverride support ====-----
+	
+	;-----====                    ====-----
+	
+	
 	Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + PlayerDupe)
 	SetLocalForm(sCharacterName,"Actor",PlayerDupe)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Made it through SetLocalForm...")
@@ -1709,6 +1771,100 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	_bSavedPerks = True
 EndEvent
 
+Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount, Actor kTargetActor = None)
+	If !kTargetActor
+		kTargetActor = PlayerREF
+	EndIf
+	Int i 
+	Int jOverlayData = JArray.Object()
+	While i < iTintCount
+		String nodeName = sTintTemplate + i + "]"
+		Int iRGB = 0
+		Int iGlow = 0
+		Float fMultiple = 0.0
+		Float fAlpha = 0
+		String sTexture = ""
+		If NetImmerse.HasNode(kTargetActor, nodeName, false) ; Actor has the node, get the immediate property
+			iRGB = NiOverride.GetNodePropertyInt(kTargetActor, false, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodePropertyInt(kTargetActor, false, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodePropertyFloat(kTargetActor, false, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodePropertyString(kTargetActor, false, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodePropertyFloat(kTargetActor, false, nodeName, 1, -1)
+		Else ; Doesn't have the node, get it from the override
+			bool isFemale = kTargetActor.GetActorBase().GetSex() as bool
+			iRGB = NiOverride.GetNodeOverrideInt(kTargetActor, isFemale, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodeOverrideInt(kTargetActor, isFemale, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodeOverrideFloat(kTargetActor, isFemale, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodeOverrideString(kTargetActor, isFemale, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodeOverrideFloat(kTargetActor, isFemale, nodeName, 1, -1)
+		Endif
+		Int iColor = Math.LogicalOr(Math.LogicalAnd(iRGB, 0xFFFFFF), Math.LeftShift((fAlpha * 255) as Int, 24))
+		Int iGlowData = Math.LogicalOr(Math.LeftShift(((fMultiple * 10.0) as Int), 24), iGlow)
+		If sTexture == ""
+			sTexture = "Actors\\Character\\Overlays\\Default.dds"
+		Endif
+		If !(iRGB + iGlow + fAlpha + fMultiple == 0 && StringUtil.Find(sTexture,"Default.dds") > -1) || (iRGB && iRGB != -1 && iRGB != 16777215) || iGlow || (fAlpha && fAlpha != 1.0) || (fMultiple && fMultiple != 1.0) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
+			Int jLayer = JMap.Object()
+			JMap.setInt(jLayer,"RGB",iRGB)
+			JMap.setInt(jLayer,"Glow",iGlow)
+			JMap.setInt(jLayer,"GlowData",iGlowData)
+			JMap.setFlt(jLayer,"Alpha",fAlpha)
+			JMap.setFlt(jLayer,"Multiple",fMultiple)
+			JMap.setInt(jLayer,"Color",iColor)
+			JMap.setStr(jLayer,"Texture",sTexture)
+			JArray.AddObj(jOverlayData,jLayer)
+		EndIf
+		i += 1
+	EndWhile
+	Return jOverlayData
+EndFunction
+
+Function NIO_DoApplyOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
+	Int iLayerCount = JArray.Count(jLayers)
+	Int i = 0
+	Bool bIsFemale = kCharacter.GetActorBase().GetSex()
+	While i < iLayerCount
+		Int jLayer = JArray.GetObj(jLayers,i)
+		String sNodeName = sNodeTemplate + i + "]"
+		
+		;rgb = NiOverride.GetNodePropertyInt(_targetActor, false, nodeName, 7, -1)
+		;glow = NiOverride.GetNodePropertyInt(_targetActor, false, nodeName, 0, -1)
+		;alpha = NiOverride.GetNodePropertyFloat(_targetActor, false, nodeName, 8, -1)
+		;texture = NiOverride.GetNodePropertyString(_targetActor, false, nodeName, 9, 0)
+		;multiple = NiOverride.GetNodePropertyFloat(_targetActor, false, nodeName, 1, -1)
+
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 7, -1, JMap.GetInt(jLayer,"RGB"), True) ; Set the tint color
+		;NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, JMap.GetInt(jLayer,"Glow"), True) ; Set the glow
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), True) ; Set the alpha
+		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), True) ; Set the tint texture
+		;NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 1, -1, JMap.GetFlt(jLayer,"Multiple"), True) ; Set the emissive multiple
+		
+		Int iGlowData = JMap.GetInt(jLayer,"GlowData")
+		Int iGlowColor = iGlowData
+		Int iGlowEmissive = Math.RightShift(iGlowColor, 24)
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, iGlowColor, True) ; Set the emissive color
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 1, -1, iGlowEmissive / 10.0, True) ; Set the emissive multiple
+		i += 1
+	EndWhile
+EndFunction
+
+Function NIO_ApplyCharacterOverlays(String sCharacterName)
+	Int jOverlayData = GetCharacterObj(sCharacterName,"NIOverrideData")
+	If !jOverlayData
+		Return
+	EndIf
+	Actor kCharacter = GetCharacterActorByName(sCharacterName)
+	If !NiOverride.HasOverlays(kCharacter)
+		NiOverride.AddOverlays(kCharacter)
+	EndIf
+	NiOverride.RevertOverlays(kCharacter)	
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
+	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
+	
+EndFunction
+
 Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment = True, Bool bSaveInventory = True, Bool bSaveFullInventory = True, Bool bSavePluginItems = False, Bool bForceSave = False)
 	_bSavedPerks = False
 	_bSavedSpells = False
@@ -1762,11 +1918,21 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
 	JMap.SetForm(jPlayerData,"Race",PlayerREF.GetActorBase().GetRace())
-	JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
 	If kLastPlayerLocation.GetLocation()
-		JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
+		JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
+		If kLastPlayerLocation.GetLocation()
+			JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
+		EndIf
 	EndIf
-	
+	If _kLastPlayerLocation as Location
+		JMap.SetForm(jPlayerData,"LastLocation",_kLastPlayerLocation as Location)
+	EndIf
+	If _kLastPlayerCell as Cell
+		JMap.SetForm(jPlayerData,"LastCell",JMap.getForm(_jMYC,"LastCell"))
+		;JMap.SetForm(jPlayerData,"LastCell",_kLastPlayerCell as Cell)
+	EndIf
+	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + _fLastPlayerPosX + ", \"y\": " + _fLastPlayerPosY + ", \"z\": " + _fLastPlayerPosZ + " }")
+	JMap.SetObj(jPlayerData,"LastPosition",jPlayerPos)
 	
 	;-----==== Save some metainfo. Some is duplicated for reasons that made sense at the time. I swear I wasn't drunk
 	
@@ -1782,7 +1948,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.setObj(jMetaInfo,"Modlist",jPlayerModList)
 	
 	JMap.setStr(jMetaInfo,"Name",sPlayerName)
-	JMap.setStr(jMetaInfo,"RaceText",PlayerREF.GetActorBase().GetRace())
+	JMap.setStr(jMetaInfo,"RaceText",PlayerREF.GetActorBase().GetRace().GetName())
 	JMap.setFlt(jMetaInfo,"Playtime",GetRealHoursPassed())
 	JMap.setInt(jMetaInfo,"SerializationVersion",2)
 
@@ -1845,6 +2011,17 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	
 	JMap.SetForm(jPlayerData,"VoiceType",None)
 
+	;-----==== Support for NIOverride ====-----
+	
+	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
+		Int jNIOData = JMap.Object()
+		JMap.SetObj(jPlayerData,"NIOverrideData",jNIOData)
+		JMap.setObj(jNIOData,"BodyOverlays",NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays()))
+		JMap.setObj(jNIOData,"HandOverlays",NIO_GetOverlayData("Hand [Ovl",NIOverride.GetNumHandOverlays()))
+		JMap.setObj(jNIOData,"FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumFeetOverlays()))
+		JMap.setObj(jNIOData,"FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumFaceOverlays()))
+	EndIf
+	
 	;-----==== None of this is needed anymore thanks to the new chargen 
 	;  function, but it doesn't take long to collect so why not ====-----
 	
@@ -1853,9 +2030,10 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	ColorForm kHairColor = PlayerBase.GetHairColor()
 	JMap.SetForm(jPlayerAppearance,"Haircolor",kHairColor)
-	int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
-	;Debug.Trace("(" + CharacterName + "/Actor) kHairColor (Post-LoadCharacter) is R:" + kHairColor.GetRed() + " G:" + kHairColor.GetGreen() + " B:" + kHairColor.GetBlue() + " H:" + kHairColor.GetHue() + " S:" + kHairColor.GetSaturation() + " V:" + kHairColor.GetValue())
-	JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
+	If kHairColor
+		Int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
+		JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
+	EndIf
 	JMap.SetForm(jPlayerAppearance,"Skin",PlayerBase.GetSkin())
 	JMap.SetForm(jPlayerAppearance,"SkinFar",PlayerBase.GetSkinFar())
 	
@@ -1907,7 +2085,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	Int jPlayerFaceMorphs = JArray.Object()
 	JMap.SetObj(jPlayerFace,"Morphs",jPlayerFaceMorphs)
 	i = 0
-	While i < PlayerBase.GetNumHeadParts() * 4
+	While i < 20 ; PlayerBase.GetNumHeadParts() * 4
 		Float fFaceMorph = PlayerBase.GetFaceMorph(i)
 		JArray.AddFlt(jPlayerFaceMorphs,fFaceMorph)
 		i += 1
