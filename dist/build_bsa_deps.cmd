@@ -1,5 +1,10 @@
 @echo off
 setlocal
+mkdir %temp%\tempdata
+xcopy /e /y * %temp%\tempdata\.
+pushd %temp%\tempdata\
+dir
+xcopy /e /y dep\* Data\.
 set I=0
 echo Finding data directory...
 :TryAgain
@@ -18,6 +23,10 @@ attrib -h %DATA%\skse
 attrib /s -h %DATA%\skse\*
 echo Building archive...
 Archive.exe bsascript.txt
+popd
+if not exist DataDep mkdir DataDep
+xcopy %temp%\tempdata\Data\*.bs? DataDep\.
+rmdir /s /q %temp%\tempdata
 endlocal
 goto End
 :TooManyLevels

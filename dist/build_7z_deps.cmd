@@ -9,9 +9,10 @@ echo %NEWTIME%
 mkdir "%NEWTIME%_%COMPUTERNAME%"
 cd "%NEWTIME%_%COMPUTERNAME%"
 xcopy /y ..\data\*.esp .
-xcopy /y ..\data\*.bsa .
+xcopy /y ..\datadep\*.bsa .
 xcopy /y ..\data\*readme* .
 echo d | xcopy /e /y ..\data\skse skse
+echo d | xcopy /e /y ..\dep\skse skse
 echo d | xcopy /e /y ..\data\vMYC vMYC
 "%ZEXE%" a -r "vMYC_FamiliarFaces_%NEWTIME%.7z" "*"
 xcopy /y *.7z ..
