@@ -740,8 +740,14 @@ Function SummonCharacter()
 	_kCharacter.EnableNoWait()
 	CharacterManager.SetCharacterTracking(CharacterName,True)
 	_kCharacter.EvaluatePackage()
+	Wait(0.5)
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	_kCharacter.MoveToPackageLocation()
+	If _kCharacter.GetParentCell().GetName() == "vMYC_Staging"
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
+		ObjectReference kMarkerObject = CharacterManager.CustomMapMarkers[CharacterManager.GetLocalInt(CharacterName, "HangoutIndex")]
+		_kCharacter.MoveTo(kMarkerObject)
+	EndIf
 	_Book.IsGlowing = False
 	Wait(1.0)
 	_kCharacter.SetAlpha(1.0)

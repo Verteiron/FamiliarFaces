@@ -42,6 +42,8 @@ vMYC_PlayerInventoryTrackerScript	Property	PlayerInventoryTracker	Auto
 
 ObjectReference Property LoadPoint Auto
 
+Activator Property vMYC_CustomMapMarker	Auto
+
 String[] Property sHangoutNames Auto Hidden
 
 ReferenceAlias[] Property kHangoutRefAliases Auto Hidden
@@ -49,6 +51,8 @@ ReferenceAlias[] Property kHangoutRefAliases Auto Hidden
 LocationAlias	Property	kLastPlayerLocation Auto 
 
 LocationAlias[]	Property	kCustomLocations Auto
+
+ObjectReference[] Property	CustomMapMarkers Auto
 
 String[] Property sClassNames Auto
 
@@ -731,9 +735,10 @@ String[] Function GetCharacterSpawnPoints(String asCharacterName)
 	Return sSpawnPoints
 EndFunction
 
-Function AddCustomLocation(Location kLocation, String sLocationName)
+Int Function AddCustomLocation(Location kLocation, String sLocationName)
+{Return -1 if failure, or Hangout index if success}
 	If !kLocation
-		Return
+		Return -1
 	EndIf
 	Debug.Trace("MYC: Adding custom location: " + kLocation + "(" + kLocation.GetName() + ")...")
 	Int i = kCustomLocations.Length
@@ -742,7 +747,7 @@ Function AddCustomLocation(Location kLocation, String sLocationName)
 		i -= 1
 		Location kThisLocation = kCustomLocations[i].GetLocation()
 		If kThisLocation == kLocation
-			Return ; This location is already on the list
+			Return -1 ; This location is already on the list
 		ElseIf !kThisLocation
 			iEmptyIndex = i
 		EndIf
@@ -755,6 +760,7 @@ Function AddCustomLocation(Location kLocation, String sLocationName)
 	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
 	sHangoutNames[iHOidx] = sLocationName
 	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
+	Return iHOidx
 EndFunction
 
 String Function GetCharacterNameFromActorBase(ActorBase akActorBase)
@@ -1036,7 +1042,29 @@ Bool Function LoadCharacter(String sCharacterName)
 		If !sLocationName
 			sLocationName = sCharacterName + "'s save point"
 		EndIf
-		AddCustomLocation(kCustomLocation,sLocationName)
+		Int iHOidx = AddCustomLocation(kCustomLocation,sLocationName)
+		If !CustomMapMarkers
+			CustomMapMarkers = New ObjectReference[32]
+		EndIf
+		Cell kCell = JMap.getForm(jCharacterData,"LastCell") as Cell
+		If kCell
+			ObjectReference kSpawnObject
+			i = kCell.GetNumRefs()
+			Debug.Trace("MYC:    LastCell is " + kCell + ", checking " + i + " objects...")
+			While !kSpawnObject && i > 0
+				i -= 1
+				kSpawnObject = kCell.GetNthRef(i)
+			EndWhile
+			If kSpawnObject
+				CustomMapMarkers[iHOidx] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
+				CustomMapMarkers[iHOidx].SetPosition(JValue.solveFlt(jCharacterData,".LastPosition.x"),JValue.solveFlt(jCharacterData,".LastPosition.y"),JValue.solveFlt(jCharacterData,".LastPosition.z"))
+				Debug.Trace("MYC:    CustomMapMarker Placed, parent location is " + CustomMapMarkers[iHOidx].GetCurrentLocation() + ", cell is " + CustomMapMarkers[iHOidx].GetParentCell())
+			Else
+				Debug.Trace("MYC:    No valid spawn object could be found.")
+			EndIf
+		Else
+				Debug.Trace("MYC:    No valid cell could be found.")
+		EndIf
 	EndIf
 	;----Load or create ActorBaseMap--------------
 	
