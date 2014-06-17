@@ -748,11 +748,11 @@ Function AddCustomLocation(Location kLocation, String sLocationName)
 		EndIf
 	EndWhile
 	;--- If we got this far, then the new location is not on the list.
-	kCustomLocations[i].ForceLocationTo(kLocation)
-	Debug.Trace("MYC:   " + kLocation + " added at position " + i + " and is now " + kCustomLocations[i] + "!")
+	kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
+	Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
 	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
 	Int iHOidx = sHangoutNames.Find("")
-	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[i]
+	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
 	sHangoutNames[iHOidx] = sLocationName
 	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
 EndFunction
