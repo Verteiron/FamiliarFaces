@@ -220,6 +220,12 @@ String[] _sCharacterNames
 
 Int _jMYC
 
+Location	_kLastPlayerLocation
+Cell		_kLastPlayerCell
+Float		_fLastPlayerPosX
+Float		_fLastPlayerPosY
+Float		_fLastPlayerPosZ
+
 ;--=== Events ===--
 
 
@@ -312,8 +318,8 @@ Event OnInit()
 ;	_sAVNames[84] = "LastBribedIntimidated"
 ;	_sAVNames[85] = "LastFlattered"
 
-	sHangoutNames = New String[18]
-	kHangoutRefAliases = New ReferenceAlias[18]
+	sHangoutNames = New String[32]
+	kHangoutRefAliases = New ReferenceAlias[32]
 	
 	sHangoutNames[0] = "$Winterhold College"
 	sHangoutNames[1] = "$The Ragged Flagon"
@@ -399,7 +405,38 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnSetLastPlayerLocation(string eventName, string strArg, float numArg, Form sender)
+	If sender as Location
+		_kLastPlayerLocation = sender as Location
+	EndIf
+	Debug.Trace("MYC: LastPlayerLocation is " + sender as Location + "(" + sender.GetName() + ")")
+EndEvent
+
+Event OnSetLastPlayerCell(string eventName, string strArg, float numArg, Form sender)
+	If sender as Cell
+		JMap.setForm(_jMYC,"LastCell",sender as Cell)
+		_kLastPlayerCell = sender as Cell
+	EndIf
+	Debug.Trace("MYC: LastPlayerCell is " + sender as Cell + "(" + sender.GetName() + ")")
+EndEvent
+
+Event OnSetLastPlayerPos(string eventName, string strArg, float numArg, Form sender)
+	If strArg == "x"
+		_fLastPlayerPosX = numArg
+	ElseIf strArg == "y"
+		_fLastPlayerPosY = numArg
+	ElseIf strArg == "z"
+		_fLastPlayerPosZ = numArg
+	EndIf
+	Debug.Trace("MYC: LastPlayerPos is " + _fLastPlayerPosX + "," + _fLastPlayerPosY + "," + _fLastPlayerPosZ)
+EndEvent
 ;--=== Functions ===--
+
+Function RegisterForModEvents()
+	RegisterForModEvent("vMYC_SetLastPlayerLocation","OnSetLastPlayerLocation")
+	RegisterForModEvent("vMYC_SetLastPlayerCell","OnSetLastPlayerCell")
+	RegisterForModEvent("vMYC_SetLastPlayerPos","OnSetLastPlayerPos")
+EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 	If bInBackground
@@ -408,11 +445,10 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	SendModEvent("vMYC_UpkeepBegin")
+	RegisterForModEvents()
 	LoadCharacterFiles()
 	RefreshCharacters()
 	SendModEvent("vMYC_UpkeepEnd")
-	JDB.writeToFile("Data/vMYC/jdb_postupkeep.json")
-	JValue.writeToFile(_jMYC,"Data/vMYC/jMYC_postupkeep.json")
 EndFunction
 
 Function DoInit()
@@ -423,7 +459,7 @@ Function DoInit()
 		_jMYC = JMap.object()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
-	
+	RegisterForModEvents()	
 	_kDummyActors = New ActorBase[128]
 	_kLoadedCharacters = New Actor[128]
 	Int i = vMYC_DummyActorsFList.GetSize()
@@ -695,10 +731,11 @@ String[] Function GetCharacterSpawnPoints(String asCharacterName)
 	Return sSpawnPoints
 EndFunction
 
-Function AddCustomLocation(Location kLocation)
+Function AddCustomLocation(Location kLocation, String sLocationName)
 	If !kLocation
 		Return
 	EndIf
+	Debug.Trace("MYC: Adding custom location: " + kLocation + "(" + kLocation.GetName() + ")...")
 	Int i = kCustomLocations.Length
 	Int iEmptyIndex = -1
 	While i > 0
@@ -711,7 +748,13 @@ Function AddCustomLocation(Location kLocation)
 		EndIf
 	EndWhile
 	;--- If we got this far, then the new location is not on the list.
-	kCustomLocations[i].ForceLocationTo(kLocation)
+	kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
+	Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
+	Int iHOidx = sHangoutNames.Find("")
+	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
+	sHangoutNames[iHOidx] = sLocationName
+	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
 EndFunction
 
 String Function GetCharacterNameFromActorBase(ActorBase akActorBase)
@@ -986,7 +1029,14 @@ Bool Function LoadCharacter(String sCharacterName)
 	
 	Location kCustomLocation = JMap.getForm(jCharacterData,"Location") as Location
 	If kCustomLocation
-		AddCustomLocation(kCustomLocation)
+		String sLocationName = kCustomLocation.GetName()
+		If !sLocationName
+			sLocationName = JMap.getForm(jCharacterData,"LastCell").GetName()
+		EndIf
+		If !sLocationName
+			sLocationName = sCharacterName + "'s save point"
+		EndIf
+		AddCustomLocation(kCustomLocation,sLocationName)
 	EndIf
 	;----Load or create ActorBaseMap--------------
 	
@@ -1868,11 +1918,21 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
 	JMap.SetForm(jPlayerData,"Race",PlayerREF.GetActorBase().GetRace())
-	JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
 	If kLastPlayerLocation.GetLocation()
-		JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
+		JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
+		If kLastPlayerLocation.GetLocation()
+			JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
+		EndIf
 	EndIf
-	
+	If _kLastPlayerLocation as Location
+		JMap.SetForm(jPlayerData,"LastLocation",_kLastPlayerLocation as Location)
+	EndIf
+	If _kLastPlayerCell as Cell
+		JMap.SetForm(jPlayerData,"LastCell",JMap.getForm(_jMYC,"LastCell"))
+		;JMap.SetForm(jPlayerData,"LastCell",_kLastPlayerCell as Cell)
+	EndIf
+	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + _fLastPlayerPosX + ", \"y\": " + _fLastPlayerPosY + ", \"z\": " + _fLastPlayerPosZ + " }")
+	JMap.SetObj(jPlayerData,"LastPosition",jPlayerPos)
 	
 	;-----==== Save some metainfo. Some is duplicated for reasons that made sense at the time. I swear I wasn't drunk
 	
