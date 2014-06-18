@@ -105,3 +105,7 @@ This early release basically serves to make sure the core functionality is worki
 *   SkyUI's MCM can be used to control the character's class (how their points get distributed based on the player's level), spawn point, and voicetype. You can also use the MCM to warp to the character's location to speed things up.
 
 If the mod does all of the above, everything is working as it should! Please let me know if this is the case, and continue to play with the mod to find bugs or issues!
+
+Disclaimer
+----------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
