@@ -5,7 +5,11 @@ body {
   font:14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
   color:#777;
   font-weight:300;
-}
+  background-image:url('../images/fflogobg.png');
+  background-repeat:no-repeat;
+  background-attachment:fixed;
+  background-position:-580px -560px;
+ }
 
 h1, h2, h3, h4, h5, h6 {
   color:#222;
@@ -181,7 +185,7 @@ footer {
   float:left;
   position:fixed;
   bottom:50px;
-}
+ }
 
 @media print, screen and (max-width: 960px) {
   
