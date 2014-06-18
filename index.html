@@ -18,10 +18,9 @@
         <h1>Familiar Faces</h1>
         <p>A Skyrim mod that allows characters to be shared between different playthroughs</p>
 
-		<p class="view"><a href="vMYC_FamiliarFaces044.7z"><strong>Current build - Ready to install <small>vMYC_FamiliarFaces044.7z</small></strong></a></p>
-		
         <p class="view"><a href="https://github.com/Verteiron/FamiliarFaces">View the Project on GitHub <small>Verteiron/FamiliarFaces</small></a></p>
-		
+
+
         <ul>
           <li><a href="https://github.com/Verteiron/FamiliarFaces/zipball/master">Download <strong>ZIP File</strong></a></li>
           <li><a href="https://github.com/Verteiron/FamiliarFaces/tarball/master">Download <strong>TAR Ball</strong></a></li>
@@ -29,8 +28,8 @@
         </ul>
       </header>
       <section>
-        <h1>
-<a name="release-044-is-out-download-it-here" class="anchor" href="#release-044-is-out-download-it-here"><span class="octicon octicon-link"></span></a>Release 0.44 is out! Download it <a href="http://verteiron.github.io/FamiliarFaces/vMYC_FamiliarFaces044.7z">here</a>!</h1>
+        <h2>
+<a name="release-044-is-out-download-it-here" class="anchor" href="#release-044-is-out-download-it-here"><span class="octicon octicon-link"></span></a>Release 0.44 is out! Download it <a href="vMYC_FamiliarFaces044.7z">here</a>!</h2>
 
 <ul>
 <li><strong>Clean install is HIGHLY recommended for this version!</strong></li>
@@ -74,8 +73,10 @@
 <li>SkyUI 4.1 - Not included. Required for using MCM.</li>
 <li>JContainers 0.67 or higher - Included. This is an SKSE plugin that is packaged with this testing edition.</li>
 <li>CharGen.dll - Included. This is a special testing version of Expired's CharGen Extender SKSE plugin. See the Warnings section below. If you are running the release versions of CharGen Extender or RaceMenu, BACK THEM UP BEFORE INSTALLING FAMILIAR FACES.</li>
-<li>Extensible Follower Framework - Not required, but recommended for follower management. UFO and AFT should also work, but EFF is specifically supported.</li>
-<li>Auto Unequip Ammo - Not required, but recommended to help your imported followers (who frequently have several types of ammo on them) pick the best ammo for their current weapon.</li>
+<li>
+<a href="http://www.nexusmods.com/skyrim/mods/12933/?">Extensible Follower Framework</a> - Not required, but recommended for follower management. UFO and AFT should also work, but EFF is specifically supported.</li>
+<li>
+<a href="http://www.nexusmods.com/skyrim/mods/10753/?">Auto Unequip Ammo</a> - Not required, but recommended to help your imported followers (who frequently have several types of ammo on them) pick the best ammo for their current weapon.</li>
 </ul><h2>
 <a name="compatibility" class="anchor" href="#compatibility"><span class="octicon octicon-link"></span></a>Compatibility</h2>
 
@@ -103,9 +104,12 @@
 <h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-<p>You can use NMM to install the mod from the 7z file. It should also work with Mod Organizer, but be aware that files will be created in MO's Overwrite directory during gameplay. This is normal but it makes MO show a warning. If you need to send me the contents of Data/vMYC, you'll have to pull them from MO's Override directory instead of your Skyrim installation.</p>
+<p>You can use NMM or MO to install the mod from the 7z file. Other managers such as Wrye have not been tested, but should work. You can install manually simply by extracting the 7z file to the Skyrim/Data directory.</p>
 
-<p>You can install manually simply by extracting the 7z file to the Skyrim/Data directory.</p>
+<h3>
+<a name="mod-organizer-note" class="anchor" href="#mod-organizer-note"><span class="octicon octicon-link"></span></a>Mod Organizer note</h3>
+
+<p>Familiar Faces does work with Mod Organizer, but files that get created during gameplay will be written to the OverWrite directory instead of to FF's mod tree. This is normal, but it does make MO show a warning. These files can be safely moved into the Familiar Faces tree after you exit Skyrim. Also note that if you need to send me the contents of Data/vMYC, you'll have to pull them from MO's Mod or Override directory instead of your Skyrim installation folder.</p>
 
 <h2>
 <a name="uninstallation" class="anchor" href="#uninstallation"><span class="octicon octicon-link"></span></a>Uninstallation</h2>
@@ -114,7 +118,7 @@
 
 <p>If you plan to reinstall the mod, leave the Data/vMYC directory intact or at least back it up. It contains all the saved character data. Otherwise...</p>
 
-<p>If you used NMM to install, uninstallation should work but may leave some files behind. If you used MO, files may remain in your Override directory.</p>
+<p>If you used NMM to install, uninstallation will work but may leave files behind in Data/vYMC. If you used MO, files may remain in your Override directory in the same location.</p>
 
 <p>Search for and remove ALL files and folders in Skyrim/Data that begin with "vMYC". Remove JContainers.dll and the included version of CharGen.dll if you aren't using them for any other mods.</p>
 
