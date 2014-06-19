@@ -105,6 +105,8 @@ Event OnUpdate()
 		EndIf
 		_bNeedRefresh = False
 		RefreshMesh()
+	ElseIf Is3DLoaded()
+		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
 	RegisterForSingleUpdate(5.0)
 EndEvent
