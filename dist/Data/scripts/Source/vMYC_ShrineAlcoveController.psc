@@ -31,6 +31,17 @@ String	Property CharacterName Hidden
 	EndFunction
 EndProperty
 
+Int Property AlcoveState Hidden
+{0 = Empty, 1 = Loading, 2 = Ready, 3 = Summoned, 4 = Error}
+	Int Function Get()
+		Return _iAlcoveState
+	EndFunction
+	Function Set(Int iAlcoveState)
+		_iAlcoveState = iAlcoveState
+		SendModEvent("vMYC_AlcoveStatusUpdate",_iAlcoveState)
+	EndFunction
+EndProperty
+
 Int Property AlcoveStatueState Hidden
 {0 = None, 1 = Loading, 2 = Loaded and placed}
 	Int Function Get()
@@ -175,6 +186,8 @@ Int				_jMYC
 
 Int				_iAlcoveIndex = -1
 Int				_iInvisibleActorIndex
+
+Int				_iAlcoveState = 0 	; 0 = Empty, 1 = Loading, 2 = Ready, 3 = Summoned, 4 = Error
 Int				_iAlcoveLightState = 0 	; 0 = empty, 1 = lights on, 2 = torches
 Int				_iAlcoveStatueState = 0	; 0 = None, 1 = loading, 2 = ready
 
@@ -228,7 +241,7 @@ EndEvent
 Event OnLoad()
 	CheckVars()
 	If !CharacterName
-		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		AlcoveState = 0
 	ElseIf AlcoveStatueState == 0
 		ActivateAlcove()
 	EndIf
@@ -272,7 +285,7 @@ Function SetAlcoveCharacterName(string sCharacterName)
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
 	ElseIf !_sCharacterName && !sCharacterName
-		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		AlcoveState = 0
 		;No change
 	Else
 		;No change
@@ -399,14 +412,14 @@ EndEvent
 Function ActivateAlcove()
 	If !_sCharacterName
 		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
-		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		AlcoveState = 0
 		Return
 	EndIf
-	SendModEvent("vMYC_AlcoveStatusUpdate",1)
+	AlcoveState = 1
 	AlcoveLightState = 1
 	AlcoveStatueState = 1
 	If !CharacterManager.LoadCharacter(_sCharacterName)
-		SendModEvent("vMYC_AlcoveStatusUpdate",4)
+		AlcoveState = 4
 		While AlcoveLightState != 1
 			Wait(1.0)
 		EndWhile
@@ -425,11 +438,11 @@ Function ActivateAlcove()
 	_kCharacter.EnableNoWait()
 	_bPoseCharacter = True
 	ShowTrophies()
-	SendModEvent("vMYC_AlcoveStatusUpdate",2)
+	AlcoveState = 2
 EndFunction
 
 Function DeactivateAlcove()
-	SendModEvent("vMYC_AlcoveStatusUpdate",1)
+	AlcoveState = 1
 	AlcoveLightState = 1
 	While AlcoveLightState != 1
 		WaitMenuMode(1)
@@ -437,7 +450,7 @@ Function DeactivateAlcove()
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	_kCharacter.DisableNoWait()
 	HideTrophies()
-	SendModEvent("vMYC_AlcoveStatusUpdate",0)
+	AlcoveState = 0
 	AlcoveStatueState = 0
 	AlcoveLightState = 0
 EndFunction
@@ -751,7 +764,7 @@ Function SummonCharacter()
 	_Book.IsGlowing = False
 	Wait(1.0)
 	_kCharacter.SetAlpha(1.0)
-	SendModEvent("vMYC_AlcoveStatusUpdate",3)
+	AlcoveState = 3
 	GoToState("Active")
 EndFunction
 
@@ -790,7 +803,7 @@ Function BanishCharacter()
 	Wait(0.25)
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Freezing character!")
 	_kCharacter.EnableAI(False)
-	SendModEvent("vMYC_AlcoveStatusUpdate",2)
+	AlcoveState = 2
 	GoToState("Active")
 EndFunction
 
@@ -818,7 +831,7 @@ Function EraseAlcove(Bool abNoLightChange = False)
 	CharacterName = ""
 	;Wait(0.1)
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
-	SendModEvent("vMYC_AlcoveStatusUpdate",0)
+	AlcoveState = 0
 EndFunction
 
 Function PlayerActivate()

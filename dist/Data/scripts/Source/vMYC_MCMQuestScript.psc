@@ -2,6 +2,7 @@ Scriptname vMYC_MCMQuestScript extends SKI_ConfigBase
 
 vMYC_MetaQuestScript Property MetaQuestScript Auto
 vMYC_CharacterManagerScript Property CharacterManager Auto
+vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
@@ -19,6 +20,7 @@ VoiceType[] _kVoiceTypesFollower
 VoiceType[] _kVoiceTypesAll
 
 Int		_iCurrentCharacter
+String	_sCharacterName
 
 Int		_iCurrentCharacterOption
 
@@ -39,11 +41,19 @@ String[] _sClassNames
 
 Int		_iWarpOption
 
+Int[]		_iAlcoveIndices
+Int[]		_iAlcoveStates
+String[]	_sAlcoveStateEnum
+String[] 	_sAlcoveCharacterNames
+Int[] 		_iAlcoveCharacterOption
+Int[]		_iAlcoveResetOption
+
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[2]
-	Pages[0] = "$Character Options"
-	Pages[1] = "$Global Options"
+	Pages = New String[3]
+	Pages[0] = "$Character Setup"
+	Pages[1] = "$Shrine of Heroes"
+	Pages[2] = "$Global Options"
 	
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
@@ -65,6 +75,20 @@ Event OnConfigInit()
 		idx += 1
 	EndWhile
 	
+	_iAlcoveIndices 		= New Int[12]
+	_iAlcoveStates			= New Int[12]
+	_sAlcoveCharacterNames	= New String[12]
+	
+	_sAlcoveStateEnum		= New String[5]
+	_sAlcoveStateEnum[0]	= "$Empty"
+	_sAlcoveStateEnum[1]	= "$Busy"
+	_sAlcoveStateEnum[2] 	= "$Ready"
+	_sAlcoveStateEnum[3] 	= "$Summoned"
+	_sAlcoveStateEnum[4] 	= "$Error"
+	
+	_iAlcoveCharacterOption	= New Int[12]
+	_iAlcoveResetOption		= New Int[12]
+	
 EndEvent
 
 event OnGameReload()
@@ -74,42 +98,78 @@ endEvent
 event OnPageReset(string a_page)
 	String sKey = "vMYC."
 	UpdateSettings()
-	If a_page == "$Character Options"
+	
+	if (a_page == "")
+        LoadCustomContent("vMYC_fflogo.dds")
+        return
+    else
+        UnloadCustomContent()
+    endIf	
+	
+	If a_page == "$Character Setup"
+		
+		;===== Character Setup page =====
+		
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		
-		_iCurrentCharacterOption = AddMenuOption("$Settings for",_sCharacterNames[_iCurrentCharacter])
-		String sCharacterName = _sCharacterNames[_iCurrentCharacter]
-		;ActorBase kCharacterDummy = CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])
+		_sCharacterName = _sCharacterNames[_iCurrentCharacter]
+
+		
+		;===== Character selection menu =====----
+		_iCurrentCharacterOption = AddMenuOption("$Settings for",_sCharacterName)
+		;====================================----
+
+		
+		;===== Set flags if disabled ========----
 		Int OptionFlags = 0
-		_bCharacterEnabled[_iCurrentCharacter] = CharacterManager.GetLocalInt(sCharacterName,"Enabled") as Bool
+		_bCharacterEnabled[_iCurrentCharacter] = CharacterManager.GetLocalInt(_sCharacterName,"Enabled") as Bool
 		If !_bCharacterEnabled[_iCurrentCharacter]
 			OptionFlags = OPTION_FLAG_DISABLED
 		EndIf
-		AddHeaderOption(sCharacterName)
-		_iCharacterEnabledOption = AddToggleOption("$Enable this character",_bCharacterEnabled[_iCurrentCharacter])
+		;====================================----
 		
-		VoiceType kCharVoiceType = CharacterManager.GetCharacterVoiceType(sCharacterName)
-		Debug.Trace("MYC: MCM: kCharVoiceType for " + sCharacterName + " is " + kCharVoiceType)
-		If kCharVoiceType == None
-			Debug.Trace("MYC: MCM: kCharVoiceType is None, selecting option 0")
+
+		;===== Character header =============----
+		AddHeaderOption(_sCharacterName)
+		;====================================----
+		
+
+		;===== Character enable option ======----
+		_iCharacterEnabledOption = AddToggleOption("$Enable this character",_bCharacterEnabled[_iCurrentCharacter])
+		;====================================----
+		
+
+		;===== Character voicetype option ==----
+		VoiceType kCharVoiceType = CharacterManager.GetCharacterVoiceType(_sCharacterName)
+
+		If kCharVoiceType == None ; If no voicetype is set, pick the "default" option
 			_iVoiceTypeSelections[_iCurrentCharacter] = 0
 		Else
 			Int iVoiceTypeIndex = _kVoiceTypesFollower.Find(kCharVoiceType)
-			Debug.Trace("MYC: MCM: kCharVoiceType is set, selecting option " + iVoiceTypeIndex)
 			_iVoiceTypeSelections[_iCurrentCharacter] = iVoiceTypeIndex
 		EndIf
+
 		_iVoiceTypeOption = AddMenuOption("$VoiceType",_sVoiceTypesFollower[_iVoiceTypeSelections[_iCurrentCharacter]],OptionFlags)
+		;====================================----
 
-		_iAliasSelections[_iCurrentCharacter] = CharacterManager.GetLocalInt(sCharacterName,"HangoutIndex")
+
+		;===== Character hangout option =====----		
+		_iAliasSelections[_iCurrentCharacter] = CharacterManager.GetLocalInt(_sCharacterName,"HangoutIndex")
 		_iAliasOption = AddMenuOption("$Hangout",_sHangoutNames[_iAliasSelections[_iCurrentCharacter]],OptionFlags)
-
-		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(sCharacterName,"Class") as Class)
+		;====================================----
+		
+		;===== Character class option =======----
+		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
 		_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
 		AddEmptyOption()
+		;====================================----
 		
+		;===== Character warp DEBUG option ==----
 		_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
+		;====================================----
 		
-		; Begin info column
+		
+		;===== Begin info column ============----
 		
 		SetCursorPosition(1)
 		AddEmptyOption()
@@ -119,24 +179,68 @@ event OnPageReset(string a_page)
 		sSex[0] = "Male"
 		sSex[1] = "Female"
 		
-		AddTextOption("Level " + (CharacterManager.GetCharacterStat(sCharacterName,"Level") as Int) + " " + CharacterManager.GetCharacterMetaString(sCharacterName,"RaceText") + " " + sSex[CharacterManager.GetCharacterInt(sCharacterName,"Sex")],"",OPTION_FLAG_DISABLED)
+		AddTextOption("Level " + (CharacterManager.GetCharacterStat(_sCharacterName,"Level") as Int) + " " + CharacterManager.GetCharacterMetaString(_sCharacterName,"RaceText") + " " + sSex[CharacterManager.GetCharacterInt(_sCharacterName,"Sex")],"",OPTION_FLAG_DISABLED)
 
-		AddTextOption("Health: " + (CharacterManager.GetCharacterAV(sCharacterName,"Health") as Int) + \
-						", Stamina:" + (CharacterManager.GetCharacterAV(sCharacterName,"Stamina") as Int) + \
-						", Magicka:" + (CharacterManager.GetCharacterAV(sCharacterName,"Magicka") as Int), "",OPTION_FLAG_DISABLED)
+		AddTextOption("Health: " + (CharacterManager.GetCharacterAV(_sCharacterName,"Health") as Int) + \
+						", Stamina:" + (CharacterManager.GetCharacterAV(_sCharacterName,"Stamina") as Int) + \
+						", Magicka:" + (CharacterManager.GetCharacterAV(_sCharacterName,"Magicka") as Int), "",OPTION_FLAG_DISABLED)
 		
-		Form kRightWeapon = CharacterManager.GetCharacterForm(sCharacterName,"Equipment.Right.Form")
-		Form kLeftWeapon = CharacterManager.GetCharacterForm(sCharacterName,"Equipment.Left.Form")
-		String sWeaponName = CharacterManager.GetCharacterEquipmentName(sCharacterName,"Right")
+		Form kRightWeapon = CharacterManager.GetCharacterForm(_sCharacterName,"Equipment.Right.Form")
+		Form kLeftWeapon = CharacterManager.GetCharacterForm(_sCharacterName,"Equipment.Left.Form")
+		String sWeaponName = CharacterManager.GetCharacterEquipmentName(_sCharacterName,"Right")
 		If kLeftWeapon && kLeftWeapon != kRightWeapon
-			sWeaponName += " and " + CharacterManager.GetCharacterEquipmentName(sCharacterName,"Left")
+			sWeaponName += " and " + CharacterManager.GetCharacterEquipmentName(_sCharacterName,"Left")
 		EndIf
 		AddTextOption("Wielding " + sWeaponName,"",OPTION_FLAG_DISABLED)
 		AddEmptyOption()
-		AddTextOption("ActorBase: " + GetFormIDString(CharacterManager.GetCharacterDummy(sCharacterName)),"",OPTION_FLAG_DISABLED)
-		AddTextOption("Actor: " + GetFormIDString(CharacterManager.GetCharacterActorByName(sCharacterName)),"",OPTION_FLAG_DISABLED)
+		AddTextOption("ActorBase: " + GetFormIDString(CharacterManager.GetCharacterDummy(_sCharacterName)),"",OPTION_FLAG_DISABLED)
+		AddTextOption("Actor: " + GetFormIDString(CharacterManager.GetCharacterActorByName(_sCharacterName)),"",OPTION_FLAG_DISABLED)
 		
+		;===== END info column =============----
+		
+	;===== END Character Setup page =====----
+		
+	ElseIf a_page == "$Shrine of Heroes"
+	
+	;===== Shrine of Heroes page =====----
+		
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		Int i = 0
+		Int iAlcoveCount = ShrineOfHeroes.Alcoves.Length
+		Int iAddedCount = 0
+
+		SetCursorFillMode(LEFT_TO_RIGHT)
+		AddHeaderOption("$Active Alcoves")
+		AddHeaderOption("$Inactive Alcoves")
+		Int iActivePos = 0
+		Int iInactivePos = 1
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		While i < iAlcoveCount
+			vMYC_ShrineAlcoveController kThisAlcove = ShrineOfHeroes.AlcoveControllers[i]
+			Int iAlcoveIndex = kThisAlcove.AlcoveIndex
+			_iAlcoveIndices[iAlcoveIndex] = iAlcoveIndex
+			_iAlcoveStates[iAlcoveIndex] = kThisAlcove.AlcoveState
+			_sAlcoveCharacterNames[iAlcoveIndex] = kThisAlcove.CharacterName
+			
+			If _iAlcoveStates[iAlcoveIndex] == 0
+				iInactivePos += 2
+				SetCursorPosition(iInactivePos)				
+			Else
+				iActivePos += 2
+				SetCursorPosition(iActivePos)
+			EndIf
+			_iAlcoveCharacterOption[iAlcoveIndex] = AddMenuOption("Alcove {" + (iAlcoveIndex + 1) + "}: {" + _sAlcoveStateEnum[_iAlcoveStates[iAlcoveIndex]] + "}",_sAlcoveCharacterNames[iAlcoveIndex])
+			i += 1
+		EndWhile
+		
+		
+	;===== END Shrine of Heroes page =====----
+	
+	Else
+
 	EndIf
+
 	
 EndEvent
 
@@ -178,6 +282,10 @@ Event OnOptionMenuOpen(Int Option)
 		SetMenuDialogOptions(_sClassNames)
 		SetMenuDialogStartIndex(_iClassSelection)
 		SetMenuDialogDefaultIndex(_iClassSelection)
+	ElseIf _iAlcoveCharacterOption.Find(Option) > -1
+		Int iAlcove = _iAlcoveCharacterOption.Find(Option)
+		SetMenuDialogOptions(_sCharacterNames)
+		SetMenuDialogStartIndex(_sCharacterNames.Find(_sAlcoveCharacterNames[iAlcove]))
 	EndIf
 EndEvent
 
@@ -198,6 +306,11 @@ Event OnOptionMenuAccept(int option, int index)
 		_iClassSelection = index
 		SetMenuOptionValue(_iClassOption,_sClassNames[index])
 		CharacterManager.SetCharacterClass(_sCharacterNames[_iCurrentCharacter],CharacterManager.kClasses[index])
+	ElseIf _iAlcoveCharacterOption.Find(Option) > -1
+		Int iAlcove = _iAlcoveCharacterOption.Find(Option)
+		SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],_sCharacterNames[index])
+		ShrineOfHeroes.AlcoveControllers[iAlcove].CharacterName = _sCharacterNames[index] 
+		ForcePageReset()
 	EndIf
 EndEvent
 

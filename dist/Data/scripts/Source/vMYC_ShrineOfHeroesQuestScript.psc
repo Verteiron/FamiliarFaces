@@ -85,6 +85,9 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	If !AlcoveState
 		Return
 	EndIf
+	If !AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex]
+		AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = sender as vMYC_ShrineAlcoveController
+	EndIf
 	AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = strArg as Int
 	Int iCount = AlcoveState.Length
 	Bool bAllReady = True
@@ -224,6 +227,7 @@ EndFunction
 
 Function DoInit(Bool abForce = False)
 	AlcoveState = New Int[12]
+	AlcoveControllers = New vMYC_ShrineAlcoveController[12]
 	_jMYC = CharacterManager.jMYC
 	Bool bSyncResult = SyncShrineData()
 	If _jShrineData && abForce
