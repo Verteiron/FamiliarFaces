@@ -43,9 +43,9 @@ Event OnTriggerEnter(ObjectReference akActionRef)
 	If akActionRef == PlayerREF && _Book
 		_BookScript = _Book as vMYC_CharacterBookActiScript
 		Int iAlcoveIndex = _BookScript.AlcoveIndex
-		String sCharacterName = ShrineOfHeroes.GetShrineCharacterName(iAlcoveIndex)
+		String sCharacterName = ShrineOfHeroes.GetAlcoveCharacterName(iAlcoveIndex)
 		Actor kCharacterActor = CharacterManager.GetCharacterActorByName(sCharacterName)
-		Debug.Trace("MYC: " + Self + " I am Book #" + _BookScript.AlcoveIndex + ", shrine character is " + ShrineOfHeroes.GetShrineCharacterName(_BookScript.AlcoveIndex) + ", shrine actor is " + CharacterManager.GetCharacterActorByName(ShrineOfHeroes.GetShrineCharacterName(_BookScript.AlcoveIndex)) + "!")
+		Debug.Trace("MYC: " + Self + " I am Book #" + _BookScript.AlcoveIndex + ", shrine character is " + ShrineOfHeroes.GetAlcoveCharacterName(_BookScript.AlcoveIndex) + ", shrine actor is " + CharacterManager.GetCharacterActorByName(ShrineOfHeroes.GetAlcoveCharacterName(_BookScript.AlcoveIndex)) + "!")
 		If kCharacterActor
 			ShrineOwner.ForceRefTo(kCharacterActor)
 			ShrineBook.ForceRefTo(_Book)

@@ -54,6 +54,8 @@ Bool 	_bReady
 
 Bool 	_bNeedSync
 
+Bool	_bShrineNeedsUpdate = False
+
 ;--=== Events ===--
 
 Event OnInit()
@@ -78,6 +80,10 @@ Event OnUpdate()
 	If _bNeedSync
 		_bNeedSync = False
 		SyncShrineData()
+	EndIf
+	If _bShrineNeedsUpdate
+		_bShrineNeedsUpdate = False
+		UpdateShrineNames()
 	EndIf
 EndEvent
 
@@ -109,6 +115,11 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	SyncShrineData()
 EndEvent
 
+Event OnShrineNeedsUpdate(string eventName, string strArg, float numArg, Form sender)
+	_bShrineNeedsUpdate = True
+	RegisterForSingleUpdate(0.5)
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoUpkeep(Bool bInBackground = True)
@@ -120,6 +131,14 @@ Function DoUpkeep(Bool bInBackground = True)
 	EndIf
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvent("vMYC_AlcovestatusUpdate","OnAlcovestatusUpdate")
+	RegisterForModEvent("vMYC_ShrineNeedsUpdate","OnShrineNeedsUpdate")
+	Int i = AlcoveControllers.Length
+	While i > 0
+		i -= 1
+		If AlcoveControllers[i]
+			AlcoveControllers[i].DoUpkeep()
+		EndIf
+	EndWhile
 	If SyncShrineData()
 		UpdateShrineNames()
 	EndIf
@@ -130,19 +149,69 @@ Function UpdateShrineNames()
 	Int jShrineArray = JMap.getObj(_jShrineData,"AlcoveForms")
 	Int i = 0 
 	Int iCount = JArray.Count(jShrineArray)
+	Int iAlcoveChangeCount = 0
+	
+	; First pass just clears any shrines that have changed.
+	Int[] iAlcovesChanged = New Int[12]
 	While i < iCount
 		String sCharacterName = JValue.solveStr(_jShrineData,".Alcove" + i + ".CharacterName")
-		Debug.Trace("MYC/Shrine: Alcove" + i + ".Controller is " + JValue.solveForm(_jShrineData,".Alcove" + i + ".Controller") + "!")
-		vMYC_ShrineAlcoveController kShrine = JArray.getForm(jShrineArray,i) as vMYC_ShrineAlcoveController
-		Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from alcove) is " + kShrine.CharacterName + " and should be " + sCharacterName + "!")
-		If sCharacterName != kShrine.CharacterName
-			kShrine.CharacterName = sCharacterName
+		;Debug.Trace("MYC/Shrine: Alcove" + i + ".Controller is " + JValue.solveForm(_jShrineData,".Alcove" + i + ".Controller") + "!")
+		vMYC_ShrineAlcoveController kAlcove = JArray.getForm(jShrineArray,i) as vMYC_ShrineAlcoveController
+		If sCharacterName != kAlcove.CharacterName
+			Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from alcove) is " + kAlcove.CharacterName + " and should be " + sCharacterName + "!")
+			iAlcovesChanged[iAlcoveChangeCount] = i
+			iAlcoveChangeCount += 1
+			If kAlcove.CharacterName && !sCharacterName
+				kAlcove.DeactivateAlcove(abAutoLights = True)
+			ElseIf kAlcove.CharacterName && sCharacterName
+				kAlcove.AlcoveLightState = 1
+				kAlcove.DeactivateAlcove(abAutoLights = False)
+			Else ; !kAlcove.CharacterName && sCharacterName
+				;kAlcove.AlcoveLightState = 1
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+
+	Debug.Trace("MYC/Shrine: Alcoves changing: " + iAlcoveChangeCount)
+	
+	Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")	
+	Int iAlcoveStateSum = 100
+	While iAlcoveStateSum
+		Wait(1)
+		i = 0
+		iAlcoveStateSum = 0
+		While i < iAlcoveChangeCount
+			iAlcoveStateSum += AlcoveState[iAlcovesChanged[i]]
+			i += 1
+		EndWhile
+		Debug.Trace("MYC/Shrine: iAlcoveStateSum: " + iAlcoveStateSum)
+	EndWhile
+	
+	i = 0
+	;Second pass actually applies new names
+	While i < iCount
+		String sCharacterName = JValue.solveStr(_jShrineData,".Alcove" + i + ".CharacterName")
+		;Debug.Trace("MYC/Shrine: Alcove" + i + ".Controller is " + JValue.solveForm(_jShrineData,".Alcove" + i + ".Controller") + "!")
+		vMYC_ShrineAlcoveController kAlcove = JArray.getForm(jShrineArray,i) as vMYC_ShrineAlcoveController
+		If sCharacterName != kAlcove.CharacterName
+			Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from alcove) is " + kAlcove.CharacterName + " and should be " + sCharacterName + "!")
+			If kAlcove.CharacterName && !sCharacterName
+				kAlcove.CharacterName = sCharacterName
+				kAlcove.AlcoveLightState = 0
+			ElseIf kAlcove.CharacterName && sCharacterName
+				kAlcove.CharacterName = sCharacterName
+				kAlcove.ActivateAlcove(abAutoLights = False)
+			Else ; !kAlcove.CharacterName && sCharacterName
+				kAlcove.CharacterName = sCharacterName
+				kAlcove.ActivateAlcove(abAutoLights = True)
+			EndIf
 		EndIf
 		i += 1
 	EndWhile
 EndFunction
 
-String Function GetShrineCharacterName(Int iAlcoveIndex)
+String Function GetAlcoveCharacterName(Int iAlcoveIndex)
 	Return JValue.solveStr(_jShrineData,".Alcove" + iAlcoveIndex + ".CharacterName")
 EndFunction
 
@@ -273,6 +342,7 @@ Function SetAlcoveCharacterNames()
 		vMYC_ShrineAlcoveController kAlcove = GetAlcoveForm(i,"Controller") as vMYC_ShrineAlcoveController
 		If kAlcove.CharacterName != sCharacterNames[i]
 			kAlcove.CharacterName = sCharacterNames[i]
+			kAlcove.ActivateAlcove()
 		EndIf
 		i += 1
 	EndWhile

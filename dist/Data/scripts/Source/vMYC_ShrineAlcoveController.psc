@@ -16,6 +16,7 @@ Int	Property AlcoveIndex Hidden
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
 		Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
+		SendModEvent("vMYC_AlcoveStatusUpdate",AlcoveState)
 		RegisterForSingleUpdate(1)
 	EndFunction
 EndProperty
@@ -248,6 +249,10 @@ Event OnLoad()
 	RegisterForModEvent("vMYC_ShrineLightingPriority","OnAlcoveLightingPriority")
 EndEvent
 
+Function DoUpkeep()
+
+EndFunction
+
 Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
 {Disable the lights of all Alcoves except the event sender to try to give its lighting effects top priority}	
 	;strArg = numArg = AlcoveIndex of sender
@@ -268,29 +273,7 @@ EndEvent
 
 Function SetAlcoveCharacterName(string sCharacterName)
 {This (un)sets the Alcove's character name}
-	If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
-		DeactivateAlcove()
-		EraseAlcove(True)
-		_sCharacterName = sCharacterName
-		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
-		ActivateAlcove()
-	ElseIf !_sCharacterName && sCharacterName
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from empty to " + sCharacterName + "!")
-		_sCharacterName = sCharacterName
-		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
-		ActivateAlcove()
-	ElseIf _sCharacterName && !sCharacterName
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from " + _sCharacterName + " to empty!")
-		DeactivateAlcove()
-		_sCharacterName = sCharacterName
-		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
-	ElseIf !_sCharacterName && !sCharacterName
-		AlcoveState = 0
-		;No change
-	Else
-		;No change
-	EndIf
+	_sCharacterName = sCharacterName
 EndFunction
 	
 Event OnCellAttach()
@@ -305,6 +288,9 @@ Event OnUpdate()
 		CheckVars()
 		_Book.AlcoveIndex = AlcoveIndex
 		InitTrophies()
+		If CharacterName
+			ActivateAlcove()
+		EndIf
 	Else
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ShrineOfHeroes is NOT ready, will try again in a second :(")
 		RegisterForSingleUpdate(1.0)
@@ -408,29 +394,54 @@ Event OnAlcoveStatueStateChange(string eventName, string strArg, float numArg, F
 	SendModEvent("vMYC_AlcoveStatueStateComplete","",_iAlcoveStatueState)
 EndEvent
 
+Event OnAlcoveBackground(string eventName, string strArg, float numArg, Form sender)
+	If sender != Self 
+		Return
+	EndIf
+	If strArg == "Activate"
+		ActivateAlcove(numArg as Int,False)
+	ElseIf strArg == "Deactivate"
+		DeactivateAlcove(numArg as Int,False)
+	EndIf
+EndEvent
+
 ;==== Functions/Events for loading the character statue ====----
 
-Function ActivateAlcove()
+Function ActivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
+	If abBackground
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating in background...")
+		RegisterForModEvent("vMYC_AlcoveBackground","OnAlcoveBackground")
+		SendModEvent("vMYC_AlcoveBackground","Activate",abAutoLights as Int)
+		Return
+	EndIf
 	If !_sCharacterName
 		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
 		AlcoveState = 0
 		Return
 	EndIf
 	AlcoveState = 1
-	AlcoveLightState = 1
-	AlcoveStatueState = 1
-	If !CharacterManager.LoadCharacter(_sCharacterName)
-		AlcoveState = 4
-		While AlcoveLightState != 1
-			Wait(1.0)
-		EndWhile
-		AlcoveLightState = 0
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": " + _sCharacterName + " could not be loaded from CharacterManager.",1)
-		CharacterName = ""
-		Return
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
+	If abAutoLights
+		AlcoveLightState = 1
 	EndIf
-	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
+	AlcoveStatueState = 1
 	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
+	If !_kCharacter
+		If !CharacterManager.LoadCharacter(_sCharacterName)
+			AlcoveState = 4
+			If abAutoLights
+				While AlcoveLightState != 1
+					Wait(1.0)
+				EndWhile
+				AlcoveLightState = 0
+			EndIf
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": " + _sCharacterName + " could not be loaded from CharacterManager.",1)
+			CharacterName = ""
+			Return
+		EndIf
+	EndIf
+	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
+	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
 	_kCharacter.SetGhost(True)
 	_kCharacter.SetScale(1.2)
 	_kCharacter.EnableAI(True)
@@ -442,18 +453,28 @@ Function ActivateAlcove()
 	AlcoveState = 2
 EndFunction
 
-Function DeactivateAlcove()
+Function DeactivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
+	If abBackground
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating in background...")
+		RegisterForModEvent("vMYC_AlcoveBackground","OnAlcoveBackground")
+		SendModEvent("vMYC_AlcoveBackground","Deactivate",abAutoLights as Int)
+		Return
+	EndIf
 	AlcoveState = 1
-	AlcoveLightState = 1
-	While AlcoveLightState != 1 && !IsInMenuMode()
-		WaitMenuMode(1)
-	EndWhile
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
+	If abAutoLights
+		AlcoveLightState = 0
+	EndIf
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
-	_kCharacter.DisableNoWait()
+	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
+	_Curtain.Enable(True)
+	If _kCharacter
+		_kCharacter.MoveToMyEditorLocation()
+	EndIf
 	HideTrophies()
 	AlcoveState = 0
 	AlcoveStatueState = 0
-	AlcoveLightState = 0
+	_Curtain.DisableNoWait()
 EndFunction
 
 Event OnCharacterReady(string eventName, string strArg, float numArg, Form sender)
@@ -482,6 +503,8 @@ Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
 	EndWhile
 	Return iSafety as Bool
 EndFunction
+
+
 
 Function WaitForCharacterReady(Int iSafety = 30)
 	_bCharacterReady = False
@@ -814,7 +837,7 @@ Function UpdateAlcove()
 	;GotoState("Inactive")
 	AlcoveLightState = 1
 	String sCharacterName = CharacterName
-	EraseAlcove(abNoLightChange = True)
+	EraseAlcove(abAutoLights = False)
 	Wait(0.1)
 	CharacterManager.EraseCharacter(sCharacterName,True)
 	;Wait(0.1)
@@ -824,8 +847,8 @@ Function UpdateAlcove()
 	;GoToState("Active")
 EndFunction
 
-Function EraseAlcove(Bool abNoLightChange = False)
-	If !abNoLightChange
+Function EraseAlcove(Bool abAutoLights = True)
+	If abAutoLights
 		AlcoveLightState = 0
 	EndIf
 	String sCharacterName = CharacterName

@@ -224,7 +224,7 @@ event OnPageReset(string a_page)
 			Int iAlcoveIndex = kThisAlcove.AlcoveIndex
 			_iAlcoveIndices[iAlcoveIndex] = iAlcoveIndex
 			_iAlcoveStates[iAlcoveIndex] = kThisAlcove.AlcoveState
-			_sAlcoveCharacterNames[iAlcoveIndex] = kThisAlcove.CharacterName
+			_sAlcoveCharacterNames[iAlcoveIndex] = ShrineOfHeroes.GetAlcoveStr(i,"CharacterName")
 			
 			If _iAlcoveStates[iAlcoveIndex] == 0
 				iInactivePos += 2
@@ -294,15 +294,20 @@ Event OnOptionMenuOpen(Int Option)
 	ElseIf _iAlcoveCharacterOption.Find(Option) > -1
 		Int iAlcove = _iAlcoveCharacterOption.Find(Option)
 		Int iCN = _sCharacterNames.Find("")
-		String[] sCharacterNamesPlusEmpty = _sCharacterNames
-		sCharacterNamesPlusEmpty[iCN] = "$Empty"
+		String[] sCharacterNamesPlusEmpty = New String[128]
+		sCharacterNamesPlusEmpty[0] = "$Empty"
+		Int i = 0
+		While i < _sCharacterNames.Length
+			sCharacterNamesPlusEmpty[i + 1] = _sCharacterNames[i]
+			i += 1
+		EndWhile
 		SetMenuDialogOptions(sCharacterNamesPlusEmpty)
 		If _sAlcoveCharacterNames[iAlcove]
 			SetMenuDialogStartIndex(sCharacterNamesPlusEmpty.Find(_sAlcoveCharacterNames[iAlcove]))
 			SetMenuDialogDefaultIndex(sCharacterNamesPlusEmpty.Find(_sAlcoveCharacterNames[iAlcove]))
 		Else
-			SetMenuDialogStartIndex(sCharacterNamesPlusEmpty.Find("$Empty"))
-			SetMenuDialogDefaultIndex(sCharacterNamesPlusEmpty.Find("$Empty"))
+			SetMenuDialogStartIndex(0)
+			SetMenuDialogDefaultIndex(0)
 		EndIf
 	EndIf
 EndEvent
@@ -325,16 +330,21 @@ Event OnOptionMenuAccept(int option, int index)
 		SetMenuOptionValue(_iClassOption,_sClassNames[index])
 		CharacterManager.SetCharacterClass(_sCharacterNames[_iCurrentCharacter],CharacterManager.kClasses[index])
 	ElseIf _iAlcoveCharacterOption.Find(Option) > -1
+		index -= 1 ; Adjust because we added "Empty" to the beginning of the other list
 		Int iAlcove = _iAlcoveCharacterOption.Find(Option)
-		If _sCharacterNames[index]
-			SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],_sCharacterNames[index])
-			ShrineOfHeroes.AlcoveControllers[iAlcove].CharacterName = _sCharacterNames[index]
+		If index < 0
+			SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],"")
+			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName","")
 		Else
-			SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],"$Empty")
-			ShrineOfHeroes.AlcoveControllers[iAlcove].CharacterName = ""
+			Int iOIndex = ShrineOfHeroes.GetAlcoveIndex(_sCharacterNames[index])
+			If iOIndex > -1
+				ShrineOfHeroes.SetAlcoveStr(iOIndex,"CharacterName","")
+				SetMenuOptionValue(_iAlcoveCharacterOption[iOIndex],"")
+			EndIf
+			SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],_sCharacterNames[index])
+			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName",_sCharacterNames[index])
 		EndIf
-		Utility.WaitMenuMode(0.5)
-		ForcePageReset()
+		SendModEvent("vMYC_ShrineNeedsUpdate")
 	EndIf
 EndEvent
 
