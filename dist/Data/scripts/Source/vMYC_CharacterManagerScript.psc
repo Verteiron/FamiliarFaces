@@ -1047,7 +1047,7 @@ Bool Function LoadCharacter(String sCharacterName)
 			CustomMapMarkers = New ObjectReference[32]
 		EndIf
 		Cell kCell = JMap.getForm(jCharacterData,"LastCell") as Cell
-		If kCell
+		If kCell && iHOidx > -1
 			ObjectReference kSpawnObject
 			i = kCell.GetNumRefs()
 			Debug.Trace("MYC:    LastCell is " + kCell + ", checking " + i + " objects...")
