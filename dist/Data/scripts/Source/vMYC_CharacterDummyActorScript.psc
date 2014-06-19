@@ -70,7 +70,7 @@ Event OnInit()
 EndEvent
 
 Event OnLoad()
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
 	SetNameIfNeeded()
 	CheckVars()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
@@ -110,7 +110,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnPackageChange(Package akOldPackage)
-	Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
+	;Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
 EndEvent
 
 Event OnUnload()
@@ -119,7 +119,7 @@ Event OnUnload()
 EndEvent
 
 Event OnRaceSwitchComplete()
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) OnRaceSwitchComplete!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnRaceSwitchComplete!")
 	_bSwitchedRace = True
 EndEvent
 
@@ -133,7 +133,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	If strArg != CharacterName
 		Return
 	EndIf
-	Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
 	Int iAdded
@@ -152,40 +152,40 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 		If bSpellIsAllowed
 			If AddSpell(kSpell,False)
-				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
+				;;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
 				iAdded += 1
 			EndIf
 		Else
 			If RemoveSpell(kSpell)
-				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
+				;;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
 				iRemoved += 1
 			EndIf
 		EndIf
 	EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 EndEvent
 
 Function CheckVars()
 	If !_kActorBase
-		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) _kActorBase is empty, filling it...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) _kActorBase is empty, filling it...")
 		_kActorBase = GetActorBase()
 	EndIf
 	If _kActorBase != GetActorBase()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) ActorBase has CHANGED, this should NEVER happen! _kActorBase: " + _kActorBase + ", current is: " + GetActorBase())
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) ActorBase has CHANGED, this should NEVER happen! _kActorBase: " + _kActorBase + ", current is: " + GetActorBase())
 		_kActorBase = GetActorBase()
 	EndIf
 	If !CharacterName
-		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterName is missing, getting it from CharacterManager...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterName is missing, getting it from CharacterManager...")
 		CharacterName = CharacterManager.GetCharacterNameFromActorBase(_kActorBase)
 		If !CharacterName
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterName was not set and could not be loaded from CharacterManager, this will cause problems!")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterName was not set and could not be loaded from CharacterManager, this will cause problems!")
 		EndIf
 	EndIf
 	If !CharacterRace
-		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterRace is missing, getting it from CharacterManager...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterRace is missing, getting it from CharacterManager...")
 		CharacterRace = CharacterManager.GetCharacterForm(CharacterName,"Race") as Race
 		If !CharacterRace
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!")
 		EndIf
 	EndIf
 EndFunction
@@ -204,7 +204,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	GotoState("Busy")
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
 	SetNonpersistent()
@@ -217,25 +217,25 @@ Function DoUpkeep(Bool bInBackground = True)
 EndFunction
 
 Function SetNonpersistent()
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	SetNameIfNeeded()
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	Int iSafetyTimer = 10
 	While CharacterManager.ApplyCharacterPerks(CharacterName) < 0 && iSafetyTimer
 		iSafetyTimer -= 1
 		Wait(0.5)
 	EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying haircolor...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying haircolor...")
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") as ColorForm
 	_kActorBase.SetHairColor(kHairColor)
 	If !NIOverride.HasOverlays(Self)
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Adding NIO overlays...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Adding NIO overlays...")
 		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
 	EndIf
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
 	If GetFactionRank(PotentialFollowerFaction) <= -2
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) setting follower factions...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting follower factions...")
 		SetFactionRank(PotentialFollowerFaction,0)
 		SetFactionRank(CurrentFollowerFaction,-1)
 		SetRelationshipRank(Game.GetPlayer(),3)
@@ -243,14 +243,14 @@ Function SetNonpersistent()
 	If !CharacterManager.GetCharacterForm(CharacterName,"Class") ; If !GetFormValue(_kActorBase,sKey + "Class")
 		SetCustomActorValues(True)
 	Else
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) has an assigned class, ignoring saved actor values!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) has an assigned class, ignoring saved actor values!")
 	EndIf
 	UpdateCombatStyle()
 EndFunction
 
 Function UpdateCombatStyle()
 	If IsDisabled()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) UpdateCombatStyle was called but actor is disabled so we can't get weapon type. Try again later!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) UpdateCombatStyle was called but actor is disabled so we can't get weapon type. Try again later!")
 		_bNeedCSUpdate = True
 		Return
 	EndIf
@@ -277,7 +277,7 @@ Function UpdateCombatStyle()
 		Else
 			SetAV("Magicka",0)
 		EndIf
-		Debug.Trace("MYC: Set " + CharacterName + "'s combatstyle to " + _kCombatStyle)
+		;Debug.Trace("MYC: Set " + CharacterName + "'s combatstyle to " + _kCombatStyle)
 	EndIf
 	CharacterManager.SetLocalForm(CharacterName,"CombatStyle",_kCombatStyle)
 EndFunction
@@ -291,17 +291,17 @@ Function RefreshMesh()
 ;	SetAlpha(0.01,False)
 ;	Wait(2.0)
 	;SetScale(0.01)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
 	;Wait(RandomFloat(0.0,2.0))
 	Int iMyTurn = vMYC_CharGenLoading.GetValue() as Int	
 	vMYC_CharGenLoading.Mod(1)
 ;	Wait(1.0)
 	;While vMYC_CharGenLoading.GetValue() - 1 != iMyTurn && iSafetyTimer > 0
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for SetRace to become available. ...")
+		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for SetRace to become available. ...")
 		;iSafetyTimer -= 1
 		;Wait(1.0)
 	;EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace!")
 	_bSwitchedRace = False
 	;Bool bAIEnabled = IsAIEnabled()
 	;EnableAI(False)
@@ -327,13 +327,13 @@ Function RefreshMesh()
 		;Wait(0.25)
 	;EndWhile
 	;If !iSafetyTimer
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace timed out, that's usually not good.")
+		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace timed out, that's usually not good.")
 	;EndIf
 	MoveTo(kHere)
 	WaitFor3DLoad(Self)
 	kHere.Delete()
 	;Wait(0.5)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Finished SetRace!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Finished SetRace!")
 	;vMYC_CharGenLoading.Mod(-1)
 	
 	;SetRace(CharacterRace)
@@ -341,10 +341,10 @@ Function RefreshMesh()
 ;	EndIf
 	;vMYC_CharGenLoading.Mod(1)
 	;While vMYC_CharGenLoading.GetValue() > 1
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for CharGen to become available...")
+		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for CharGen to become available...")
 		;Wait(RandomFloat(0.8,1.2))
 	;EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
 	_bSwitchedRace = False
 	iSafetyTimer = 10
 	Bool bSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
@@ -353,7 +353,7 @@ Function RefreshMesh()
 		Wait(0.5)
 		bSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
 	EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bSuccess + " from LoadCharacter!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bSuccess + " from LoadCharacter!")
 	iSafetyTimer = 20
 	While !_bSwitchedRace && iSafetyTimer > 0
 		iSafetyTimer -= 1
@@ -375,7 +375,7 @@ Function RefreshMesh()
 		UnequipItem(kLongHairEquipment)
 	EndIf
 	If kHairEquipment || kLongHairEquipment
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Fixing hair...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Fixing hair...")
 		; LoadCharacter doesn't know about head armor, so sometimes can make a ponytail stick through a hood and such.
 		;  This fixes that by un/requipping anything that uses the Hair or Longhair slots 
 ;		Wait(0.5)
@@ -419,19 +419,19 @@ EndFunction
 
 
 Function SetCustomActorValues(Bool bScaleToLevel = False)
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting custom actor values...")
+	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting custom actor values...")
 	String[] sAVNames = CharacterManager.AVNames
 	Int iBaseLevel = CharacterManager.GetCharacterStat(CharacterName,"Level") as Int
 	Int iMyLevel = GetLevel()
 	Float fScaleMult = 1.0
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
+	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
 	Float fCharacterXP = (12.5 * iMyLevel * iMyLevel) + 62.5 * iMyLevel - 75
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) needs " + fCharacterXP + " to reach this level!")
+	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) needs " + fCharacterXP + " to reach this level!")
 	If bScaleToLevel
 		If iBaseLevel > 0
 			fScaleMult = (iMyLevel as Float) / (iBaseLevel as Float)
 		EndIf
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor values will be scaled to " + fScaleMult * 100 + "% of their value")
+		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor values will be scaled to " + fScaleMult * 100 + "% of their value")
 	EndIf
 	Int i
 	i = sAVNames.Length ;jArray.Count(jActorValueStrings)
@@ -457,7 +457,7 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 				EndIf
 			EndIf
 			SetActorValue(sAVName,fAV as Int)
-			;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
+			;;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
 		EndIf
 	EndWhile
 	SetAV("Confidence",3)
@@ -466,7 +466,7 @@ EndFunction
 
 Function SetNameIfNeeded(Bool abForce = False)
 	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
 		_kActorBase.SetName(CharacterName)
 
 		Int i = GetNumReferenceAliases()
@@ -474,7 +474,7 @@ Function SetNameIfNeeded(Bool abForce = False)
 			i -= 1
 			ReferenceAlias kThisRefAlias = GetNthReferenceAlias(i)
 			If kThisRefAlias.GetOwningQuest() != CharacterManager && kThisRefAlias.GetOwningQuest() != ShrineOfHeroes
-				Debug.Trace("MYC: (" + CharacterName + "/Actor) Resetting RefAlias " + kThisRefAlias + "!")
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor) Resetting RefAlias " + kThisRefAlias + "!")
 				kThisRefAlias.Clear()
 				kThisRefAlias.ForceRefTo(Self)
 			EndIf
@@ -491,9 +491,9 @@ Function SetNameIfNeeded(Bool abForce = False)
 				While i > 0
 					i -= 1
 					If WidgetList[i]
-						Debug.Trace("MYC: Widget " + i + " is type " + WidgetList[i].getWidgetType())
+						;Debug.Trace("MYC: Widget " + i + " is type " + WidgetList[i].getWidgetType())
 						If WidgetList[i].getWidgetType() == "XFLPanel"
-							Debug.Trace("MYC: Resetting widget " + i + "...")
+							;Debug.Trace("MYC: Resetting widget " + i + "...")
 							if XFLMain
 								(WidgetList[i] as xflpanel).RemoveActors(XFLMain.XFL_FollowerList)
 								(WidgetList[i] as xflpanel).AddActors(XFLMain.XFL_FollowerList)
@@ -520,19 +520,19 @@ EndFunction
 State Busy
 
 	Event OnLoad()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad called in Busy state!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad called in Busy state!")
 	EndEvent
 
 	Event OnAttachedToCell()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnAttachedToCell called in Busy state!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnAttachedToCell called in Busy state!")
 	EndEvent
 	
 	Event OnUnload()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) OnUnload called in Busy state!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnUnload called in Busy state!")
 	EndEvent
 	
 	;Function DoUpkeep(Bool bInBackground = True)
-	;	Debug.Trace("MYC: (" + CharacterName + "/Actor) DoUpkeep called in Busy state!")
+	;	;Debug.Trace("MYC: (" + CharacterName + "/Actor) DoUpkeep called in Busy state!")
 	;EndFunction
 
 EndState
