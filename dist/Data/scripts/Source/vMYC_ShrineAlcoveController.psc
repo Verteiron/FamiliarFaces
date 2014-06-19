@@ -271,6 +271,7 @@ Function SetAlcoveCharacterName(string sCharacterName)
 	If _sCharacterName && sCharacterName && sCharacterName != _sCharacterName ; FIXME: Swap characters
 		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnSetAlcoveCharacterName - CharacterName changed from " + _sCharacterName + " to " + sCharacterName + "!",1)
 		DeactivateAlcove()
+		EraseAlcove(True)
 		_sCharacterName = sCharacterName
 		ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",_sCharacterName)
 		ActivateAlcove()
@@ -444,7 +445,7 @@ EndFunction
 Function DeactivateAlcove()
 	AlcoveState = 1
 	AlcoveLightState = 1
-	While AlcoveLightState != 1
+	While AlcoveLightState != 1 && !IsInMenuMode()
 		WaitMenuMode(1)
 	EndWhile
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
@@ -829,6 +830,7 @@ Function EraseAlcove(Bool abNoLightChange = False)
 	EndIf
 	String sCharacterName = CharacterName
 	CharacterName = ""
+	_kCharacter.Delete()
 	;Wait(0.1)
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 	AlcoveState = 0

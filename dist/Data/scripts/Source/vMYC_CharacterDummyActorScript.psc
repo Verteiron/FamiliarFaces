@@ -494,7 +494,6 @@ Function SetNameIfNeeded(Bool abForce = False)
 						Debug.Trace("MYC: Widget " + i + " is type " + WidgetList[i].getWidgetType())
 						If WidgetList[i].getWidgetType() == "XFLPanel"
 							Debug.Trace("MYC: Resetting widget " + i + "...")
-							
 							if XFLMain
 								(WidgetList[i] as xflpanel).RemoveActors(XFLMain.XFL_FollowerList)
 								(WidgetList[i] as xflpanel).AddActors(XFLMain.XFL_FollowerList)
