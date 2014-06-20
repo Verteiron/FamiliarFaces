@@ -87,7 +87,7 @@ Event OnConfigInit()
 	_iAlcoveCharacterOption	= New Int[12]
 	_iAlcoveResetOption		= New Int[12]
 
-	FilterVoiceTypes(VOICETYPE_FOLLOWER)
+	FilterVoiceTypes(VOICETYPE_NOFILTER)
 	
 EndEvent
 
@@ -102,33 +102,27 @@ Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 		String sFilterLegend = ""
 		VoiceType kThisVoiceType = CharacterManager.vMYC_VoiceTypesAllList.GetAt(i) as VoiceType
 		Bool bInclude = False
-		If !iVoiceTypeFilter
-			bInclude = True
-			iVoiceTypeFilter = 31
-		EndIf
 		If CharacterManager.vMYC_VoiceTypesFollowerList.Find(kThisVoiceType) > -1
 			sFilterLegend = sFilterLegend + "F"
-			If Math.LogicalAnd(iVoiceTypeFilter,VOICETYPE_FOLLOWER)
-				bInclude = True
-			EndIf
+			bInclude = True
 		EndIf
 		If CharacterManager.vMYC_VoiceTypesSpouseList.Find(kThisVoiceType) > -1
 			If sFilterLegend
 				sFilterLegend = sFilterLegend + ","
 			EndIf
 			sFilterLegend = sFilterLegend + "S"
-			If Math.LogicalAnd(iVoiceTypeFilter,VOICETYPE_SPOUSE)
-				bInclude = True
-			EndIf
+			bInclude = True
 		EndIf
 		If CharacterManager.vMYC_VoiceTypesAdoptList.Find(kThisVoiceType) > -1
 			If sFilterLegend
 				sFilterLegend = sFilterLegend + ","
 			EndIf
 			sFilterLegend = sFilterLegend + "A"
-			If Math.LogicalAnd(iVoiceTypeFilter,VOICETYPE_ADOPT)
-				bInclude = True
-			EndIf
+			bInclude = True
+		EndIf
+
+		If !iVoiceTypeFilter || iVoiceTypeFilter == VOICETYPE_NOFILTER
+			bInclude = True
 		EndIf
 		
 		If bInclude
@@ -139,12 +133,12 @@ Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 			If sFilterLegend
 				_sVoiceTypesFiltered[idx] = _sVoiceTypesFiltered[idx] + " (" + sFilterLegend + ")"
 			EndIf
-			Debug.Trace("MYC: MCM: _kVoiceTypesFiltered[ " + idx + "] is " + _kVoiceTypesFiltered[idx] + " named " + _sVoiceTypesFiltered[idx])
+			;Debug.Trace("MYC: MCM: _kVoiceTypesFiltered[ " + idx + "] is " + _kVoiceTypesFiltered[idx] + " named " + _sVoiceTypesFiltered[idx])
 			idx += 1
 		EndIf
 		i += 1
 	EndWhile
-
+	Debug.Trace("MYC/MCM: Displaying " + idx + "/" + i + " voicetypes")
 EndFunction
 
 event OnGameReload()
