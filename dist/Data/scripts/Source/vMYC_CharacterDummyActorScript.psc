@@ -18,12 +18,15 @@ Bool Property NeedRefresh Hidden
 	EndFunction
 EndProperty
 
+Actor Property PlayerREF Auto
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 
 Faction Property CurrentFollowerFaction Auto
 Faction Property PotentialFollowerFaction Auto
+Faction Property PotentialMarriageFaction Auto
+Faction Property vMYC_CharacterPlayerEnemyFaction Auto
 
 GlobalVariable Property	vMYC_CharGenLoading Auto
 
@@ -236,18 +239,42 @@ Function SetNonpersistent()
 	EndIf
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
 	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
-	If GetFactionRank(PotentialFollowerFaction) <= -2
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting follower factions...")
-		SetFactionRank(PotentialFollowerFaction,0)
-		SetFactionRank(CurrentFollowerFaction,-1)
-		SetRelationshipRank(Game.GetPlayer(),3)
-	EndIf
+	SetFactions()
 	If !CharacterManager.GetCharacterForm(CharacterName,"Class") ; If !GetFormValue(_kActorBase,sKey + "Class")
 		SetCustomActorValues(True)
 	Else
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) has an assigned class, ignoring saved actor values!")
 	EndIf
 	UpdateCombatStyle()
+EndFunction
+
+Function SetFactions()
+	If CharacterManager.GetLocalInt(CharacterName,"IsFoe")
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Hates the player!")
+		RemoveFromFaction(CurrentFollowerFaction)
+		RemoveFromFaction(PotentialFollowerFaction)
+		RemoveFromFaction(PotentialMarriageFaction)
+		SetFactionRank(vMYC_CharacterPlayerEnemyFaction,0)
+		SetActorValue("Aggression",1)
+		SetRelationshipRank(PlayerREF,-4)
+	Else
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Likes the player!")
+		If GetFactionRank(PotentialFollowerFaction) <= -2
+			RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
+			SetFactionRank(PotentialFollowerFaction,0)
+			SetFactionRank(CurrentFollowerFaction,-1)
+			SetRelationshipRank(PlayerREF,3)
+			SetActorValue("Aggression",0)
+		EndIf
+		If IsInCombat() && GetCombatTarget() == PlayerREF
+			StopCombat()
+		EndIf
+		If CharacterManager.GetLocalInt(CharacterName,"CanMarry") && GetFactionRank(PotentialMarriageFaction) <= -2
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) LOVES the player!")
+			SetFactionRank(PotentialMarriageFaction,0)
+		EndIf
+	EndIf
+	
 EndFunction
 
 Function UpdateCombatStyle()

@@ -29,6 +29,10 @@ Int		_iCurrentCharacterOption
 Int		_iCharacterEnabledOption
 Bool[]	_bCharacterEnabled
 
+Int		_iCharacterIsFoeOption
+
+Int		_iCharacterCanMarryOption
+
 Int		_iVoiceTypeOption
 Int[]	_iVoiceTypeSelections
 
@@ -166,6 +170,13 @@ event OnPageReset(string a_page)
 		_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
 		AddEmptyOption()
 		;====================================----
+
+		;===== Character faction options ====----
+		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
+		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
+		_iCharacterIsFoeOption = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
+		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
+		;====================================----
 		
 		;===== Character warp DEBUG option ==----
 		_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
@@ -264,6 +275,32 @@ Event OnOptionSelect(Int Option)
 
 		SetToggleOptionValue(Option,_bCharacterEnabled[_iCurrentCharacter])		
 		;ForcePageReset()
+	ElseIf Option == _iCharacterIsFoeOption
+		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe") as Bool
+		bIsFoe = !bIsFoe
+		CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",bIsFoe as Int)
+		If bIsFoe
+			CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",0)
+			SetToggleOptionValue(_iCharacterCanMarryOption,False,True)
+			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_DISABLED,True)
+		Else
+			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_NONE,True)
+		EndIf
+		SetToggleOptionValue(Option,bIsFoe)
+		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
+	ElseIf Option == _iCharacterCanMarryOption
+		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry") as Bool
+		bCanMarry = !bCanMarry
+		CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",bCanMarry as Int)
+		If bCanMarry
+			CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",0)
+			SetToggleOptionValue(_iCharacterIsFoeOption,False,True)
+			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_DISABLED,True)
+		Else
+			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_NONE,True)
+		EndIf
+		SetToggleOptionValue(Option,bCanMarry)
+		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
 	ElseIf Option == _iWarpOption
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
