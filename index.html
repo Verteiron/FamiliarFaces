@@ -37,7 +37,7 @@
 <li>Characters now report readiness to the Shrine faster, which speeds up load time</li>
 <li>Minor backend changes</li>
 </ul><h3>
-<a name="updates-in-preview-version-044" class="anchor" href="#updates-in-preview-version-044"><span class="octicon octicon-link"></span></a>Updates in preview version (0.44)</h3>
+<a name="updates-in-previous-version-044" class="anchor" href="#updates-in-previous-version-044"><span class="octicon octicon-link"></span></a>Updates in previous version (0.44)</h3>
 
 <ul>
 <li>Perks are now FULLY IMPLEMENTED!</li>
@@ -78,7 +78,7 @@
 <li>Latest version of Skyrim - Dawnguard and Dragonborn are supported but not required.</li>
 <li>SKSE 1.7.0 - Not included. Download and install if you're not using it already. Earlier versions WILL NOT WORK. The mod will notice if SKSE is missing and will shut down.</li>
 <li>SkyUI 4.1 - Not included. Required for using MCM.</li>
-<li>JContainers 0.67 or higher - Included. This is an SKSE plugin that is packaged with this testing edition.</li>
+<li>JContainers 0.67.1 or higher - Included. This is an SKSE plugin that is packaged with this testing edition.</li>
 <li>CharGen.dll - Included. This is a special testing version of Expired's CharGen Extender SKSE plugin. See the Warnings section below. If you are running the release versions of CharGen Extender or RaceMenu, BACK THEM UP BEFORE INSTALLING FAMILIAR FACES.</li>
 <li>
 <a href="http://www.nexusmods.com/skyrim/mods/12933/?">Extensible Follower Framework</a> - Not required, but recommended for follower management. UFO and AFT should also work, but EFF is specifically supported.</li>
@@ -89,10 +89,11 @@
 
 <ul>
 <li>Dawnguard and Dragonborn are supported but not required.</li>
-<li>Enhanced Character Edit (ECE) is <strong>NOT</strong> compatible with Familiar Faces and likely won't be any time in the near future. This is not due to any particular flaw in ECE, it just uses a different system than CharGen Extender, which is what I'm relying on.</li>
+<li>Enhanced Character Edit (ECE) is <strong>NOT</strong> compatible with Familiar Faces and likely won't be any time in the near future. This is not due to any particular flaw in ECE, it just uses a different system than CharGen Extender, which is what I'm relying on. I have been in contact with the author but do not hold out much hope of compatibility being achieved.</li>
 <li>Body replacer mods such CBBE should be compatible. Face replacer mods should work (provided they don't rely on ECE), but exported characters will probably not load properly if the face-altering mod is removed.</li>
-<li>Mods that add NIOverride overlays (body tattoos, scars, glowing face tattoos, etc) to RaceMenu <del>will be supported, but don't work yet</del> are now fully supported (and in need of testing!)</li>
+<li>Mods that add NIOverride overlays (body tattoos, scars, glowing face tattoos, etc) to RaceMenu <del>will be supported, but don't work yet</del> <strong>are now fully supported</strong> (and in need of testing!)</li>
 <li>Some ENB setups may interfere with ImageSpaceOverrides, meaning some animations that normally fade to white to hide animation glitches will not do so. Please let me know if you're using ENB before reporting animation bugs.</li>
+<li>HDT physics mods like flowing hair, etc do not load properly. This likely a bug in the HDT plugin, but I haven't had much luck in getting it addressed.</li>
 </ul><h2>
 <a name="testing-setup" class="anchor" href="#testing-setup"><span class="octicon octicon-link"></span></a>Testing setup</h2>
 
@@ -134,9 +135,9 @@
 
 <p>Shortly after starting or loading a game, you should receive a Portal Stone in your inventory. You can use that stone from your Inventory (under misc items) to warp to the Shrine of Heroes. Activate the "Tome of the Dragonborn" in front of an empty shrine to save your character there. The save process will take some time, dependent on how many skills, perks, and inventory items your character has.</p>
 
-<p>Now load up a different game, use the Portal Stone (there may be a delay before it gets placed in your inventory, just wait), and you can open the Tome of your saved character to send them into the world. They will have a default spawn point which can be changed from within MCM. Upon talking to them, you should be able to recruit them as followers.</p>
+<p>Now load up a different game, use the Portal Stone (there may be a delay before it gets placed in your inventory, just wait), and you can open the Tome of your saved character to send them into the world. They will have a default spawn point which can be changed from within MCM. Upon talking to them, you should be able to recruit them as followers. You can also make them your marriageable lover (or even your worst enemy!) via MCM.</p>
 
-<p>After that, just play around with your imported character as a follower!</p>
+<p>After that, just play around with your imported character!</p>
 
 <h2>
 <a name="what-to-test-first-aka-the-sanity-check" class="anchor" href="#what-to-test-first-aka-the-sanity-check"><span class="octicon octicon-link"></span></a>What to test first (aka the sanity check)</h2>
@@ -183,13 +184,14 @@ If you must poke around in Morphs (seriously, it doesn't work yet, don't mess wi
 
 <ul>
 <li>If you have more than 5 characters without ANY side-quest achievements, they may not get sent to the world when their book is opened, or may end up in a random place.</li>
-<li>The imported character may not give you the recruitment dialog. This is due to not every default voicetype having Follower options. If this happens, use MCM to change that character's voicetype to one of those listed as a Follower here. Alternatively, installing this mod may help.</li>
-<li>Characters will ignore their weapons and use Magic, regardless of their Class. Try selecting them and typing ForceAV Magicka 0 in the console to force them to use their weapon. This is a complex problem that I'm working on.</li>
-<li>If you have several shrines next to each other, especially with lots of trophies, you may find the lighting doesn't work properly during the save animation. I've taken some steps to mitigate this but it is fundamentally an engine limitation I wasn't aware of before building the shrine. A fairly radical redesign may be needed to fix this and that probably won't happen before the initial release.</li>
+<li>Character sent to a custom location may wind up in limbo if that location has no objects loaded. Steps have been taken to fix this (and more will be taken) but it still happens from time to time. The only fix is to close the character's book and send them somewhere else via MCM.</li>
+<li>The imported character may not give you the recruitment dialog (or marriage options, or adoption options). This is due to not every default voicetype having Follower options. If this happens, use MCM to change that character's voicetype to one that meets your needs: they on the list with what they can do (F=Follower,S=Spouse,A=Adoption) Alternatively, installing <a href="http://www.nexusmods.com/skyrim/mods/16266/?">this mod</a> may help.</li>
+<li>Characters will ignore their weapons and use Magic, regardless of their Class. Try selecting them and typing ForceAV Magicka 0 in the console to force them to use their weapon. This is a complex problem that I'm (still) working on.</li>
+<li>If you have several shrines next to each other, especially with lots of trophies, you may find the lighting doesn't work properly during the save animation and torches flicker in odd ways. I've taken some steps to mitigate this but it is fundamentally an engine limitation I wasn't aware of before building the shrine (turns out the light source limit doesn't <em>just</em> apply to shadow lights). A fairly radical redesign may be needed to fix this and that probably won't happen before the initial release.</li>
 </ul><h1>
 <a name="thanks" class="anchor" href="#thanks"><span class="octicon octicon-link"></span></a>Thanks!</h1>
 
-<p>Thank you for helping me make Familiar Faces the best mod it can be. All early testers will be credited in the mod's description on Skyrim Nexus; it's not much of a thank you, but it's all I've got!</p>
+<p>Thank you for helping me make Familiar Faces the best mod it can be. </p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/Verteiron">Verteiron</a></p>
