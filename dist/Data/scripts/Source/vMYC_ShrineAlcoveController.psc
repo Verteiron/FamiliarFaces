@@ -284,6 +284,7 @@ EndEvent
 
 Event OnUpdate()
 	If ShrineOfHeroes.Ready
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ShrineOfHeroes is ready, will try again in a second :(")
 		CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
 		CheckVars()
 		_Book.AlcoveIndex = AlcoveIndex
@@ -615,7 +616,8 @@ Function DoSaveAnimation()
 	Wait(1.0)
 	_Book.FlipPages = False
 	ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",PlayerREF.GetActorBase().GetName())
-	RegisterForSingleUpdate(0.1)
+	If 
+	ActivateAlcove()
 
 	;Saving is done, return the character to the ground
 	vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds 
