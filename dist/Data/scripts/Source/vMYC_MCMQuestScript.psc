@@ -7,6 +7,11 @@ vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
 
+Int Property	 VOICETYPE_NOFILTER = 0	AutoReadOnly
+Int Property	 VOICETYPE_FOLLOWER = 1	AutoReadOnly
+Int Property	 VOICETYPE_SPOUSE 	= 2	AutoReadOnly
+Int Property	 VOICETYPE_ADOPT 	= 4	AutoReadOnly
+Int Property	 VOICETYPE_GENDER	= 8 AutoReadOnly
 
 Bool _Changed 
 Bool _Shutdown
@@ -15,10 +20,12 @@ String 	_sCurrentPage
 
 String[] _sCharacterNames
 
-String[] _sVoiceTypesFollower
+String[] _sVoiceTypesFiltered
+Int		 _iVoiceTypeFilter
+
 String[] _sVoiceTypesAll
 
-VoiceType[] _kVoiceTypesFollower
+VoiceType[] _kVoiceTypesFiltered
 VoiceType[] _kVoiceTypesAll
 
 Int		_iCurrentCharacter
@@ -28,6 +35,10 @@ Int		_iCurrentCharacterOption
 
 Int		_iCharacterEnabledOption
 Bool[]	_bCharacterEnabled
+
+Int		_iCharacterIsFoeOption
+
+Int		_iCharacterCanMarryOption
 
 Int		_iVoiceTypeOption
 Int[]	_iVoiceTypeSelections
@@ -60,23 +71,8 @@ Event OnConfigInit()
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
 	_iVoiceTypeSelections = New Int[128]
-	_sVoiceTypesFollower = New String[128]
-	_kVoiceTypesFollower = New VoiceType[128]
 	_iAliasSelections = New Int[128]
-	Int i = 0
-	Int idx = 1
-	Int iListSize = CharacterManager.vMYC_VoiceTypesFollowerList.GetSize()
-	_sVoiceTypesFollower[0] = "Default"
-	While i < iListSize
-		_kVoiceTypesFollower[idx] = CharacterManager.vMYC_VoiceTypesFollowerList.GetAt(i) as VoiceType
-		_sVoiceTypesFollower[idx] = _kVoiceTypesFollower[idx] as String
-		_sVoiceTypesFollower[idx] = StringUtil.SubString(_sVoiceTypesFollower[idx],0,StringUtil.Find(_sVoiceTypesFollower[idx],">") - 10)
-		_sVoiceTypesFollower[idx] = StringUtil.SubString(_sVoiceTypesFollower[idx],StringUtil.Find(_sVoiceTypesFollower[idx],"<") + 1)
-		Debug.Trace("MYC: MCM: _kVoiceTypesFollower[ " + idx + "] is " + _kVoiceTypesFollower[idx] + " named " + _sVoiceTypesFollower[idx])
-		i += 1
-		idx += 1
-	EndWhile
-	
+
 	_iAlcoveIndices 		= New Int[12]
 	_iAlcoveStates			= New Int[12]
 	_sAlcoveCharacterNames	= New String[12]
@@ -90,8 +86,60 @@ Event OnConfigInit()
 	
 	_iAlcoveCharacterOption	= New Int[12]
 	_iAlcoveResetOption		= New Int[12]
+
+	FilterVoiceTypes(VOICETYPE_NOFILTER)
 	
 EndEvent
+
+Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
+	_sVoiceTypesFiltered = New String[128]
+	_kVoiceTypesFiltered = New VoiceType[128]
+	Int i = 0
+	Int idx = 1
+	Int iListSize = CharacterManager.vMYC_VoiceTypesAllList.GetSize()
+	_sVoiceTypesFiltered[0] = "Default"
+	While i < iListSize
+		String sFilterLegend = ""
+		VoiceType kThisVoiceType = CharacterManager.vMYC_VoiceTypesAllList.GetAt(i) as VoiceType
+		Bool bInclude = False
+		If CharacterManager.vMYC_VoiceTypesFollowerList.Find(kThisVoiceType) > -1
+			sFilterLegend = sFilterLegend + "F"
+			bInclude = True
+		EndIf
+		If CharacterManager.vMYC_VoiceTypesSpouseList.Find(kThisVoiceType) > -1
+			If sFilterLegend
+				sFilterLegend = sFilterLegend + ","
+			EndIf
+			sFilterLegend = sFilterLegend + "S"
+			bInclude = True
+		EndIf
+		If CharacterManager.vMYC_VoiceTypesAdoptList.Find(kThisVoiceType) > -1
+			If sFilterLegend
+				sFilterLegend = sFilterLegend + ","
+			EndIf
+			sFilterLegend = sFilterLegend + "A"
+			bInclude = True
+		EndIf
+
+		If !iVoiceTypeFilter || iVoiceTypeFilter == VOICETYPE_NOFILTER
+			bInclude = True
+		EndIf
+		
+		If bInclude
+			_kVoiceTypesFiltered[idx] = kThisVoiceType
+			_sVoiceTypesFiltered[idx] = _kVoiceTypesFiltered[idx] as String
+			_sVoiceTypesFiltered[idx] = StringUtil.SubString(_sVoiceTypesFiltered[idx],0,StringUtil.Find(_sVoiceTypesFiltered[idx],">") - 10)
+			_sVoiceTypesFiltered[idx] = StringUtil.SubString(_sVoiceTypesFiltered[idx],StringUtil.Find(_sVoiceTypesFiltered[idx],"<") + 1)
+			If sFilterLegend
+				_sVoiceTypesFiltered[idx] = _sVoiceTypesFiltered[idx] + " (" + sFilterLegend + ")"
+			EndIf
+			;Debug.Trace("MYC: MCM: _kVoiceTypesFiltered[ " + idx + "] is " + _kVoiceTypesFiltered[idx] + " named " + _sVoiceTypesFiltered[idx])
+			idx += 1
+		EndIf
+		i += 1
+	EndWhile
+	Debug.Trace("MYC/MCM: Displaying " + idx + "/" + i + " voicetypes")
+EndFunction
 
 event OnGameReload()
     parent.OnGameReload()
@@ -148,11 +196,11 @@ event OnPageReset(string a_page)
 		If kCharVoiceType == None ; If no voicetype is set, pick the "default" option
 			_iVoiceTypeSelections[_iCurrentCharacter] = 0
 		Else
-			Int iVoiceTypeIndex = _kVoiceTypesFollower.Find(kCharVoiceType)
+			Int iVoiceTypeIndex = _kVoiceTypesFiltered.Find(kCharVoiceType)
 			_iVoiceTypeSelections[_iCurrentCharacter] = iVoiceTypeIndex
 		EndIf
 
-		_iVoiceTypeOption = AddMenuOption("$VoiceType",_sVoiceTypesFollower[_iVoiceTypeSelections[_iCurrentCharacter]],OptionFlags)
+		_iVoiceTypeOption = AddMenuOption("$VoiceType",_sVoiceTypesFiltered[_iVoiceTypeSelections[_iCurrentCharacter]],OptionFlags)
 		;====================================----
 
 
@@ -165,6 +213,13 @@ event OnPageReset(string a_page)
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
 		_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
 		AddEmptyOption()
+		;====================================----
+
+		;===== Character faction options ====----
+		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
+		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
+		_iCharacterIsFoeOption = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
+		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
 		
 		;===== Character warp DEBUG option ==----
@@ -264,6 +319,32 @@ Event OnOptionSelect(Int Option)
 
 		SetToggleOptionValue(Option,_bCharacterEnabled[_iCurrentCharacter])		
 		;ForcePageReset()
+	ElseIf Option == _iCharacterIsFoeOption
+		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe") as Bool
+		bIsFoe = !bIsFoe
+		CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",bIsFoe as Int)
+		If bIsFoe
+			CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",0)
+			SetToggleOptionValue(_iCharacterCanMarryOption,False,True)
+			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_DISABLED,True)
+		Else
+			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_NONE,True)
+		EndIf
+		SetToggleOptionValue(Option,bIsFoe)
+		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
+	ElseIf Option == _iCharacterCanMarryOption
+		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry") as Bool
+		bCanMarry = !bCanMarry
+		CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",bCanMarry as Int)
+		If bCanMarry
+			CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",0)
+			SetToggleOptionValue(_iCharacterIsFoeOption,False,True)
+			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_DISABLED,True)
+		Else
+			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_NONE,True)
+		EndIf
+		SetToggleOptionValue(Option,bCanMarry)
+		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
 	ElseIf Option == _iWarpOption
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
@@ -276,7 +357,7 @@ EndEvent
 Event OnOptionMenuOpen(Int Option)
 	Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
 	If Option == _iVoiceTypeOption
-		SetMenuDialogOptions(_sVoiceTypesFollower)
+		SetMenuDialogOptions(_sVoiceTypesFiltered)
 		SetMenuDialogStartIndex(_iVoiceTypeSelections[_iCurrentCharacter])
 		SetMenuDialogDefaultIndex(0)
 	ElseIf Option == _iAliasOption
@@ -316,8 +397,8 @@ Event OnOptionMenuAccept(int option, int index)
 	Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
 	If Option == _iVoiceTypeOption
 		_iVoiceTypeSelections[_iCurrentCharacter] = index
-		SetMenuOptionValue(_iVoiceTypeOption,_sVoiceTypesFollower[index])
-		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFollower[index])
+		SetMenuOptionValue(_iVoiceTypeOption,_sVoiceTypesFiltered[index])
+		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == _iAliasOption
 		_iAliasSelections[_iCurrentCharacter] = index
 		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])

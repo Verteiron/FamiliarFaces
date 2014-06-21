@@ -177,8 +177,14 @@ Formlist Property vMYC_PerkList Auto
 Formlist Property vMYC_VoiceTypesFollowerList Auto
 {A list of voicetypes that can be followers.}
 
+Formlist Property vMYC_VoiceTypesSpouseList Auto
+{A list of voicetypes that can be married.}
+
+Formlist Property vMYC_VoiceTypesAdoptList Auto
+{A list of voicetypes that can be parents.}
+
 Formlist Property vMYC_VoiceTypesAllList Auto
-{A list of all voicetypes.}
+{A list of all (except unique/special) voicetypes.}
 
 TextureSet Property vMYC_PlayerFaceTexture Auto
 
