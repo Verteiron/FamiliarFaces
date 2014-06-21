@@ -32,7 +32,14 @@ Event OnLoad()
 EndEvent
 
 Event OnUpdate()
-	SplineTranslateTo(_kTarget.GetPositionX(),_kTarget.GetPositionY(),_kTarget.GetPositionZ() + 50,RandomFloat(-180,180),RandomFloat(-180,180),RandomFloat(-180,180),RandomFloat(500,800),RandomFloat(350,450))
+	If !Is3DLoaded()
+		Wait(2)
+	EndIf
+	If Is3DLoaded()
+		SplineTranslateTo(_kTarget.GetPositionX(),_kTarget.GetPositionY(),_kTarget.GetPositionZ() + 50,RandomFloat(-180,180),RandomFloat(-180,180),RandomFloat(-180,180),RandomFloat(500,800),RandomFloat(350,450))
+	Else
+		Delete()
+	EndIf
 EndEvent
 
 Function DoFlight()
