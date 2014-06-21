@@ -609,8 +609,8 @@ Function DoSaveAnimation()
 	_Curtain.EnableNoWait(True)
 
 	;Save the player
-	CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
 	_Book.FlipPages = True
+	CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
 	_bForceSave = False
 	vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
 	Wait(1.0)
