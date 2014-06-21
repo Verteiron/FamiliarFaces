@@ -1,6 +1,6 @@
 #FamiliarFaces
 
-Skyrim mod that allow characters to be shared between different playthroughs.
+Skyrim mod that allow characters to be shared between different playthroughs. Download the current build from the Github page [here](http://verteiron.github.io/FamiliarFaces/).
 
 This is a development version of Familiar Faces. There are bugs, possibly severe ones. You should be comfortable 
 installing Skyrim mods and have a basic grasp of things like directory structures, 7z files, and load order.
