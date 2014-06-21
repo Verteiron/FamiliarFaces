@@ -609,14 +609,14 @@ Function DoSaveAnimation()
 	_Curtain.EnableNoWait(True)
 
 	;Save the player
-	_Book.FlipPages = True
 	CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
+	_Book.FlipPages = True
 	_bForceSave = False
 	vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
 	Wait(1.0)
 	_Book.FlipPages = False
 	ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",PlayerREF.GetActorBase().GetName())
-	If 
+	CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
 	ActivateAlcove()
 
 	;Saving is done, return the character to the ground
