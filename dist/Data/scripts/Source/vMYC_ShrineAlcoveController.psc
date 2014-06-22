@@ -656,9 +656,10 @@ Function DoSaveAnimation()
 	_Book.IsOpen = False
 EndFunction
 
-Event OnEquipmentSaveEnd(string eventName, string strArg, float numArg, Form sender)
-{Cleanup invisible actors after all equipment is saved.}
+Event OnInventorySaveEnd(string eventName, string strArg, float numArg, Form sender)
+{Cleanup invisible actors after all inventory is saved.}
 	Wait(6.0) ; give 'em time to float into the shrine
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Killing the invisible swordsmen...")
 	Int i = _kInvisibleActors.Length
 	While i > 0
 		i -= 1
@@ -670,10 +671,14 @@ EndEvent
 Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sender)
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnEquipmentSaved(" + eventName + "," + sender + "," + strArg + "," + numArg + ")")
 	If _bPlayerIsSaving && ((sender as Armor) || (sender as Weapon))
+		If _iInvisibleActorIndex == 0
+			_iInvisibleActorIndex = _kInvisibleActors.Length
+		EndIf
 		_iInvisibleActorIndex -= 1
 		Int iThisIndex = _iInvisibleActorIndex
 		;_kInvisibleActors[iThisIndex].TranslateToRef(PlayerREF,999999)
-		_kInvisibleActors[iThisIndex].SetAlpha(0,False)
+		_kInvisibleActors[iThisIndex].RemoveAllItems()
+		_kInvisibleActors[iThisIndex].SetAlpha(0.01,False)
 		_kInvisibleActors[iThisIndex].MoveTo(PlayerREF)
 		Wait(RandomFloat(0.5,3))
 		;MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_kInvisibleActors[iThisIndex])
@@ -682,8 +687,13 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 			_kInvisibleActors[iThisIndex].EquipItem(sender)
 			_kInvisibleActors[iThisIndex].UnequipItemEx(sender,1,True)
 			Wait(0.1)
+		ElseIf sender as Weapon && numArg == 1
+			_kInvisibleActors[iThisIndex].EquipItem(sender)
 		Else
 			_kInvisibleActors[iThisIndex].EquipItem(sender)
+			_kInvisibleActors[iThisIndex].EquipItem(sender)
+			_kInvisibleActors[iThisIndex].UnequipItemEx(sender,RandomInt(1,2),True)
+			_kInvisibleActors[iThisIndex].TranslateTo(PlayerREF.GetPositionX() + RandomFloat(-30,30),PlayerREF.GetPositionY() + RandomFloat(-30,30),PlayerREF.GetPositionZ() + RandomFloat(-30,30),PlayerREF.GetAngleX(),PlayerREF.GetAngleY(),PlayerREF.GetAngleZ(),15)
 		EndIf
 		;_kInvisibleActors[iThisIndex].TranslateTo(PlayerREF.GetPositionX() + RandomFloat(-100,100),PlayerREF.GetPositionY() + RandomFloat(-100,100),PlayerREF.GetPositionZ() + RandomFloat(0,100),PlayerREF.GetAngleX(),PlayerREF.GetAngleY(),PlayerREF.GetAngleZ(),100)
 		If (sender as Armor)

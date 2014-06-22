@@ -1598,7 +1598,11 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		JMap.SetInt(jEquipmentInfo,"IsCustom",0)
 	EndIf
 	If !(iHand == 0 && IsTwoHanded) && kItem ; exclude left-hand iteration of two-handed weapons
-		kItem.SendModEvent("vMYC_EquipmentSaved","",iHand)
+		If kWornObjectActor == PlayerREF
+			kItem.SendModEvent("vMYC_EquipmentSaved","",iHand)
+		Else ;Was not saved from player, indicate this with iHand = -1
+			kItem.SendModEvent("vMYC_EquipmentSaved","",-1)
+		EndIf
 	EndIf
 	Debug.Trace("MYC: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
 EndFunction
@@ -1771,7 +1775,6 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 					SerializeEquipment(kItem,jCustomWeapon,1,0,kWeaponDummy)
 					JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
 				EndIf
-				kWeaponDummy.UnEquipItemEX(kItem,1,preventEquip = True)
 			EndIf
 		EndIf
 		Int iItemID = kItem.GetFormID()
