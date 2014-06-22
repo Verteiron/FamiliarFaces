@@ -1186,6 +1186,7 @@ Bool Function LoadCharacter(String sCharacterName)
 			If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
 				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is enchanted!")
 				WornObject.SetEnchantment(PlayerDupe,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
+				;WornObject.SetItemCharge(
 			EndIf
 			If JMap.GetInt(jArmor,"IsCustom")
 				String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
@@ -1262,7 +1263,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	While i > 0
 		i -= 1
 		Int jItem = JArray.GetObj(jCustomItems,i)
-		LoadEquipment(PlayerDupe,jItem,1,False)
+		LoadWeapon(PlayerDupe,jItem,1,False)
 	EndWhile
 	
 	Int iHand = 1 ; start with right
@@ -1273,7 +1274,7 @@ Bool Function LoadCharacter(String sCharacterName)
 			sHand = "Left"
 		EndIf
 		Int jItem = JValue.solveObj(jCharacterData,".Equipment." + sHand)
-		LoadEquipment(PlayerDupe, jItem, iHand,False)
+		LoadWeapon(PlayerDupe, jItem, iHand,False)
 		;If iHand == 1 ; Equip in proper hand and prevent removal
 			;PlayerDupe.UnEquipItem(kItem)
 			;PlayerDupe.EquipItemEx(kItem,1,True) ; Right
@@ -1308,7 +1309,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	Return True
 EndFunction
 
-Function LoadEquipment(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEquipped = False)
+Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEquipped = False)
 	Bool bTwoHanded = False
 	Form kItem = JMap.getForm(jItem,"Form")
 	String sCharacterName = kCharacterActor.GetName()
@@ -1371,7 +1372,13 @@ Function LoadEquipment(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveE
 				EndWhile
 				Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " creating custom enchantment...")
 				WornObject.CreateEnchantment(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
+				
 				Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " done!")
+			EndIf
+			If iHand == 1
+				kCharacterActor.SetActorValue("RightItemCharge",JMap.getFlt(jItem,"ItemCharge"))
+			Else
+				kCharacterActor.SetActorValue("LeftItemCharge",JMap.getFlt(jItem,"ItemCharge"))
 			EndIf
 		EndIf
 		If iHand == 1 ; Equip in proper hand and allow removal
@@ -1600,6 +1607,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		Debug.Trace("MYC: " + kItem + " is enchanted/forged item " + sItemDisplayName)
 		JMap.SetInt(jEquipmentInfo,"IsCustom",1)
 		JMap.SetFlt(jEquipmentInfo,"ItemHealthPercent",WornObject.GetItemHealthPercent(kWornObjectActor,iHand,h))
+		JMap.SetFlt(jEquipmentInfo,"ItemCharge",WornObject.GetItemCharge(kWornObjectActor,iHand,h))
 		JMap.SetFlt(jEquipmentInfo,"ItemMaxCharge",WornObject.GetItemMaxCharge(kWornObjectActor,iHand,h))
 		JMap.SetStr(jEquipmentInfo,"DisplayName",sItemDisplayName)
 		kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
@@ -1777,6 +1785,19 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	Debug.Trace("MYC: " + sPlayerName + " has " + iItemCount + " items.")
 	Int iAddedCount = 0
 
+	;===== Create dummy actor for custom weapon scans =====----
+	
+	Actor kWeaponDummy = PlayerREF.PlaceAtMe(vMYC_InvisibleMActor,abInitiallyDisabled = True) as Actor
+	kWeaponDummy.SetScale(0.01)
+	kWeaponDummy.SetGhost(True)
+	kWeaponDummy.EnableAI(False)
+	kWeaponDummy.EnableNoWait()
+	Int iSafetyTimer = 30
+	While !kWeaponDummy.Is3DLoaded() && iSafetyTimer
+		iSafetyTimer -= 1
+		Wait(0.1)
+	EndWhile
+
 	While i < iItemCount
 		bAddItem = True
 		Form kItem = JArray.getForm(jInvForms,i)
@@ -1784,10 +1805,24 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 		Int iType = kItem.GetType()
 		Debug.Trace("MYC: " + sPlayerName + " has " + kItem)
 
-		If iType == 41
+		;===== Save custom weapons =====----
+		If iType == 41 ;kWeapon
 			If !PlayerREF.IsEquipped(kItem)
 				bAddItem = False
-				JArray.AddForm(jWeaponsToCheck,kItem)
+				PlayerREF.RemoveItem(kItem,1,True,kWeaponDummy)
+				kWeaponDummy.EquipItemEX(kItem,1,preventUnequip = True,equipSound = False)
+				If WornObject.GetDisplayName(kWeaponDummy,1,0) || WornObject.GetItemHealthPercent(kWeaponDummy,1,0) > 1.0
+					Int jCustomWeapon = JMap.Object()
+
+					JMap.setForm(jCustomWeapon,"Form",kItem)
+					JMap.setInt(jCustomWeapon,"Count",JArray.getInt(jInvCounts,i))
+					
+					SerializeEquipment(kItem,jCustomWeapon,1,0,kWeaponDummy)
+					JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
+				EndIf
+				kWeaponDummy.RemoveItem(kItem,1,True,PlayerREF)
+
+				;JArray.AddForm(jWeaponsToCheck,kItem)
 			EndIf
 		EndIf
 		Int iItemID = kItem.GetFormID()
@@ -1812,36 +1847,13 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	EndWhile
 	Debug.Trace("MYC: Saved " + iAddedCount + " items for " + sPlayerName + ".")
 
-	;===== Save custom weapons =====----
-	Actor kWeaponDummy = PlayerREF.PlaceAtMe(vMYC_InvisibleMActor,abInitiallyDisabled = True) as Actor
-	kWeaponDummy.SetScale(0.01)
-	kWeaponDummy.SetGhost(True)
-	kWeaponDummy.EnableAI(False)
-	kWeaponDummy.EnableNoWait()
-	Int iSafetyTimer = 30
-	While !kWeaponDummy.Is3DLoaded() && iSafetyTimer
-		iSafetyTimer -= 1
-		Wait(0.1)
-	EndWhile
 
 
-	i = jArray.Count(jWeaponsToCheck)
-	While i > 0
-		i -= 1
-		Form kItem = jArray.getForm(jWeaponsToCheck,i)
-		PlayerREF.RemoveItem(kItem,1,True,kWeaponDummy)
-		kWeaponDummy.EquipItemEX(kItem,1,preventUnequip = True,equipSound = False)
-		If WornObject.GetDisplayName(kWeaponDummy,1,0) || WornObject.GetItemHealthPercent(kWeaponDummy,1,0) > 1.0
-			Int jCustomWeapon = JMap.Object()
-
-			JMap.setForm(jCustomWeapon,"Form",kItem)
-			JMap.setInt(jCustomWeapon,"Count",JArray.getInt(jInvCounts,i))
-			
-			SerializeEquipment(kItem,jCustomWeapon,1,0,kWeaponDummy)
-			JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
-		EndIf
-		kWeaponDummy.RemoveItem(kItem,1,True,PlayerREF)
-	EndWhile
+;	i = jArray.Count(jWeaponsToCheck)
+;	While i > 0
+;		i -= 1
+;		Form kItem = jArray.getForm(jWeaponsToCheck,i)
+;	EndWhile
 	Debug.Trace("MYC: Saved " + JArray.Count(jPlayerCustomItems) + " custom items for " + sPlayerName + ".")
 
 	SendModEvent("vMYC_InventorySaveEnd",iAddedCount)
@@ -2229,7 +2241,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	
 	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
-		Wait(0.25)
+		Wait(0.5)
 	EndWhile
 	
 	JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
