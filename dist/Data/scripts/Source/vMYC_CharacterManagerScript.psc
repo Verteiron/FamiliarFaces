@@ -1777,9 +1777,6 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	
 	Bool bAddItem = False
 
-	Int jWeaponsToCheck = JArray.Object()
-	JValue.Retain(jWeaponsToCheck)
-	
 	Int iItemCount = JArray.Count(jInvForms)
 	Int i = 0
 	Debug.Trace("MYC: " + sPlayerName + " has " + iItemCount + " items.")
