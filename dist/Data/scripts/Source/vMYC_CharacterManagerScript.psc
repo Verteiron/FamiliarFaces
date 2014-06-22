@@ -159,6 +159,9 @@ ReferenceAlias[] Property alias_CustomCharacters Auto
 Actor Property PlayerRef Auto
 {The Player, duh}
 
+ActorBase Property vMYC_InvisibleMActor	Auto 
+{Invisible actor for collecting custom weapons}
+
 Formlist Property vMYC_PlayerFormlist Auto
 {An empty formlist that will be used to store all the player's spells, shouts, etc.}
 
@@ -1525,16 +1528,20 @@ Function SaveCharacter(String sCharacterName)
 
 EndFunction
 
-Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0)
+Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
 {Fills the JMap jEquipmentInfo with all info from Form kItem}
 	JMap.SetForm(jEquipmentInfo,"Form",kItem)
 
+	If !kWornObjectActor
+		kWornObjectActor = PlayerREF
+	EndIf
+	
 	Bool isWeapon = False 
 	Bool isEnchantable = False
 	Bool isTwoHanded = False
 	Enchantment kItemEnchantment
 
-	;Debug.Trace("MYC: Serializing " + kItem.GetName() + "...")
+	Debug.Trace("MYC: Serializing " + kItem.GetName() + "...")
 	If (kItem as Weapon)
 		isWeapon = True
 		isEnchantable = True
@@ -1555,20 +1562,20 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	
 	If kItemEnchantment
 		;PlayerEnchantments[newindex] = kItemEnchantment
-		;Debug.Trace("MYC: " + kItem.GetName() + " has enchantment " + kItemEnchantment.GetFormID() + ", " + kItemEnchantment.GetName())
+		Debug.Trace("MYC: " + kItem.GetName() + " has enchantment " + kItemEnchantment.GetFormID() + ", " + kItemEnchantment.GetName())
 		JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
 		JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",0)
 	EndIf
-	String sItemDisplayName = WornObject.GetDisplayName(PlayerREF,iHand,h)
+	String sItemDisplayName = WornObject.GetDisplayName(kWornObjectActor,iHand,h)
 	sItemDisplayName = StringUtil.SubString(sItemDisplayName,0,StringUtil.Find(sItemDisplayName,"(") - 1) ; Strip " (Legendary)"
-	kItemEnchantment = WornObject.GetEnchantment(PlayerREF,iHand,h)
+	kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
 	If sItemDisplayName || kItemEnchantment
-		;Debug.Trace("MYC: " + kItem + " is enchanted/forged item " + sItemDisplayName)
+		Debug.Trace("MYC: " + kItem + " is enchanted/forged item " + sItemDisplayName)
 		JMap.SetInt(jEquipmentInfo,"IsCustom",1)
-		JMap.SetFlt(jEquipmentInfo,"ItemHealthPercent",WornObject.GetItemHealthPercent(PlayerREF,iHand,h))
-		JMap.SetFlt(jEquipmentInfo,"ItemMaxCharge",WornObject.GetItemMaxCharge(PlayerREF,iHand,h))
+		JMap.SetFlt(jEquipmentInfo,"ItemHealthPercent",WornObject.GetItemHealthPercent(kWornObjectActor,iHand,h))
+		JMap.SetFlt(jEquipmentInfo,"ItemMaxCharge",WornObject.GetItemMaxCharge(kWornObjectActor,iHand,h))
 		JMap.SetStr(jEquipmentInfo,"DisplayName",sItemDisplayName)
-		kItemEnchantment = WornObject.GetEnchantment(PlayerREF,iHand,h)
+		kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
 		If kItemEnchantment
 			JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
 			JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",1)
@@ -1578,7 +1585,6 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 			Int j = 0
 			While j < iNumEffects
 				Int jEffectsInfo = JMap.Object()
-				;String sEquEnchKey = sKey + "Equipment." + iItemIndex + ".Enchantment.Effects." + j + "."
 				JMap.SetFlt(jEffectsInfo, "Magnitude", kItemEnchantment.GetNthEffectMagnitude(j))
 				JMap.SetFlt(jEffectsInfo, "Area", kItemEnchantment.GetNthEffectArea(j))
 				JMap.SetFlt(jEffectsInfo, "Duration", kItemEnchantment.GetNthEffectDuration(j))
@@ -1594,7 +1600,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	If !(iHand == 0 && IsTwoHanded) && kItem ; exclude left-hand iteration of two-handed weapons
 		kItem.SendModEvent("vMYC_EquipmentSaved","",iHand)
 	EndIf
-	;Debug.Trace("MYC: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
+	Debug.Trace("MYC: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
 EndFunction
 
 Event OnSaveCurrentPlayerEquipment(string eventName, string strArg, float numArg, Form sender)
@@ -1725,19 +1731,49 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	JValue.Retain(jInvCounts)
 	Int jPlayerInventory = JFormMap.Object()
 	JMap.SetObj(jPlayerData,"Inventory",jPlayerInventory)
+	
+	Int jPlayerCustomItems = JArray.Object()
+	JMap.SetObj(jPlayerData,"InventoryCustomItems",jPlayerCustomItems)
+	
 	Bool bAddItem = False
 	
 	Int iItemCount = JArray.Count(jInvForms)
 	Int i = 0
 	Debug.Trace("MYC: " + sPlayerName + " has " + iItemCount + " items.")
 	Int iAddedCount = 0
+	Actor kWeaponDummy = PlayerREF.PlaceAtMe(vMYC_InvisibleMActor,abInitiallyDisabled = True) as Actor
+	kWeaponDummy.SetScale(0.01)
+	kWeaponDummy.SetGhost(True)
+	kWeaponDummy.EnableAI(False)
+	kWeaponDummy.EnableNoWait()
+	Int iSafetyTimer = 30
+	While !kWeaponDummy.Is3DLoaded() && iSafetyTimer
+		iSafetyTimer -= 1
+		Wait(0.1)
+	EndWhile
 	While i < iItemCount
 		bAddItem = True
 		Form kItem = JArray.getForm(jInvForms,i)
 
 		Int iType = kItem.GetType()
 		Debug.Trace("MYC: " + sPlayerName + " has " + kItem)
-		
+
+		If iType == 41
+			If !PlayerREF.IsEquipped(kItem)
+				bAddItem = False
+				PlayerREF.RemoveItem(kItem,1,True,kWeaponDummy)
+				kWeaponDummy.EquipItemEX(kItem,1,preventUnequip = True,equipSound = False)
+				If WornObject.GetDisplayName(kWeaponDummy,1,0) || WornObject.GetItemHealthPercent(kWeaponDummy,1,0) > 1.0
+					JMap.setForm(jCustomWeapon,"Form",kItem)
+					JMap.setInt(jCustomWeapon,"Count",JArray.getInt(jInvCounts,i))
+					
+					Int jCustomWeapon = JMap.Object()
+					SerializeEquipment(kItem,jCustomWeapon,1,0,kWeaponDummy)
+					JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
+				EndIf
+				kWeaponDummy.UnEquipItemEX(kItem,1,preventEquip = True)
+			EndIf
+		EndIf
 		Int iItemID = kItem.GetFormID()
 		If iItemID > 0x05000000 || iItemID < 0 && !(iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF) 
 			; Item is NOT part of Skyrim, Dawnguard, Hearthfires, or Dragonborn and is not a custom item
@@ -1749,7 +1785,7 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 			bAddItem = False
 		EndIf
 		If kItem as ObjectReference
-			Debug.Trace("MYC: " + kItem + " is an ObjectReference!")
+			Debug.Trace("MYC: " + kItem + " is an ObjectReference named " + (kItem as ObjectReference).GetDisplayName())
 		EndIf
 		If bAddItem
 			JFormMap.SetInt(jPlayerInventory,kItem,JArray.getInt(jInvCounts,i))
@@ -1761,9 +1797,12 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	Debug.Trace("MYC: Saved " + iAddedCount + " items for " + sPlayerName + ".")
 	SendModEvent("vMYC_InventorySaveEnd",iAddedCount)
 	JValue.WriteTofile(jPlayerInventory,"Data/vMYC/_jPlayerInventory.json")
+	JValue.WriteTofile(jPlayerCustomItems,"Data/vMYC/_jPlayerCustomItems.json")
 	_bSavedInventory = True
 	JValue.Release(jInvForms)
 	JValue.Release(jInvCounts)
+	kWeaponDummy.RemoveAllItems(PlayerREF)
+	kWeaponDummy.Delete()
 EndEvent
 
 Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Form sender)
