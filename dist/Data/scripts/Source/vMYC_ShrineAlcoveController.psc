@@ -169,6 +169,10 @@ Bool			_bPoseCharacter
 Bool			_bFreezeCharacter
 Bool			_bCharacterReady
 Bool			_bForceSave
+Bool			_bSavedEquipment 
+Bool			_bSavedPerks 
+Bool			_bSavedInventory 
+Bool			_bSavedSpells
 
 ObjectReference	_FogBlowing
 ObjectReference	_FogEmpty
@@ -246,7 +250,7 @@ Event OnLoad()
 	ElseIf AlcoveStatueState == 0
 		ActivateAlcove()
 	EndIf
-	RegisterForModEvent("vMYC_ShrineLightingPriority","OnAlcoveLightingPriority")
+	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
 EndEvent
 
 Function DoUpkeep()
@@ -257,10 +261,22 @@ Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Fo
 {Disable the lights of all Alcoves except the event sender to try to give its lighting effects top priority}	
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
-	If iRequestingIndex != AlcoveIndex
-		_Light.Disable()
-		Wait(5)
-		_Light.Enable()
+	If iRequestingIndex != AlcoveIndex && strArg == "Request"
+		If AlcoveLightState == 2
+			_Torches.DisableNoWait(True)
+			GetLinkedRef(vMYC_ShrineLightingMaster).DisableNoWait(True)
+		EndIf
+		If AlcoveLightState > 0
+			_Light.DisableNoWait(True)
+		EndIf
+	ElseIf iRequestingIndex != AlcoveIndex && strArg == "Release"
+		If AlcoveLightState == 2
+			_Torches.EnableNoWait(True)
+			GetLinkedRef(vMYC_ShrineLightingMaster).EnableNoWait(True)
+		EndIf
+		If AlcoveLightState > 0
+			_Light.EnableNoWait(True)
+		EndIf
 	EndIf
 EndEvent
 
@@ -540,7 +556,7 @@ Function SavePlayer(Bool abForceSave = False)
 	DisablePlayerControls(abCamSwitch = True)
 	ForceThirdPerson()
 	AlcoveLightState = 1
-	SendModEvent("vMYC_ShrineLightingPriority","On",AlcoveIndex)
+	SendModEvent("vMYC_AlcoveLightingPriority","Request",AlcoveIndex)
 	Wait(0.5)
 	DisablePlayerControls(abCamSwitch = True)
 	;vMYC_BlindingLightGold.Play(PlayerREF,-1)
@@ -611,6 +627,9 @@ Function DoSaveAnimation()
 	;Save the player
 	_Book.FlipPages = True
 	CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
+	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
+		Wait(0.5)
+	EndWhile
 	_bForceSave = False
 	vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
 	Wait(1.0)
@@ -618,7 +637,7 @@ Function DoSaveAnimation()
 	ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",PlayerREF.GetActorBase().GetName())
 	CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
 	ActivateAlcove()
-
+	SendModEvent("vMYC_AlcoveLightingPriority","Release",AlcoveIndex)
 	;Saving is done, return the character to the ground
 	vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds 
 	
@@ -658,7 +677,7 @@ EndFunction
 
 Event OnInventorySaveEnd(string eventName, string strArg, float numArg, Form sender)
 {Cleanup invisible actors after all inventory is saved.}
-	Wait(6.0) ; give 'em time to float into the shrine
+	Wait(5.0) ; give 'em time to float into the shrine
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Killing the invisible swordsmen...")
 	Int i = _kInvisibleActors.Length
 	While i > 0
@@ -666,6 +685,19 @@ Event OnInventorySaveEnd(string eventName, string strArg, float numArg, Form sen
 		_kInvisibleActors[i].StopTranslation()
 		_kInvisibleActors[i].Delete()
 	EndWhile
+	_bSavedInventory = True
+EndEvent
+
+Event OnEquipmentSaveEnd(string eventName, string strArg, float numArg, Form sender)
+	_bSavedEquipment = True
+EndEvent
+
+Event OnSpellsSaveEnd(string eventName, string strArg, float numArg, Form sender)
+	_bSavedSpells = True
+EndEvent
+
+Event OnPerksSaveEnd(string eventName, string strArg, float numArg, Form sender)
+	_bSavedPerks = True
 EndEvent
 
 Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sender)
@@ -680,7 +712,11 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 		_kInvisibleActors[iThisIndex].RemoveAllItems()
 		_kInvisibleActors[iThisIndex].SetAlpha(0.01,False)
 		_kInvisibleActors[iThisIndex].MoveTo(PlayerREF)
-		Wait(RandomFloat(0.5,3))
+		Int iSafetyTimer = 10
+		While !_kInvisibleActors[iThisIndex].Is3DLoaded() && iSafetyTimer
+			iSafetyTimer -= 1
+			Wait(0.5)
+		EndWhile
 		;MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_kInvisibleActors[iThisIndex])
 		If sender as Weapon && numArg == 2
 			_kInvisibleActors[iThisIndex].EquipItem(sender)
@@ -708,9 +744,10 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 		Else
 			_kInvisibleActors[iThisIndex].TranslateToRef(_StatueMarker,30,1)
 		EndIf
-		Wait(0.1)
-		_kInvisibleActors[iThisIndex].SetAlpha(1,True)
+		;Wait(0.1)
 		vMYC_BlindingLightGold.Play(_kInvisibleActors[iThisIndex],0.1)
+		_kInvisibleActors[iThisIndex].SetAlpha(1,True)
+		
 		Wait(RandomFloat(1.0,2.0))
 		_kInvisibleActors[iThisIndex].SplineTranslateToRef(_StatueMarker,RandomFloat(350,800),250,10)
 		;Wait(5)
