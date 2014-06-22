@@ -1873,19 +1873,47 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
 
 	SendModEvent("vMYC_PerksSaveBegin")
-	
 
+	String[] SkillNames = New String[24]
+	
+	SkillNames[6] = "OneHanded"
+	SkillNames[7] = "TwoHanded"
+	SkillNames[8] = "Marksman"
+	SkillNames[9] = "Block"
+	SkillNames[10] = "Smithing"
+	SkillNames[11] = "HeavyArmor"
+	SkillNames[12] = "LightArmor"
+	SkillNames[13] = "Pickpocket"
+	SkillNames[14] = "LockPicking"
+	SkillNames[15] = "Sneak"
+	SkillNames[16] = "Alchemy"
+	SkillNames[17] = "SpeechCraft"
+	SkillNames[18] = "Alteration"
+	SkillNames[19] = "Conjuration"
+	SkillNames[20] = "Destruction"
+	SkillNames[21] = "Illusion"
+	SkillNames[22] = "Restoration"
+	SkillNames[23] = "Enchanting"
+
+	Int jPerks = JArray.Object() 
+	JMap.SetObj(jPlayerData,"Perks",jPerks)
+	
+	Int jPerkCounts = JMap.Object() 
+	JMap.SetObj(jPlayerData,"PerkCounts",jPerkCounts)
+	
 	vMYC_PerkList.Revert()
 	Int iAdvSkills = 6
 	While iAdvSkills < 24
 		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAdvSkills)
+		Int iLastCount = vMYC_PerkList.GetSize()
 		AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
+		Int iThisCount = vMYC_PerkList.GetSize()
+		JMap.SetInt(jPerkCounts,SkillNames[iAdvSkills],iThisCount - iLastCount)
+		Debug.Trace("MYC: Saved " + (iThisCount - iLastCount) + " perks in the " + SkillNames[iAdvSkills] + " tree!")
 		iAdvSkills += 1
 	EndWhile
 
 	Int iAddedCount = 0
-	Int jPerks = JArray.Object() 
-	JMap.SetObj(jPlayerData,"Perks",jPerks)
 	Int i = vMYC_PerkList.GetSize()
 	While i > 0
 		i -= 1

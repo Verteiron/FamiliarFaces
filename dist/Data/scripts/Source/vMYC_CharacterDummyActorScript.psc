@@ -61,6 +61,8 @@ Bool _bDoUpkeep = False
 
 Bool _bSwitchedRace = False
 
+String[] _sSkillNames 
+
 ;Int _jCharacterData 
 
 CombatStyle _kCombatStyle
@@ -69,7 +71,7 @@ CombatStyle _kLastCombatStyle
 ;--=== Events ===--
 
 Event OnInit()
-	_kActorBase = GetActorBase()	
+	_kActorBase = GetActorBase()
 EndEvent
 
 Event OnLoad()
@@ -167,7 +169,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 			EndIf
 		EndIf
 	EndWhile
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 EndEvent
 
 Function CheckVars()
@@ -193,6 +195,27 @@ Function CheckVars()
 			;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!")
 		EndIf
 	EndIf
+	
+	_sSkillNames = New String[24]
+	
+	_sSkillNames[6] = "OneHanded"
+	_sSkillNames[7] = "TwoHanded"
+	_sSkillNames[8] = "Marksman"
+	_sSkillNames[9] = "Block"
+	_sSkillNames[10] = "Smithing"
+	_sSkillNames[11] = "HeavyArmor"
+	_sSkillNames[12] = "LightArmor"
+	_sSkillNames[13] = "Pickpocket"
+	_sSkillNames[14] = "LockPicking"
+	_sSkillNames[15] = "Sneak"
+	_sSkillNames[16] = "Alchemy"
+	_sSkillNames[17] = "SpeechCraft"
+	_sSkillNames[18] = "Alteration"
+	_sSkillNames[19] = "Conjuration"
+	_sSkillNames[20] = "Destruction"
+	_sSkillNames[21] = "Illusion"
+	_sSkillNames[22] = "Restoration"
+	_sSkillNames[23] = "Enchanting"
 EndFunction
 
 Function DoInit(Bool bInBackground = True)
@@ -212,8 +235,8 @@ Function DoUpkeep(Bool bInBackground = True)
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
-	SetNonpersistent()
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
+	SetNonpersistent()
 	_bNeedRefresh = True
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
@@ -283,21 +306,48 @@ Function UpdateCombatStyle()
 		_bNeedCSUpdate = True
 		Return
 	EndIf
+	
+	Int i = 6
+	While i < _sSkillNames.Length
+		Int iPerkCount = CharacterManager.GetCharacterInt(CharacterName,"PerkCounts." + _sSkillNames[i])
+		If iPerkCount
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) PerkCount for " + _sSkillNames[i] + " is " + iPerkCount)
+		EndIf
+
+		If _sSkillNames[i] == "Blocking" && iPerkCount < 2
+			CharacterManager.SetLocalInt(CharacterName,"AllowDualWield",1)
+		EndIf
+		
+		 ; Magic skills
+		If i >= 18 && i <= 22
+			If iPerkCount > 1
+				CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],1)
+			Else 
+				CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],0)
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
 	_bNeedCSUpdate = False
 	Int iEquippedItemType = GetEquippedItemType(1)
+	
 	_kLastCombatStyle = _kCombatStyle
 	CharacterManager.SetLocalInt(CharacterName,"AllowMagic",0)
 	If iEquippedItemType < 5 ; One-handed
-		_kCombatStyle = vMYC_CombatStyles.GetAt(1) as CombatStyle ; Boss1H
+		If CharacterManager.GetLocalInt(CharacterName,"AllowDualWield")
+			_kCombatStyle = vMYC_CombatStyles.GetAt(16) as CombatStyle ; vMYC_csHumanBoss1HDual
+		Else
+			_kCombatStyle = vMYC_CombatStyles.GetAt(3) as CombatStyle ; Boss1H
+		EndIf
 	ElseIf iEquippedItemType == 5 || iEquippedItemType == 6
-		_kCombatStyle = vMYC_CombatStyles.GetAt(2) as CombatStyle ; Boss2H
+		_kCombatStyle = vMYC_CombatStyles.GetAt(4) as CombatStyle ; Boss2H
 	ElseIf iEquippedItemType == 7 || iEquippedItemType == 12
-		_kCombatStyle = vMYC_CombatStyles.GetAt(4) as CombatStyle ; Missile
+		_kCombatStyle = vMYC_CombatStyles.GetAt(14) as CombatStyle ; Missile
 	ElseIf iEquippedItemType == 8|| iEquippedItemType == 9
-		_kCombatStyle = vMYC_CombatStyles.GetAt(3) as CombatStyle ; Magic
+		_kCombatStyle = vMYC_CombatStyles.GetAt(5) as CombatStyle ; Magic
 		CharacterManager.SetLocalInt(CharacterName,"AllowMagic",1)
 	Else
-		_kCombatStyle = vMYC_CombatStyles.GetAt(5) as CombatStyle ; Tank
+		_kCombatStyle = vMYC_CombatStyles.GetAt(1) as CombatStyle ; Tank
 	EndIf
 	If _kCombatStyle != _kLastCombatStyle
 		_kActorBase.SetCombatStyle(_kCombatStyle)
@@ -306,9 +356,10 @@ Function UpdateCombatStyle()
 		Else
 			SetAV("Magicka",0)
 		EndIf
-		;Debug.Trace("MYC: Set " + CharacterName + "'s combatstyle to " + _kCombatStyle)
+		Debug.Trace("MYC: Set " + CharacterName + "'s combatstyle to " + _kCombatStyle)
 	EndIf
 	CharacterManager.SetLocalForm(CharacterName,"CombatStyle",_kCombatStyle)
+	SendModEvent("vMYC_UpdateCharacterSpellList",CharacterName)
 EndFunction
 
 Function RefreshMesh()
