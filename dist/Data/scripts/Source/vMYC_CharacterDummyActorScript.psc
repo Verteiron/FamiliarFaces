@@ -40,6 +40,8 @@ Race Property DummyRace		Auto
 
 Formlist Property vMYC_CombatStyles Auto
 
+Message Property vMYC_VoiceTypeNoFollower 	Auto
+Message Property vMYC_VoiceTypeNoSpouse		Auto
 
 ;--=== Config variables ===--
 
@@ -60,6 +62,10 @@ Bool _bNeedCSUpdate = False
 Bool _bDoUpkeep = False
 
 Bool _bSwitchedRace = False
+
+Bool _bWarnedVoiceTypeNoFollower = False 
+
+Bool _bWarnedVoiceTypeNoSpouse = False 
 
 String[] _sSkillNames 
 
@@ -114,6 +120,35 @@ Event OnUpdate()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
 	RegisterForSingleUpdate(5.0)
+EndEvent
+
+Event OnActivate(ObjectReference akActionRef)
+	VoiceType kVoiceType = GetVoiceType()
+	If !kVoiceType
+		kVoiceType = _kActorBase.GetVoiceType()
+		If !kVoiceType
+			Return
+		EndIf
+	EndIf
+	If !_bWarnedVoiceTypeNoFollower
+		If GetFactionRank(CurrentFollowerFaction) == -1 && CharacterManager.vMYC_VoiceTypesFollowerList.Find(kVoiceType) == -1
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning player about missing Follower VoiceType!")
+			Message.ResetHelpMessage("VoiceTypeNoFollower")
+			vMYC_VoiceTypeNoFollower.ShowAsHelpMessage("VoiceTypeNoFollower",8,240,1)
+			_bWarnedVoiceTypeNoFollower = True
+		EndIf
+	EndIf
+	If !_bWarnedVoiceTypeNoSpouse
+		If GetFactionRank(PotentialMarriageFaction) > -2 && CharacterManager.vMYC_VoiceTypesSpouseList.Find(kVoiceType) == -1
+			Armor kAmuletOfMara = GetFormFromFile(0x000C891B,"Skyrim.esm") as Armor
+			If PlayerREF.IsEquipped(kAmuletOfMara)
+				Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning player about missing Spouse VoiceType!")
+				Message.ResetHelpMessage("VoiceTypeNoSpouse")
+				vMYC_VoiceTypeNoSpouse.ShowAsHelpMessage("VoiceTypeNoSpouse",8,240,1)
+				_bWarnedVoiceTypeNoSpouse = True
+			EndIf
+		EndIf
+	EndIf
 EndEvent
 
 Event OnPackageChange(Package akOldPackage)
@@ -238,6 +273,8 @@ Function DoUpkeep(Bool bInBackground = True)
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	SetNonpersistent()
 	_bNeedRefresh = True
+	_bWarnedVoiceTypeNoFollower = False
+	_bWarnedVoiceTypeNoSpouse = False
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
@@ -261,7 +298,23 @@ Function SetNonpersistent()
 		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
 	EndIf
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
-	_kActorBase.SetVoiceType(CharacterManager.GetCharacterVoiceType(CharacterName))
+	VoiceType kVoiceType = CharacterManager.GetCharacterForm(CharacterName,"VoiceType") as VoiceType
+	If !kVoiceType
+		kVoiceType = CharacterManager.GetLocalForm(CharacterName,"VoiceType") as VoiceType
+	EndIf
+	If kVoiceType
+		_kActorBase.SetVoiceType(kVoiceType)
+	Else ; No voicetype is saved, so set the default voicetype as the local voicetype
+		kVoiceType = GetVoiceType()
+		If !kVoiceType
+			kVoiceType = _kActorBase.GetVoiceType()
+		EndIf
+		If kVoiceType
+			CharacterManager.SetLocalForm(CharacterName,"VoiceType",GetVoiceType())
+		Else
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) Weird, no VoiceType could be found ANYWHERE. What's going on here?",1)
+		EndIf
+	EndIf
 	SetFactions()
 	If !CharacterManager.GetCharacterForm(CharacterName,"Class") ; If !GetFormValue(_kActorBase,sKey + "Class")
 		SetCustomActorValues(True)
@@ -297,7 +350,6 @@ Function SetFactions()
 			SetFactionRank(PotentialMarriageFaction,0)
 		EndIf
 	EndIf
-	
 EndFunction
 
 Function UpdateCombatStyle()
@@ -559,32 +611,7 @@ Function SetNameIfNeeded(Bool abForce = False)
 				kThisRefAlias.ForceRefTo(Self)
 			EndIf
 		EndWhile
-		
-		;=== This updates the character's name in EFF's widget, if it's installed
-		;    Expired has said he'll add a ModEvent we can use to do this in future, which should be much simpler
-		If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
-			SKI_WidgetManager WidgetManager = GetFormFromFile(0x00000824,"SkyUI.esp") as SKI_WidgetManager
-			XFLScript XFLMain = (Game.GetFormFromFile(0x48C9, "XFLMain.esm") as XFLScript)
-			If XFLMain.XFL_FollowerList.HasForm(Self) ; check if we're being tracked by EFF
-				SKI_WidgetBase[] WidgetList = WidgetManager.GetWidgets()
-				i = WidgetList.Length
-				While i > 0
-					i -= 1
-					If WidgetList[i]
-						;Debug.Trace("MYC: Widget " + i + " is type " + WidgetList[i].getWidgetType())
-						If WidgetList[i].getWidgetType() == "XFLPanel"
-							;Debug.Trace("MYC: Resetting widget " + i + "...")
-							if XFLMain
-								(WidgetList[i] as xflpanel).RemoveActors(XFLMain.XFL_FollowerList)
-								(WidgetList[i] as xflpanel).AddActors(XFLMain.XFL_FollowerList)
-							endIf
-						EndIf
-					EndIf
-				EndWhile
-			EndIf
-		EndIf
-		;===
-		
+		SendModEvent("vMYC_UpdateXFLPanel")
 	EndIf
 EndFunction
 

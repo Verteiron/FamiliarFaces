@@ -2168,7 +2168,12 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	RegisterForModEvent("vMYC_SaveCurrentPlayerInventory","OnSaveCurrentPlayerInventory")
 	SendModEvent("vMYC_SaveCurrentPlayerInventory",jPlayerData)
 	
-	JMap.SetForm(jPlayerData,"VoiceType",None)
+	VoiceType kPlayerVoiceType = PlayerREF.GetVoiceType()
+	If !kPlayerVoiceType
+		kPlayerVoiceType = PlayerREF.GetActorBase().GetVoiceType()
+	EndIf
+	
+	JMap.SetForm(jPlayerData,"VoiceType",kPlayerVoiceType)
 
 	;-----==== Support for NIOverride ====-----
 	
