@@ -211,8 +211,10 @@ event OnPageReset(string a_page)
 			Int iVoiceTypeIndex = _kVoiceTypesFiltered.Find(kCharVoiceType)
 			_iVoiceTypeSelections[_iCurrentCharacter] = iVoiceTypeIndex
 		EndIf
-
-		_iVoiceTypeOption = AddMenuOption("$VoiceType",_sVoiceTypesFiltered[_iVoiceTypeSelections[_iCurrentCharacter]],OptionFlags)
+		String sShortVoiceType = _sVoiceTypesFiltered[_iVoiceTypeSelections[_iCurrentCharacter]]
+		sShortVoiceType = StringUtil.Substring(sShortVoiceType,0,StringUtil.Find(sShortVoiceType," "))
+		_iVoiceTypeOption = AddMenuOption("$VoiceType",sShortVoiceType,OptionFlags)
+		
 		;====================================----
 
 
