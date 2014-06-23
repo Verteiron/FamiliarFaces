@@ -847,7 +847,9 @@ Function BanishCharacter()
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": BanishCharacter!")
 	GoToState("Busy")
 	_Book.IsOpen = False
-	_Book.IsGlowing = True
+	If Is3DLoaded()
+		_Book.IsGlowing = True
+	EndIf
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling character tracking...")
 	CharacterManager.SetCharacterTracking(CharacterName,False)
 	;_kCharacter.DisableNoWait(False)
@@ -870,7 +872,9 @@ Function BanishCharacter()
 	EndIf
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Fading in character...")
 	_kCharacter.SetAlpha(1.0,True)
-	_Book.IsGlowing = False
+	If Is3DLoaded()
+		_Book.IsGlowing = False
+	EndIf
 	Wait(3.0)
 	_kCharacter.PlayIdle(IdleStaticPoseA)
 	;_kCharacter.DrawWeapon()

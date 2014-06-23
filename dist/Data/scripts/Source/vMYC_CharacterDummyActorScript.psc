@@ -37,6 +37,14 @@ String Property CharacterName Auto Hidden
 Race Property CharacterRace Auto Hidden
 Race Property DummyRace		Auto
 
+EffectShader 	Property 	vMYC_BlindingLightGold				Auto
+Explosion 		Property	vMYC_CharacterDeathExplosion		Auto
+VisualEffect	Property	vMYC_ValorFX						Auto
+VisualEffect	Property 	DA02SummonValorTargetFX				Auto
+ImageSpaceModifier	Property	ISMDwhiteoutFULLthenFade		Auto
+
+Sound			Property	NPCDragonDeathFX2D					Auto
+Sound			Property	NPCDragonDeathSequenceExplosion		Auto
 
 Formlist Property vMYC_CombatStyles Auto
 
@@ -102,6 +110,28 @@ EndEvent
 
 Event OnAttachedToCell()
 	;_bNeedRefresh = True
+EndEvent
+
+Event OnEnterBleedout()
+	If CharacterManager.GetLocalInt(CharacterName,"IsFoe")
+		BlockActivation(True)
+		vMYC_ValorFX.Play(Self,8)
+		Wait(2)
+		DA02SummonValorTargetFX.Play(Self,8)
+		ISMDwhiteoutFULLthenFade.Apply()
+		Wait(1)
+		SetAlpha(0.01,True)
+		Wait(1.3)
+		NPCDragonDeathSequenceExplosion.Play(Self)
+		PlaceAtMe(vMYC_CharacterDeathExplosion)
+		NPCDragonDeathFX2D.Play(Self)
+		CharacterManager.SetCharacterTracking(CharacterName,False)
+		SetAlpha(0,True)
+		SetScale(0.01)
+		Wait(8)
+		BlockActivation(False)
+		ShrineOfHeroes.AlcoveControllers[ShrineOfHeroes.GetAlcoveIndex(CharacterName)].BanishCharacter()
+	EndIf
 EndEvent
 
 Event OnUpdate()
