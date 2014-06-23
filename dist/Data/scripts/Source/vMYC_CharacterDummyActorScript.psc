@@ -192,13 +192,13 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		Else
 			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllowOther")
 		EndIf
-		If bSpellIsAllowed
+		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
 				;;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
 				iAdded += 1
 			EndIf
-		Else
-			If RemoveSpell(kSpell)
+		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
+			If RemoveSpell(kSpell) 
 				;;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
 				iRemoved += 1
 			EndIf
