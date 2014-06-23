@@ -89,6 +89,7 @@ Formlist		Property	vMYC_TrophyKeywords					Auto
 
 VisualEffect	Property	MAGDragonPowerAbsorbEffect 			Auto
 VisualEffect	Property	MAGDragonPowerAbsorbManEffect 		Auto
+VisualEffect	Property	FXGreybeardAbsorbEffect 			Auto
 VisualEffect	Property 	AbsorbCastVFX01						Auto
 VisualEffect	Property 	AbsorbTargetVFX01					Auto
 VisualEffect	Property 	AbsorbBlueCastVFX01					Auto
@@ -618,7 +619,7 @@ Function DoSaveAnimation()
 	_Book.IsGlowing = True
 	PlayerRef.TranslateToRef(_Book.GetLinkedRef(vMYC_ShrineBook),100) ; book is linked to player target through this keyword
 	Wait(1)
-	MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
+	FXGreybeardAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
 	vMYC_SpellAbsorbTargetVFX.Play(PlayerREF,-1,_StatueMarker)
 	
 	;Turn on opaque white object to make the shrine look super-bright
@@ -649,7 +650,7 @@ Function DoSaveAnimation()
 	Wait(2.0)
 	_Book.IsGlowing = False
 	vMYC_BlindingLightSkinOnly.Stop(PlayerREF)
-	MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
+	FXGreybeardAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
 	PlayerRef.TranslateToRef(_Book.GetLinkedRef(vMYC_ShrineBook).GetLinkedRef(),999999)
 	Wait(0.1)
 	PlayerREF.PlayIdle(IdleStop_loose)
@@ -717,7 +718,7 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 			iSafetyTimer -= 1
 			Wait(0.5)
 		EndWhile
-		;MAGDragonPowerAbsorbEffect.Play(PlayerREF,8,_kInvisibleActors[iThisIndex])
+		;FXGreybeardAbsorbEffect.Play(PlayerREF,8,_kInvisibleActors[iThisIndex])
 		If sender as Weapon && numArg == 2
 			_kInvisibleActors[iThisIndex].EquipItem(sender)
 			_kInvisibleActors[iThisIndex].EquipItem(sender)
