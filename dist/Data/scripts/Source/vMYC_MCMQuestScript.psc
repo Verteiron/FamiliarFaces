@@ -16,6 +16,8 @@ Int Property	 VOICETYPE_GENDER	= 8 AutoReadOnly
 Bool _Changed 
 Bool _Shutdown
 
+Bool _bShowDebugOptions
+
 String 	_sCurrentPage
 
 String[] _sCharacterNames
@@ -60,6 +62,8 @@ String[]	_sAlcoveStateEnum
 String[] 	_sAlcoveCharacterNames
 Int[] 		_iAlcoveCharacterOption
 Int[]		_iAlcoveResetOption
+
+Int		_iShowDebugOption
 
 Int Function GetVersion()
     return 2 ; Default version
@@ -236,10 +240,13 @@ event OnPageReset(string a_page)
 		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
 		
-		;===== Character warp DEBUG option ==----
-		_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
-		;====================================----
-		
+		If _bShowDebugOptions
+			AddEmptyOption()
+			AddHeaderOption("Debug")
+			;===== Character warp DEBUG option ==----
+			_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
+			;====================================----
+		EndIf
 		
 		;===== Begin info column ============----
 		
@@ -309,8 +316,15 @@ event OnPageReset(string a_page)
 		
 	;===== END Shrine of Heroes page =====----
 	
-	Else
-
+	ElseIf a_page == "$Global Options"
+	
+	;===== Global Options page =====----
+	
+		_iShowDebugOption = AddToggleOption("Show debug options",_bShowDebugOptions)
+		AddEmptyOption()
+		AddTextOption("More options will go here","")
+		
+	;===== END Global Options page =----
 	EndIf
 
 	
@@ -364,6 +378,9 @@ Event OnOptionSelect(Int Option)
 		If bResult
 			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
 		EndIf
+	ElseIf Option == _iShowDebugOption
+		_bShowDebugOptions = !_bShowDebugOptions
+		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
 	EndIf
 
 EndEvent
