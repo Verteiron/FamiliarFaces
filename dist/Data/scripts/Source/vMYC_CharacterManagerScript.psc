@@ -767,7 +767,7 @@ Int Function AddCustomLocation(Location kLocation, String sLocationName)
 	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
 	Int iHOidx = sHangoutNames.Find("")
 	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
-	sHangoutNames[iHOidx] = sLocationName
+	sHangoutNames[iHOidx] = sLocationName + " (Custom)"
 	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
 	Return iHOidx
 EndFunction
