@@ -110,7 +110,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		_ShowedJContainersWarning = False
 	EndIf
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 48
+	_CurrentVersion = 50
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 	String sErrorMessage
 	SendModEvent("vMYC_UpkeepBegin")
@@ -181,30 +181,9 @@ EndFunction
 Function DoUpgrade()
 	_Running = False
 	;version-specific upgrade code
-	If ModVersion < 13
-		Debug.Trace("MYC: Upgrading to " + ((13 as Float) / 100.0) + "...")
-		CharacterManager.DoUpkeep()
-		String[] sCharacterNames = CharacterManager.CharacterNames
-		Int i = sCharacterNames.Length
-		While i > 0
-			i -= 1
-			If sCharacterNames[i]
-				CharacterManager.PopulateInventory(sCharacterNames[i])
-			EndIf
-		EndWhile
-		ShrineOfHeroes.DoUpkeep()
-		Debug.Trace("MYC: Upgrade to " + ((13 as Float) / 100.0) + " complete!")
-		ModVersion = 13
-	EndIf
-	If ModVersion < 14
-	Debug.Trace("MYC: Upgrading to " + ((14 as Float) / 100.0) + "...")
-		Debug.MessageBox("WARNING! Between version 0.13 and 0.14, JContainers was updated from 0.66 to 0.67.1. Unfortunately this means old files don't all get read properly. You'll need to re-save your characters in the Shrine, otherwise weird stuff will happen.")
-		CharacterManager.DoUpkeep(False) 	; Wait for upkeep to finish
-		ShrineOfHeroes.SyncShrineData(True) ; Force reload from file
-		Wait(2)
-		ShrineOfHeroes.DoUpkeep()
-		Debug.Trace("MYC: Upgrade to " + ((14 as Float) / 100.0) + " complete!")
-		ModVersion = 14
+	If ModVersion < 50
+		Debug.MessageBox("Familiar Faces\nHEY! You REALLY need to start from a clean save! Upgrading from previous tests to this version is NOT SUPPORTED!\nHit ~ and type qqq in the console to quit now!")
+		Debug.MessageBox("Familiar Faces\nI'm serious, there is so much stuff that's going to be broken if you keep going, and any bug reports you submit will be useless. PLEASE quit the game ASAP, do a clean install of FF, and try it again from scratch!")
 	EndIf
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
