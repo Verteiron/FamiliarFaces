@@ -61,6 +61,18 @@ String[] 	_sAlcoveCharacterNames
 Int[] 		_iAlcoveCharacterOption
 Int[]		_iAlcoveResetOption
 
+Int Function GetVersion()
+    return 2 ; Default version
+EndFunction
+
+Event OnVersionUpdate(int a_version)
+	If (a_version >= 2 && CurrentVersion < 2)
+		Debug.Trace("MYC/MCM: Updating script to version 2...")
+        FilterVoiceTypes(VOICETYPE_NOFILTER)
+	EndIf
+
+EndEvent
+
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
 	Pages = New String[3]
@@ -103,21 +115,21 @@ Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 		VoiceType kThisVoiceType = CharacterManager.vMYC_VoiceTypesAllList.GetAt(i) as VoiceType
 		Bool bInclude = False
 		If CharacterManager.vMYC_VoiceTypesFollowerList.Find(kThisVoiceType) > -1
-			sFilterLegend = sFilterLegend + "F"
+			sFilterLegend = sFilterLegend + "Follower"
 			bInclude = True
 		EndIf
 		If CharacterManager.vMYC_VoiceTypesSpouseList.Find(kThisVoiceType) > -1
 			If sFilterLegend
 				sFilterLegend = sFilterLegend + ","
 			EndIf
-			sFilterLegend = sFilterLegend + "S"
+			sFilterLegend = sFilterLegend + "Spouse"
 			bInclude = True
 		EndIf
 		If CharacterManager.vMYC_VoiceTypesAdoptList.Find(kThisVoiceType) > -1
 			If sFilterLegend
 				sFilterLegend = sFilterLegend + ","
 			EndIf
-			sFilterLegend = sFilterLegend + "A"
+			sFilterLegend = sFilterLegend + "Adoption"
 			bInclude = True
 		EndIf
 
@@ -397,7 +409,8 @@ Event OnOptionMenuAccept(int option, int index)
 	Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
 	If Option == _iVoiceTypeOption
 		_iVoiceTypeSelections[_iCurrentCharacter] = index
-		SetMenuOptionValue(_iVoiceTypeOption,_sVoiceTypesFiltered[index])
+		String sShortVoiceType = StringUtil.Substring(_sVoiceTypesFiltered[index],0,StringUtil.Find(_sVoiceTypesFiltered[index]," "))
+		SetMenuOptionValue(_iVoiceTypeOption,sShortVoiceType)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == _iAliasOption
 		_iAliasSelections[_iCurrentCharacter] = index
