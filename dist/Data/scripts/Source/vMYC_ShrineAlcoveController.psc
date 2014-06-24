@@ -684,6 +684,7 @@ Event OnInventorySaveEnd(string eventName, string strArg, float numArg, Form sen
 	While i > 0
 		i -= 1
 		_kInvisibleActors[i].StopTranslation()
+		Wait(0.01)
 		_kInvisibleActors[i].Delete()
 	EndWhile
 	_bSavedInventory = True
