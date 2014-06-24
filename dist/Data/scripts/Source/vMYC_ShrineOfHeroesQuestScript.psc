@@ -95,23 +95,6 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 		AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = sender as vMYC_ShrineAlcoveController
 	EndIf
 	AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = strArg as Int
-	Int iCount = AlcoveState.Length
-	Bool bAllReady = True
-	Int i = 0
-	While i < iCount
-		If AlcoveState[i] == 1 ; Shrine is loading 
-			bAllReady = False
-		EndIf
-		i += 1
-	EndWhile
-	If bAllReady
-		SendModEvent("vMYC_AllAlcovesReady",1,CharacterManager.CharacterNames.Length)
-		Debug.Trace("MYC: ====================== DINGDINGDINGDINGDINGDINGDING ALL Alcoves READY W00pw00pw00pw00p! ===============")
-		vMYC_PortalStoneQuest.Start()
-	Else 
-		SendModEvent("vMYC_AllAlcovesReady",0)
-		;Debug.Trace("MYC: ====================== W00pw00pw00pw00p Alcoves NOT READY :(((((((((((((((( ===============")
-	EndIf
 	SyncShrineData()
 EndEvent
 
@@ -142,6 +125,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	If SyncShrineData()
 		UpdateShrineNames()
 	EndIf
+	StartPortalStoneQuestIfNeeded()	
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
@@ -281,6 +265,26 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	Return False
 EndFunction
 
+Function StartPortalStoneQuestIfNeeded()
+	Int iCount = AlcoveState.Length
+	Bool bAllReady = True
+	Int i = 0
+	While i < iCount
+		If AlcoveState[i] == 1 ; Shrine is loading 
+			bAllReady = False
+		EndIf
+		i += 1
+	EndWhile
+	If bAllReady && ShrineDataSerial > 0
+		SendModEvent("vMYC_AllAlcovesReady",1,CharacterManager.CharacterNames.Length)
+		Debug.Trace("MYC: ====================== DINGDINGDINGDINGDINGDINGDING ALL Alcoves READY W00pw00pw00pw00p! ===============")
+		vMYC_PortalStoneQuest.Start()
+	Else 
+		SendModEvent("vMYC_AllAlcovesReady",0)
+		;Debug.Trace("MYC: ====================== W00pw00pw00pw00p Alcoves NOT READY :(((((((((((((((( ===============")
+	EndIf
+EndFunction
+
 Function TickDataSerial(Bool abForceSync = False)
 	ShrineDataSerial += 1
 	JMap.setInt(_jShrineData,"DataSerial",ShrineDataSerial)
@@ -309,6 +313,7 @@ Function DoInit(Bool abForce = False)
 	JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 	TickDataSerial(True)
 	UpdateAlcoveControllers()
+	StartPortalStoneQuestIfNeeded()	
 EndFunction
 
 Function InitShrineData()

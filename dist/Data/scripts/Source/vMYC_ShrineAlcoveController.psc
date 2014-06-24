@@ -16,7 +16,7 @@ Int	Property AlcoveIndex Hidden
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
 		Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
-		SendModEvent("vMYC_AlcoveStatusUpdate",AlcoveState)
+		SendModEvent("vMYC_AlcoveStatusUpdate",0)
 		RegisterForSingleUpdate(1)
 	EndFunction
 EndProperty
