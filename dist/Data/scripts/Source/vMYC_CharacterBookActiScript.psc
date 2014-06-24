@@ -41,7 +41,7 @@ Int	Property AlcoveIndex Hidden
 	EndFunction
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
-		Debug.Trace("MYC/Shrine/Book" + _iAlcoveIndex + ": I am alcove book #" + _iAlcoveIndex + "!")
+		;Debug.Trace("MYC/Shrine/Book" + _iAlcoveIndex + ": I am alcove book #" + _iAlcoveIndex + "!")
 	EndFunction
 EndProperty
 
