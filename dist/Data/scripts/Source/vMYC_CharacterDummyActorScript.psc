@@ -30,6 +30,8 @@ Faction Property vMYC_CharacterPlayerEnemyFaction Auto
 
 GlobalVariable Property	vMYC_CharGenLoading Auto
 
+GlobalVariable Property DecapitationChance Auto
+
 Float Property PlayTime Auto Hidden
 
 String Property CharacterName Auto Hidden
@@ -76,6 +78,8 @@ Bool _bWarnedVoiceTypeNoFollower = False
 Bool _bWarnedVoiceTypeNoSpouse = False 
 
 String[] _sSkillNames 
+
+Float _fDecapitationChance
 
 ;Int _jCharacterData 
 
@@ -183,6 +187,12 @@ EndEvent
 
 Event OnPackageChange(Package akOldPackage)
 	;Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
+	If IsInCombat() && GetCombatTarget() == PlayerREF && DecapitationChance.GetValue()
+		_fDecapitationChance = DecapitationChance.GetValue()
+		DecapitationChance.SetValue(0)
+	ElseIf _fDecapitationChance && !DecapitationChance.GetValue()
+		DecapitationChance.SetValue(_fDecapitationChance)
+	EndIf
 EndEvent
 
 Event OnUnload()
