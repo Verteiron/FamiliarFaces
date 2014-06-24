@@ -24,6 +24,8 @@ ObjectReference	Property	COCMarkerRef				Auto
 
 ObjectReference Property vMYC_PortalReturnMarker Auto
 
+FormList	Property	vMYC_LocationAnchorsList	Auto
+
 Message Property vRDN_EndCombatMSG Auto
 
 LocationAlias	Property	kLastPlayerLocation Auto 
@@ -50,14 +52,39 @@ EndEvent
 
 Event OnEquipped(Actor akActor)
 	Debug.Trace("MYC/PortalStoneScript: PortalStone equipped by " + akActor)
-	If PlayerREF.GetCurrentLocation()
-		kLastPlayerLocation.ForceLocationTo(PlayerREF.GetCurrentLocation())
-		PlayerREF.GetCurrentLocation().SendModEvent("vMYC_SetLastPlayerLocation")
+	
+	Int iEventHandle = ModEvent.Create("vMYC_SetCustomLocation")
+	If iEventHandle
+		ModEvent.PushForm(iEventHandle,Self)
+		
+		String sLocationName
+		If PlayerREF.GetCurrentLocation()
+			sLocationName = PlayerREF.GetCurrentLocation().GetName()
+		EndIf
+		If !sLocationName
+			sLocationName = PlayerREF.GetParentCell().GetName()
+		EndIf
+		If !sLocationName || sLocationName == "Wilderness"
+			sLocationName = PlayerREF.GetActorBase().GetName() + "'s last location"
+		EndIf
+		ModEvent.PushString(iEventHandle,sLocationName)
+		ModEvent.PushForm(iEventHandle,PlayerREF.GetCurrentLocation())
+		ModEvent.PushForm(iEventHandle,PlayerREF.GetParentCell())
+		Int i = 1
+		While i < 6 ; Send 5 objects found within increasing range as 'anchors' to ensure that we can find SOMETHING to MoveTo when loading this location later
+			ModEvent.PushForm(iEventHandle,Game.FindRandomReferenceOfAnyTypeInListFromRef(vMYC_LocationAnchorsList, PlayerREF, 2048 * i))
+			i += 1
+		EndWhile
+		ModEvent.PushFloat(iEventHandle,PlayerREF.GetPositionX())
+		ModEvent.PushFloat(iEventHandle,PlayerREF.GetPositionY())
+		ModEvent.PushFloat(iEventHandle,PlayerREF.GetPositionZ())
+		If ModEvent.Send(iEventHandle)
+			Debug.Trace("MYC/PortalStoneScript: Sent custom location data!")
+		Else
+			Debug.Trace("MYC/PortalStoneScript: WARNING, could not send custom location data!",1)
+		EndIf
 	EndIf
-	PlayerREF.GetParentCell().SendModEvent("vMYC_SetLastPlayerCell")
-	PlayerREF.SendModEvent("vMYC_SetLastPlayerPos","x",PlayerREF.GetPositionX())
-	PlayerREF.SendModEvent("vMYC_SetLastPlayerPos","y",PlayerREF.GetPositionY())
-	PlayerREF.SendModEvent("vMYC_SetLastPlayerPos","z",PlayerREF.GetPositionZ())
+		
 	If akActor == PlayerREF
 		DisablePlayerControls(abMovement = false, abFighting = true, abCamSwitch = true, abLooking = false, abSneaking = true, abMenu = true, abActivate = true, abJournalTabs = false)
 		ForceThirdPerson()

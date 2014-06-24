@@ -48,11 +48,15 @@ String[] Property sHangoutNames Auto Hidden
 
 ReferenceAlias[] Property kHangoutRefAliases Auto Hidden
 
+ReferenceAlias	Property	CustomLocMarkerAlias	Auto 
+
 LocationAlias	Property	kLastPlayerLocation Auto 
 
 LocationAlias[]	Property	kCustomLocations Auto
 
 ObjectReference[] Property	CustomMapMarkers Auto
+
+Formlist Property	vMYC_CustomLocationsList Auto
 
 String[] Property sClassNames Auto
 
@@ -443,12 +447,41 @@ Event OnSetLastPlayerPos(string eventName, string strArg, float numArg, Form sen
 	EndIf
 	Debug.Trace("MYC: LastPlayerPos is " + _fLastPlayerPosX + "," + _fLastPlayerPosY + "," + _fLastPlayerPosZ)
 EndEvent
+
+Event OnSetLocationAnchor(string eventName, string strArg, float numArg, Form sender)
+	Int jLocationAnchors = JMap.getObj(_jMYC,"LocationAnchors")
+	If !jLocationAnchors
+		jLocationAnchors = JArray.Object()
+		JMap.setObj(_jMYC,"LocationAnchors",jLocationAnchors)
+	EndIf
+	Debug.Trace("MYC: LocationAnchor: " + sender)
+	JArray.AddForm(jLocationAnchors,sender as ObjectReference)
+	Debug.Trace("MYC: LocationAnchor: " + sender + " added!")
+EndEvent
+
+Event OnSetCustomLocation(Form sender, String sLocationName, Form kLocation, Form kCell, Form kAnchor1, Form kAnchor2, Form kAnchor3, Form kAnchor4, Form kAnchor5, Float fPlayerX, Float fPlayerY, Float fPlayerZ)
+	Debug.Trace("MYC: Received custom location!")
+	Int jLocationData = JMap.Object()
+	JMap.setObj(_jMYC,"LocationData",jLocationData)
+	JMap.setStr(jLocationData,"LocationName",sLocationName)
+	JMap.setForm(jLocationData,"Location",kLocation as Location)
+	JMap.setForm(jLocationData,"Cell",kCell as Cell)
+	Int jLocationAnchors = JArray.Object()
+	JMap.setObj(jLocationData,"Anchors",jLocationAnchors)
+	JArray.AddForm(jLocationAnchors,kAnchor1)
+	JArray.AddForm(jLocationAnchors,kAnchor2)
+	JArray.AddForm(jLocationAnchors,kAnchor3)
+	JArray.AddForm(jLocationAnchors,kAnchor4)
+	JArray.AddForm(jLocationAnchors,kAnchor5)
+	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
+	JMap.setObj(jLocationData,"Position",jPlayerPos)
+EndEvent
+		
 ;--=== Functions ===--
 
 Function RegisterForModEvents()
-	RegisterForModEvent("vMYC_SetLastPlayerLocation","OnSetLastPlayerLocation")
-	RegisterForModEvent("vMYC_SetLastPlayerCell","OnSetLastPlayerCell")
-	RegisterForModEvent("vMYC_SetLastPlayerPos","OnSetLastPlayerPos")
+	Debug.Trace("MYC/CharacterManager: Registering for mod events...")
+	RegisterForModEvent("vMYC_SetCustomLocation","OnSetCustomLocation")
 EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
@@ -567,7 +600,7 @@ Function LoadCharacterFiles()
 			Else
 				;We're loading a file for a character we already have a record of.
 				Int jCharacterInfo = JMap.getObj(_jMYC,sCharacterName)
-				If JValue.solveFlt(jCharacterInfo,".Data.!MYC.PlayTime") != JValue.solveFlt(jCharacterData,".!MYC.PlayTime")
+				If JValue.solveFlt(jCharacterInfo,".Data._MYC.PlayTime") != JValue.solveFlt(jCharacterData,"._MYC.PlayTime")
 					Debug.Trace("MYC: The saved data for " + sCharacterName + " HAS changed!")
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData)
 				Else
@@ -595,10 +628,10 @@ EndFunction
 
 Int Function ValidateCharacterInfo(Int jCharacterData)
 	;Debug.Trace("MYC: ValidateCharacterData!")
-	If !JValue.hasPath(jCharacterData,".!MYC.SerializationVersion") && JMap.hasKey(jCharacterData,"Name")
+	If !JValue.hasPath(jCharacterData,"._MYC.SerializationVersion") && JMap.hasKey(jCharacterData,"Name")
 		;Debug.Trace("MYC: Character data is valid but from an early development version.")
 		Return 0
-	ElseIf JValue.hasPath(jCharacterData,".!MYC.SerializationVersion")
+	ElseIf JValue.hasPath(jCharacterData,"._MYC.SerializationVersion")
 		Int iSVer = JValue.solveInt(jCharacterData,"._MYC.SerializationVersion")
 		;Debug.Trace("MYC: Character data is valid, serialization version " + iSVer)
 		Return iSVer
@@ -608,24 +641,24 @@ EndFunction
 
 Bool Function UpgradeCharacterInfo(Int jCharacterData)
 	Bool bUpgraded = False
-	If !JValue.hasPath(jCharacterData,".!MYC.SerializationVersion") && JMap.hasKey(jCharacterData,"Name")
+	If !JValue.hasPath(jCharacterData,"._MYC.SerializationVersion") && JMap.hasKey(jCharacterData,"Name")
 		;Dev version, upgrade to version 1
 		;Debug.Trace("MYC: Upgrading dev version data to version 1...")
 		Int jMetaInfo = JMap.Object()
 		JMap.setInt(jMetaInfo,"SerializationVersion",1)
 		JMap.setStr(jMetaInfo,"Name",JMap.getStr(jCharacterData,"Name"))
-		JMap.setObj(jCharacterData,"!MYC",jMetaInfo)
+		JMap.setObj(jCharacterData,"_MYC",jMetaInfo)
 		If !JMap.hasKey(jCharacterData,"ModList")
 			JMap.setObj(jCharacterData,"Modlist",JArray.object()) ; Add empty modlist entry
 		EndIf
 		;Debug.Trace("MYC: ...version 1 upgrade finished!")
 		bUpgraded = True
 	EndIf
-	Int iDataVer = JValue.solveInt(jCharacterData,".!MYC.SerializationVersion")
+	Int iDataVer = JValue.solveInt(jCharacterData,"._MYC.SerializationVersion")
 	If iDataVer == 1
 		;Debug.Trace("MYC: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
 		;Debug.Trace("MYC: Upgrading version 1 to version 2...")
-		Int jMetaInfo = JMap.getObj(jCharacterData,"!MYC")
+		Int jMetaInfo = JMap.getObj(jCharacterData,"_MYC")
 		JMap.setStr(jMetaInfo,"Name",JMap.getStr(jCharacterData,"Name"))
 		JMap.setStr(jMetaInfo,"RaceText",(JMap.getForm(jCharacterData,"Race") as Race).GetName())
 		JMap.setFlt(jMetaInfo,"Playtime",JMap.getFlt(jCharacterData,"PlayTime"))
@@ -636,7 +669,7 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 		;Debug.Trace("MYC: ...version 2 upgrade finished!")
 		bUpgraded = True
 	EndIf
-	iDataVer = JValue.solveInt(jCharacterData,".!MYC.SerializationVersion")
+	iDataVer = JValue.solveInt(jCharacterData,"._MYC.SerializationVersion")
 	If iDataVer < SerializationVersion
 		;Debug.Trace("MYC: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
 		;Debug.Trace("MYC: Unfortunately no upgrade function is in place, so we'll just have to hope for the best!")
@@ -693,7 +726,7 @@ Actor Function GetCharacterActorByName(String asCharacterName)
 EndFunction
 
 String Function GetCharacterMetaString(String asCharacterName, String asMetaName)
-	Return JValue.solveStr(_jMYC,"." + asCharacterName + ".Data.!MYC." + asMetaName)
+	Return JValue.solveStr(_jMYC,"." + asCharacterName + ".Data._MYC." + asMetaName)
 EndFunction
 
 Int Function GetCharacterInt(String asCharacterName, String asPath)
@@ -744,31 +777,79 @@ String[] Function GetCharacterSpawnPoints(String asCharacterName)
 	Return sSpawnPoints
 EndFunction
 
-Int Function AddCustomLocation(Location kLocation, String sLocationName)
+Int Function AddCustomLocation(Int jLocationData)
 {Return -1 if failure, or Hangout index if success}
-	If !kLocation
+	If !jLocationData
 		Return -1
 	EndIf
-	Debug.Trace("MYC: Adding custom location: " + kLocation + "(" + kLocation.GetName() + ")...")
-	Int i = kCustomLocations.Length
+	String sLocationName = JMap.GetStr(jLocationData,"LocationName")
+	Location kLocation = JMap.GetForm(jLocationData,"Location") as Location
+	Cell kCell = JMap.GetForm(jLocationData,"Cell") as Cell
+	
+	ObjectReference kSpawnObject
+	ObjectReference[] kAnchorObjects = New ObjectReference[5]
+	Int jAnchorObjects = JMap.GetObj(jLocationData,"Anchors")
+	Int i = kAnchorObjects.Length
+	Int iAnchorCount
+	While i > 0
+		i -= 1
+		ObjectReference kAnchor = JArray.GetForm(jAnchorObjects,i) as ObjectReference
+		If kAnchor
+			kAnchorObjects[i] = kAnchor
+			kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
+			iAnchorCount += 1
+		EndIf
+	EndWhile
+	Float TargetX = JValue.SolveFlt(jLocationData,".Position.X")
+	Float TargetY = JValue.SolveFlt(jLocationData,".Position.Y")
+	Float TargetZ = JValue.SolveFlt(jLocationData,".Position.Z")
+	
+	Debug.Trace("MYC: Adding custom location: " + sLocationName)
+	Debug.Trace("MYC:   Location: " + kLocation)
+	Debug.Trace("MYC:       Cell: " + kCell)
+	Debug.Trace("MYC:    Anchors: " + iAnchorCount)
+	Debug.Trace("MYC:   Position: X: " + TargetX + ", Y: " + TargetY + ", Z:" + TargetZ)
+
 	Int iEmptyIndex = -1
+	i = kCustomLocations.Length
 	While i > 0
 		i -= 1
 		Location kThisLocation = kCustomLocations[i].GetLocation()
-		If kThisLocation == kLocation
+		If kLocation && kThisLocation == kLocation ; Even if !kLocation, we still need to find a empty spot
+			Debug.Trace("MYC:  Location already on the list!")
 			Return -1 ; This location is already on the list
 		ElseIf !kThisLocation
 			iEmptyIndex = i
 		EndIf
 	EndWhile
+
 	;--- If we got this far, then the new location is not on the list.
-	kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
-	Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+	If kLocation
+		kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
+		Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+	ElseIf !kLocation
+		Debug.Trace("MYC:   No location form attached to this cell, assigning a custom one...")
+		kLocation = vMYC_CustomLocationsList.GetAt(iEmptyIndex) as Location
+		kLocation.SetName(sLocationName)
+		kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
+		Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+	EndIf
+	
 	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
 	Int iHOidx = sHangoutNames.Find("")
 	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
 	sHangoutNames[iHOidx] = sLocationName + " (Custom)"
 	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
+	If !CustomMapMarkers
+		CustomMapMarkers = New ObjectReference[32]
+	EndIf
+	If iHOidx > -1
+		CustomMapMarkers[iHOidx] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
+		CustomLocMarkerAlias.ForceRefTo(CustomMapMarkers[iHOidx]) ; Force target cell to load so we can get its data.
+		CustomMapMarkers[iHOidx].SetPosition(TargetX, TargetY, TargetZ)
+		Debug.Trace("MYC:    CustomMapMarker Placed, parent location is " + CustomMapMarkers[iHOidx].GetCurrentLocation() + ", cell is " + CustomMapMarkers[iHOidx].GetParentCell())
+		CustomLocMarkerAlias.Clear()
+	EndIf
 	Return iHOidx
 EndFunction
 
@@ -1042,39 +1123,8 @@ Bool Function LoadCharacter(String sCharacterName)
 		EndIf
 	EndIf
 	
-	Location kCustomLocation = JMap.getForm(jCharacterData,"Location") as Location
-	If kCustomLocation
-		String sLocationName = kCustomLocation.GetName()
-		If !sLocationName
-			sLocationName = JMap.getForm(jCharacterData,"LastCell").GetName()
-		EndIf
-		If !sLocationName
-			sLocationName = sCharacterName + "'s save point"
-		EndIf
-		Int iHOidx = AddCustomLocation(kCustomLocation,sLocationName)
-		If !CustomMapMarkers
-			CustomMapMarkers = New ObjectReference[32]
-		EndIf
-		Cell kCell = JMap.getForm(jCharacterData,"LastCell") as Cell
-		If kCell && iHOidx > -1
-			ObjectReference kSpawnObject
-			i = kCell.GetNumRefs()
-			Debug.Trace("MYC:    LastCell is " + kCell + ", checking " + i + " objects...")
-			While !kSpawnObject && i > 0
-				i -= 1
-				kSpawnObject = kCell.GetNthRef(i)
-			EndWhile
-			If kSpawnObject
-				CustomMapMarkers[iHOidx] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
-				CustomMapMarkers[iHOidx].SetPosition(JValue.solveFlt(jCharacterData,".LastPosition.x"),JValue.solveFlt(jCharacterData,".LastPosition.y"),JValue.solveFlt(jCharacterData,".LastPosition.z"))
-				Debug.Trace("MYC:    CustomMapMarker Placed, parent location is " + CustomMapMarkers[iHOidx].GetCurrentLocation() + ", cell is " + CustomMapMarkers[iHOidx].GetParentCell())
-			Else
-				Debug.Trace("MYC:    No valid spawn object could be found.")
-			EndIf
-		Else
-				Debug.Trace("MYC:    No valid cell could be found.")
-		EndIf
-	EndIf
+	Int iHOidx = AddCustomLocation(JMap.getObj(jCharacterData,"LocationData"))
+	
 	;----Load or create ActorBaseMap--------------
 	
 	Int jActorBaseMap
@@ -1312,7 +1362,7 @@ EndFunction
 Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEquipped = False)
 	Bool bTwoHanded = False
 	Form kItem = JMap.getForm(jItem,"Form")
-	String sCharacterName = kCharacterActor.GetName()
+	String sCharacterName = kCharacterActor.GetActorBase().GetName()
 	If kItem as Weapon
 		Int iWeaponType = (kItem as Weapon).GetWeaponType()
 		If iWeaponType == 5 || iWeaponType == 6 || iWeaponType == 7 || iWeaponType == 9 ; Greatswords, axes, bows or crossbows
@@ -1321,7 +1371,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 		If iWeaponType == 7
 			SetLocalInt(sCharacterName,"BowEquipped",1)
 		EndIf
-		Debug.Trace("MYC: (" + sCharacterName + ") adding " + kItem.GetName() +"...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") adding " + kItem.GetName() +"...")
 		If !(bTwoHanded && iHand == 0) 
 			kCharacterActor.AddItem(kItem)
 		EndIf
@@ -1329,7 +1379,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 		;kCharacterActor.DrawWeapon()
 		;Wait(1)
 		;WaitMenuMode(0.1)
-		Debug.Trace("MYC: (" + sCharacterName + ") equipping " + kItem.GetName() +"...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") equipping " + kItem.GetName() +"...")
 		If iHand == 1 ; Equip in proper hand and prevent removal
 			kCharacterActor.EquipItemEx(kItem,1,True) ; Right
 		ElseIf !bTwoHanded
@@ -1348,7 +1398,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 			;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetItemMaxCharge(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemMaxCharge"))
 			WornObject.SetItemMaxCharge(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemMaxCharge"))
 			If sDisplayName ; Will be blank if player hasn't renamed the item
-				Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetDisplayName(kCharacterActor," + iHand + ",0," + sDisplayName)
+				;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetDisplayName(kCharacterActor," + iHand + ",0," + sDisplayName)
 				WornObject.SetDisplayName(kCharacterActor,iHand,0,sDisplayName)
 			EndIf
 
@@ -1370,10 +1420,10 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 					kMagicEffects[j] = JMap.GetForm(jWeaponEnchEffect,"MagicEffect") as MagicEffect
 					j += 1
 				EndWhile
-				Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " creating custom enchantment...")
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " creating custom enchantment...")
 				WornObject.CreateEnchantment(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
 				
-				Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " done!")
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " done!")
 			EndIf
 			If iHand == 1
 				kCharacterActor.SetActorValue("RightItemCharge",JMap.getFlt(jItem,"ItemCharge"))
@@ -2077,21 +2127,10 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
 	JMap.SetForm(jPlayerData,"Race",PlayerREF.GetActorBase().GetRace())
-	If kLastPlayerLocation.GetLocation()
-		JMap.SetForm(jPlayerData,"Location",kLastPlayerLocation.GetLocation())
-		If kLastPlayerLocation.GetLocation()
-			JMap.setStr(jPlayerData,"LocationName",kLastPlayerLocation.GetLocation().GetName())
-		EndIf
-	EndIf
-	If _kLastPlayerLocation as Location
-		JMap.SetForm(jPlayerData,"LastLocation",_kLastPlayerLocation as Location)
-	EndIf
-	If _kLastPlayerCell as Cell
-		JMap.SetForm(jPlayerData,"LastCell",JMap.getForm(_jMYC,"LastCell"))
-		;JMap.SetForm(jPlayerData,"LastCell",_kLastPlayerCell as Cell)
-	EndIf
-	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + _fLastPlayerPosX + ", \"y\": " + _fLastPlayerPosY + ", \"z\": " + _fLastPlayerPosZ + " }")
-	JMap.SetObj(jPlayerData,"LastPosition",jPlayerPos)
+	
+	;-----==== Save custom location data
+	
+	JMap.setObj(jPlayerData,"LocationData",JMap.GetObj(_jMYC,"LocationData"))
 	
 	;-----==== Save some metainfo. Some is duplicated for reasons that made sense at the time. I swear I wasn't drunk
 	
@@ -2111,7 +2150,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.setFlt(jMetaInfo,"Playtime",GetRealHoursPassed())
 	JMap.setInt(jMetaInfo,"SerializationVersion",2)
 
-	JMap.setObj(jPlayerData,"!MYC",jMetaInfo)
+	JMap.setObj(jPlayerData,"_MYC",jMetaInfo)
 	
 	;-----==== Save actorvalues
 	

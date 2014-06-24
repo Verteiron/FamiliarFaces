@@ -831,7 +831,11 @@ Function SummonCharacter()
 	Wait(0.5)
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	_kCharacter.MoveToPackageLocation()
-	If _kCharacter.GetParentCell().GetName() == "vMYC_Staging"
+	String sCellName
+	If _kCharacter.GetParentCell()
+		sCellName = _kCharacter.GetParentCell().GetName()
+	EndIf
+	If sCellName == "vMYC_Staging"
 		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
 		ObjectReference kMarkerObject = CharacterManager.CustomMapMarkers[CharacterManager.GetLocalInt(CharacterName, "HangoutIndex")]
 		_kCharacter.MoveTo(kMarkerObject)
