@@ -88,26 +88,31 @@ Function DoUpkeep(Bool DelayedStart = True)
 		Wait(RandomFloat(2,4))
 	EndIf
 	Float fSKSE = SKSE.GetVersion() + SKSE.GetVersionMinor() * 0.01 + SKSE.GetVersionBeta() * 0.0001
+	Debug.Trace("MYC: SKSE is version " + fSKSE)
+	Debug.Trace("MYC: JContainers is version " + SKSE.GetPluginVersion("Jcontainers"))
+	Debug.Trace("MYC: FFutils is version " + SKSE.GetPluginVersion("ffutils"))
+	Debug.Trace("MYC: Chargen is version " + SKSE.GetPluginVersion("chargen"))
 	;Debug.MessageBox("SKSE version is " + fSKSE)
 	If fSKSE < 1.0700
-		If !_ShowedSKSEWarning
-			Debug.MessageBox("SKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher and will now shut down. This message will not be displayed again.")
-			_ShowedSKSEWarning = True
-		EndIf
+		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher and will now shut down. This message will not be displayed again.")
 		DoShutdown()
 		Return
-	Else ; reset message in case user breaks SKSE later
-		_ShowedSKSEWarning = False
+	Else 
+		;Proceed
 	EndIf
 	If JContainers.APIVersion() < 2
-		If !_ShowedJContainersWarning
-			Debug.MessageBox("The SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.67.1 or higher and will now shut down. This message will not be displayed again.")
-		_ShowedJContainersWarning = True
-		EndIf
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.67.3 or higher and will now shut down. This message will not be displayed again.")
 		DoShutdown()
 		Return
 	Else
-		_ShowedJContainersWarning = False
+		;Proceed
+	EndIf
+	If SKSE.GetPluginVersion("chargen") < 2
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.7.2 or higher, or at least the current version of CharGen.dll distributed with RaceMenu. Familiar Faces will now shut down.")
+		DoShutdown()
+		Return
+	Else
+		;Proceed
 	EndIf
 	;FIXME: CHANGE THIS WHEN UPDATING!
 	_CurrentVersion = 80

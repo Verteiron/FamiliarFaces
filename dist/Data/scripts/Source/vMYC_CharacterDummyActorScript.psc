@@ -234,13 +234,15 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
-				;;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell)
+				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell.GetName() + " (" + kSpell + ")")
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-			If RemoveSpell(kSpell) 
-				;;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell)
-				iRemoved += 1
+			If kSpell.GetNthEffectDuration(0) > 0
+				If RemoveSpell(kSpell) 
+					Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell.GetName() + " (" + kSpell + ")")
+					iRemoved += 1
+				EndIf
 			EndIf
 		EndIf
 	EndWhile
@@ -327,6 +329,12 @@ Function SetNonpersistent()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	Int iSafetyTimer = 10
 	While CharacterManager.ApplyCharacterPerks(CharacterName) < 0 && iSafetyTimer
+		iSafetyTimer -= 1
+		Wait(0.5)
+	EndWhile
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
+	iSafetyTimer = 10
+	While CharacterManager.ApplyCharacterShouts(CharacterName) < 0 && iSafetyTimer
 		iSafetyTimer -= 1
 		Wait(0.5)
 	EndWhile

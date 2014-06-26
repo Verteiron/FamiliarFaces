@@ -66,6 +66,8 @@ CombatStyle[] Property kCombatStyles Auto
 
 Formlist Property vMYC_CombatStyles Auto
 
+Formlist Property vMYC_PlayerShoutCheckList Auto
+
 Bool[] Property bMagicUser Auto
 
 FavorJarlsMakeFriendsScript Property ThaneTracker Auto
@@ -181,6 +183,9 @@ Formlist Property vMYC_PerkCheckList Auto
 Formlist Property vMYC_PerkList Auto
 {A list of all perks as found by ActorValueInfo.}
 
+Formlist Property vMYC_ShoutList Auto
+{A list of all shouts as found by HasShout/ShoutCheckList.}
+
 Formlist Property vMYC_VoiceTypesFollowerList Auto
 {A list of voicetypes that can be followers.}
 
@@ -224,6 +229,8 @@ Bool _bBusyEquipment = False
 Bool _bFreeActorBaseBusy
 
 Bool _bApplyPerksBusy = False
+
+Bool _bApplyShoutsBusy = False
 
 ActorBase[] _kDummyActors
 
@@ -536,9 +543,14 @@ Function DoInit()
 		DLC1MQ02 = GetFormFromFile(0x02002F65,"Dawnguard.esm") as Quest 
 		DLC1MQ08 = GetFormFromFile(0x02007C25,"Dawnguard.esm") as Quest
 		DLC1VampireChange = GetFormFromFile(0x0200283B,"Dawnguard.esm") as Spell
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x02007CB6,"Dawnguard.esm")) ; Soul Tear
 	EndIf
 	If GetModByName("Dragonborn.esm") != 255
 		DLC2MQ06 = GetFormFromFile(0x020179D7,"Dragonborn.esm") as Quest
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x020179d8,"Dragonborn.esm")) ; Bend Will
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x0201df92,"Dragonborn.esm")) ; Dragon Aspect
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x020200c0,"Dragonborn.esm")) ; Cyclone
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x0202ad09,"Dragonborn.esm")) ; Battle Fury
 	EndIf
 	RegisterForSingleUpdate(1)
 EndFunction
@@ -1039,12 +1051,44 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
 	If vMYC_PerkList.GetSize() != JArray.Count(jCharacterPerks)
 		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		_bApplyPerksBusy = False
 		Return -1
 	EndIf
-	CharGen.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
+	FFUtils.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
 	_bApplyPerksBusy = False
 	Return vMYC_PerkList.GetSize()
+EndFunction
+
+Int Function ApplyCharacterShouts(String sCharacterName)
+{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption. }
+	If _bApplyShoutsBusy
+		Return -1
+	EndIf
+	_bApplyShoutsBusy = True
+	vMYC_Shoutlist.Revert()
+	Int jCharacterShouts = GetCharacterObj(sCharacterName,"Shouts")
+	Int i = JArray.Count(jCharacterShouts)
+	While i > 0
+		i -= 1
+		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
+		Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
+		vMYC_ShoutList.AddForm(kShout)
+	EndWhile
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
+	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
+		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		_bApplyShoutsBusy = False
+		Return -1
+	ElseIf vMYC_ShoutList.GetSize() == 0
+		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Aborting!",1)
+		_bApplyShoutsBusy = False
+		Return -1
+	EndIf
+	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
+	WaitMenuMode(0.1)
+	_bApplyShoutsBusy = False
+	Return vMYC_ShoutList.GetSize()
 EndFunction
 
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
@@ -1794,6 +1838,20 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 	EndWhile
 	SendModEvent("vMYC_SpellsSaveEnd",iAddedCount)
 	;Debug.Trace("MYC: Saved " + iAddedCount + " spells for " + sPlayerName + ".")
+
+	Int jPlayerShouts = JArray.Object()
+	JMap.SetObj(jPlayerData,"Shouts",jPlayerShouts)
+	
+	Int iShoutCount = vMYC_PlayerShoutCheckList.GetSize()
+	i = 0
+	While i < iShoutCount
+		Shout kShout = vMYC_PlayerShoutCheckList.GetAt(i) as Shout
+		If PlayerREF.HasSpell(kShout)
+			JArray.AddForm(jPlayerShouts,kShout)
+		EndIf
+		i += 1
+	EndWhile
+	Debug.Trace("MYC: Saved " + JArray.Count(jPlayerShouts) + " shouts for " + sPlayerName + ".")
 	
 	_bSavedSpells = True
 EndEvent
