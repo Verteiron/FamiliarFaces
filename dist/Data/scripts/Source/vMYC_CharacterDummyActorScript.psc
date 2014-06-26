@@ -332,6 +332,12 @@ Function SetNonpersistent()
 		iSafetyTimer -= 1
 		Wait(0.5)
 	EndWhile
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
+	iSafetyTimer = 10
+	While CharacterManager.ApplyCharacterShouts(CharacterName) < 0 && iSafetyTimer
+		iSafetyTimer -= 1
+		Wait(0.5)
+	EndWhile
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying haircolor...")
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") as ColorForm
 	_kActorBase.SetHairColor(kHairColor)
