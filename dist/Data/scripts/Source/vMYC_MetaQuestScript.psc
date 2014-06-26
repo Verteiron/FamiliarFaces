@@ -110,7 +110,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		_ShowedJContainersWarning = False
 	EndIf
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 70
+	_CurrentVersion = 80
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 	String sErrorMessage
 	SendModEvent("vMYC_UpkeepBegin")
