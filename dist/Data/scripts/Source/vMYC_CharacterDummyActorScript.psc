@@ -81,6 +81,8 @@ String[] _sSkillNames
 
 Float _fDecapitationChance
 
+Int _iMagicUpdateCounter
+
 ;Int _jCharacterData 
 
 CombatStyle _kCombatStyle
@@ -215,6 +217,13 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	If strArg != CharacterName
 		Return
 	EndIf
+	_iMagicUpdateCounter += 1
+	Int iMyCounter = _iMagicUpdateCounter
+	Wait(1)
+	If iMyCounter != _iMagicUpdateCounter
+		Return
+	EndIf
+	
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
@@ -234,13 +243,15 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
-				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added spell - " + kSpell.GetName() + " (" + kSpell + ")")
+				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-			If kSpell.GetNthEffectDuration(0) > 0
+			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
+			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This was we avoid stripping perk, race, and doom stone abilities
+			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
 				If RemoveSpell(kSpell) 
-					Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed spell - " + kSpell.GetName() + " (" + kSpell + ")")
+					Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
 					iRemoved += 1
 				EndIf
 			EndIf
