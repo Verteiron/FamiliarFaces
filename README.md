@@ -37,14 +37,14 @@ Send bug reports to: verteiron+ffbugs@gmail.com.
 *   SKSE 1.7.0 - Not included. Download and install if you're not using it already. Earlier versions WILL NOT WORK. The mod will notice if SKSE is missing and will shut down.
 *   SkyUI 4.1 - Not included. Required for using MCM.
 *   JContainers 0.66 or higher - Included. This is an SKSE plugin that is packaged with this testing edition.
-*   CharGen.dll - Included. This is a special testing version of Expired's CharGen Extender SKSE plugin. See the Warnings section below. If you are running the release versions of CharGen Extender or RaceMenu, BACK THEM UP BEFORE INSTALLING FAMILIAR FACES.
+*   CharGen.dll - Download this as part of [RaceMenu 2.7.2](http://www.nexusmods.com/skyrim/mods/29624/?). If you don't want to use Racemenu, don't activate its ESP files, but the chargen.dll included with it is required.
 
 ###Compatibility
 
 *   Dawnguard and Dragonborn are supported but not required.
 *   Enhanced Character Edit (ECE) is NOT compatible with Familiar Faces and likely won't be any time in the near future. This is not due to any particular flaw in ECE, it just uses a different system than CharGen Extender, which is what I'm relying on.
 *   Body replacer mods such CBBE should be compatible. Face replacer mods should work (provided they don't rely on ECE), but exported characters will probably not load properly if the face-altering mod is removed.
-*   Mods that add NIOverride overlays (body tattoos, scars, glowing face tattoos, etc) to RaceMenu will be supported, but don't work yet.
+*   Mods that add NIOverride overlays (body tattoos, scars, glowing face tattoos, etc) are *fully* supported.
 *   Some ENB setups may interfere with ImageSpaceOverrides, meaning some animations that normally fade to white to hide animation glitches will not do so. Please let me know if you're using ENB before reporting animation bugs.
 
 ###Testing setup
