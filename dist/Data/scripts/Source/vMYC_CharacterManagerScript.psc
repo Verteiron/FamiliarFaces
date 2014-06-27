@@ -944,7 +944,7 @@ Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHango
 	Else 
 		Return False
 	EndIf
-	SetCharacterTracking(asCharacterName, True)
+	SetCharacterTracking(asCharacterName, GetLocalInt(asCharacterName,"TrackingEnabled") as Bool)
 	Return True
 EndFunction
 
@@ -954,6 +954,7 @@ Function SetCharacterTracking(String asCharacterName, Bool abEnable)
 	If iRefIndex == -1 && abEnable
 		PickHangout(asCharacterName)
 	EndIf
+	SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
 	;Debug.Trace("MYC: SetCharacterTracking for " + asCharacterName + " at HangoutIndex " + iRefIndex + " to " + abEnable)
 	SetObjectiveDisplayed(iRefIndex,False)
 	SetObjectiveDisplayed(iRefIndex,abEnable)
