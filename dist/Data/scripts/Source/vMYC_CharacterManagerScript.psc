@@ -1529,6 +1529,11 @@ Int Function CreateLocalDataIfMissing(String asCharacterName)
 	Return jCharLocalData
 EndFunction
 
+Bool Function HasLocalKey(String asCharacterName, String asPath)
+	Int jCharacterLocal = CreateLocalDataIfMissing(asCharacterName)
+	Return JMap.hasKey(jCharacterLocal,asPath)
+EndFunction
+
 Function SetLocalString(String asCharacterName, String asPath, String asString)
 	Int jCharacterLocal = CreateLocalDataIfMissing(asCharacterName)
 	JMap.setStr(jCharacterLocal,asPath,asString)

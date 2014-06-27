@@ -328,6 +328,13 @@ Function DoUpkeep(Bool bInBackground = True)
 	_bNeedRefresh = True
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
+	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
+		If CharacterManager.GetLocalInt(CharacterName,"InAlcove")
+			CharacterManager.SetCharacterTracking(CharacterName,False)
+		Else
+			CharacterManager.SetCharacterTracking(CharacterName,True)
+		EndIf
+	EndIf
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
