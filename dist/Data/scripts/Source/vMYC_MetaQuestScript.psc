@@ -1,4 +1,4 @@
-Scriptname vMYC_MetaQuestScript extends Quest
+Scriptname vMYC_MetaQuestScript extends Quest  
 {Do initialization and track variables for scripts}
 
 ;--=== Imports ===--
@@ -57,7 +57,7 @@ Event OnReset()
 EndEvent
 
 Event OnUpdate()
-
+	
 EndEvent
 
 Event OnGameReloaded()
@@ -85,9 +85,9 @@ Function DoUpkeep(Bool DelayedStart = True)
 	EndIf
 
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 90
+	_CurrentVersion = 100
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
-
+	
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
 	RegisterForModEvent("vMYC_InitEnd","OnInitState")
 	RegisterForModEvent("vMYC_UpkeepBegin","OnUpkeepState")
@@ -147,7 +147,7 @@ Function DoInit()
 		;CharacterManager.DoInit()
 	EndIf
 
-
+	
 	;Wait(3)
 	;CharacterManager.SaveCurrentPlayer()
 	;Int i = 0
@@ -165,8 +165,8 @@ EndFunction
 Function DoUpgrade()
 	_Running = False
 	;version-specific upgrade code
-	If ModVersion < 50
-		Debug.MessageBox("Familiar Faces\nHEY! You REALLY need to start from a clean save! Upgrading from previous tests to this version is NOT SUPPORTED!\nHit ~ and type qqq in the console to quit now!")
+	If ModVersion < 90
+		Debug.MessageBox("Familiar Faces\nHEY! You REALLY need to start from a clean save! Upgrading from the beta to this version is NOT SUPPORTED!\nHit ~ and type qqq in the console to quit now!")
 		Debug.MessageBox("Familiar Faces\nI'm serious, there is so much stuff that's going to be broken if you keep going, and any bug reports you submit will be useless. PLEASE quit the game ASAP, do a clean install of FF, and try it again from scratch!")
 	EndIf
 	;Generic upgrade code
@@ -204,7 +204,7 @@ Bool Function CheckDependencies()
 	If fSKSE < 1.0700
 		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
 		Return False
-	Else
+	Else 
 		;Proceed
 	EndIf
 	If JContainers.APIVersion() != 2
