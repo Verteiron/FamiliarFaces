@@ -5,6 +5,7 @@ Scriptname vMYC_CharacterDummyActorScript extends Actor
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -213,6 +214,12 @@ EndEvent
 Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
+Event OnConfigUpdate(String asConfigPath)
+	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive"
+		UpdateCharacterSpellList()
+	EndIf	
+EndEvent
+
 Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, Form sender)
 	If strArg != CharacterName
 		Return
@@ -223,12 +230,18 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	If iMyCounter != _iMagicUpdateCounter
 		Return
 	EndIf
-	
+	UpdateCharacterSpellList()
+EndEvent
+
+Function UpdateCharacterSpellList()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
 	Int iAdded
 	Int iRemoved
+	
+	Bool bMagicAllowHealing = GetConfigInt("MagicAllowHealing")
+	Bool bMagicAllowDefensive = GetConfigInt("MagicAllowDefensive")
 	
 	Int i = JArray.Count(jSpells)
 	While i > 0
@@ -241,6 +254,14 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		Else
 			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllowOther")
 		EndIf
+		
+		If sMagicSchool == "Restoration" && bMagicAllowHealing
+			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
+			If !kSpell.IsHostile() && !kMagicEffect.IsEffectFlagSet(0x00000004) 
+				bSpellIsAllowed = True
+			EndIf
+		EndIf
+		
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
 				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
@@ -258,7 +279,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 	EndWhile
 	Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
-EndEvent
+EndFunction
 
 Function CheckVars()
 	If !_kActorBase
@@ -323,6 +344,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
+	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	SetNonpersistent()
 	_bNeedRefresh = True
@@ -342,6 +364,10 @@ Function DoUpkeep(Bool bInBackground = True)
 EndFunction
 
 Function SetNonpersistent()
+	If !Self
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Something SERIOUSLY wrong here, our self is missing!",1)
+		Return
+	EndIf
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	SetNameIfNeeded()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")

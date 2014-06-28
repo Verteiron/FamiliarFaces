@@ -5,6 +5,7 @@ Scriptname vMYC_MetaQuestScript extends Quest
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -85,7 +86,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	EndIf
 
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 80
+	_CurrentVersion = 90
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 	
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
@@ -140,7 +141,7 @@ Function DoInit()
 		WaitMenuMode(0.5)
 		CharacterManager.DoInit()
 	EndIf
-
+	SetConfigDefaults()
 	If !(ShrineOfHeroes as Quest).IsRunning()
 		WaitMenuMode(0.5)
 		(ShrineOfHeroes as Quest).Start()
