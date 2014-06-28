@@ -1,5 +1,7 @@
 Scriptname vMYC_MCMQuestScript extends SKI_ConfigBase  
 
+Import vMYC_Config
+
 vMYC_MetaQuestScript Property MetaQuestScript Auto
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
@@ -7,11 +9,21 @@ vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
 
-Int Property	 VOICETYPE_NOFILTER = 0	AutoReadOnly
-Int Property	 VOICETYPE_FOLLOWER = 1	AutoReadOnly
-Int Property	 VOICETYPE_SPOUSE 	= 2	AutoReadOnly
-Int Property	 VOICETYPE_ADOPT 	= 4	AutoReadOnly
-Int Property	 VOICETYPE_GENDER	= 8 AutoReadOnly
+Int Property	VOICETYPE_NOFILTER = 0	AutoReadOnly Hidden
+Int Property	VOICETYPE_FOLLOWER = 1	AutoReadOnly Hidden
+Int Property	VOICETYPE_SPOUSE 	= 2	AutoReadOnly Hidden
+Int Property	VOICETYPE_ADOPT 	= 4	AutoReadOnly Hidden
+Int Property	VOICETYPE_GENDER	= 8 AutoReadOnly Hidden
+
+Int Property	OPTION_TOGGLE_TRACKING					Auto Hidden
+
+Int Property	OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		Auto Hidden
+Int Property	OPTION_TOGGLE_MAGICALLOW_ALTERATION		Auto Hidden
+Int Property	OPTION_TOGGLE_MAGICALLOW_CONJURATION	Auto Hidden
+Int Property	OPTION_TOGGLE_MAGICALLOW_ILLUSION		Auto Hidden
+Int Property	OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	Auto Hidden
+Int Property	OPTION_TOGGLE_MAGICALLOW_RESTORATION	Auto Hidden
+Int Property	OPTION_TOGGLE_MAGICALLOW_OTHER			Auto Hidden
 
 Bool _Changed 
 Bool _Shutdown
@@ -54,6 +66,9 @@ Int 	_iClassOption
 Int 	_iClassSelection
 String[] _sClassNames
 
+Int		_iMagicAutoSelectOption
+Int[]	_iMagicSchoolOptions
+
 Int		_iWarpOption
 
 Int[]		_iAlcoveIndices
@@ -66,29 +81,34 @@ Int[]		_iAlcoveResetOption
 Int		_iShowDebugOption
 
 Int Function GetVersion()
-    return 2 ; Default version
+    return 3 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
 	If (a_version >= 2 && CurrentVersion < 2)
 		Debug.Trace("MYC/MCM: Updating script to version 2...")
         FilterVoiceTypes(VOICETYPE_NOFILTER)
+	ElseIf (a_version >= 3 && CurrentVersion < 3)
+		Debug.Trace("MYC/MCM: Updating script to version 3...")
+		_iMagicSchoolOptions = New Int[6]
 	EndIf
 
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[3]
+	Pages = New String[2]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Shrine of Heroes"
-	Pages[2] = "$Global Options"
+	;Pages[2] = "$Global Options"
 	
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
 	_iVoiceTypeSelections = New Int[128]
 	_iAliasSelections = New Int[128]
 
+	_iMagicSchoolOptions = New Int[6]
+	
 	_iAlcoveIndices 		= New Int[12]
 	_iAlcoveStates			= New Int[12]
 	_sAlcoveCharacterNames	= New String[12]
@@ -182,17 +202,7 @@ event OnPageReset(string a_page)
 		_sCharacterName = _sCharacterNames[_iCurrentCharacter]
 
 		
-		;===== Character selection menu =====----
-		_iCurrentCharacterOption = AddMenuOption("$Settings for",_sCharacterName)
-		;====================================----
-
-		
-		;===== Set flags if disabled ========----
 		Int OptionFlags = 0
-		_bCharacterEnabled[_iCurrentCharacter] = CharacterManager.GetLocalInt(_sCharacterName,"Enabled") as Bool
-		If !_bCharacterEnabled[_iCurrentCharacter]
-			OptionFlags = OPTION_FLAG_DISABLED
-		EndIf
 		;====================================----
 		
 
@@ -202,7 +212,7 @@ event OnPageReset(string a_page)
 		
 
 		;===== Character enable option ======----
-		_iCharacterEnabledOption = AddToggleOption("$Enable this character",_bCharacterEnabled[_iCurrentCharacter])
+		OPTION_TOGGLE_TRACKING = AddToggleOption("$Track this character",CharacterManager.GetLocalInt(_sCharacterName,"TrackingEnabled"))
 		;====================================----
 		
 
@@ -240,6 +250,27 @@ event OnPageReset(string a_page)
 		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
 		
+		;===== Character magic option =======----
+		AddHeaderOption("Magic")
+		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
+		OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
+		OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+		
+		_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION	
+		_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
+		_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+		_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION	
+		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
+		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER		
+		
+		
+		;====================================----
+		
 		If _bShowDebugOptions
 			AddEmptyOption()
 			AddHeaderOption("Debug")
@@ -251,9 +282,11 @@ event OnPageReset(string a_page)
 		;===== Begin info column ============----
 		
 		SetCursorPosition(1)
-		AddEmptyOption()
-		AddEmptyOption()
-		
+
+		;===== Character selection menu =====----
+		_iCurrentCharacterOption = AddMenuOption("$Settings for",_sCharacterName)
+		;====================================----
+
 		String[] sSex = New String[2]
 		sSex[0] = "Male"
 		sSex[1] = "Female"
@@ -304,7 +337,7 @@ event OnPageReset(string a_page)
 			
 			If _iAlcoveStates[iAlcoveIndex] == 0
 				iInactivePos += 2
-				SetCursorPosition(iInactivePos)				
+				SetCursorPosition(iInactivePos)
 			Else
 				iActivePos += 2
 				SetCursorPosition(iActivePos)
@@ -323,7 +356,6 @@ event OnPageReset(string a_page)
 		_iShowDebugOption = AddToggleOption("Show debug options",_bShowDebugOptions)
 		AddEmptyOption()
 		AddTextOption("More options will go here","")
-		
 	;===== END Global Options page =----
 	EndIf
 
@@ -373,6 +405,37 @@ Event OnOptionSelect(Int Option)
 		EndIf
 		SetToggleOptionValue(Option,bCanMarry)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
+	ElseIf Option == OPTION_TOGGLE_MAGICALLOW_AUTOSELECT
+		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
+		bAutoMagic = !bAutoMagic
+		CharacterManager.SetLocalInt(_sCharacterName,"MagicAutoSelect",bAutoMagic as Int)
+		Int i = _iMagicSchoolOptions.Length
+		While i > 0
+			i -= 1
+			SetOptionFlags(_iMagicSchoolOptions[i],Math.LogicalAnd(OPTION_FLAG_DISABLED,bAutoMagic as Int),True)
+		EndWhile
+		SetToggleOptionValue(Option,bAutoMagic)
+		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf _iMagicSchoolOptions.Find(Option) > -1
+		String sSchool
+		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
+			sSchool = "Alteration"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_CONJURATION
+			sSchool = "Conjuration"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+			sSchool = "Destruction"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_ILLUSION
+			sSchool = "Illusion"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_RESTORATION
+			sSchool = "Restoration"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_OTHER
+			sSchool = "Other"
+		EndIf
+		Bool bAllowed = CharacterManager.GetLocalInt(_sCharacterName,"MagicAllow" + sSchool) as Bool
+		bAllowed = !bAllowed
+		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
+		SetToggleOptionValue(Option,bAllowed)
+		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf Option == _iWarpOption
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
