@@ -202,19 +202,19 @@ Bool Function CheckDependencies()
 	Debug.Trace("MYC: CharGen is version " + SKSE.GetPluginVersion("chargen"))
 	;Debug.MessageBox("SKSE version is " + fSKSE)
 	If fSKSE < 1.0700
-		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher and will now shut down. This message will not be displayed again.")
+		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
 		Return False
 	Else 
 		;Proceed
 	EndIf
-	If JContainers.APIVersion() < 2
-		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.67.3 or higher and will now shut down. This message will not be displayed again.")
+	If JContainers.APIVersion() != 2
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.67.x, but the current version reports a different API version.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed
 	EndIf
-	If SKSE.GetPluginVersion("chargen") < 2
-		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.7.2 or higher, or at least the current version of CharGen.dll distributed with RaceMenu. Familiar Faces will now shut down.")
+	If SKSE.GetPluginVersion("chargen") != 2
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.7.2 or higher, or at least the current version of CharGen.dll distributed with RaceMenu.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed
