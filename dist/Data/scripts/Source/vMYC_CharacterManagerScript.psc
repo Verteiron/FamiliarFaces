@@ -559,15 +559,32 @@ Function RefreshCharacters()
 	Int jActorMap = JMap.getObj(_jMYC,"ActorBaseMap")
 	Int jActorBaseList = JFormMap.allKeys(jActorMap)
 	Int i = JArray.Count(jActorBaseList)
+	Int jDeferredActors = JArray.Object()
+	JValue.Retain(jDeferredActors)
 	While i > 0
 		i -= 1
 		ActorBase kActorBase = JArray.getForm(jActorBaseList,i) as ActorBase
 		If kActorBase
-			Debug.Trace("MYC: Refreshing " + JFormMap.getStr(jActorMap,kActorBase) + ", ActorBase " + kActorBase)
+			String sCharacterName = JFormMap.getStr(jActorMap,kActorBase)
 			Actor kTargetActor = GetCharacterActor(kActorBase)
-			(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
+			If kTargetActor.Is3DLoaded()
+				Debug.Trace("MYC: Refreshing " + sCharacterName + ", ActorBase " + kActorBase)
+				(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
+			Else
+				JArray.AddForm(jDeferredActors,kTargetActor)
+			EndIf
 		EndIf
 	EndWhile
+	JValue.Writetofile(jDeferredActors,"Data/vMYC/_jDeferredActors.json")
+	WaitMenuMode(8) ; Give loaded characters priority
+	i = JArray.Count(jDeferredActors)
+	While i > 0
+		i -= 1
+		Actor kTargetActor = JArray.getForm(jDeferredActors,i) as Actor
+		Debug.Trace("MYC: Refreshing Actor " + kTargetActor)
+		(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
+	EndWhile
+	JValue.Release(jDeferredActors)
 EndFunction
 
 Function LoadCharacterFiles()
