@@ -85,7 +85,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	EndIf
 
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 80
+	_CurrentVersion = 90
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 	
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
