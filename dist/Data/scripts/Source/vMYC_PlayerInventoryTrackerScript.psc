@@ -1,4 +1,4 @@
-Scriptname vMYC_PlayerInventoryTrackerScript extends ReferenceAlias  
+Scriptname vMYC_PlayerInventoryTrackerScript extends ReferenceAlias
 {Tracks player's inventory in the background to save time while saving}
 ;--=== Imports ===--
 
@@ -49,7 +49,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnPlayerLoadGame()
-	
+
 EndEvent
 
 Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
@@ -119,9 +119,9 @@ State Overloaded
 	Event OnBeginState()
 		Busy = True
 		RegisterForSingleUpdate(5.0)
-		Debug.Trace("MYC: " + Self + " Too many items moving around at once, suspending item tracking...")	
+		Debug.Trace("MYC: " + Self + " Too many items moving around at once, suspending item tracking...")
 	EndEvent
-	
+
 	Event OnUpdate()
 		Debug.Trace("MYC: " + Self + " Resuming item tracking...")
 		GoToState("")
@@ -129,11 +129,11 @@ State Overloaded
 		_bRefreshed = False
 		RegisterForSingleUpdate(0.1)
 	EndEvent
-	
+
 	Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	EndEvent
-	
+
 	Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	EndEvent
-	
+
 EndState

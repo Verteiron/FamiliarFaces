@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineOfHeroesQuestScript extends Quest  
+Scriptname vMYC_ShrineOfHeroesQuestScript extends Quest
 {Handle reservations of the various Alcoves, and assign characters to them. Data stored separately from characters.}
 
 ;--=== Imports ===--
@@ -33,7 +33,7 @@ ReferenceAlias	 Property ShrineBook Auto
 
 vMYC_ShrineAlcoveController[] Property AlcoveControllers Auto
 
-Int[]			 Property AlcoveState Auto 
+Int[]			 Property AlcoveState Auto
 {0 = Empty, 1 = Loading, 2 = Ready, 3 = Summoned, 4 = Error}
 
 Actor Property PlayerRef Auto
@@ -125,16 +125,16 @@ Function DoUpkeep(Bool bInBackground = True)
 	If SyncShrineData()
 		UpdateShrineNames()
 	EndIf
-	StartPortalStoneQuestIfNeeded()	
+	StartPortalStoneQuestIfNeeded()
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
 Function UpdateShrineNames()
 	Int jShrineArray = JMap.getObj(_jShrineData,"AlcoveForms")
-	Int i = 0 
+	Int i = 0
 	Int iCount = JArray.Count(jShrineArray)
 	Int iAlcoveChangeCount = 0
-	
+
 	; First pass just clears any shrines that have changed.
 	Int[] iAlcovesChanged = New Int[12]
 	While i < iCount
@@ -158,8 +158,8 @@ Function UpdateShrineNames()
 	EndWhile
 
 	Debug.Trace("MYC/Shrine: Alcoves changing: " + iAlcoveChangeCount)
-	
-	Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")	
+
+	Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")
 	Int iAlcoveStateSum = 100
 	While iAlcoveStateSum
 		Wait(1)
@@ -171,7 +171,7 @@ Function UpdateShrineNames()
 		EndWhile
 		Debug.Trace("MYC/Shrine: iAlcoveStateSum: " + iAlcoveStateSum)
 	EndWhile
-	
+
 	i = 0
 	;Second pass actually applies new names
 	While i < iCount
@@ -221,7 +221,7 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	Int jSavedShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
 	JValue.Retain(jSavedShrineData)
 	Int iSavedDataSerial
-	If jSavedShrineData 
+	If jSavedShrineData
 		Debug.Trace("MYC/Shrine: Found saved data!")
 		If JMap.hasKey(jSavedShrineData,"DataSerial")
 			iSavedDataSerial = JMap.getInt(jSavedShrineData,"DataSerial")
@@ -270,7 +270,7 @@ Function StartPortalStoneQuestIfNeeded()
 	Bool bAllReady = True
 	Int i = 0
 	While i < iCount
-		If AlcoveState[i] == 1 ; Shrine is loading 
+		If AlcoveState[i] == 1 ; Shrine is loading
 			bAllReady = False
 		EndIf
 		i += 1
@@ -279,7 +279,7 @@ Function StartPortalStoneQuestIfNeeded()
 		SendModEvent("vMYC_AllAlcovesReady",1,CharacterManager.CharacterNames.Length)
 		Debug.Trace("MYC: ====================== DINGDINGDINGDINGDINGDINGDING ALL Alcoves READY W00pw00pw00pw00p! ===============")
 		vMYC_PortalStoneQuest.Start()
-	Else 
+	Else
 		SendModEvent("vMYC_AllAlcovesReady",0)
 		;Debug.Trace("MYC: ====================== W00pw00pw00pw00p Alcoves NOT READY :(((((((((((((((( ===============")
 	EndIf
@@ -307,20 +307,20 @@ Function DoInit(Bool abForce = False)
 		Debug.Trace("MYC/Shrine: abForce == True, data exists but will be overwritten!",1)
 	EndIf
 	If !_jShrineData || abForce
-		Debug.Trace("MYC/Shrine: No saved data, initializing from scratch!")	
+		Debug.Trace("MYC/Shrine: No saved data, initializing from scratch!")
 		InitShrineData()
 	EndIf
 	JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 	TickDataSerial(True)
 	UpdateAlcoveControllers()
-	StartPortalStoneQuestIfNeeded()	
+	StartPortalStoneQuestIfNeeded()
 EndFunction
 
 Function InitShrineData()
 	_jShrineData = JMap.Object()
 	Int jAlcoveRefs = JArray.Object()
 	JMap.setObj(_jShrineData,"AlcoveForms",jAlcoveRefs)
-	Int i 
+	Int i
 	Int iCount = Alcoves.Length
 	While i < iCount
 		JArray.addForm(jAlcoveRefs,Alcoves[i].GetReference() as vMYC_ShrineAlcoveController)

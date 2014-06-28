@@ -1,4 +1,4 @@
-Scriptname vMYC_PortalStoneScript extends ObjectReference  
+Scriptname vMYC_PortalStoneScript extends ObjectReference
 {Warp player to the Shrine of Heroes}
 
 ;--=== Imports ===--
@@ -19,7 +19,7 @@ ImageSpaceModifier	Property	FadeToWhiteImod	Auto
 ImageSpaceModifier	Property	FadeToWhiteHoldImod	Auto
 ImageSpaceModifier	Property	FadeToWhiteBackImod	Auto
 
-vMYC_ShrinePortalScript	Property	PortalRef					Auto		
+vMYC_ShrinePortalScript	Property	PortalRef					Auto
 ObjectReference	Property	COCMarkerRef				Auto
 
 ObjectReference Property vMYC_PortalReturnMarker Auto
@@ -28,7 +28,7 @@ FormList	Property	vMYC_LocationAnchorsList	Auto
 
 Message Property vRDN_EndCombatMSG Auto
 
-LocationAlias	Property	kLastPlayerLocation Auto 
+LocationAlias	Property	kLastPlayerLocation Auto
 
 ;--=== Variables ===--
 
@@ -52,11 +52,11 @@ EndEvent
 
 Event OnEquipped(Actor akActor)
 	Debug.Trace("MYC/PortalStoneScript: PortalStone equipped by " + akActor)
-	
+
 	Int iEventHandle = ModEvent.Create("vMYC_SetCustomLocation")
 	If iEventHandle
 		ModEvent.PushForm(iEventHandle,Self)
-		
+
 		String sLocationName
 		If PlayerREF.GetCurrentLocation()
 			sLocationName = PlayerREF.GetCurrentLocation().GetName()
@@ -84,7 +84,7 @@ Event OnEquipped(Actor akActor)
 			Debug.Trace("MYC/PortalStoneScript: WARNING, could not send custom location data!",1)
 		EndIf
 	EndIf
-		
+
 	If akActor == PlayerREF
 		DisablePlayerControls(abMovement = false, abFighting = true, abCamSwitch = true, abLooking = false, abSneaking = true, abMenu = true, abActivate = true, abJournalTabs = false)
 		ForceThirdPerson()

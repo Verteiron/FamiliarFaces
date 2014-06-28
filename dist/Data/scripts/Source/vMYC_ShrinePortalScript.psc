@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrinePortalScript extends ObjectReference  
+Scriptname vMYC_ShrinePortalScript extends ObjectReference
 {Handle portal activation/deactivation effects}
 
 ;--=== Imports ===--
@@ -8,7 +8,7 @@ Import Game
 
 ;--=== Properties ===--
 
-Bool Property IsOpen Hidden 
+Bool Property IsOpen Hidden
 {0 = Close, 1 = Open}
 	Bool Function Get()
 		If _bPortalOpen || _bPortalOpening || _bPortalClosing
@@ -26,7 +26,7 @@ Bool Property IsOpen Hidden
 	EndFunction
 EndProperty
 
-Int Property PortalState Hidden 
+Int Property PortalState Hidden
 {0 = Closed, 1 = Opening, 2 = Open, 3 = Closing}
 	Int Function Get()
 		If _bPortalOpening
@@ -35,7 +35,7 @@ Int Property PortalState Hidden
 			Return 3
 		ElseIf _bPortalOpen
 			Return 2
-		Else 
+		Else
 			Return 0
 		EndIf
 	EndFunction
@@ -166,7 +166,7 @@ Function PortalOpen(Bool abQuickOpen = False)
 		WaterChurn.SetPosition(WaterChurn.X,WaterChurn.Y,_fWaterZ - 1000)
 	Else
 		Wait(1.0)
-		Water.TranslateTo(Water.X,Water.Y,_fWaterZ - 1000,Water.GetAngleX(),Water.GetAngleY(),Water.GetAngleZ(),250)	
+		Water.TranslateTo(Water.X,Water.Y,_fWaterZ - 1000,Water.GetAngleX(),Water.GetAngleY(),Water.GetAngleZ(),250)
 		WaterChurn.TranslateTo(WaterChurn.X,WaterChurn.Y,_fWaterZ - 1000,0,0,0,250)
 	EndIf
 	WaterFog.DisableNoWait(True)
@@ -208,7 +208,7 @@ Function PortalClose()
 	Wait(4.2)
 	_bPortalClosing = False
 	_bPortalOpen = False
-	WaterChurn.Disable(True)	
+	WaterChurn.Disable(True)
 	WaterChurn.SetPosition(WaterChurn.X,WaterChurn.Y,_fWaterZ)
 	If Is3DLoaded()
 		WaterFog.TranslateTo(WaterFog.X,WaterFog.Y,WaterFog.Z + 200,0,0,0,5)

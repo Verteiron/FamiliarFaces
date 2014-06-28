@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineBookNameTriggerScript extends ObjectReference  
+Scriptname vMYC_ShrineBookNameTriggerScript extends ObjectReference
 {Cheat the system by renaming the book when the player gets close.}
 
 ;--=== Imports ===--

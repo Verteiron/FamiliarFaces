@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineTorchShadowTrigScript extends ObjectReference  
+Scriptname vMYC_ShrineTorchShadowTrigScript extends ObjectReference
 {Handle shrine shadow torch activation when player gets close}
 
 ;--=== Imports ===--

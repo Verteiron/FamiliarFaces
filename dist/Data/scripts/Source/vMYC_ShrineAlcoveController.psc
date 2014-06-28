@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineAlcoveController extends ObjectReference  
+Scriptname vMYC_ShrineAlcoveController extends ObjectReference
 {Handle alcove activation/deactivation effects}
 
 ;--=== Imports ===--
@@ -54,7 +54,7 @@ Int Property AlcoveStatueState Hidden
 	EndFunction
 EndProperty
 
-Int Property AlcoveLightState Hidden 
+Int Property AlcoveLightState Hidden
 {0 = Dark, 1 = FullLight, 2 = TorchLight}
 	Int Function Get()
 		Return _iAlcoveLightState
@@ -170,9 +170,9 @@ Bool			_bPoseCharacter
 Bool			_bFreezeCharacter
 Bool			_bCharacterReady
 Bool			_bForceSave
-Bool			_bSavedEquipment 
-Bool			_bSavedPerks 
-Bool			_bSavedInventory 
+Bool			_bSavedEquipment
+Bool			_bSavedPerks
+Bool			_bSavedInventory
 Bool			_bSavedSpells
 
 ObjectReference	_FogBlowing
@@ -259,7 +259,7 @@ Function DoUpkeep()
 EndFunction
 
 Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
-{Disable the lights of all Alcoves except the event sender to try to give its lighting effects top priority}	
+{Disable the lights of all Alcoves except the event sender to try to give its lighting effects top priority}
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
 	If iRequestingIndex != AlcoveIndex && strArg == "Request"
@@ -292,7 +292,7 @@ Function SetAlcoveCharacterName(string sCharacterName)
 {This (un)sets the Alcove's character name}
 	_sCharacterName = sCharacterName
 EndFunction
-	
+
 Event OnCellAttach()
 EndEvent
 
@@ -331,7 +331,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	Int iOldLightState = _iAlcoveLightState
 	Int iLightState = numArg as Int
 	_LightAmbientTarget	= _Light.GetLinkedRef()
-	
+
 	If _Light.IsDisabled() && iLightState > 0
 		_Light.Enable()
 		Int iSafety = 0
@@ -352,7 +352,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		_Torches.EnableNoWait(True)
 		GetLinkedRef(vMYC_ShrineLightingMaster).EnableNoWait(True)
 	EndIf
-	
+
 	If iLightState == 1 && _Light.GetDistance(_LightAmbientTarget) < 10
 		If bUseTranslation
 			_Light.TranslateTo(_LightX,_LightY,_LightZ,0,0,0,150)
@@ -371,7 +371,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 			_Light.MoveTo(_LightAmbientTarget)
 		EndIf
 	EndIf
-	
+
 	If iLightState == 2
 		_FogEmpty.Disable(True)
 		_FogBlowing.DisableNoWait(True)
@@ -379,7 +379,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		_FogEmpty.Enable(True)
 		_FogBlowing.EnableNoWait(True)
 	EndIf
-	
+
 	If iLightState == 1
 		Wait(1.5)
 		If !_iQSTMG07MagnusStormCollegeMediumLPM && bUseTranslation
@@ -393,11 +393,11 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		Wait(2)
 		_Light.DisableNoWait()
 	EndIf
-	
+
 	If !Is3DLoaded() && bUseTranslation ;We got unloaded mid-transition, probably because the player is naughty. Rerun with bUseTranslation off!
 		OnAlcoveLightStateChange(eventName, strArg, numArg, sender)
 	EndIf
-	_iAlcoveLightState = iLightState ; Set internal property value 
+	_iAlcoveLightState = iLightState ; Set internal property value
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
 	SendModEvent("vMYC_ShrineLightStateComplete","",_iAlcoveLightState)
 EndEvent
@@ -408,12 +408,12 @@ Event OnAlcoveStatueStateChange(string eventName, string strArg, float numArg, F
 		Return
 	EndIf
 	Int iStatueState = numArg as Int
-	_iAlcoveStatueState = iStatueState ; Set internal property value 
+	_iAlcoveStatueState = iStatueState ; Set internal property value
 	SendModEvent("vMYC_AlcoveStatueStateComplete","",_iAlcoveStatueState)
 EndEvent
 
 Event OnAlcoveBackground(string eventName, string strArg, float numArg, Form sender)
-	If sender != Self 
+	If sender != Self
 		Return
 	EndIf
 	If strArg == "Activate"
@@ -501,7 +501,7 @@ Event OnCharacterReady(string eventName, string strArg, float numArg, Form sende
 	EndIf
 	If strArg == _sCharacterName && _bPoseCharacter
 		_bPoseCharacter = False
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")	
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")
 		vMYC_BlindingLightInwardParticles.Play(_kCharacter,0.5)
 
 		Debug.SendAnimationEvent(_kCharacter,"IdleStaticPoseAStart") ;_kCharacter.PlayIdle(IdleStaticPoseA)
@@ -562,7 +562,7 @@ Function SavePlayer(Bool abForceSave = False)
 	DisablePlayerControls(abCamSwitch = True)
 	;vMYC_BlindingLightGold.Play(PlayerREF,-1)
 	RegisterForAnimationEvent(PlayerREF,"T02Ascend")
-	Idle kAscendIdle 
+	Idle kAscendIdle
 	If !PlayerREF.GetActorBase().GetSex()
 		kAscendIdle = AscendMale
 	Else
@@ -609,9 +609,9 @@ EndEvent
 ;Last part of save process
 Function DoSaveAnimation()
 {Play VFX and actually save the player character}
-	;We turn off collisions here. 
+	;We turn off collisions here.
 	Debug.ToggleCollisions() ; Keep the invisible actors from bouncing around during the next bit
-	
+
 	;VFX
 	vMYC_QSTTG09BeamAbilitiesColumnStartSM.Play(PlayerREF)
 	vMYC_ValorFX.Play(PlayerREF,-1)
@@ -621,7 +621,7 @@ Function DoSaveAnimation()
 	Wait(1)
 	FXGreybeardAbsorbEffect.Play(PlayerREF,8,_StatueMarker)
 	vMYC_SpellAbsorbTargetVFX.Play(PlayerREF,-1,_StatueMarker)
-	
+
 	;Turn on opaque white object to make the shrine look super-bright
 	_Curtain.EnableNoWait(True)
 
@@ -640,11 +640,11 @@ Function DoSaveAnimation()
 	ActivateAlcove()
 	SendModEvent("vMYC_AlcoveLightingPriority","Release",AlcoveIndex)
 	;Saving is done, return the character to the ground
-	vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds 
-	
+	vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds
+
 	;Force the book to update with the player's name
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
-	
+
 	;Break the character out of the floating pose. There's no smooth way to do it, which is why we hide it behind a fade-to-white and some sound effects
 	QSTMQ206TimeTravel2DSound.Play(_Book)
 	Wait(2.0)
@@ -658,8 +658,8 @@ Function DoSaveAnimation()
 	vMYC_ValorFX.Stop(PlayerREF)
 	PlayerREF.StopTranslation()
 	Wait(0.1)
-	
-	;We turn collisions back on here. 
+
+	;We turn collisions back on here.
 	Debug.ToggleCollisions()
 
 	;Actually make the player stop playing the float animation
@@ -667,7 +667,7 @@ Function DoSaveAnimation()
 
 	;Leave them on the floor
 	Debug.SendAnimationEvent(PlayerREF,"BleedOutStart")
-	
+
 	Wait(3.0)
 	EnablePlayerControls()
 	Debug.SendAnimationEvent(PlayerREF,"BleedOutStop")
@@ -749,7 +749,7 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 		;Wait(0.1)
 		vMYC_BlindingLightGold.Play(_kInvisibleActors[iThisIndex],0.1)
 		_kInvisibleActors[iThisIndex].SetAlpha(1,True)
-		
+
 		Wait(RandomFloat(1.0,2.0))
 		_kInvisibleActors[iThisIndex].SplineTranslateToRef(_StatueMarker,RandomFloat(350,800),250,10)
 		;Wait(5)
@@ -815,7 +815,7 @@ Function SummonCharacter()
 	;EndIf
 	vMYC_ValorFX.Play(_kCharacter,5)
 	Wait(0.5)
-	_kCharacter.PlayIdle(IdleSilentBow)	
+	_kCharacter.PlayIdle(IdleSilentBow)
 	Wait(0.5)
 	DA02SummonValorTargetFX.Play(_kCharacter,8)
 	Wait(0.5)

@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineTrophyFXScript extends ObjectReference  
+Scriptname vMYC_ShrineTrophyFXScript extends ObjectReference
 {Enables and adds a glow to all linked references}
 
 ;--=== Imports ===--
@@ -54,7 +54,7 @@ Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Fo
 EndEvent
 
 Event OnActivate(ObjectReference akTriggerRef)
-	
+
 EndEvent
 
 Event OnCellAttach()
@@ -78,10 +78,10 @@ EndEvent
 
 Event OnUnload()
 	;Debug.Trace("MYC: " + Self + " OnUnload!")
-	; Only hide trophies if unloaded while cell is attached. 
-	; Otherwise the trophy animation will play every time the player enters the Alcove. 
+	; Only hide trophies if unloaded while cell is attached.
+	; Otherwise the trophy animation will play every time the player enters the Alcove.
 	; Any unload we get while the cell is attached has to be the player resetting the Alcove.
-	If _bCellAttached 
+	If _bCellAttached
 		HideTrophies()
 	EndIf
 EndEvent

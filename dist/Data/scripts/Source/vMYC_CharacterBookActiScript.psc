@@ -1,4 +1,4 @@
-Scriptname vMYC_CharacterBookActiScript extends ObjectReference  
+Scriptname vMYC_CharacterBookActiScript extends ObjectReference
 {Linked to Shrine activator, handle player interaction}
 
 ;--=== Imports ===--
@@ -172,14 +172,14 @@ Event OnActivate(ObjectReference akTriggerRef)
 				If iResult == 0 ; Open the book
 					AlcoveController.SummonCharacter()
 				Else ; leave it
-					;Do nothing 
+					;Do nothing
 				EndIf
 			Else ;Book is already open
 				Int iResult = vMYC_ShrineBookAltReturnItMenu.Show()
 				If iResult == 1 ; Close the book
 					AlcoveController.BanishCharacter()
 				Else ; leave it
-					;Do nothing 
+					;Do nothing
 				EndIf
 			EndIf
 		EndIf

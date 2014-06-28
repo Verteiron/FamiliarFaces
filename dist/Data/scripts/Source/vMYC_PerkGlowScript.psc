@@ -1,4 +1,4 @@
-Scriptname vMYC_PerkGlowScript extends ObjectReference  
+Scriptname vMYC_PerkGlowScript extends ObjectReference
 
 ;--=== Imports ===--
 

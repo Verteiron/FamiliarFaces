@@ -73,17 +73,17 @@ Bool _bDoUpkeep = False
 
 Bool _bSwitchedRace = False
 
-Bool _bWarnedVoiceTypeNoFollower = False 
+Bool _bWarnedVoiceTypeNoFollower = False
 
-Bool _bWarnedVoiceTypeNoSpouse = False 
+Bool _bWarnedVoiceTypeNoSpouse = False
 
-String[] _sSkillNames 
+String[] _sSkillNames
 
 Float _fDecapitationChance
 
 Int _iMagicUpdateCounter
 
-;Int _jCharacterData 
+;Int _jCharacterData
 
 CombatStyle _kCombatStyle
 CombatStyle _kLastCombatStyle
@@ -223,10 +223,10 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	If iMyCounter != _iMagicUpdateCounter
 		Return
 	EndIf
-	
+
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
-	
+
 	Int iAdded
 	Int iRemoved
 
@@ -242,14 +242,14 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 			If i >= 18 && i <= 22
 				If iPerkCount > 1
 					CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],1)
-				Else 
+				Else
 					CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],0)
 				EndIf
 			EndIf
 			i += 1
 		EndWhile
 	EndIf
-	
+
 	Int i = JArray.Count(jSpells)
 	While i > 0
 		i -= 1
@@ -270,7 +270,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
 			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This was we avoid stripping perk, race, and doom stone abilities
 			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
-				If RemoveSpell(kSpell) 
+				If RemoveSpell(kSpell)
 					Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
 					iRemoved += 1
 				EndIf
@@ -303,9 +303,9 @@ Function CheckVars()
 			;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!")
 		EndIf
 	EndIf
-	
+
 	_sSkillNames = New String[24]
-	
+
 	_sSkillNames[6] = "OneHanded"
 	_sSkillNames[7] = "TwoHanded"
 	_sSkillNames[8] = "Marksman"
@@ -452,7 +452,7 @@ Function UpdateCombatStyle()
 		;Few blocking perks means that block confers no big advantage or the character is a natural dual-wielder
 		CharacterManager.SetLocalInt(CharacterName,"AllowDualWield",1)
 	EndIf
-	
+
 	_kLastCombatStyle = _kCombatStyle
 	CharacterManager.SetLocalInt(CharacterName,"AllowMagic",0)
 	If iEquippedItemType < 5 ; One-handed
@@ -495,7 +495,7 @@ Function RefreshMesh()
 	;SetScale(0.01)
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
 	;Wait(RandomFloat(0.0,2.0))
-	Int iMyTurn = vMYC_CharGenLoading.GetValue() as Int	
+	Int iMyTurn = vMYC_CharGenLoading.GetValue() as Int
 	vMYC_CharGenLoading.Mod(1)
 ;	Wait(1.0)
 	;While vMYC_CharGenLoading.GetValue() - 1 != iMyTurn && iSafetyTimer > 0
@@ -537,7 +537,7 @@ Function RefreshMesh()
 	;Wait(0.5)
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Finished SetRace!")
 	;vMYC_CharGenLoading.Mod(-1)
-	
+
 	;SetRace(CharacterRace)
 	;Wait(0.1)
 ;	EndIf
@@ -579,7 +579,7 @@ Function RefreshMesh()
 	If kHairEquipment || kLongHairEquipment
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Fixing hair...")
 		; LoadCharacter doesn't know about head armor, so sometimes can make a ponytail stick through a hood and such.
-		;  This fixes that by un/requipping anything that uses the Hair or Longhair slots 
+		;  This fixes that by un/requipping anything that uses the Hair or Longhair slots
 ;		Wait(0.5)
 		If kHairEquipment
 			EquipItemEx(kHairEquipment,0,True)
@@ -642,13 +642,13 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 		String sAVName = sAVNames[i]
 		If sAVNames[i]
 			Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
-			If sAVName == "Health" || sAVName == "Magicka" || sAVName == "Stamina" 
+			If sAVName == "Health" || sAVName == "Magicka" || sAVName == "Stamina"
 				fAV = 100 + (((fAV - 100) / (iBaseLevel as Float)) * iMyLevel)
 				If fAV < 100
 					fAV = 100
 				EndIf
 				CharacterManager.SetLocalFlt(CharacterName,sAVName,fAV)
-			ElseIf fAV < 20 
+			ElseIf fAV < 20
 				; Player hasn't really worked on this one at all, don't change it
 			Else
 				fAV = 15 + (((fAV - 15) / (iBaseLevel as Float)) * iMyLevel)
@@ -703,11 +703,11 @@ State Busy
 	Event OnAttachedToCell()
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnAttachedToCell called in Busy state!")
 	EndEvent
-	
+
 	Event OnUnload()
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnUnload called in Busy state!")
 	EndEvent
-	
+
 	;Function DoUpkeep(Bool bInBackground = True)
 	;	;Debug.Trace("MYC: (" + CharacterName + "/Actor) DoUpkeep called in Busy state!")
 	;EndFunction
