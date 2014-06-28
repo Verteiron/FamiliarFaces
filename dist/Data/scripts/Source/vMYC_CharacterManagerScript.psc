@@ -1340,7 +1340,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	
 	;----Add spells--------------	
 
-	SetAllowedSpells(sCharacterName)
+	SetLocalInt(sCharacterName,"MagicAutoSelect",1)
 
 	;;Debug.Trace("MYC: (" + sCharacterName + ") Setting the dummy's actor values...")
 	;i = 0

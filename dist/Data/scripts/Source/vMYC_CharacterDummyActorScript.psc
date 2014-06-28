@@ -229,6 +229,26 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	
 	Int iAdded
 	Int iRemoved
+
+	If CharacterManager.GetLocalInt(CharacterName,"MagicAutoSelect")
+		Int i = 6
+		While i < _sSkillNames.Length
+			Int iPerkCount = CharacterManager.GetCharacterInt(CharacterName,"PerkCounts." + _sSkillNames[i])
+			If iPerkCount
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor) PerkCount for " + _sSkillNames[i] + " is " + iPerkCount)
+			EndIf
+
+			 ; Magic skills
+			If i >= 18 && i <= 22
+				If iPerkCount > 1
+					CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],1)
+				Else 
+					CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],0)
+				EndIf
+			EndIf
+			i += 1
+		EndWhile
+	EndIf
 	
 	Int i = JArray.Count(jSpells)
 	While i > 0
@@ -424,30 +444,14 @@ Function UpdateCombatStyle()
 		_bNeedCSUpdate = True
 		Return
 	EndIf
-	
-	Int i = 6
-	While i < _sSkillNames.Length
-		Int iPerkCount = CharacterManager.GetCharacterInt(CharacterName,"PerkCounts." + _sSkillNames[i])
-		If iPerkCount
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) PerkCount for " + _sSkillNames[i] + " is " + iPerkCount)
-		EndIf
 
-		If _sSkillNames[i] == "Blocking" && iPerkCount < 2
-			CharacterManager.SetLocalInt(CharacterName,"AllowDualWield",1)
-		EndIf
-		
-		 ; Magic skills
-		If i >= 18 && i <= 22
-			If iPerkCount > 1
-				CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],1)
-			Else 
-				CharacterManager.SetLocalInt(CharacterName,"MagicAllow" + _sSkillNames[i],0)
-			EndIf
-		EndIf
-		i += 1
-	EndWhile
 	_bNeedCSUpdate = False
 	Int iEquippedItemType = GetEquippedItemType(1)
+
+	If CharacterManager.GetCharacterInt(CharacterName,"PerkCounts.Blocking") < 2
+		;Few blocking perks means that block confers no big advantage or the character is a natural dual-wielder
+		CharacterManager.SetLocalInt(CharacterName,"AllowDualWield",1)
+	EndIf
 	
 	_kLastCombatStyle = _kCombatStyle
 	CharacterManager.SetLocalInt(CharacterName,"AllowMagic",0)
