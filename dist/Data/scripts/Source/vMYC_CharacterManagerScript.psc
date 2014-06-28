@@ -1254,7 +1254,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	vMYC_CharacterDummyActorScript CharacterDummy = PlayerDupe as vMYC_CharacterDummyActorScript
 	CharacterDummy.NeedRefresh = True
 	SetLocalForm(sCharacterName,"Script",CharacterDummy)
-
+	SetLocalInt(sCharacterName,"TrackingEnabled",0)
 	;Wait(0.5) ; Don't remove this, the following statement locks up without it, god knows why
 	;Debug.Trace("MYC: (" + sCharacterName + ") About to set CharacterDummy.CharacterName property...")
 	CharacterDummy.CharacterName = JMap.getStr(jCharacterData,"Name")
