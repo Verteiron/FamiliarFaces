@@ -384,10 +384,11 @@ Function SetNonpersistent()
 		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
 	EndIf
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Getting VoiceType from CharacterManager...")
-	VoiceType kVoiceType = CharacterManager.GetCharacterForm(CharacterName,"VoiceType") as VoiceType
+	VoiceType kVoiceType = CharacterManager.GetLocalForm(CharacterName,"VoiceType") as VoiceType
 	If !kVoiceType
-		kVoiceType = CharacterManager.GetLocalForm(CharacterName,"VoiceType") as VoiceType
+		kVoiceType = CharacterManager.GetCharacterForm(CharacterName,"VoiceType") as VoiceType
 	EndIf
+
 	If kVoiceType
 		_kActorBase.SetVoiceType(kVoiceType)
 	Else ; No voicetype is saved, so set the default voicetype as the local voicetype
@@ -513,10 +514,10 @@ Function RefreshMesh()
 	EndWhile
 	If iSafetyTimer
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch succeeded!")
-	Else 
+	Else
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch timed out! Something's not right.",1)
 	EndIf
-	
+
 	MoveTo(kHere)
 	WaitFor3DLoad(Self)
 	kHere.Delete()
@@ -561,7 +562,7 @@ Function RefreshMesh()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(")
 	EndIf
 	vMYC_CharGenLoading.SetValue(0)
-	
+
 	Form kHairEquipment = GetWornForm(0x00000002)
 	Form kLongHairEquipment = GetWornForm(0x00000800)
 	If kHairEquipment == kLongHairEquipment
