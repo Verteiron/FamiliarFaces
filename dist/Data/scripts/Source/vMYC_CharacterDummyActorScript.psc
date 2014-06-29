@@ -277,7 +277,9 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 			EndIf
 		EndIf
 	EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
+	If iAdded || iRemoved
+		Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
+	EndIf
 EndEvent
 
 Function CheckVars()

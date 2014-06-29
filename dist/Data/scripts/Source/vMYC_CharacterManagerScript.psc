@@ -1071,6 +1071,10 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyPerksBusy = False
 		Return -1
+	ElseIf vMYC_PerkList.GetSize() == 0
+		;Debug.Trace("MYC: (" + sCharacterName + ") PerkList size is 0. Won't attempt to apply this.")
+		_bApplyPerksBusy = False
+		Return 0
 	EndIf
 	FFUtils.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
@@ -1099,9 +1103,9 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		_bApplyShoutsBusy = False
 		Return -1
 	ElseIf vMYC_ShoutList.GetSize() == 0
-		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Aborting!",1)
+		;Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
-		Return -1
+		Return 0
 	EndIf
 	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
 	WaitMenuMode(0.1)
