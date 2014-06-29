@@ -486,85 +486,82 @@ EndFunction
 
 Function RefreshMesh()
 	GotoState("Busy")
-	;Race kDummyRace = GetFormFromFile(0x00071E6A,"Skyrim.esm") as Race ; InvisibleRace
-	Race kDummyRace = GetFormFromFile(0x00067CD8,"Skyrim.esm") as Race ; ElderRace
-	Int iSafetyTimer = 15
+	Race kDummyRace = GetFormFromFile(0x00071E6A,"Skyrim.esm") as Race ; InvisibleRace
+	;Race kDummyRace = GetFormFromFile(0x00067CD8,"Skyrim.esm") as Race ; ElderRace
+
 	_kActorBase.SetInvulnerable(True)
-;	SetAlpha(0.01,False)
-;	Wait(2.0)
-	;SetScale(0.01)
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
-	;Wait(RandomFloat(0.0,2.0))
+
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
+
 	Int iMyTurn = vMYC_CharGenLoading.GetValue() as Int
 	vMYC_CharGenLoading.Mod(1)
-;	Wait(1.0)
-	;While vMYC_CharGenLoading.GetValue() - 1 != iMyTurn && iSafetyTimer > 0
-		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for SetRace to become available. ...")
-		;iSafetyTimer -= 1
-		;Wait(1.0)
-	;EndWhile
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace!")
 	_bSwitchedRace = False
-	;Bool bAIEnabled = IsAIEnabled()
-	;EnableAI(False)
-	;If
-	ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; NordRace 0x13746
+	ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
 	Activator FXEmptyActivator = GetFormFromFile(0x000b79ff,"Skyrim.esm") as Activator
+
 	ObjectReference kHere = PlaceAtMe(FXEmptyActivator)
+
 	Moveto(kNowhere)
 	Wait(0.1)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) In staging cell, setting to dummy race...")
+	Int iSafetyTimer = 15
 	SetRace(kDummyRace)
-	Wait(0.1)
-;	Race kNordRace = GetFormFromFile(0x00013746,"Skyrim.esm") as Race ; NordRace 0x13746
-;	Race kArgonianRace = GetFormFromFile(0x00013740,"Skyrim.esm") as Race ; LeeezardRace 0x13746
-;
-;	If CharacterRace == kNordRace
-;		CharGen.LoadCharacter(Self, kArgonianRace, "vMYC_DefaultNonNord")
-;	Else
-;		CharGen.LoadCharacter(Self, kNordRace, "vMYC_DefaultNord")
-;	EndIf
-	;iSafetyTimer = 20
-	;While !_bSwitchedRace && iSafetyTimer > 0
-		;iSafetyTimer -= 1
-		;Wait(0.25)
-	;EndWhile
-	;If !iSafetyTimer
-		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace timed out, that's usually not good.")
-	;EndIf
-	MoveTo(kHere)
-	WaitFor3DLoad(Self)
-	kHere.Delete()
-	;Wait(0.5)
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Finished SetRace!")
-	;vMYC_CharGenLoading.Mod(-1)
-
-	;SetRace(CharacterRace)
-	;Wait(0.1)
-;	EndIf
-	;vMYC_CharGenLoading.Mod(1)
-	;While vMYC_CharGenLoading.GetValue() > 1
-		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for CharGen to become available...")
-		;Wait(RandomFloat(0.8,1.2))
-	;EndWhile
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
-	_bSwitchedRace = False
-	iSafetyTimer = 10
-	Bool bSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
-	While !bSuccess && iSafetyTimer > 0
-		iSafetyTimer -= 1
-		Wait(0.5)
-		bSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
-	EndWhile
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bSuccess + " from LoadCharacter!")
-	iSafetyTimer = 20
-	While !_bSwitchedRace && iSafetyTimer > 0
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Making sure dummy race switch happened...")
+	While iSafetyTimer && GetRace().IsRaceFlagSet(0x00000001) ; IsPlayable
 		iSafetyTimer -= 1
 		Wait(0.25)
 	EndWhile
-	If !iSafetyTimer
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) SetRace timed out, that's usually not good.")
+	If iSafetyTimer
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch succeeded!")
+	Else 
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch timed out! Something's not right.",1)
 	EndIf
-	;vMYC_CharGenLoading.Mod(-1)
+	
+	MoveTo(kHere)
+	WaitFor3DLoad(Self)
+	kHere.Delete()
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) We're back, safe and sound!")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
+
+	Bool bSuccess = False
+	Int iNumTriesRemaining = 5
+	While !bSuccess && iNumTriesRemaining
+		iNumTriesRemaining -= 1
+		_bSwitchedRace = False
+		iSafetyTimer = 10
+		Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+		While !bLCSuccess && iSafetyTimer > 0
+			iSafetyTimer -= 1
+			Wait(0.5)
+			bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+		EndWhile
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Got " + bLCSuccess + " from LoadCharacter!")
+		iSafetyTimer = 30
+		While !_bSwitchedRace && iSafetyTimer > 0
+			iSafetyTimer -= 1
+			Wait(0.5)
+		EndWhile
+		If !GetRace().IsRaceFlagSet(0x00000001) ; Playable
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) Is not a playable race!",1)
+		EndIf
+		If !iSafetyTimer
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter timed out, that's usually not good.",1)
+		Else
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded!")
+			bSuccess = True
+		EndIf
+		If !bSuccess
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) " + iNumTriesRemaining + " tries remaining...")
+		EndIf
+	EndWhile
+
+	If bSuccess
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) loaded successfully!")
+	Else
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(")
+	EndIf
+	vMYC_CharGenLoading.SetValue(0)
+	
 	Form kHairEquipment = GetWornForm(0x00000002)
 	Form kLongHairEquipment = GetWornForm(0x00000800)
 	If kHairEquipment == kLongHairEquipment
@@ -577,10 +574,8 @@ Function RefreshMesh()
 		UnequipItem(kLongHairEquipment)
 	EndIf
 	If kHairEquipment || kLongHairEquipment
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Fixing hair...")
 		; LoadCharacter doesn't know about head armor, so sometimes can make a ponytail stick through a hood and such.
 		;  This fixes that by un/requipping anything that uses the Hair or Longhair slots
-;		Wait(0.5)
 		If kHairEquipment
 			EquipItemEx(kHairEquipment,0,True)
 		EndIf
@@ -589,24 +584,9 @@ Function RefreshMesh()
 		EndIf
 	EndIf
 
-	If bSuccess
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) loaded successfully!")
-	Else
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(")
-	EndIf
-	vMYC_CharGenLoading.SetValue(0)
-	;If CharacterManager.GetLocalInt(CharacterName,"InShrine")
-		;SetScale(1.2)
-	;Else
-		;SetScale(1.0)
-	;EndIf
-;	SetAlpha(1.0,False)
-;	Wait(1.0)
 	SetNameIfNeeded()
-	;EnableAI(bAIEnabled)
+
 	_kActorBase.SetInvulnerable(False)
-	;CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
-	;DumpNIOData(CharacterName + "_RefreshMesh_" + GetCurrentRealTime())
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
 EndFunction
@@ -618,7 +598,6 @@ Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
 	EndWhile
 	Return iSafety as Bool
 EndFunction
-
 
 Function SetCustomActorValues(Bool bScaleToLevel = False)
 	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting custom actor values...")
