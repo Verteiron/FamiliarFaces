@@ -29,7 +29,7 @@ ObjectReference _kPortalStone
 ;--=== Events ===--
 
 Event OnInit()
-	Debug.Trace("MYC/PortalStoneQuest: OnInit!")
+	;Debug.Trace("MYC/PortalStoneQuest: OnInit!")
 	RegisterForSingleUpdate(1.0)
 EndEvent
 

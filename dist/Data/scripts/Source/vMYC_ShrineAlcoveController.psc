@@ -15,7 +15,7 @@ Int	Property AlcoveIndex Hidden
 	EndFunction
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
-		Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
+		;Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
 		SendModEvent("vMYC_AlcoveStatusUpdate",0)
 		RegisterForSingleUpdate(1)
 	EndFunction
@@ -327,7 +327,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	If !Is3DLoaded()
 		bUseTranslation = False
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Setting light state to " + numArg as Int + ", current state is " + _iAlcoveLightState)
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Setting light state to " + numArg as Int + ", current state is " + _iAlcoveLightState)
 	Int iOldLightState = _iAlcoveLightState
 	Int iLightState = numArg as Int
 	_LightAmbientTarget	= _Light.GetLinkedRef()
@@ -398,7 +398,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		OnAlcoveLightStateChange(eventName, strArg, numArg, sender)
 	EndIf
 	_iAlcoveLightState = iLightState ; Set internal property value
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
 	SendModEvent("vMYC_ShrineLightStateComplete","",_iAlcoveLightState)
 EndEvent
 
@@ -427,18 +427,18 @@ EndEvent
 
 Function ActivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 	If abBackground
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating in background...")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating in background...")
 		RegisterForModEvent("vMYC_AlcoveBackground","OnAlcoveBackground")
 		SendModEvent("vMYC_AlcoveBackground","Activate",abAutoLights as Int)
 		Return
 	EndIf
 	If !_sCharacterName
-		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
 		AlcoveState = 0
 		Return
 	EndIf
 	AlcoveState = 1
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
 	If abAutoLights
 		AlcoveLightState = 1
 	EndIf
@@ -473,13 +473,13 @@ EndFunction
 
 Function DeactivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 	If abBackground
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating in background...")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating in background...")
 		RegisterForModEvent("vMYC_AlcoveBackground","OnAlcoveBackground")
 		SendModEvent("vMYC_AlcoveBackground","Deactivate",abAutoLights as Int)
 		Return
 	EndIf
 	AlcoveState = 1
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
 	If abAutoLights
 		AlcoveLightState = 0
 	EndIf
@@ -501,7 +501,7 @@ Event OnCharacterReady(string eventName, string strArg, float numArg, Form sende
 	EndIf
 	If strArg == _sCharacterName && _bPoseCharacter
 		_bPoseCharacter = False
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")
 		vMYC_BlindingLightInwardParticles.Play(_kCharacter,0.5)
 
 		Debug.SendAnimationEvent(_kCharacter,"IdleStaticPoseAStart") ;_kCharacter.PlayIdle(IdleStaticPoseA)
@@ -601,7 +601,7 @@ Event OnAnimationEvent(ObjectReference akSource, string asEventName)
 	If asEventName == "T02Ascend" ; Player is floating
 
 		UnregisterForAnimationEvent(PlayerREF,"T02Ascend")
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player is floating!")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player is floating!")
 		DoSaveAnimation()
 	EndIf
 EndEvent
@@ -671,7 +671,7 @@ Function DoSaveAnimation()
 	Wait(3.0)
 	EnablePlayerControls()
 	Debug.SendAnimationEvent(PlayerREF,"BleedOutStop")
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player should be released, Alcove should be loaded/loading!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Player should be released, Alcove should be loaded/loading!")
 	Wait(3.0)
 	_Book.IsOpen = False
 EndFunction
@@ -679,7 +679,7 @@ EndFunction
 Event OnInventorySaveEnd(string eventName, string strArg, float numArg, Form sender)
 {Cleanup invisible actors after all inventory is saved.}
 	Wait(5.0) ; give 'em time to float into the shrine
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Killing the invisible swordsmen...")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Killing the invisible swordsmen...")
 	Int i = _kInvisibleActors.Length
 	While i > 0
 		i -= 1
@@ -703,7 +703,7 @@ Event OnPerksSaveEnd(string eventName, string strArg, float numArg, Form sender)
 EndEvent
 
 Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sender)
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnEquipmentSaved(" + eventName + "," + sender + "," + strArg + "," + numArg + ")")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnEquipmentSaved(" + eventName + "," + sender + "," + strArg + "," + numArg + ")")
 	If _bPlayerIsSaving && ((sender as Armor) || (sender as Weapon))
 		If _iInvisibleActorIndex == 0
 			_iInvisibleActorIndex = _kInvisibleActors.Length
@@ -849,25 +849,25 @@ EndFunction
 
 Function BanishCharacter()
 {Banish the character from Tamriel back to the Alcove}
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": BanishCharacter!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": BanishCharacter!")
 	GoToState("Busy")
 	_Book.IsOpen = False
 	If Is3DLoaded()
 		_Book.IsGlowing = True
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling character tracking...")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling character tracking...")
 	CharacterManager.SetCharacterTracking(CharacterName,False)
 	;_kCharacter.DisableNoWait(False)
 	Wait(0.25)
 	_kCharacter.SetScale(0.01)
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Moving character to staging area...")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Moving character to staging area...")
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
 	_kCharacter.MoveTo(_StatueMarker)
 	WaitForCharacterReady()
 	If WaitFor3DLoad(_kCharacter)
 		_kCharacter.SetAlpha(0.01,False)
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Moving character to Alcove...")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Moving character to Alcove...")
 	_kCharacter.SetGhost(True)
 	_kCharacter.SetScale(1.2)
 	If WaitFor3DLoad(_kCharacter)
@@ -875,7 +875,7 @@ Function BanishCharacter()
 		DA02SummonValorTargetFX.Play(_kCharacter,8)
 		Wait(1.0)
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Fading in character...")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Fading in character...")
 	_kCharacter.SetAlpha(1.0,True)
 	If Is3DLoaded()
 		_Book.IsGlowing = False
@@ -884,7 +884,7 @@ Function BanishCharacter()
 	_kCharacter.PlayIdle(IdleStaticPoseA)
 	;_kCharacter.DrawWeapon()
 	Wait(0.25)
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Freezing character!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Freezing character!")
 	_kCharacter.EnableAI(False)
 	AlcoveState = 2
 	GoToState("Active")
@@ -950,7 +950,7 @@ Function ShowTrophies()
 	String[] sSpawnPoints = CharacterManager.GetCharacterSpawnPoints(_sCharacterName)
 	;Int i = 0
 	;While i < sSpawnPoints.Length
-		;;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Spawnpoint[" + i + "] is " + sSpawnPoints[i])
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Spawnpoint[" + i + "] is " + sSpawnPoints[i])
 		;sSpawnPoints[i]
 		;i += 1
 	;EndWhile

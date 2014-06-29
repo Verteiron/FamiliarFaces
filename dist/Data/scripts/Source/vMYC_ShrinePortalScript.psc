@@ -133,7 +133,7 @@ Function PortalOpen(Bool abQuickOpen = False)
 	EndIf
 	_bPortalBusy = True
 	_bPortalOpening = True
-	Debug.Trace("MYC/ShrinePortalScript: Moving water...")
+	;Debug.Trace("MYC/ShrinePortalScript: Moving water...")
 	If abQuickOpen
 		Water.SetPosition(Water.X,Water.Y,_fWaterZ - 1000)
 	Else
@@ -144,9 +144,9 @@ Function PortalOpen(Bool abQuickOpen = False)
 		WaterChurn.TranslateTo(WaterChurn.X,WaterChurn.Y,_fWaterZ + 40,0,0,0,10)
 		Wait(1.0)
 	EndIf
-	Debug.Trace("MYC/ShrinePortalScript: Disabling PortalStoneStatic...")
+	;Debug.Trace("MYC/ShrinePortalScript: Disabling PortalStoneStatic...")
 	PortalStoneStatic.DisableNoWait(True)
-	Debug.Trace("MYC/ShrinePortalScript: PlayAnim02")
+	;Debug.Trace("MYC/ShrinePortalScript: PlayAnim02")
 	PortalFX.PlayAnimation("PlayAnim02")
 	If abQuickOpen
 		Seal.PlayAnimation("StartOpen")
@@ -159,7 +159,7 @@ Function PortalOpen(Bool abQuickOpen = False)
 		Seal.PlayAnimation("Open")
 		WaterChurn.TranslateTo(WaterChurn.X,WaterChurn.Y,_fWaterZ + 40,0,0,0,70)
 	EndIf
-	Debug.Trace("MYC/ShrinePortalScript: Play sound fx...")
+	;Debug.Trace("MYC/ShrinePortalScript: Play sound fx...")
 	_iPortalSound1 = QSTSovengardePortalOn2DLPM.Play(Seal)
 	_iPortalSound2 = QSTSovengardePortalOnMonoLPM.Play(Seal)
 	If abQuickOpen

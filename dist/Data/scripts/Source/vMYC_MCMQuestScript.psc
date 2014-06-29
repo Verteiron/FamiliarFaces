@@ -84,10 +84,10 @@ EndFunction
 
 Event OnVersionUpdate(int a_version)
 	If (a_version >= 2 && CurrentVersion < 2)
-		Debug.Trace("MYC/MCM: Updating script to version 2...")
+		;Debug.Trace("MYC/MCM: Updating script to version 2...")
         FilterVoiceTypes(VOICETYPE_NOFILTER)
 	ElseIf (a_version >= 3 && CurrentVersion < 3)
-		Debug.Trace("MYC/MCM: Updating script to version 3...")
+		;Debug.Trace("MYC/MCM: Updating script to version 3...")
 		_iMagicSchoolOptions = New Int[6]
 	EndIf
 
@@ -172,7 +172,7 @@ Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 		EndIf
 		i += 1
 	EndWhile
-	Debug.Trace("MYC/MCM: Displaying " + idx + "/" + i + " voicetypes")
+	;Debug.Trace("MYC/MCM: Displaying " + idx + "/" + i + " voicetypes")
 EndFunction
 
 event OnGameReload()
@@ -367,7 +367,7 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 EndEvent
 
 Event OnOptionSelect(Int Option)
-	Debug.Trace("MYC: MCM: OnOptionSelect(" + Option + ")")
+	;Debug.Trace("MYC: MCM: OnOptionSelect(" + Option + ")")
 	If Option == OPTION_TOGGLE_TRACKING
 		Bool bEnabled = CharacterManager.GetLocalInt(_sCharacterName,"TrackingEnabled") as Bool
 		bEnabled = !bEnabled
@@ -444,7 +444,7 @@ Event OnOptionSelect(Int Option)
 EndEvent
 
 Event OnOptionMenuOpen(Int Option)
-	Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
+	;Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
 	If Option == _iVoiceTypeOption
 		SetMenuDialogOptions(_sVoiceTypesFiltered)
 		SetMenuDialogStartIndex(_iVoiceTypeSelections[_iCurrentCharacter])
@@ -483,7 +483,7 @@ Event OnOptionMenuOpen(Int Option)
 EndEvent
 
 Event OnOptionMenuAccept(int option, int index)
-	Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
+	;Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
 	If Option == _iVoiceTypeOption
 		_iVoiceTypeSelections[_iCurrentCharacter] = index
 		String sShortVoiceType = StringUtil.Substring(_sVoiceTypesFiltered[index],0,StringUtil.Find(_sVoiceTypesFiltered[index]," "))

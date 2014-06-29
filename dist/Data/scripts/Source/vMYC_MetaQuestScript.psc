@@ -1,4 +1,4 @@
-Scriptname vMYC_MetaQuestScript extends Quest  
+Scriptname vMYC_MetaQuestScript extends Quest
 {Do initialization and track variables for scripts}
 
 ;--=== Imports ===--
@@ -53,11 +53,11 @@ Event OnInit()
 EndEvent
 
 Event OnReset()
-	Debug.Trace("MYC: Metaquest event: OnReset")
+	;Debug.Trace("MYC: Metaquest event: OnReset")
 EndEvent
 
 Event OnUpdate()
-	
+
 EndEvent
 
 Event OnGameReloaded()
@@ -85,9 +85,9 @@ Function DoUpkeep(Bool DelayedStart = True)
 	EndIf
 
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 100
+	_CurrentVersion = 101
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
-	
+
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
 	RegisterForModEvent("vMYC_InitEnd","OnInitState")
 	RegisterForModEvent("vMYC_UpkeepBegin","OnUpkeepState")
@@ -147,7 +147,7 @@ Function DoInit()
 		;CharacterManager.DoInit()
 	EndIf
 
-	
+
 	;Wait(3)
 	;CharacterManager.SaveCurrentPlayer()
 	;Int i = 0
@@ -204,7 +204,7 @@ Bool Function CheckDependencies()
 	If fSKSE < 1.0700
 		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
 		Return False
-	Else 
+	Else
 		;Proceed
 	EndIf
 	If JContainers.APIVersion() != 2

@@ -97,7 +97,7 @@ EndEvent
 Function RefreshInventory()
 	Busy = True
 	_iThreadCount += 1
-	Debug.Trace("MYC: " + Self + " Refreshing player inventory...")
+	;Debug.Trace("MYC: " + Self + " Refreshing player inventory...")
 	Float fStartTime = GetCurrentRealTime()
 	JFormMap.clear(_jInventory)
 	Int iItemCount = PlayerREF.GetNumItems()
@@ -119,11 +119,11 @@ State Overloaded
 	Event OnBeginState()
 		Busy = True
 		RegisterForSingleUpdate(5.0)
-		Debug.Trace("MYC: " + Self + " Too many items moving around at once, suspending item tracking...")
+		;Debug.Trace("MYC: " + Self + " Too many items moving around at once, suspending item tracking...")
 	EndEvent
 
 	Event OnUpdate()
-		Debug.Trace("MYC: " + Self + " Resuming item tracking...")
+		;Debug.Trace("MYC: " + Self + " Resuming item tracking...")
 		GoToState("")
 		_iThreadCount = 0
 		_bRefreshed = False

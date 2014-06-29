@@ -263,7 +263,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
-				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
@@ -271,7 +271,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This was we avoid stripping perk, race, and doom stone abilities
 			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
 				If RemoveSpell(kSpell)
-					Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+					;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
 					iRemoved += 1
 				EndIf
 			EndIf
@@ -286,21 +286,21 @@ Function CheckVars()
 		_kActorBase = GetActorBase()
 	EndIf
 	If _kActorBase != GetActorBase()
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) ActorBase has CHANGED, this should NEVER happen! _kActorBase: " + _kActorBase + ", current is: " + GetActorBase())
+		Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) ActorBase has CHANGED, this should NEVER happen! _kActorBase: " + _kActorBase + ", current is: " + GetActorBase(),1)
 		_kActorBase = GetActorBase()
 	EndIf
 	If !CharacterName
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterName is missing, getting it from CharacterManager...")
 		CharacterName = CharacterManager.GetCharacterNameFromActorBase(_kActorBase)
 		If !CharacterName
-			;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterName was not set and could not be loaded from CharacterManager, this will cause problems!")
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterName was not set and could not be loaded from CharacterManager, this will cause problems!",1)
 		EndIf
 	EndIf
 	If !CharacterRace
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterRace is missing, getting it from CharacterManager...")
 		CharacterRace = CharacterManager.GetCharacterForm(CharacterName,"Race") as Race
 		If !CharacterRace
-			;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!")
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!",1)
 		EndIf
 	EndIf
 
@@ -357,7 +357,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	EndIf
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
 	GotoState("")
 EndFunction
 
@@ -370,7 +370,7 @@ Function SetNonpersistent()
 		iSafetyTimer -= 1
 		Wait(0.5)
 	EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
 	iSafetyTimer = 10
 	While CharacterManager.ApplyCharacterShouts(CharacterName) < 0 && iSafetyTimer
 		iSafetyTimer -= 1
@@ -413,7 +413,7 @@ EndFunction
 
 Function SetFactions()
 	If CharacterManager.GetLocalInt(CharacterName,"IsFoe")
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Hates the player!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Hates the player!")
 		RemoveFromFaction(CurrentFollowerFaction)
 		RemoveFromFaction(PotentialFollowerFaction)
 		RemoveFromFaction(PotentialMarriageFaction)
@@ -421,7 +421,7 @@ Function SetFactions()
 		SetActorValue("Aggression",1)
 		SetRelationshipRank(PlayerREF,-4)
 	Else
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Likes the player!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Likes the player!")
 		If GetFactionRank(PotentialFollowerFaction) <= -2
 			RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
 			SetFactionRank(PotentialFollowerFaction,0)
@@ -433,7 +433,7 @@ Function SetFactions()
 			StopCombat()
 		EndIf
 		If CharacterManager.GetLocalInt(CharacterName,"CanMarry") && GetFactionRank(PotentialMarriageFaction) <= -2
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) LOVES the player!")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LOVES the player!")
 			SetFactionRank(PotentialMarriageFaction,0)
 		EndIf
 	EndIf
@@ -479,7 +479,7 @@ Function UpdateCombatStyle()
 		Else
 			SetAV("Magicka",0)
 		EndIf
-		Debug.Trace("MYC: Set " + CharacterName + "'s combatstyle to " + _kCombatStyle)
+		;Debug.Trace("MYC: Set " + CharacterName + "'s combatstyle to " + _kCombatStyle)
 	EndIf
 	CharacterManager.SetLocalForm(CharacterName,"CombatStyle",_kCombatStyle)
 	SendModEvent("vMYC_UpdateCharacterSpellList",CharacterName)
@@ -504,16 +504,16 @@ Function RefreshMesh()
 
 	Moveto(kNowhere)
 	Wait(0.1)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) In staging cell, setting to dummy race...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) In staging cell, setting to dummy race...")
 	Int iSafetyTimer = 15
 	SetRace(kDummyRace)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Making sure dummy race switch happened...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Making sure dummy race switch happened...")
 	While iSafetyTimer && GetRace().IsRaceFlagSet(0x00000001) ; IsPlayable
 		iSafetyTimer -= 1
 		Wait(0.25)
 	EndWhile
 	If iSafetyTimer
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch succeeded!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch succeeded!")
 	Else
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dummy race switch timed out! Something's not right.",1)
 	EndIf
@@ -521,8 +521,8 @@ Function RefreshMesh()
 	MoveTo(kHere)
 	WaitFor3DLoad(Self)
 	kHere.Delete()
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) We're back, safe and sound!")
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) We're back, safe and sound!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Running LoadCharacter...")
 
 	Bool bSuccess = False
 	Int iNumTriesRemaining = 5
@@ -548,18 +548,18 @@ Function RefreshMesh()
 		If !iSafetyTimer
 			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter timed out, that's usually not good.",1)
 		Else
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded!")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded!")
 			bSuccess = True
 		EndIf
 		If !bSuccess
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) " + iNumTriesRemaining + " tries remaining...")
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) " + iNumTriesRemaining + " tries remaining...",1)
 		EndIf
 	EndWhile
 
 	If bSuccess
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) loaded successfully!")
 	Else
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(")
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(",1)
 	EndIf
 	vMYC_CharGenLoading.SetValue(0)
 
@@ -601,19 +601,19 @@ Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
 EndFunction
 
 Function SetCustomActorValues(Bool bScaleToLevel = False)
-	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting custom actor values...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) setting custom actor values...")
 	String[] sAVNames = CharacterManager.AVNames
 	Int iBaseLevel = CharacterManager.GetCharacterStat(CharacterName,"Level") as Int
 	Int iMyLevel = GetLevel()
 	Float fScaleMult = 1.0
-	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
 	Float fCharacterXP = (12.5 * iMyLevel * iMyLevel) + 62.5 * iMyLevel - 75
-	;;Debug.Trace("MYC: (" + CharacterName + "/Actor) needs " + fCharacterXP + " to reach this level!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) needs " + fCharacterXP + " to reach this level!")
 	If bScaleToLevel
 		If iBaseLevel > 0
 			fScaleMult = (iMyLevel as Float) / (iBaseLevel as Float)
 		EndIf
-		;;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor values will be scaled to " + fScaleMult * 100 + "% of their value")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) original actor values will be scaled to " + fScaleMult * 100 + "% of their value")
 	EndIf
 	Int i
 	i = sAVNames.Length ;jArray.Count(jActorValueStrings)
@@ -639,7 +639,7 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 				EndIf
 			EndIf
 			SetActorValue(sAVName,fAV as Int)
-			;;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
+			;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
 		EndIf
 	EndWhile
 	SetAV("Confidence",3)

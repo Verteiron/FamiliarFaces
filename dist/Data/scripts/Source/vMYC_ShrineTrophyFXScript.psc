@@ -130,7 +130,7 @@ Function ShowTrophies(Bool abPlayFX = True)
 		kLinkedObject = kLinkedObject.GetLinkedRef()
 	EndWhile
 	If iSafety == 0
-		;Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: Reached safety limit!",1)
+		Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: Reached safety limit!",1)
 	EndIf
 	;Debug.Trace("MYC: " + Self + " Done!")
 EndFunction
