@@ -1,8 +1,14 @@
 Familiar Faces
-1.0.0
+1.0.1
 
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the only way to do it!
 
+1.0.1 update available!
+	Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is [i]very[/i] slow to load or you don't have the right version of RaceMenu/Chargen.dll installed.
+	Fixed "Character Tracking" option not working in MCM.
+	Fixed VoiceTypes being reset after a save/load.
+	Removed a ton of debug messages that were spamming the Papyrus file.
+	Fixed a potential (but unlikely) CTD that could occur while applying perks or shouts.
 
 What Familiar Faces does
 
