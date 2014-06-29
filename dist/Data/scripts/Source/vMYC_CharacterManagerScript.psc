@@ -952,7 +952,7 @@ Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHango
 	EndWhile
 
 	If !akHangoutRefAlias.GetReference()
-		Int iHangoutIndex = JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData.HangoutIndex")
+		Int iHangoutIndex = GetLocalInt(asCharacterName,"HangoutIndex") ;JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData.HangoutIndex")
 		kHangoutRefAliases[iHangoutIndex].Clear()
 		akHangoutRefAlias.ForceRefTo(kTargetActor)
 		iHangoutIndex = kHangoutRefAliases.Find(akHangoutRefAlias)

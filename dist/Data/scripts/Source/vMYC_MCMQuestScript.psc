@@ -1,7 +1,5 @@
 Scriptname vMYC_MCMQuestScript extends SKI_ConfigBase
 
-Import vMYC_Config
-
 vMYC_MetaQuestScript Property MetaQuestScript Auto
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
@@ -370,14 +368,11 @@ EndEvent
 
 Event OnOptionSelect(Int Option)
 	Debug.Trace("MYC: MCM: OnOptionSelect(" + Option + ")")
-	If Option == _iCharacterEnabledOption
-		_bCharacterEnabled[_iCurrentCharacter] = !_bCharacterEnabled[_iCurrentCharacter]
-		CharacterManager.SetCharacterEnabled(_sCharacterNames[_iCurrentCharacter],_bCharacterEnabled[_iCurrentCharacter])
-
-		SetOptionFlags(_iVoiceTypeOption, Math.LogicalAnd(OPTION_FLAG_DISABLED,_bCharacterEnabled[_iCurrentCharacter] as Int),True)
-		SetOptionFlags(_iAliasOption, Math.LogicalAnd(OPTION_FLAG_DISABLED,_bCharacterEnabled[_iCurrentCharacter] as Int),True)
-
-		SetToggleOptionValue(Option,_bCharacterEnabled[_iCurrentCharacter])
+	If Option == OPTION_TOGGLE_TRACKING
+		Bool bEnabled = CharacterManager.GetLocalInt(_sCharacterName,"TrackingEnabled") as Bool
+		bEnabled = !bEnabled
+		CharacterManager.SetCharacterTracking(_sCharacterName, bEnabled)
+		SetToggleOptionValue(Option,bEnabled)
 		;ForcePageReset()
 	ElseIf Option == _iCharacterIsFoeOption
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe") as Bool
