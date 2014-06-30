@@ -100,6 +100,7 @@ Event OnLoad()
 	CheckVars()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
+		RefreshMeshNewCG()
 ;		_bNeedRefresh = True
 		;DoUpkeep()
 		_bFirstLoad = False
@@ -145,14 +146,16 @@ Event OnUpdate()
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	If _bNeedRefresh
-		If !Is3DLoaded()
-			RegisterForSingleUpdate(1.0)
-			Return
-		EndIf
-		_bNeedRefresh = False
-		RefreshMesh()
-	ElseIf Is3DLoaded()
+	
+	;If _bNeedRefresh
+		;If !Is3DLoaded()
+			;RegisterForSingleUpdate(1.0)
+			;Return
+		;EndIf
+		;_bNeedRefresh = False
+		;RefreshMesh()
+	;Else
+	If Is3DLoaded()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
 	RegisterForSingleUpdate(5.0)
@@ -347,7 +350,9 @@ Function DoUpkeep(Bool bInBackground = True)
 	CheckVars()
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	SetNonpersistent()
-	_bNeedRefresh = True
+	RefreshMeshNewCG()
+	;_bNeedRefresh = True
+	;RefreshMeshNewCG()
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
 	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
@@ -485,6 +490,46 @@ Function UpdateCombatStyle()
 	EndIf
 	CharacterManager.SetLocalForm(CharacterName,"CombatStyle",_kCombatStyle)
 	SendModEvent("vMYC_UpdateCharacterSpellList",CharacterName)
+EndFunction
+
+Function RefreshMeshNewCG()
+	GotoState("Busy")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
+	While vMYC_CharGenLoading.GetValue()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for LoadCharacter to become available...")
+		Wait(0.5)
+	EndWhile
+	vMYC_CharGenLoading.Mod(1)
+;	Race kDummyRace = GetFormFromFile(0x00067CD8,"Skyrim.esm") as Race ; ElderRace
+;	SetRace(kDummyRace)
+;	Wait(5)
+;	Debug.Trace("MYC: (" + CharacterName + "/Actor) regeneratehead")
+;	RegenerateHead()
+;	Wait(5)
+	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
+	_kActorBase.SetInvulnerable(True)
+	Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+	Int iSafetyTimer = 10
+	While !bLCSuccess && iSafetyTimer > 0
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
+		iSafetyTimer -= 1
+		Wait(0.5)
+		bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+	EndWhile
+	If bLCSuccess 
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded!")
+	EndIf
+	SetNameIfNeeded()
+;	Wait(5)
+;	Debug.Trace("MYC: (" + CharacterName + "/Actor) regeneratehead")
+;	RegenerateHead()
+;	Wait(5)
+;	Debug.Trace("MYC: (" + CharacterName + "/Actor) queueninodeupdate")
+;	QueueNiNodeUpdate()
+	_kActorBase.SetInvulnerable(False)
+	vMYC_CharGenLoading.Mod(-1)
+	SendModEvent("vMYC_CharacterReady",CharacterName)
+	GotoState("")
 EndFunction
 
 Function RefreshMesh()
