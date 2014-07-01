@@ -158,6 +158,10 @@ Event OnUpdate()
 	ElseIf Is3DLoaded()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
+	If !CharacterManager.GetLocalInt(CharacterName,"InAlcove") && !IsAIEnabled()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) AI disabled while InAlcove is false, enabling AI!")
+		EnableAI(True)
+	EndIf
 	RegisterForSingleUpdate(5.0)
 EndEvent
 
