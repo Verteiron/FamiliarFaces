@@ -79,16 +79,19 @@ Int[]		_iAlcoveResetOption
 Int		_iShowDebugOption
 
 Int Function GetVersion()
-    return 3 ; Default version
+    return 4 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
 	If (a_version >= 2 && CurrentVersion < 2)
-		;Debug.Trace("MYC/MCM: Updating script to version 2...")
+		Debug.Trace("MYC/MCM: Updating script to version 2...")
         FilterVoiceTypes(VOICETYPE_NOFILTER)
 	ElseIf (a_version >= 3 && CurrentVersion < 3)
-		;Debug.Trace("MYC/MCM: Updating script to version 3...")
+		Debug.Trace("MYC/MCM: Updating script to version 3...")
 		_iMagicSchoolOptions = New Int[6]
+	ElseIf (a_version >= 4 && CurrentVersion < 4)
+		Debug.Trace("MYC/MCM: Updating script to version 4...")
+		OnConfigInit()
 	EndIf
 
 EndEvent
