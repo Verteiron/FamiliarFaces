@@ -1313,10 +1313,10 @@ Bool Function LoadCharacter(String sCharacterName)
 					WornObject.SetDisplayName(PlayerDupe,1,h,sDisplayName)
 				EndIf
 
-				Float[] fMagnitudes = New Float[4]
-				Int[] iDurations = New Int[4]
-				Int[] iAreas = New Int[4]
-				MagicEffect[] kMagicEffects = New MagicEffect[4]
+				Float[] fMagnitudes = New Float[8]
+				Int[] iDurations = New Int[8]
+				Int[] iAreas = New Int[8]
+				MagicEffect[] kMagicEffects = New MagicEffect[8]
 
 				If JValue.solveInt(jArmor,".Enchantment.IsCustom")
 					Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
@@ -1468,10 +1468,10 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 				WornObject.SetDisplayName(kCharacterActor,iHand,0,sDisplayName)
 			EndIf
 
-			Float[] fMagnitudes = New Float[4]
-			Int[] iDurations = New Int[4]
-			Int[] iAreas = New Int[4]
-			MagicEffect[] kMagicEffects = New MagicEffect[4]
+			Float[] fMagnitudes = New Float[8]
+			Int[] iDurations = New Int[8]
+			Int[] iAreas = New Int[8]
+			MagicEffect[] kMagicEffects = New MagicEffect[8]
 			;Wait(1)
 			If JValue.solveInt(jItem,".Enchantment.IsCustom")
 				Int iNumEffects = JValue.solveInt(jItem,".Enchantment.NumEffects")
