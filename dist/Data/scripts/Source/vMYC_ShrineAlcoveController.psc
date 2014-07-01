@@ -714,11 +714,12 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 		_kInvisibleActors[iThisIndex].RemoveAllItems()
 		_kInvisibleActors[iThisIndex].SetAlpha(0.01,False)
 		_kInvisibleActors[iThisIndex].MoveTo(PlayerREF)
-		Int iSafetyTimer = 10
-		While !_kInvisibleActors[iThisIndex].Is3DLoaded() && iSafetyTimer
-			iSafetyTimer -= 1
-			Wait(0.5)
-		EndWhile
+		If WaitFor3DLoad(_kInvisibleActors[iThisIndex])
+			;Proceed
+		Else
+			_kInvisibleActors[iThisIndex].Delete()
+			Return
+		EndIf
 		;FXGreybeardAbsorbEffect.Play(PlayerREF,8,_kInvisibleActors[iThisIndex])
 		If sender as Weapon && numArg == 2
 			_kInvisibleActors[iThisIndex].EquipItem(sender)
@@ -751,7 +752,12 @@ Event OnEquipmentSaved(string eventName, string strArg, float numArg, Form sende
 		_kInvisibleActors[iThisIndex].SetAlpha(1,True)
 
 		Wait(RandomFloat(1.0,2.0))
-		_kInvisibleActors[iThisIndex].SplineTranslateToRef(_StatueMarker,RandomFloat(350,800),250,10)
+		If !WaitFor3DLoad(_kInvisibleActors[iThisIndex])
+			;For some reason actor was unloaded, might be possible near the end of the save or if there are tons of custom weapons
+			_kInvisibleActors[iThisIndex].Delete()
+		Else
+			_kInvisibleActors[iThisIndex].SplineTranslateToRef(_StatueMarker,RandomFloat(350,800),250,10)
+		EndIf
 		;Wait(5)
 		;_kInvisibleActors[iThisIndex].Disable(True)
 	EndIf
