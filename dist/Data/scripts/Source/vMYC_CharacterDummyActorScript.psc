@@ -103,7 +103,7 @@ Event OnLoad()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
 		If _iCharGenVersion == 3
-			RefreshMeshNewCG()
+			;RefreshMeshNewCG()
 		EndIf
 		_bFirstLoad = False
 	EndIf
@@ -335,7 +335,7 @@ Function CheckVars()
 	_sSkillNames[23] = "Enchanting"
 	
 	_iCharGenVersion = SKSE.GetPluginVersion("chargen")
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) CharGen version is " + _iCharGenVersion)
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) CharGen version is " + _iCharGenVersion)
 EndFunction
 
 Function DoInit(Bool bInBackground = True)
@@ -508,7 +508,7 @@ Function RefreshMeshNewCG()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for LoadCharacter to become available...")
 		Wait(0.5)
 	EndWhile
-	vMYC_CharGenLoading.Mod(1)
+	;vMYC_CharGenLoading.Mod(1)
 ;	Race kDummyRace = GetFormFromFile(0x00067CD8,"Skyrim.esm") as Race ; ElderRace
 ;	SetRace(kDummyRace)
 ;	Wait(5)
@@ -522,7 +522,7 @@ Function RefreshMeshNewCG()
 	While !bLCSuccess && iSafetyTimer > 0
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
 		iSafetyTimer -= 1
-		Wait(0.5)
+		Wait(RandomFloat(0.5,2))
 		bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
 	EndWhile
 	If bLCSuccess 
@@ -536,7 +536,7 @@ Function RefreshMeshNewCG()
 ;	Debug.Trace("MYC: (" + CharacterName + "/Actor) queueninodeupdate")
 ;	QueueNiNodeUpdate()
 	_kActorBase.SetInvulnerable(False)
-	vMYC_CharGenLoading.Mod(-1)
+	;vMYC_CharGenLoading.Mod(-1)
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
 EndFunction
