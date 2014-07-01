@@ -127,6 +127,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		;CheckForOrphans()
 	EndIf
 	CheckForExtras()
+	CheckCompatibilityModules()
 	UpdateConfig()
 	Debug.Trace("MYC: Upkeep complete!")
 	Ready = True
@@ -183,6 +184,50 @@ Function DoUpgrade()
 	_Running = True
 	Debug.Trace("MYC: Upgrade complete!")
 EndFunction
+
+Function CheckCompatibilityModules()
+	If !CheckCompatibilityModule_EFF()
+		Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
+	EndIf
+
+EndFunction
+
+Bool Function CheckCompatibilityModule_EFF()
+	Quest vMYC_zCompat_EFFQuest = GetFormFromFile(0x0201eaf2,"vMYC_MeetYourCharacters.esp") as Quest
+	If !vMYC_zCompat_EFFQuest
+		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_EFFQuest!",1)
+		Return False
+	EndIf
+	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
+	If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
+		Debug.Trace("MYC:  EFF found!")
+		If !vMYC_zCompat_EFFQuest.IsRunning()
+			vMYC_zCompat_EFFQuest.Start()
+			Debug.Trace("MYC:  Started EFF compatibility module!")
+			If vMYC_zCompat_EFFQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		Else
+			Debug.Trace("MYC:  EFF compatibility module is already running.")
+			Return True
+		EndIf
+	Else
+		Debug.Trace("MYC:  EFF not found.")
+		If vMYC_zCompat_EFFQuest.IsRunning()
+			vMYC_zCompat_EFFQuest.Stop()
+			Debug.Trace("MYC:  Stopped EFF compatibility module!")
+			If !vMYC_zCompat_EFFQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		EndIf
+	EndIf
+	Return True
+EndFunction
+
 
 Function DoShutdown()
 	Ready = False
