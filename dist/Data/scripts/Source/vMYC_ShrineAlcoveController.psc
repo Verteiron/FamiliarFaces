@@ -344,7 +344,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	If iLightState != 1
 		_Curtain.DisableNoWait(True)
 	EndIf
-
+	
 	If iLightState != 2
 		_Torches.DisableNoWait(True)
 		GetLinkedRef(vMYC_ShrineLightingMaster).DisableNoWait(True)
@@ -399,7 +399,23 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	EndIf
 	_iAlcoveLightState = iLightState ; Set internal property value
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
-	SendModEvent("vMYC_ShrineLightStateComplete","",_iAlcoveLightState)
+	RegisterForModEvent("vMYC_AlcoveLightStateComplete","OnAlcoveLightStateComplete")
+	SendModEvent("vMYC_AlcoveLightStateComplete","",_iAlcoveLightState)
+EndEvent
+
+Event OnAlcoveLightStateComplete(string eventName, string strArg, float numArg, Form sender)
+	If sender != Self
+		Return
+	EndIf
+	WaitMenuMode(2)
+	;Extras for safety
+	If _iAlcoveLightState != 1
+		_Curtain.DisableNoWait(True)
+	EndIf
+	If (_iAlcoveLightState == 0 || _iAlcoveLightState == 2) && _iQSTMG07MagnusStormCollegeMediumLPM
+		Sound.StopInstance(_iQSTMG07MagnusStormCollegeMediumLPM)
+		_iQSTMG07MagnusStormCollegeMediumLPM = 0
+	EndIf
 EndEvent
 
 Event OnAlcoveStatueStateChange(string eventName, string strArg, float numArg, Form sender)
