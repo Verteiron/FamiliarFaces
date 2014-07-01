@@ -88,6 +88,8 @@ Int _iMagicUpdateCounter
 CombatStyle _kCombatStyle
 CombatStyle _kLastCombatStyle
 
+Int _iCharGenVersion
+
 ;--=== Events ===--
 
 Event OnInit()
@@ -100,9 +102,9 @@ Event OnLoad()
 	CheckVars()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
-		RefreshMeshNewCG()
-;		_bNeedRefresh = True
-		;DoUpkeep()
+		If _iCharGenVersion == 3
+			RefreshMeshNewCG()
+		EndIf
 		_bFirstLoad = False
 	EndIf
 	If _bNeedCSUpdate
@@ -146,16 +148,14 @@ Event OnUpdate()
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	
-	;If _bNeedRefresh
-		;If !Is3DLoaded()
-			;RegisterForSingleUpdate(1.0)
-			;Return
-		;EndIf
-		;_bNeedRefresh = False
-		;RefreshMesh()
-	;Else
-	If Is3DLoaded()
+	If _bNeedRefresh && _iCharGenVersion == 2
+		If !Is3DLoaded()
+			RegisterForSingleUpdate(1.0)
+			Return
+		EndIf
+		_bNeedRefresh = False
+		RefreshMesh()
+	ElseIf Is3DLoaded()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
 	RegisterForSingleUpdate(5.0)
@@ -329,6 +329,9 @@ Function CheckVars()
 	_sSkillNames[21] = "Illusion"
 	_sSkillNames[22] = "Restoration"
 	_sSkillNames[23] = "Enchanting"
+	
+	_iCharGenVersion = SKSE.GetPluginVersion("chargen")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) CharGen version is " + _iCharGenVersion)
 EndFunction
 
 Function DoInit(Bool bInBackground = True)
@@ -350,9 +353,11 @@ Function DoUpkeep(Bool bInBackground = True)
 	CheckVars()
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	SetNonpersistent()
-	RefreshMeshNewCG()
-	;_bNeedRefresh = True
-	;RefreshMeshNewCG()
+	If _iCharGenVersion == 2
+		_bNeedRefresh = True
+	ElseIf _iCharGenVersion == 3
+		RefreshMeshNewCG()
+	EndIf
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
 	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
@@ -494,7 +499,7 @@ EndFunction
 
 Function RefreshMeshNewCG()
 	GotoState("Busy")
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen(3) data for " + CharacterName + ". Race is " + CharacterRace)
 	While vMYC_CharGenLoading.GetValue()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for LoadCharacter to become available...")
 		Wait(0.5)
@@ -509,7 +514,7 @@ Function RefreshMeshNewCG()
 	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
 	_kActorBase.SetInvulnerable(True)
 	Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
-	Int iSafetyTimer = 10
+	Int iSafetyTimer = 30
 	While !bLCSuccess && iSafetyTimer > 0
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
 		iSafetyTimer -= 1
@@ -539,7 +544,7 @@ Function RefreshMesh()
 
 	_kActorBase.SetInvulnerable(True)
 
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen data for " + CharacterName + ". Race is " + CharacterRace)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen(2) data for " + CharacterName + ". Race is " + CharacterRace)
 
 	Int iMyTurn = vMYC_CharGenLoading.GetValue() as Int
 	vMYC_CharGenLoading.Mod(1)

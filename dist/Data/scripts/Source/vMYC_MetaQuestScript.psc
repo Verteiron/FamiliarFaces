@@ -214,7 +214,7 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	If SKSE.GetPluginVersion("chargen") < 3
+	If SKSE.GetPluginVersion("chargen") < 2
 		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.7.2 or higher, or at least the current version of CharGen.dll distributed with RaceMenu.\nThe mod will now shut down.")
 		Return False
 	Else
