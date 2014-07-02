@@ -339,7 +339,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnAlcoveValidateState(string eventName, string strArg, float numArg, Form sender)
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnAlcoveValidateState!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnAlcoveValidateState!")
 	If AlcoveLightState == 1 
 		If AlcoveState == 0
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 0!")
