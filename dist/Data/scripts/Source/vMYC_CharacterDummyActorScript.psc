@@ -355,6 +355,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
+	SyncCharacterData()
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	If _iCharGenVersion == 2
 		_bNeedRefresh = True
@@ -375,6 +376,18 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
 	GotoState("")
+EndFunction
+
+Function SyncCharacterData()
+	If CharacterManager.GetLocalFlt(CharacterName,"PlayTime") != CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime")
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Our source data has changed!")
+		;RemoveAllItems(PlayerREF)
+		Int iResult
+		CharacterManager.SetLocalFlt(CharacterName,"PlayTime",CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime"))
+		CharacterManager.PopulateInventory(CharacterName)
+		iResult = CharacterManager.ApplyCharacterArmor(CharacterName)
+		iResult = CharacterManager.ApplyCharacterWeapons(CharacterName)
+	EndIf
 EndFunction
 
 Function SetNonpersistent()
@@ -517,16 +530,26 @@ Function RefreshMeshNewCG()
 ;	Wait(5)
 	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
 	_kActorBase.SetInvulnerable(True)
-	Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
-	Int iSafetyTimer = 30
-	While !bLCSuccess && iSafetyTimer > 0
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
-		iSafetyTimer -= 1
-		Wait(RandomFloat(0.5,2))
-		bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
-	EndWhile
-	If bLCSuccess 
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded!")
+	Bool _bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + CharacterName + ".dds")
+	If !_bHasFileTexture
+		Debug.MessageBox("Familiar Faces\nThe texture file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, " + CharacterName + "'s face will lack the proper color.")
+	EndIf
+
+	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
+	If _bHasFileSlot
+		Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+		Int iSafetyTimer = 30
+		While !bLCSuccess && iSafetyTimer > 0
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
+			iSafetyTimer -= 1
+			Wait(RandomFloat(0.5,2))
+			bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+		EndWhile
+		If bLCSuccess 
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded with " + iSafetyTimer + "tries remaining!")
+		EndIf
+	Else
+		Debug.MessageBox("Familiar Faces\nThe slot file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, appearance data cannot be loaded for " + CharacterName)
 	EndIf
 	SetNameIfNeeded()
 ;	Wait(5)
