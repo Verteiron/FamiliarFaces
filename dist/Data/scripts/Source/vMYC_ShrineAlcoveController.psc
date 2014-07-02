@@ -258,10 +258,16 @@ Event OnLoad()
 	Else
 		_Book.IsOpen = False
 	EndIf
-	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
+	RegisterForModEvents()
 EndEvent
 
+Function RegisterForModEvents()
+	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
+	RegisterForModEvent("vMYC_AlcoveValidateState","OnAlcoveValidateState")
+EndFunction
+
 Function DoUpkeep()
+	RegisterForModEvents()
 	If AlcoveState == 3
 		CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
 		_bCharacterSummoned = True
@@ -319,7 +325,6 @@ EndEvent
 
 Event OnUpdate()
 	If ShrineOfHeroes.Ready
-		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ShrineOfHeroes is ready, will try again in a second :(")
 		CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
 		CheckVars()
 		_Book.AlcoveIndex = AlcoveIndex
@@ -330,6 +335,21 @@ Event OnUpdate()
 	Else
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ShrineOfHeroes is NOT ready, will try again in a second :(")
 		RegisterForSingleUpdate(1.0)
+	EndIf
+EndEvent
+
+Event OnAlcoveValidateState(string eventName, string strArg, float numArg, Form sender)
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnAlcoveValidateState!")
+	If AlcoveLightState == 1 
+		If AlcoveState == 0
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 0!")
+			AlcoveLightState = 0
+			HideTrophies()
+		ElseIf AlcoveState == 2 || AlcoveState == 3
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 2!")
+			AlcoveLightState = 2
+			ShowTrophies()
+		EndIf
 	EndIf
 EndEvent
 

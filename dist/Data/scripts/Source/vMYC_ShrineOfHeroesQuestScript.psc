@@ -85,6 +85,8 @@ Event OnUpdate()
 		_bShrineNeedsUpdate = False
 		UpdateShrineNames()
 	EndIf
+	SendModEvent("vMYC_AlcoveValidateState")
+	RegisterForSingleUpdate(10) ; Make sure alcoves aren't stuck
 EndEvent
 
 Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form sender)
