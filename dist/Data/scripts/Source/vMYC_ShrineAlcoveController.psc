@@ -27,6 +27,7 @@ String	Property CharacterName Hidden
 		Return _sCharacterName
 	EndFunction
 	Function Set(String sCharacterName)
+		_sCharacterName = sCharacterName
 		RegisterForModEvent("vMYC_SetAlcoveCharacterName","OnSetAlcoveCharacterName")
 		SendModEvent("vMYC_SetAlcoveCharacterName",sCharacterName)
 	EndFunction
@@ -174,6 +175,7 @@ Bool			_bSavedEquipment
 Bool			_bSavedPerks
 Bool			_bSavedInventory
 Bool			_bSavedSpells
+Bool			_bCharacterSummoned
 
 ObjectReference	_FogBlowing
 ObjectReference	_FogEmpty
@@ -251,11 +253,19 @@ Event OnLoad()
 	ElseIf AlcoveStatueState == 0
 		ActivateAlcove()
 	EndIf
+	If AlcoveState == 3
+		_Book.IsOpen = True
+	Else
+		_Book.IsOpen = False
+	EndIf
 	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
 EndEvent
 
 Function DoUpkeep()
-
+	If AlcoveState == 3
+		CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
+		_bCharacterSummoned = True
+	EndIf
 EndFunction
 
 Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
@@ -294,6 +304,14 @@ Function SetAlcoveCharacterName(string sCharacterName)
 EndFunction
 
 Event OnCellAttach()
+	If AlcoveLightState == 1
+		If AlcoveState == 2 || AlcoveState == 3
+			AlcoveLightState = 2
+		ElseIf AlcoveState == 0
+			AlcoveLightState = 0
+		EndIf
+	EndIf
+		
 EndEvent
 
 Event OnAttachedToCell()
@@ -327,7 +345,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	If !Is3DLoaded()
 		bUseTranslation = False
 	EndIf
-	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Setting light state to " + numArg as Int + ", current state is " + _iAlcoveLightState)
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Setting light state to " + numArg as Int + ", current state is " + _iAlcoveLightState)
 	Int iOldLightState = _iAlcoveLightState
 	Int iLightState = numArg as Int
 	_LightAmbientTarget	= _Light.GetLinkedRef()
@@ -398,7 +416,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		OnAlcoveLightStateChange(eventName, strArg, numArg, sender)
 	EndIf
 	_iAlcoveLightState = iLightState ; Set internal property value
-	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
 	RegisterForModEvent("vMYC_AlcoveLightStateComplete","OnAlcoveLightStateComplete")
 	SendModEvent("vMYC_AlcoveLightStateComplete","",_iAlcoveLightState)
 EndEvent
@@ -451,13 +469,14 @@ Function ActivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 	If !_sCharacterName
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activated but has no character living in it. Aborting!")
 		AlcoveState = 0
+		HideTrophies()
 		Return
 	EndIf
-	AlcoveState = 1
-	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
 	If abAutoLights
 		AlcoveLightState = 1
 	EndIf
+	AlcoveState = 1
 	AlcoveStatueState = 1
 	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
 	If !_kCharacter
@@ -475,16 +494,31 @@ Function ActivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 		EndIf
 	EndIf
 	_kCharacter = CharacterManager.GetCharacterActorByName(_sCharacterName)
-	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
-	_kCharacter.SetGhost(True)
-	_kCharacter.SetScale(1.2)
-	_kCharacter.EnableAI(True)
-	_kCharacter.Moveto(_StatueMarker)
+	If CharacterManager.GetLocalInt(_sCharacterName,"IsSummoned")
+		_bCharacterSummoned = True
+	EndIf
+	If !_bCharacterSummoned ; make sure we don't yank the character back if they're summoned already
+		CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",1)
+		_kCharacter.SetGhost(True)
+		_kCharacter.SetScale(1.2)
+		_kCharacter.EnableAI(True)
+		_kCharacter.Moveto(_StatueMarker)
+		_kCharacter.EnableNoWait()
+		_bPoseCharacter = True
+		AlcoveState = 2
+	EndIf
 	RegisterForModEvent("vMYC_CharacterReady","OnCharacterReady")
-	_kCharacter.EnableNoWait()
-	_bPoseCharacter = True
 	ShowTrophies()
-	AlcoveState = 2
+	If _bCharacterSummoned
+		_Book.IsOpen = True
+		AlcoveState = 3
+		If abAutoLights
+			While AlcoveLightState != 1
+				Wait(1.0)
+			EndWhile
+			AlcoveLightState = 2
+		EndIf
+	EndIf
 EndFunction
 
 Function DeactivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
@@ -494,17 +528,21 @@ Function DeactivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 		SendModEvent("vMYC_AlcoveBackground","Deactivate",abAutoLights as Int)
 		Return
 	EndIf
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
+	If _kCharacter && !_bCharacterSummoned ; make sure we don't yank the character back if they're summoned
+		_kCharacter.MoveToMyEditorLocation()
+	EndIf
 	AlcoveState = 1
-	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
 	If abAutoLights
 		AlcoveLightState = 0
 	EndIf
+	If _bCharacterSummoned
+		_Book.IsOpen = False
+	EndIf
+	_bCharacterSummoned = False
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
-	_Curtain.Enable(True)
-	If _kCharacter
-		_kCharacter.MoveToMyEditorLocation()
-	EndIf
+;	_Curtain.Enable(True)
 	HideTrophies()
 	AlcoveState = 0
 	AlcoveStatueState = 0
@@ -515,7 +553,7 @@ Event OnCharacterReady(string eventName, string strArg, float numArg, Form sende
 	If strArg == _sCharacterName
 		_bCharacterReady = True
 	EndIf
-	If strArg == _sCharacterName && _bPoseCharacter
+	If strArg == _sCharacterName && _bPoseCharacter && !_bCharacterSummoned
 		_bPoseCharacter = False
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character reports they are ready!")
 		vMYC_BlindingLightInwardParticles.Play(_kCharacter,0.5)
@@ -865,6 +903,8 @@ Function SummonCharacter()
 	_Book.IsGlowing = False
 	Wait(1.0)
 	_kCharacter.SetAlpha(1.0)
+	_bCharacterSummoned = True
+	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
 	AlcoveState = 3
 	GoToState("Active")
 EndFunction
@@ -908,6 +948,8 @@ Function BanishCharacter()
 	Wait(0.25)
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Freezing character!")
 	_kCharacter.EnableAI(False)
+	_bCharacterSummoned = False
+	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",0)
 	AlcoveState = 2
 	GoToState("Active")
 EndFunction

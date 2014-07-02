@@ -157,19 +157,26 @@ Function UpdateShrineNames()
 		i += 1
 	EndWhile
 
-	;Debug.Trace("MYC/Shrine: Alcoves changing: " + iAlcoveChangeCount)
+	Debug.Trace("MYC/Shrine: Alcoves changing: " + iAlcoveChangeCount)
 
-	;Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")
+	Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")
 	Int iAlcoveStateSum = 100
-	While iAlcoveStateSum
+	Int iSafetyTimer = 10
+	While iAlcoveStateSum && iSafetyTimer
+		iSafetyTimer -= 1
 		Wait(1)
 		i = 0
 		iAlcoveStateSum = 0
 		While i < iAlcoveChangeCount
-			iAlcoveStateSum += AlcoveState[iAlcovesChanged[i]]
+			If iSafetyTimer < 5
+				If AlcoveState[iAlcovesChanged[i]] 
+					vMYC_ShrineAlcoveController kAlcove = JArray.getForm(jShrineArray,iAlcovesChanged[i]) as vMYC_ShrineAlcoveController
+					kAlcove.DeactivateAlcove(abAutoLights = True)
+				EndIf
+			EndIf
 			i += 1
 		EndWhile
-		;Debug.Trace("MYC/Shrine: iAlcoveStateSum: " + iAlcoveStateSum)
+		Debug.Trace("MYC/Shrine: iAlcoveStateSum: " + iAlcoveStateSum)
 	EndWhile
 
 	i = 0

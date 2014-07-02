@@ -62,12 +62,14 @@ Bool Property IsGlowing Hidden
 		Return _bIsGlowing
 	EndFunction
 	Function Set(Bool bIsGlowing)
-		If bIsGlowing && !_bIsGlowing
+		_bWantGlowing = bIsGlowing
+		If _bWantGlowing && !_bIsGlowing && _BookStatic.Is3DLoaded()
 			GlowFXS.Play(_BookStatic,-1)
-		ElseIf !bIsGlowing && _bIsGlowing
+			_bIsGlowing = _bWantGlowing
+		ElseIf !_bWantGlowing && _bIsGlowing && _BookStatic.Is3DLoaded()
 			GlowFXS.Stop(_BookStatic)
+			_bIsGlowing = _bWantGlowing
 		EndIf
-		_bIsGlowing = bIsGlowing
 	EndFunction
 EndProperty
 
@@ -77,19 +79,23 @@ Bool Property IsOpen Hidden
 		Return _bIsOpen
 	EndFunction
 	Function Set(Bool bIsOpen)
-		If bIsOpen && !_bIsOpen
+		_bWantOpen = bIsOpen
+		If _bWantOpen && !_bIsOpen && _BookStatic.Is3DLoaded()
 			OpenBook()
-		ElseIf !bIsOpen && _bIsOpen
+			_bIsOpen = _bWantOpen
+		ElseIf !_bWantOpen && _bIsOpen && _BookStatic.Is3DLoaded()
 			CloseBook()
+			_bIsOpen = _bWantOpen
 		EndIf
-		_bIsOpen = bIsOpen
 	EndFunction
 EndProperty
 
 ;--=== Variables ===--
 
 Bool	_bIsOpen
+Bool	_bWantOpen
 Bool	_bIsGlowing
+Bool	_bWantGlowing
 Bool	_bFlipPages
 
 String 	_sCharacterName
@@ -117,6 +123,8 @@ Event OnLoad()
 	If !_BookShine
 		_BookShine = GetLinkedRef(vMYC_ShrineLight)
 	EndIf
+	IsOpen = _bWantOpen
+	IsGlowing = _bWantGlowing
 EndEvent
 
 Event OnActivate(ObjectReference akTriggerRef)
@@ -190,6 +198,8 @@ Event OnActivate(ObjectReference akTriggerRef)
 EndEvent
 
 Event OnCellAttach()
+	IsOpen = _bWantOpen
+	IsGlowing = _bWantGlowing
 EndEvent
 
 Event OnAttachedToCell()
