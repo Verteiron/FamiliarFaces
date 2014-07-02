@@ -356,12 +356,12 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepBegin")
 	CheckVars()
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
-	SetNonpersistent()
 	If _iCharGenVersion == 2
 		_bNeedRefresh = True
 	ElseIf _iCharGenVersion == 3
 		RefreshMeshNewCG()
 	EndIf
+	SetNonpersistent()
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
 	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
