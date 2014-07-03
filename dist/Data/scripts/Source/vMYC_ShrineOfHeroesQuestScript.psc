@@ -96,8 +96,10 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	If !AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex]
 		AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = sender as vMYC_ShrineAlcoveController
 	EndIf
-	AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = strArg as Int
-	SyncShrineData()
+	If AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] != strArg as Int
+		AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = strArg as Int
+		SyncShrineData()
+	EndIf
 EndEvent
 
 Event OnShrineNeedsUpdate(string eventName, string strArg, float numArg, Form sender)
@@ -117,6 +119,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvent("vMYC_AlcovestatusUpdate","OnAlcovestatusUpdate")
 	RegisterForModEvent("vMYC_ShrineNeedsUpdate","OnShrineNeedsUpdate")
+	Bool bUpdateNames = SyncShrineData()
 	Int i = AlcoveControllers.Length
 	While i > 0
 		i -= 1
@@ -124,7 +127,7 @@ Function DoUpkeep(Bool bInBackground = True)
 			AlcoveControllers[i].DoUpkeep()
 		EndIf
 	EndWhile
-	If SyncShrineData()
+	If bUpdateNames
 		UpdateShrineNames()
 	EndIf
 	StartPortalStoneQuestIfNeeded()
@@ -256,10 +259,34 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 			;Debug.Trace("MYC/Shrine: Data is already synced. Sunc?")
 		EndIf
 	ElseIf JValue.hasPath(_jMYC,".ShrineOfHeroes")
-		Debug.Trace("MYC/Shrine: No saved data, but found data in _jMYC!",1)
-		_jShrineData = JValue.solveObj(_jMYC,".ShrineOfHeroes")
+		If GetState() == "SyncLocked"
+			Return False
+		EndIf
+		GotoState("SyncLocked")
+		Debug.Trace("MYC/Shrine: No saved data, but found data in _jMYC! This means the file was deleted, so we'll blank out the shrine.",1)
+		Int iShrineDataSerial = ShrineDataSerial
+		Int i = 0
+		Int iCount = AlcoveControllers.Length
+		While i < iCount
+			Debug.Trace("MYC/Shrine: Resetting alcove " + i,1)
+			AlcoveControllers[i].ResetAlcove()
+			SetAlcoveInt(i,"State",0)
+			SetAlcoveStr(i,"CharacterName","")
+			i += 1
+		EndWhile
+		ShrineDataSerial = iShrineDataSerial + 1
+		JMap.setInt(_jShrineData,"DataSerial",ShrineDataSerial)
 		JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
+		GotoState("")
+		i = 0
+		While i < iCount
+			Debug.Trace("MYC/Shrine: Activating alcove " + i,1)
+			AlcoveControllers[i].ActivateAlcove()
+			i += 1
+		EndWhile
 		iSavedDataSerial = ShrineDataSerial
+		JValue.WriteToFile(_jMYC,"Data/vMYC/_jMYC_postreset.json")
+		Return False
 	EndIf
 	If abRewriteFile
 		TickDataSerial()
@@ -340,7 +367,7 @@ Function InitShrineData()
 		(Alcoves[i].GetReference() as vMYC_ShrineAlcoveController).AlcoveIndex = i
 		i += 1
 	EndWhile
-	SetAlcoveCharacterNames()
+	;SetAlcoveCharacterNames()
 EndFunction
 
 Function SetAlcoveCharacterNames()
@@ -437,3 +464,11 @@ EndFunction
 Int Function GetAlcoveObj(Int aiAlcoveIndex, String asPath)
 	Return JValue.solveObj(_jShrineData,".Alcove" + aiAlcoveIndex + "." + asPath)
 EndFunction
+
+State SyncLocked
+
+	Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
+		Return False
+	EndFunction
+
+EndState

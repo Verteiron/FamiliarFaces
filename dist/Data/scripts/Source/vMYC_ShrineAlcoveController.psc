@@ -701,7 +701,7 @@ Function DoSaveAnimation()
 
 	;Save the player
 	_Book.FlipPages = True
-	CharacterManager.SaveCurrentPlayer(bForceSave = _bForceSave)
+	CharacterManager.SaveCurrentPlayer(bForceSave = True)
 	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
 		Wait(0.5)
 	EndWhile
@@ -975,6 +975,26 @@ Function BanishCharacter()
 EndFunction
 
 ;==== Utility functions ====----
+
+Function ResetAlcove()
+	If _kCharacter && !_kCharacter.IsAIEnabled()
+		_kCharacter.MoveToMyEditorLocation()
+		_kCharacter.DisableNoWait()
+	EndIf
+
+	_bCharacterSummoned = False
+	_kCharacter = None
+	CharacterName = ""
+
+	HideTrophies()
+	_Book.IsOpen = False
+	_Book.IsGlowing = False
+	_Book.FlipPages = False
+
+	AlcoveLightState = 0
+	AlcoveStatueState = 0
+	AlcoveState = 0	
+EndFunction
 
 Function UpdateAlcove()
 	;GotoState("Inactive")
