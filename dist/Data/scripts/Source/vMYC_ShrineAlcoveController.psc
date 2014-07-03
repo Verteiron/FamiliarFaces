@@ -550,7 +550,8 @@ Function DeactivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 	EndIf
 	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
 	If _kCharacter && !_bCharacterSummoned ; make sure we don't yank the character back if they're summoned
-		_kCharacter.MoveToMyEditorLocation()
+		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
+		_kCharacter.MoveTo(kNowhere)
 	EndIf
 	AlcoveState = 1
 	If abAutoLights
@@ -978,8 +979,8 @@ EndFunction
 
 Function ResetAlcove()
 	If _kCharacter && !_kCharacter.IsAIEnabled()
-		_kCharacter.MoveToMyEditorLocation()
-		_kCharacter.DisableNoWait()
+		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
+		_kCharacter.MoveTo(kNowhere)
 	EndIf
 
 	_bCharacterSummoned = False
