@@ -370,25 +370,6 @@ Function InitShrineData()
 	;SetAlcoveCharacterNames()
 EndFunction
 
-Function SetAlcoveCharacterNames()
-	String[] sCharacterNames = CharacterManager.CharacterNames
-	Int i = 0
-	Int iCount = Alcoves.Length
-	If iCount > sCharacterNames.Length
-		iCount = sCharacterNames.Length
-	EndIf
-	While i < iCount
-		SetAlcoveStr(i,"CharacterName",sCharacterNames[i])
-		;Debug.Trace("MYC/Shrine: kAlcove " + i + " is " + GetAlcoveForm(i,"Controller"))
-		vMYC_ShrineAlcoveController kAlcove = GetAlcoveForm(i,"Controller") as vMYC_ShrineAlcoveController
-		If kAlcove.CharacterName != sCharacterNames[i]
-			kAlcove.CharacterName = sCharacterNames[i]
-			kAlcove.ActivateAlcove()
-		EndIf
-		i += 1
-	EndWhile
-EndFunction
-
 Function UpdateAlcoveControllers()
 	Int jAlcoveRefs = JMap.getObj(_jShrineData,"AlcoveForms")
 	Int iCount = Alcoves.Length
