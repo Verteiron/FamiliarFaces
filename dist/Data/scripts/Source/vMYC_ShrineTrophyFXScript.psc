@@ -46,9 +46,9 @@ EndEvent
 Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
-	If iRequestingIndex != AlcoveIndex
+	If iRequestingIndex != AlcoveIndex && strArg == "Request"
 		HideTrophies()
-		Wait(5)
+	ElseIf iRequestingIndex != AlcoveIndex && strArg == "Release"
 		ShowTrophies(False)
 	EndIf
 EndEvent
@@ -84,6 +84,7 @@ Event OnUnload()
 	If _bCellAttached
 		HideTrophies()
 	EndIf
+	UnRegisterForModEvent("vMYC_AlcoveLightingPriority")
 EndEvent
 
 Function HideTrophies()
