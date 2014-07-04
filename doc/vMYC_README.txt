@@ -1,16 +1,25 @@
-Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the [i]only[/i] way to do it!
+[img]http://i.imgur.com/qSeywkt.png[/img]
 
+[center]Special thanks to Brodual for getting this video done on a short deadline!
 
-[b][size=5]1.0.1 update available![/size][/b]
+[youtube]5nE6BEAPG4A[/youtube]
+[/center]
+
+[b][size=4]1.0.3[/size][/b]
 [LIST]
-[*]Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is [i]very[/i] slow to load or you don't have the right version of RaceMenu/Chargen.dll installed.[/*]
-[*]Fixed "Character Tracking" option not working in MCM.[/*]
-[*]Fixed VoiceTypes being reset after a save/load.[/*]
-[*]Removed a ton of debug messages that were spamming the Papyrus file.[/*]
-[*]Fixed a potential (but unlikely) CTD that could occur while applying perks or shouts.[/*]
+[*]Character items, armor, and weapons will now be updated properly if their Shrine save is updated. This may cause them to flicker when loaded but should be fine otherwise. Items you have given your imported characters should remain with them unchanged.[/*]
+[*]Fix for getting stuck floating in the air while saving.[/*]
+[*]Destroying the Tome now actually frees up the Shrine. If you delete the last character in the Alcove, the Tome will still be named after them, but you can still use it.[/*]
+[*]Related to the previous, fixed every Tome saying "You've already written down your story."[/*]
+[*]Gracefully handle deletion of the the _shrineofheroes.json file. If your Shrine has become unusable, deleting the data file will cause it to be completely emptied without deleting your character data. You can then use MCM to refill it without having to re-save everybody manually.[/*]
+[*]Fixed a bug where the Portal Stone would strand you in the Shrine forever if used there.[/*]
+[*]Thanks to an update to RaceMenu (2.8.2), Vampire characters should now be saved without a gray face, though you'll need to update their Tome to fix their appearance.[/*]
+[*]Fixed trophies remaining in the shrine after character removal.[/*]
 [/LIST]
 
- 
+
+Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the [i]only[/i] way to do it!
+
 [b][size=5]What Familiar Faces does[/size][/b]
  
 Familiar Faces allows you to create persistent copies of your character that exist independently of saved games. You can then visit those characters from any of your saved games; send them into the world to interact with, recruit as followers, marry or kill.
@@ -67,17 +76,20 @@ This list is not exhaustive. Generally, if a mod doesn't affect a character's lo
 [*]Sound effect overhauls, visual overhauls.[/*]
 [*]Mods that add weapons and armor, including craftable ones. The mod must remain installed for the imported items to appear; if it is removed, the items it provides will be removed as usual and ignored by Familiar Faces.[/*]
 [*]Body replacer mods such CBBE are fine, as long as they are compatible with RaceMenu.[/*]
+[*][color=red]NEW[/color]: [url=http://www.nexusmods.com/skyrim/mods/52019/?]Follower Commentary Overhaul[/url], as long as you assign your follower a Follower voicetype via MCM. Thanks to aetherious for testing this for me![/*]
 [/LIST]
 [b]Works with caveats[/b]
 [LIST]
 [*]Perks provided by overhaul mods such as SkyRE should be imported with all attributes intact, but may not function as originally intended. Familiar Faces has not been tested with SkyRE.[/*]
 [*]Face replacer mods should work as long as they are compatible with RaceMenu and they don't rely on ECE, but characters will probably not load properly if the face-altering mod is removed. Horrific monstrosities may result.[/*]
 [*]AFT seems to be causing problems for some people when it comes to selecting VoiceTypes for characters, as well as setting up spell lists.[/*]
+[*]HDT body mods [i]should[/i] work but have not been tested.[/*]
+[*][color=red]NEW[/color]: Custom races work if and ONLY if they share the same skeleton as the vanilla playable races. This may be fixable, or it may not be. If you use or are the author of a popular custom race mod, PM me or create an issue over on the [url=https://github.com/Verteiron/FamiliarFaces/issues]Github[/url] page to let me know if your race is not working properly.[/*]
 [/LIST]
 [b]Known to NOT work[/b]
 [LIST]
 [*]Enhanced Character Edit (ECE) is **NOT** compatible with Familiar Faces and likely won't be any time in the near future. I have contacted the author about adding compatibility functions to ECE, but thus far they are unwilling or unable to do so. The way the mod is written currently, I have no way to apply ECE information to an NPC.[/*]
-[*]HDT physics mods almost certainly will not work properly. See [url=https://code.google.com/p/hdt-pe/issues/detail?id=2]this page[/url] for more information. HDT body mods [i]may[/i] work but have not been tested. HDT hair definitely does not work.[/*]
+[*]HDT physics hair does not work. See [url=https://code.google.com/p/hdt-pe/issues/detail?id=2]this page[/url] for more information. HDT body mods [i]should[/i] work but have not been tested.[/*]
 [/LIST]
  
 [size=5][b]Installation[/b][/size]
@@ -100,10 +112,12 @@ If you used NMM to install, uninstallation will work but may leave files behind 
 Search for and remove ALL files and folders in Skyrim/Data that begin with "vMYC". The only other files remaining after that will be ffutils.*, which can also be searched for and removed.
 
 [size=5][b]Getting started[/b][/size]
+
+[color=red]WARNING! Do not use the portal stone while you are inside the shrine! You'll end up stuck there and unable to return to your previous location! If you've already done this, use [i]cow tamriel 2 0[/i] at the console to return to Tamriel. This will be fixed in a patch release in the very near future![/color]
  
 Shortly after starting or loading a game, you should receive a Portal Stone in your inventory. You can use that stone from your Inventory (under misc items, where you find your dragon bones and other miscellaneous stuff) to warp to the Shrine of Heroes. Activate the "Tome of the Dragonborn" in front of an empty alcove to save your character there. The save process will take some time; exactly how long depends on how many skills, perks, and inventory items your character has. It should never take longer than a minute of real time and should rarely take longer than 30 seconds unless you have a huge number of inventory items.
 
-Once your character has been saved in an alcove, a statue of them will appear, possibly surrounded by various trophies and banners. These reflect your progress and which paths you chose in your adventures through Skyrim.
+Once your character has been saved in an alcove, a statue of them will appear, possibly surrounded by various trophies and banners. These reflect your progress and which paths you chose in your adventures through Skyrim. An index of the available trophies can be found [url=http://imgur.com/a/iCqYZ]here[/url].
 
 [size=5][b]Meeting your character[/b][/size]
  
@@ -145,18 +159,96 @@ The following are not bugs (or are unavoidable) and should not be reported:
 
 [b][size=5]FAQ[/size][/b]
 [LIST]
-[*][b]Q: I'm getting a warning about SKSE/JContainers/CharGen![/b]
-[b]A: [/b]You're missing some dependencies. See the requirements list up above and make sure you have the newest versions of each one installed. You can also try using the "plus Deps" version on the download page, but this is intended ONLY for people who are not already using RaceMenu. To keep everything running smoothly, install all the required mods separately.
+[*][b]Q: I'm getting a warning about SKSE/JContainers/CharGen![/b] [/*]
+[*][b]A: [/b]You're missing some dependencies. See the requirements list up above and make sure you have the newest versions of each one installed. You can also try using the "plus Deps" version on the download page, but this is intended ONLY for people who are not already using RaceMenu. To keep everything running smoothly, install all the required mods separately.[/*]
+[/LIST]
+[LIST]
+[*][b]Q: SKSE 1.7 is labeled Alpha, is it safe? Is it compatible with my other mods? Why is it required? [/b][/*]
+[*]A: Yes. This mod was developed entirely using 1.7, and uses a huge amount of SKSE calls. SKSE 1.7 is already very widely adopted and heavily used. It is entirely backward-compatible with 1.6: If you have mods that require 1.6, they will work with 1.7.  As for why, the simplest answer is that it provides the features that make Familiar Faces possible. Without 1.7 this mod would not exist.
  [/*]
-[*]Q: SKSE 1.7 is labeled Alpha, is it safe? Is it compatible with my other mods? Why is it required?
-A: Yes. This mod was developed entirely using 1.7, and uses a huge amount of SKSE calls. SKSE 1.7 is already very widely adopted and heavily used. It is entirely backward-compatible with 1.6: If you have mods that require 1.6, they will work with 1.7.  As for why, the simplest answer is that it provides the features that make Familiar Faces possible. Without 1.7 this mod would not exist.
+[/LIST]
+[LIST]
+[*][b]Q: Why isn't the stone appearing in my inventory? [/b][/*]
+[*]A: Either the mod isn't installed properly or your scripting engine is incredibly bogged down by other mods. Install the USKP, put the ClearInvalidRegistrations line in SKSE.ini, try starting a from a clean save or even a new game and see what happens.
  [/*]
-[*]Q: Why isn't the stone appearing in my inventory?
-A: Either the mod isn't installed properly or your scripting engine is incredibly bogged down by other mods. Install the USKP, put the ClearInvalidRegistrations line in SKSE.ini, try starting a from a clean save or even a new game and see what happens.
+[/LIST]
+[LIST]
+[*][b]Q: Everything seems to be working but my characters aren't getting saved! [/b][/*]
+[*]A: Make sure the Data/vMYC folder got created during the installation and that you have permission to write to it. 
  [/*]
-[*]Q: Everything seems to be working but my characters aren't getting saved!
-A: Make sure the Data/vMYC folder got created during the installation and that you have permission to write to it.
+[/LIST]
+[LIST]
+[*][b]Q: The save animation never finishes/alcove stays lit forever![/b][/*]
+[*]A: Check the above question for some first steps. There are a few reasons this could be happening, but the most likely culprit is a bogged-down script engine from other badly-behaved mods. Try enabling the ClearInvalidRegistrations feature of SKSE, or start from your clean save and see if it works there. If these don't work, send me your Papyrus log (you can use Pastebin and PM me the link) and I'll see what I can figure out for you. This could also happen if you have thousands and thousands of inventory items and spend all your time in god mode, in which case if you wait long enough, it should finish, but it shouldn't take more than a couple of minutes.
  [/*]
-[*]Q: My game crashed and I'm pretty sure this mod is the culprit!
-A: Sorry to hear that. Crashes were a problem early on but have not been reported by any testers in the versions leading up to public release. Get me the Papyrus log and the details surrounding the crash and I'll check it out.[/*]
+[/LIST]
+[LIST]
+[*][b]Q: I'm stuck in the Shrine with collision disabled![/b][/*]
+[*]A: See the previous answer. Basically your scripting engine is too bogged down to function properly. If nothing else works, you can try adding the following lines to your Skyrim.ini in the Papyrus section:
+[code]fUpdateBudgetMS=800
+fExtraTaskletBudgetMS=800
+fPostLoadUpdateTimeMS=2000[/code]
+Note that this basically papering over the problem rather than actually fixing it, but it may allow you to continue using your current save until you can fix it for good.
+ [/*]
+[/LIST]
+[LIST]
+[*][b]Q: My game crashed and I'm pretty sure this mod is the culprit! [/b][/*]
+[*]A: Sorry to hear that. Crashes were a problem early on but have not been reported by any testers in the versions leading up to public release. The only remaining one I am aware of is a very rare crash when first entering the Shrine which is caused by the Sovngarde portal mesh. Get me the Papyrus log and the details surrounding the crash and I'll check it out.[/*]
+[/LIST]
+[LIST]
+[*][b]Q: Can I get my character files out and send them to people?[/b][/*]
+[*]A: You can! The character file will be named after your character and be located in Skyrim/Data/vMYC. You will also need the RaceMenu slot file, located in Skyrim/Data/SKSE/Plugins/Chargen/Exported, and the texture, located in Skyrim/Data/Textures/CharGen/Exported. Copy these three files to another system in the same location, and your character will become available for selection in the Shrine of Heroes MCM page, as well importable by RaceMenu[/*]
+[/LIST]
+[LIST]
+[*][b]Q: What is this trophy/banner/symbol in my character's alcove?[/b] [/*]
+[*][b]A: [/b]An index of the available trophies can be found [url=http://imgur.com/a/iCqYZ#20]here[/url].[/*]
+[/LIST]
+[LIST]
+[*][b]Q: I'm getting a warning about SKSE/JContainers/CharGen![/b] [/*]
+[*][b]A: [/b]You're missing some dependencies. See the requirements list up above and make sure you have the newest versions of each one installed.[/*]
+[/LIST]
+
+
+[b][size=5]Special thanks to...[/size][/b]
+[LIST]
+[*][b]Syrcaid[/b] - My wifey, both for providing a decent name for this mod and putting up with being a mod widow. Also for the neat face graphic used in the logo.[/*]
+[*][b][url=http://www.nexusmods.com/skyrim/users/2950481/?tb=mods&pUp=1]Expired[/url][/b] - Without whom this mod would not have been even remotely possible. You need to go and download/endorse ALL his mods.[/*]
+[*][b]SilverIce[/b] - For the incredible JContainers plugin, which provides a powerful and much-needed data storage mechanism to Papyrus.[/*]
+[*][b]Brodual[/b] - For getting a video out in an impossibly short time.[/*]
+[*][b]Gopher[/b] - For a very positive [url=http://www.twitch.tv/gophergaming/b/542971665]Twitch review[/url] that got me a lot of new downloaders.[/*]
+[/LIST]
+
+[b][size=5]Testers[/size][/b]
+For making sure the mod actually ran on computers other than my own.
+[LIST]
+[*][b]Cad'ika Orade[/b] - Also the catalyst for the mod's creation[/*]
+[*][b]BLourenco[/b][/*]
+[*][b]aetherious[/b][/*]
+[*][b]BerenOneHanded[/b][/*]
+[*][b]Cryptoss[/b][/*]
+[*][b]Terrorfox1234[/b][/*]
+[*][b]DaveC[/b][/*]
+[*][b]Terrorfox1234[/b][/*]
+[/LIST]
+
+
+[b][size=5]Older changelog[/size][/b]
+[b][size=4]1.0.2[/size][/b]
+[LIST]
+[*][color=red]Required for compatibility with [url=http://www.nexusmods.com/skyrim/mods/29624/?]RaceMenu[/url] 2.8.1.[/color][/*]
+[*]GREATLY improved character appearance loading. Characters now load faster, more reliably, and flicker-free thanks to a change in the CharGen.dll plugin. No more ElderRace followers! [b]RaceMenu 2.8.1 is required for this new system to take effect.[/b] Familiar Faces 1.0.2 is backward compatible with RM 2.8.0 but it is recommended that you upgrade to take advantage of the new system.[/*] [b]After upgrading RaceMenu, it may be necessary to re-save Khajiit and Argonian characters in the Shrine to avoid a distorted appearance.[/b] Or it may not, results seem to be mixed.
+[*]Support for weapons with up to 8 enchantment effects (where are you people GETTING these?)[/*]
+[*]EFF compatibility moved to a quest to prevent issues with having the module attached to actors when EFF is installed and removed.[/*]
+[*]Additional checks on some translations in the Shrine that could cause a CTD in rare circumstances.[/*]
+[*]Fix for MCM Character Tracking box still not responding properly.[/*]
+[/LIST]
+
+[b][size=4]1.0.1[/size][/b]
+[LIST]
+[*][color=red]Expired has updated [url=http://www.nexusmods.com/skyrim/mods/29624/?]RaceMenu[/url] to version 2.8.0. It is [b]very strongly recommended[/b] that you upgrade to 2.8.0 ASAP to ensure compatibility with Familiar Faces.[/color][/*]
+[*]Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is [i]very[/i] slow to load or you don't have the right version of RaceMenu/Chargen.dll installed.[/*]
+[*]Fixed "Character Tracking" option not working in MCM.[/*]
+[*]Fixed VoiceTypes being reset after a save/load.[/*]
+[*]Removed a ton of debug messages that were spamming the Papyrus file.[/*]
+[*]Fixed a potential (but unlikely) CTD that could occur while applying perks or shouts.[/*]
 [/LIST]
