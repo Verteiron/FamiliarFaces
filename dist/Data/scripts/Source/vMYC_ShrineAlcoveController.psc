@@ -342,11 +342,11 @@ Event OnAlcoveValidateState(string eventName, string strArg, float numArg, Form 
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnAlcoveValidateState!")
 	If AlcoveLightState == 1 && !_bPlayerIsSaving
 		If AlcoveState == 0
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 0!")
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 0!")
 			AlcoveLightState = 0
 			HideTrophies()
 		ElseIf AlcoveState == 2 || AlcoveState == 3
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 2!")
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 2!")
 			AlcoveLightState = 2
 			ShowTrophies()
 		EndIf
@@ -365,7 +365,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 	If !Is3DLoaded()
 		bUseTranslation = False
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Setting light state to " + numArg as Int + ", current state is " + _iAlcoveLightState)
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Setting light state to " + numArg as Int + ", current state is " + _iAlcoveLightState)
 	Int iOldLightState = _iAlcoveLightState
 	Int iLightState = numArg as Int
 	_LightAmbientTarget	= _Light.GetLinkedRef()
@@ -436,7 +436,7 @@ Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Fo
 		OnAlcoveLightStateChange(eventName, strArg, numArg, sender)
 	EndIf
 	_iAlcoveLightState = iLightState ; Set internal property value
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Set light state to " + _iAlcoveLightState + "!")
 	RegisterForModEvent("vMYC_AlcoveLightStateComplete","OnAlcoveLightStateComplete")
 	SendModEvent("vMYC_AlcoveLightStateComplete","",_iAlcoveLightState)
 EndEvent
@@ -492,7 +492,7 @@ Function ActivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 		HideTrophies()
 		Return
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Activating. Auto lights:" + abAutoLights)
 	If abAutoLights
 		AlcoveLightState = 1
 	EndIf
@@ -548,7 +548,7 @@ Function DeactivateAlcove(Bool abAutoLights = True, Bool abBackground = True)
 		SendModEvent("vMYC_AlcoveBackground","Deactivate",abAutoLights as Int)
 		Return
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Deactivating. Auto lights:" + abAutoLights)
 	If _kCharacter && !_bCharacterSummoned ; make sure we don't yank the character back if they're summoned
 		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
 		_kCharacter.MoveTo(kNowhere)
@@ -917,7 +917,7 @@ Function SummonCharacter()
 		sCellName = _kCharacter.GetParentCell().GetName()
 	EndIf
 	If sCellName == "vMYC_Staging"
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
 		ObjectReference kMarkerObject = CharacterManager.CustomMapMarkers[CharacterManager.GetLocalInt(CharacterName, "HangoutIndex")]
 		_kCharacter.MoveTo(kMarkerObject)
 	EndIf

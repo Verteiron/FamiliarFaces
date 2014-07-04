@@ -159,7 +159,7 @@ Event OnUpdate()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
 	If !CharacterManager.GetLocalInt(CharacterName,"InAlcove") && !IsAIEnabled()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) AI disabled while InAlcove is false, enabling AI!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) AI disabled while InAlcove is false, enabling AI!")
 		EnableAI(True)
 	EndIf
 	RegisterForSingleUpdate(5.0)
@@ -175,7 +175,7 @@ Event OnActivate(ObjectReference akActionRef)
 	EndIf
 	If !_bWarnedVoiceTypeNoFollower
 		If GetFactionRank(CurrentFollowerFaction) == -1 && CharacterManager.vMYC_VoiceTypesFollowerList.Find(kVoiceType) == -1
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning player about missing Follower VoiceType!")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning player about missing Follower VoiceType!")
 			Message.ResetHelpMessage("VoiceTypeNoFollower")
 			vMYC_VoiceTypeNoFollower.ShowAsHelpMessage("VoiceTypeNoFollower",8,240,1)
 			_bWarnedVoiceTypeNoFollower = True
@@ -185,7 +185,7 @@ Event OnActivate(ObjectReference akActionRef)
 		If GetFactionRank(PotentialMarriageFaction) > -2 && CharacterManager.vMYC_VoiceTypesSpouseList.Find(kVoiceType) == -1
 			Armor kAmuletOfMara = GetFormFromFile(0x000C891B,"Skyrim.esm") as Armor
 			If PlayerREF.IsEquipped(kAmuletOfMara)
-				Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning player about missing Spouse VoiceType!")
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning player about missing Spouse VoiceType!")
 				Message.ResetHelpMessage("VoiceTypeNoSpouse")
 				vMYC_VoiceTypeNoSpouse.ShowAsHelpMessage("VoiceTypeNoSpouse",8,240,1)
 				_bWarnedVoiceTypeNoSpouse = True
@@ -285,7 +285,7 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 		EndIf
 	EndWhile
 	If iAdded || iRemoved
-		Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
 EndEvent
 
@@ -380,7 +380,7 @@ EndFunction
 
 Function SyncCharacterData()
 	If CharacterManager.GetLocalFlt(CharacterName,"PlayTime") != CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime")
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Our source data has changed!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Our source data has changed!")
 		;RemoveAllItems(PlayerREF)
 		Int iResult
 		CharacterManager.SetLocalFlt(CharacterName,"PlayTime",CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime"))
@@ -516,16 +516,16 @@ EndFunction
 
 Function RefreshMeshNewCG()
 	GotoState("Busy")
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen(3) data for " + CharacterName + ". Race is " + CharacterRace)
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen(3) data for " + CharacterName + ". Race is " + CharacterRace)
 	While vMYC_CharGenLoading.GetValue()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for LoadCharacter to become available...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Waiting for LoadCharacter to become available...")
 		Wait(0.5)
 	EndWhile
 	;vMYC_CharGenLoading.Mod(1)
 ;	Race kDummyRace = GetFormFromFile(0x00067CD8,"Skyrim.esm") as Race ; ElderRace
 ;	SetRace(kDummyRace)
 ;	Wait(5)
-;	Debug.Trace("MYC: (" + CharacterName + "/Actor) regeneratehead")
+;	;Debug.Trace("MYC: (" + CharacterName + "/Actor) regeneratehead")
 ;	RegenerateHead()
 ;	Wait(5)
 	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
@@ -540,23 +540,23 @@ Function RefreshMeshNewCG()
 		Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
 		Int iSafetyTimer = 30
 		While !bLCSuccess && iSafetyTimer > 0
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
 			iSafetyTimer -= 1
 			Wait(RandomFloat(0.5,2))
 			bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
 		EndWhile
 		If bLCSuccess 
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded with " + iSafetyTimer + "tries remaining!")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded with " + iSafetyTimer + "tries remaining!")
 		EndIf
 	Else
 		Debug.MessageBox("Familiar Faces\nThe slot file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, appearance data cannot be loaded for " + CharacterName)
 	EndIf
 	SetNameIfNeeded()
 ;	Wait(5)
-;	Debug.Trace("MYC: (" + CharacterName + "/Actor) regeneratehead")
+;	;Debug.Trace("MYC: (" + CharacterName + "/Actor) regeneratehead")
 ;	RegenerateHead()
 ;	Wait(5)
-;	Debug.Trace("MYC: (" + CharacterName + "/Actor) queueninodeupdate")
+;	;Debug.Trace("MYC: (" + CharacterName + "/Actor) queueninodeupdate")
 ;	QueueNiNodeUpdate()
 	_kActorBase.SetInvulnerable(False)
 	;vMYC_CharGenLoading.Mod(-1)
@@ -571,7 +571,7 @@ Function RefreshMesh()
 
 	_kActorBase.SetInvulnerable(True)
 
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen(2) data for " + CharacterName + ". Race is " + CharacterRace)
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) is loading CharGen(2) data for " + CharacterName + ". Race is " + CharacterRace)
 
 	Int iMyTurn = vMYC_CharGenLoading.GetValue() as Int
 	vMYC_CharGenLoading.Mod(1)
@@ -636,7 +636,7 @@ Function RefreshMesh()
 	EndWhile
 
 	If bSuccess
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) loaded successfully!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) loaded successfully!")
 	Else
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) FAILED! :(",1)
 	EndIf

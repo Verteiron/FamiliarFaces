@@ -162,9 +162,9 @@ Function UpdateShrineNames()
 		i += 1
 	EndWhile
 
-	Debug.Trace("MYC/Shrine: Alcoves changing: " + iAlcoveChangeCount)
+	;Debug.Trace("MYC/Shrine: Alcoves changing: " + iAlcoveChangeCount)
 
-	Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")
+	;Debug.Trace("MYC/Shrine: Waiting for changed alcoves to empty...")
 	Int iAlcoveStateSum = 100
 	Int iSafetyTimer = 10
 	While iAlcoveStateSum && iSafetyTimer
@@ -181,7 +181,7 @@ Function UpdateShrineNames()
 			EndIf
 			i += 1
 		EndWhile
-		Debug.Trace("MYC/Shrine: iAlcoveStateSum: " + iAlcoveStateSum)
+		;Debug.Trace("MYC/Shrine: iAlcoveStateSum: " + iAlcoveStateSum)
 	EndWhile
 
 	i = 0
@@ -191,7 +191,7 @@ Function UpdateShrineNames()
 		;Debug.Trace("MYC/Shrine: Alcove" + i + ".Controller is " + JValue.solveForm(_jShrineData,".Alcove" + i + ".Controller") + "!")
 		vMYC_ShrineAlcoveController kAlcove = JArray.getForm(jShrineArray,i) as vMYC_ShrineAlcoveController
 		If sCharacterName != kAlcove.CharacterName
-			Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from alcove) is " + kAlcove.CharacterName + " and should be " + sCharacterName + "!")
+			;Debug.Trace("MYC/Shrine: Alcove" + i + " CharacterName (from alcove) is " + kAlcove.CharacterName + " and should be " + sCharacterName + "!")
 			If kAlcove.CharacterName && !sCharacterName
 				kAlcove.CharacterName = sCharacterName
 				kAlcove.AlcoveLightState = 0
@@ -238,7 +238,7 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 		If JMap.hasKey(jSavedShrineData,"DataSerial")
 			iSavedDataSerial = JMap.getInt(jSavedShrineData,"DataSerial")
 		Else
-			Debug.Trace("MYC/Shrine: Shrine data is from an older version, forcing an update...")
+			;Debug.Trace("MYC/Shrine: Shrine data is from an older version, forcing an update...")
 			abForceLoadFile = True
 			abRewriteFile = True
 		EndIf
@@ -248,11 +248,11 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 			iSavedDataSerial = ShrineDataSerial + 1
 		EndIf
 		If iSavedDataSerial > ShrineDataSerial
-			Debug.Trace("MYC/Shrine: Our data is old, updating it to saved version!")
+			;Debug.Trace("MYC/Shrine: Our data is old, updating it to saved version!")
 			JMap.setObj(_jMYC,"ShrineOfHeroes",jSavedShrineData)
 			_jShrineData = JMap.getObj(_jMYC,"ShrineOfHeroes")
 		ElseIf iSavedDataSerial < ShrineDataSerial
-			Debug.Trace("MYC/Shrine: Our data is newer than the saved data, so we'll save it to the file.")
+			;Debug.Trace("MYC/Shrine: Our data is newer than the saved data, so we'll save it to the file.")
 			JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
 			iSavedDataSerial = ShrineDataSerial
 		Else
