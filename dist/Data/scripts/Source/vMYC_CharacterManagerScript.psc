@@ -657,7 +657,7 @@ Function LoadCharacterFiles()
 		If !GetLocalInt(sCharacterName,"FilePresent") && !GetLocalInt(sCharacterName,"ShowedMissingWarning")
 			SetLocalInt(sCharacterName,"ShowedMissingWarning",1)
 			;Debug.Trace("MYC: The saved data for " + sCharacterName + " is missing! :(")
-			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! You can use MCM to remove (or restore) " + sCharacterName + "'s data from this session.")
+			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
 		EndIf
 	EndWhile
 EndFunction
