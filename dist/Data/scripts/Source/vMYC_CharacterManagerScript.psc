@@ -1276,7 +1276,7 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 				Int iItemCount = kCharacterActor.GetItemCount(kItem)
 				If iItemCount
 					kCharacterActor.RemoveItem(kItem,iItemCount)
-					kCharacterActor.AddItem(kItem,iItemCount)
+					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				Else
 					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				EndIf
