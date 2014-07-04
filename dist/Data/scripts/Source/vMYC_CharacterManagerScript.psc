@@ -629,8 +629,15 @@ Function LoadCharacterFiles()
 			Else
 				;We're loading a file for a character we already have a record of.
 				Int jCharacterInfo = JMap.getObj(_jMYC,sCharacterName)
-				If JValue.solveFlt(jCharacterInfo,".Data._MYC.PlayTime") != JValue.solveFlt(jCharacterData,"._MYC.PlayTime")
-					;Debug.Trace("MYC: The saved data for " + sCharacterName + " HAS changed!")
+				Float fFilePlayTime = JValue.solveFlt(jCharacterData,"._MYC.PlayTime")
+				Float fLocalPlayTime = GetCharacterFlt(sCharacterName,"_MYC.PlayTime")
+				If !HasLocalKey(sCharacterName,"PlayTime") ; added to 1.0.3
+					SetLocalFlt(sCharacterName,"PlayTime",fLocalPlayTime)
+				EndIf
+				If fLocalPlayTime != fFilePlayTime
+					Debug.Trace("MYC: " + sCharacterName + "'s Local PlayTime is " + fLocalPlayTime + ", saved PlayTime is " + fFilePlayTime)
+					Debug.Trace("MYC: The saved data for " + sCharacterName + " HAS changed!")
+					;SetLocalFlt(sCharacterName,"PlayTime",fFilePlayTime)
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData)
 				Else
 					;Debug.Trace("MYC: The saved data for " + sCharacterName + " hasn't changed.")
@@ -650,7 +657,7 @@ Function LoadCharacterFiles()
 		If !GetLocalInt(sCharacterName,"FilePresent") && !GetLocalInt(sCharacterName,"ShowedMissingWarning")
 			SetLocalInt(sCharacterName,"ShowedMissingWarning",1)
 			;Debug.Trace("MYC: The saved data for " + sCharacterName + " is missing! :(")
-			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! You can use MCM to remove (or restore) " + sCharacterName + "'s data from this session.")
+			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
 		EndIf
 	EndWhile
 EndFunction
@@ -1051,6 +1058,139 @@ Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool 
 
 EndFunction
 
+Int Function ApplyCharacterWeapons(String sCharacterName)
+	Int i
+	Int iCount
+	While _bBusyEquipment
+		Wait(1.0)
+	EndWhile
+	_bBusyEquipment = True
+	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipped weapons...")
+	SetLocalInt(sCharacterName,"BowEquipped",0)
+	;SetLocalInt(sCharacterName,"SpellEquipped",0)
+
+	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
+	
+	Int jCustomItems = GetCharacterObj(sCharacterName,"InventoryCustomItems")
+	
+	i = JArray.Count(jCustomItems)
+	;Debug.Trace("MYC: (" + sCharacterName + ") has " + i + " items to be customized!")
+	While i > 0
+		i -= 1
+		Int jItem = JArray.GetObj(jCustomItems,i)
+		LoadWeapon(kCharacterActor,jItem,1,False)
+		iCount += 1
+	EndWhile
+
+	Int iHand = 1 ; start with right
+	While iHand >= 0
+		Bool bTwoHanded = False
+		String sHand = "Right"
+		If iHand == 0
+			sHand = "Left"
+		EndIf
+		Int jItem = GetCharacterObj(sCharacterName,"Equipment." + sHand)
+		LoadWeapon(kCharacterActor, jItem, iHand,False)
+		;If iHand == 1 ; Equip in proper hand and prevent removal
+			;kCharacterActor.UnEquipItem(kItem)
+			;kCharacterActor.EquipItemEx(kItem,1,True) ; Right
+		;ElseIf !bTwoHanded
+			;kCharacterActor.UnEquipItem(kItem)
+			;kCharacterActor.EquipItemEx(kItem,2,True) ; Left
+		;EndIf
+		iHand -= 1
+		iCount += 1
+		If bTwoHanded ; skip left hand
+			;Debug.Trace("MYC: (" + sCharacterName + ") two-handed weapon, so skipping further processing...")
+			iHand -= 1
+			iCount -= 1
+		EndIf
+	EndWhile
+	;Debug.Trace("MYC: (" + sCharacterName + ") Equipping power!")
+	;kCharacterActor.EquipItemEx(GetCharacterForm(sCharacterName,"Equipment.Voice"),0)
+	
+	_bBusyEquipment = False
+
+	If GetLocalInt(sCharacterName,"BowEquipped") == 0 && GetLocalForm(sCharacterName,"AmmoDefault")
+		kCharacterActor.UnEquipItem(GetLocalForm(sCharacterName,"AmmoDefault"))
+	EndIf
+	
+	Return iCount
+EndFunction
+
+Int Function ApplyCharacterArmor(String sCharacterName)
+	Int i
+	Int iCount
+	
+	While _bBusyEquipment
+		Wait(1.0)
+	EndWhile
+	_bBusyEquipment = True
+	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipment...")
+
+	Int jCharacterArmor = GetCharacterObj(sCharacterName,"Equipment.Armor")
+	Int jCharacterArmorInfo = GetCharacterObj(sCharacterName,"Equipment.ArmorInfo")
+
+	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
+	
+	i = JArray.Count(jCharacterArmorInfo)
+	While i > 0
+		i -= 1
+		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
+		Form kItem = JMap.GetForm(jArmor,"Form")
+		If kItem
+			If kCharacterActor.GetItemCount(kItem)
+				kCharacterActor.RemoveItem(kItem)
+			EndIf
+			kCharacterActor.AddItem(kItem)
+			kCharacterActor.EquipItemEx(kItem,0,True)
+			iCount += 1
+			Int h = (kItem as Armor).GetSlotMask()
+			;Debug.Trace("MYC: (" + sCharacterName + ") setting up " + kItem.GetName() + "...")
+			Enchantment kItemEnchantment = JMap.GetForm(jArmor,"Enchantment") as Enchantment
+			If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is enchanted!")
+				WornObject.SetEnchantment(kCharacterActor,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
+				;WornObject.SetItemCharge(
+			EndIf
+			If JMap.GetInt(jArmor,"IsCustom")
+				String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
+				WornObject.SetItemHealthPercent(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemHealthPercent"))
+				WornObject.SetItemMaxCharge(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemMaxCharge"))
+				If sDisplayName ; Will be blank if player hasn't renamed the item
+					WornObject.SetDisplayName(kCharacterActor,1,h,sDisplayName)
+				EndIf
+
+				Float[] fMagnitudes = New Float[8]
+				Int[] iDurations = New Int[8]
+				Int[] iAreas = New Int[8]
+				MagicEffect[] kMagicEffects = New MagicEffect[8]
+
+				If JValue.solveInt(jArmor,".Enchantment.IsCustom")
+					Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
+					;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
+					Int j = 0
+					Int jArmorEnchEffects = JValue.SolveObj(jArmor,".Enchantment.Effects")
+					While j < iNumEffects
+						Int jArmorEnchEffect = JArray.getObj(jArmorEnchEffects,j)
+						fMagnitudes[j] = JMap.GetFlt(jArmorEnchEffect,"Magnitude")
+						iDurations[j] = JMap.GetFlt(jArmorEnchEffect,"Duration") as Int
+						iAreas[j] = JMap.GetFlt(jArmorEnchEffect,"Area") as Int
+						kMagicEffects[j] = JMap.GetForm(jArmorEnchEffect,"MagicEffect") as MagicEffect
+						j += 1
+					EndWhile
+					WornObject.CreateEnchantment(kCharacterActor, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
+				EndIf
+			EndIf
+		EndIf
+	EndWhile
+
+	_bBusyEquipment = False
+	
+	Return iCount
+EndFunction
+
 Int Function ApplyCharacterPerks(String sCharacterName)
 {Apply perks to named character. Return -1 for failure, or number of perks applied for success.}
 	If _bApplyPerksBusy
@@ -1136,7 +1276,7 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 				Int iItemCount = kCharacterActor.GetItemCount(kItem)
 				If iItemCount
 					kCharacterActor.RemoveItem(kItem,iItemCount)
-					kCharacterActor.AddItem(kItem,iItemCount)
+					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				Else
 					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				EndIf
@@ -1279,65 +1419,9 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	;----Load and equip armor--------------
 
-	While _bBusyEquipment
-		Wait(1.0)
-	EndWhile
-	_bBusyEquipment = True
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipment...")
-
-	Int jCharacterArmor = JValue.solveObj(jCharacterData,".Equipment.Armor")
-	Int jCharacterArmorInfo = JValue.solveObj(jCharacterData,".Equipment.ArmorInfo")
-
-	i = JArray.Count(jCharacterArmorInfo)
-	While i > 0
-		i -= 1
-		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
-		Form kItem = JMap.GetForm(jArmor,"Form")
-		If kItem
-			PlayerDupe.AddItem(kItem)
-			PlayerDupe.EquipItemEx(kItem,0,True)
-			Int h = (kItem as Armor).GetSlotMask()
-			;Debug.Trace("MYC: (" + sCharacterName + ") setting up " + kItem.GetName() + "...")
-			Enchantment kItemEnchantment = JMap.GetForm(jArmor,"Enchantment") as Enchantment
-			If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is enchanted!")
-				WornObject.SetEnchantment(PlayerDupe,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
-				;WornObject.SetItemCharge(
-			EndIf
-			If JMap.GetInt(jArmor,"IsCustom")
-				String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
-				WornObject.SetItemHealthPercent(PlayerDupe,1,h,JMap.GetFlt(jArmor,"ItemHealthPercent"))
-				WornObject.SetItemMaxCharge(PlayerDupe,1,h,JMap.GetFlt(jArmor,"ItemMaxCharge"))
-				If sDisplayName ; Will be blank if player hasn't renamed the item
-					WornObject.SetDisplayName(PlayerDupe,1,h,sDisplayName)
-				EndIf
-
-				Float[] fMagnitudes = New Float[8]
-				Int[] iDurations = New Int[8]
-				Int[] iAreas = New Int[8]
-				MagicEffect[] kMagicEffects = New MagicEffect[8]
-
-				If JValue.solveInt(jArmor,".Enchantment.IsCustom")
-					Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
-					;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
-					Int j = 0
-					Int jArmorEnchEffects = JValue.SolveObj(jArmor,".Enchantment.Effects")
-					While j < iNumEffects
-						Int jArmorEnchEffect = JArray.getObj(jArmorEnchEffects,j)
-						fMagnitudes[j] = JMap.GetFlt(jArmorEnchEffect,"Magnitude")
-						iDurations[j] = JMap.GetFlt(jArmorEnchEffect,"Duration") as Int
-						iAreas[j] = JMap.GetFlt(jArmorEnchEffect,"Area") as Int
-						kMagicEffects[j] = JMap.GetForm(jArmorEnchEffect,"MagicEffect") as MagicEffect
-						j += 1
-					EndWhile
-					WornObject.CreateEnchantment(PlayerDupe, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
-				EndIf
-			EndIf
-		EndIf
-	EndWhile
-
-	_bBusyEquipment = False
+	Int iArmorCount = ApplyCharacterArmor(sCharacterName)
+	
+	
 	;----Populate inventory--------------
 
 	PopulateInventory(sCharacterName)
@@ -1365,53 +1449,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	Wait(1)
 
 	;----Load and equip weapons/hand gear--------------
-	While _bBusyEquipment
-		Wait(1.0)
-	EndWhile
-	_bBusyEquipment = True
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipped weapons...")
-	SetLocalInt(sCharacterName,"BowEquipped",0)
-	;SetLocalInt(sCharacterName,"SpellEquipped",0)
-
-	Int jCustomItems = JValue.solveObj(jCharacterData,".InventoryCustomItems")
-	i = JArray.Count(jCustomItems)
-	;Debug.Trace("MYC: (" + sCharacterName + ") has " + i + " items to be customized!")
-	While i > 0
-		i -= 1
-		Int jItem = JArray.GetObj(jCustomItems,i)
-		LoadWeapon(PlayerDupe,jItem,1,False)
-	EndWhile
-
-	Int iHand = 1 ; start with right
-	While iHand >= 0
-		Bool bTwoHanded = False
-		String sHand = "Right"
-		If iHand == 0
-			sHand = "Left"
-		EndIf
-		Int jItem = JValue.solveObj(jCharacterData,".Equipment." + sHand)
-		LoadWeapon(PlayerDupe, jItem, iHand,False)
-		;If iHand == 1 ; Equip in proper hand and prevent removal
-			;PlayerDupe.UnEquipItem(kItem)
-			;PlayerDupe.EquipItemEx(kItem,1,True) ; Right
-		;ElseIf !bTwoHanded
-			;PlayerDupe.UnEquipItem(kItem)
-			;PlayerDupe.EquipItemEx(kItem,2,True) ; Left
-		;EndIf
-		iHand -= 1
-		If bTwoHanded ; skip left hand
-			;Debug.Trace("MYC: (" + sCharacterName + ") two-handed weapon, so skipping further processing...")
-			iHand -= 1
-		EndIf
-	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Equipping power!")
-	PlayerDupe.EquipItemEx(JValue.solveForm(jCharacterData,".Equipment.Voice"),0)
-
-	_bBusyEquipment = False
-
-	If GetLocalInt(sCharacterName,"BowEquipped") == 0 && GetLocalForm(sCharacterName,"AmmoDefault")
-		PlayerDupe.UnEquipItem(GetLocalForm(sCharacterName,"AmmoDefault"))
-	EndIf
+	Int iWeaponCount = ApplyCharacterWeapons(sCharacterName)
 
 	SetLocalInt(sCharacterName,"Enabled", 1)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Enabling dummy...")
@@ -1439,6 +1477,9 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 		EndIf
 		;Debug.Trace("MYC: (" + sCharacterName + ") adding " + kItem.GetName() +"...")
 		If !(bTwoHanded && iHand == 0)
+			If kCharacterActor.GetItemCount(kItem)
+				kCharacterActor.RemoveItem(kItem)
+			EndIf
 			kCharacterActor.AddItem(kItem)
 		EndIf
 		;Wait(1)

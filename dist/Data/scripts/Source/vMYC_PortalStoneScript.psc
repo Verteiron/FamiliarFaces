@@ -52,7 +52,10 @@ EndEvent
 
 Event OnEquipped(Actor akActor)
 	;Debug.Trace("MYC/PortalStoneScript: PortalStone equipped by " + akActor)
-
+	If PlayerREF.GetParentCell() == vMYC_ShrineOfHeroes
+		Debug.Notification("You can't use that. You're already here.")
+		Return
+	EndIf
 	Int iEventHandle = ModEvent.Create("vMYC_SetCustomLocation")
 	If iEventHandle
 		ModEvent.PushForm(iEventHandle,Self)
