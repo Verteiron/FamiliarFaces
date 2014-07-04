@@ -340,7 +340,7 @@ EndEvent
 
 Event OnAlcoveValidateState(string eventName, string strArg, float numArg, Form sender)
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnAlcoveValidateState!")
-	If AlcoveLightState == 1 
+	If AlcoveLightState == 1 && !_bPlayerIsSaving
 		If AlcoveState == 0
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateState: Lighting state was 1, should be 0!")
 			AlcoveLightState = 0
@@ -1015,9 +1015,15 @@ Function EraseAlcove(Bool abAutoLights = True)
 	If abAutoLights
 		AlcoveLightState = 0
 	EndIf
-	String sCharacterName = CharacterName
+	HideTrophies()
+	If _kCharacter
+		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
+		_kCharacter.MoveTo(kNowhere)
+	EndIf
+	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
+	ShrineOfHeroes.SetAlcoveInt(AlcoveIndex,"State",0)
 	CharacterName = ""
-	_kCharacter.Delete()
+	_kCharacter = None
 	;Wait(0.1)
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 	AlcoveState = 0
