@@ -1200,14 +1200,20 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 	vMYC_Perklist.Revert()
 	Int jCharacterPerks = GetCharacterObj(sCharacterName,"Perks")
 	Int i = JArray.Count(jCharacterPerks)
+	Int iMissingCount = 0
 	While i > 0
 		i -= 1
 		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
+		If !kPerk
+			iMissingCount += 1
+		Else 
+			vMYC_PerkList.AddForm(kPerk)		
+		EndIf
+		;Debug.Trace("MYC: (" + sCharacterName + ") Perk is from " + JArray.getStr(jCharacterPerks,i))
 		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
-		vMYC_PerkList.AddForm(kPerk)
 	EndWhile
 	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
-	If vMYC_PerkList.GetSize() != JArray.Count(jCharacterPerks)
+	If vMYC_PerkList.GetSize() + iMissingCount != JArray.Count(jCharacterPerks)
 		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyPerksBusy = False
 		Return -1
@@ -1215,6 +1221,9 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 		;Debug.Trace("MYC: (" + sCharacterName + ") PerkList size is 0. Won't attempt to apply this.")
 		_bApplyPerksBusy = False
 		Return 0
+	EndIf
+	If iMissingCount
+		Debug.Trace("MYC: (" + sCharacterName + ") Perklist loaded with " + iMissingCount + " skipped, probably due to missing mods.",1)
 	EndIf
 	FFUtils.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
