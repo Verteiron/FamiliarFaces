@@ -2429,9 +2429,12 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		i += 1
 	EndWhile
 
-	If SKSE.GetPluginVersion("CharGen") > 0
-		CharGen.SaveCharacter(sPlayerName)
+	If CharGen.IsExternalEnabled()
+		 CharGen.SaveExternalCharacter(PlayerREF,sPlayerName) 
+	Else
+		 CharGen.SaveCharacter(sPlayerName) 
 	EndIf
+	
 
 	;Old head export function
 	;Debug.MessageBox("Chargen Version is " + SKSE.GetPluginVersion("CharGen"))
