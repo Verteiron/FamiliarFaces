@@ -534,16 +534,16 @@ Function RefreshMeshNewCG()
 	If !_bHasFileTexture
 		Debug.MessageBox("Familiar Faces\nThe texture file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, " + CharacterName + "'s face will lack the proper color.")
 	EndIf
-
+	
 	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
 	If _bHasFileSlot
-		Bool bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+		Bool bLCSuccess = CharGenLoadCharacter(Self, CharacterRace, CharacterName)
 		Int iSafetyTimer = 30
 		While !bLCSuccess && iSafetyTimer > 0
 			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
 			iSafetyTimer -= 1
 			Wait(RandomFloat(0.5,2))
-			bLCSuccess = CharGen.LoadCharacter(Self, CharacterRace, CharacterName)
+			bLCSuccess = CharGenLoadCharacter(Self, CharacterRace, CharacterName)
 		EndWhile
 		If bLCSuccess 
 			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter succeeded with " + iSafetyTimer + "tries remaining!")
@@ -562,6 +562,14 @@ Function RefreshMeshNewCG()
 	;vMYC_CharGenLoading.Mod(-1)
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
+EndFunction
+
+Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	If CharGen.IsExternalEnabled()
+		 Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+	Else
+		 Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+	EndIf
 EndFunction
 
 Function RefreshMesh()
