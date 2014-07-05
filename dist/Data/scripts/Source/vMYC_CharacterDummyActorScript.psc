@@ -565,10 +565,22 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
+	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	If CharGen.IsExternalEnabled()
-		 Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		If !_bExternalHeadExists
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
+			Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		EndIf
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is true, using LoadExternalCharacter...")
+		Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
 	Else
-		 Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		If _bExternalHeadExists
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
+			Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		EndIf
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is false, using LoadCharacter...")
+		Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
 	EndIf
 EndFunction
 

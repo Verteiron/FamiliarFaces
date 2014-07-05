@@ -1717,14 +1717,6 @@ ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
 	Return None
 EndFunction
 
-Function SaveCharacter(String sCharacterName)
-
-
-	;Debug.Trace("MYC: Finding dummy for " + sCharacterName + "...")
-	ActorBase DummyActorBase = GetCharacterDummy(sCharacterName)
-
-EndFunction
-
 State SerializeBusy
 	Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
 		Wait(RandomFloat(0.1,1))
@@ -2430,7 +2422,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	EndWhile
 
 	If CharGen.IsExternalEnabled()
-		 CharGen.SaveExternalCharacter(PlayerREF,sPlayerName) 
+		 CharGen.SaveExternalCharacter(sPlayerName) 
 	Else
 		 CharGen.SaveCharacter(sPlayerName) 
 	EndIf
