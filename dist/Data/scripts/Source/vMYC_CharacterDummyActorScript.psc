@@ -580,7 +580,10 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 			Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
 		EndIf
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is false, using LoadCharacter...")
-		Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		Bool bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		Wait(1)
+		RegenerateHead()
+		Return bResult
 	EndIf
 EndFunction
 

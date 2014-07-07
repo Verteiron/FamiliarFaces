@@ -9,7 +9,7 @@ Import Game
 
 ;--=== Properties ===--
 
-Int Property SerializationVersion = 2 Auto Hidden
+Int Property SerializationVersion = 3 Auto Hidden
 
 String[] Property CharacterNames Hidden
 {List of character names}
@@ -607,7 +607,12 @@ Function LoadCharacterFiles()
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
-
+	
+	JValue.Retain(jCharacterNames)
+	JValue.Retain(jDirectoryScan)
+	JValue.Retain(jCharFiles)
+	JValue.Retain(jCharData)
+	
 	;--- Load and validate all files in the data directory
 	While i > 0
 		i -= 1
@@ -615,6 +620,7 @@ Function LoadCharacterFiles()
 		If ValidateCharacterInfo(jCharacterData) > -1
 			If UpgradeCharacterInfo(jCharacterData)
 				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				WaitMenuMode(0.25)
 			EndIf
 			String sCharacterName = JValue.solveStr(jCharacterData,".Name")
 			;Debug.Trace("MYC: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - " + sCharacterName)
@@ -660,6 +666,11 @@ Function LoadCharacterFiles()
 			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
 		EndIf
 	EndWhile
+	
+	JValue.Release(jCharacterNames)
+	JValue.Release(jDirectoryScan)
+	JValue.Release(jCharFiles)
+	JValue.Release(jCharData)
 EndFunction
 
 Int Function ValidateCharacterInfo(Int jCharacterData)
@@ -707,14 +718,97 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 	EndIf
 	iDataVer = JValue.solveInt(jCharacterData,"._MYC.SerializationVersion")
 	If iDataVer < SerializationVersion
-		;Debug.Trace("MYC: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
+		Debug.Trace("MYC: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
+		If iDataVer == 2 
+			Debug.Trace("MYC: Upgrading this file to serialization version 3...")
+			If !JValue.HasPath(jCharacterData,"._MYC.ReqList")
+				Debug.Trace("MYC: Attempting to generate character requirements, if this copy of the game is missing any they will not be added...")
+				
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Race"),"Race")
+				
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Left"),"Equipment")
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Right"),"Equipment")
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
+				
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
+			
+				Int jArmor = JValue.SolveObj(jCharacterData,".Equipment.Armor")
+				Int i = JArray.Count(jArmor)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jArmor,i),"Equipment")
+				EndWhile
+				
+				Int jHeadparts = JValue.SolveObj(jCharacterData,".Appearance.Headparts")
+				i = JArray.Count(jHeadparts)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jHeadparts,i),"Headpart")
+				EndWhile
+				
+				Int jPerks = JValue.SolveObj(jCharacterData,".Perks")
+				i = JArray.Count(jPerks)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jPerks,i),"Perk")
+				EndWhile
+				
+				Int jSpells = JValue.SolveObj(jCharacterData,".Spells")
+				i = JArray.Count(jSpells)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jSpells,i),"Spell")
+				EndWhile
+			EndIf
+			JValue.SolveIntSetter(jCharacterData,"._MYC.SerializationVersion",3)
+			Debug.Trace("MYC: Finished upgrading the file!")
+			;JValue.WritetoFile("Data/vMYC/" + 
+			bUpgraded = True
+		EndIf
 		;Debug.Trace("MYC: Unfortunately no upgrade function is in place, so we'll just have to hope for the best!")
 	ElseIf iDataVer == SerializationVersion
 		;Debug.Trace("MYC: Data serialization is up to date!")
 	Else
-		;Debug.Trace("MYC: Data serialization is from a future version? Odd. We'll just have to hope it works.")
+		Debug.Trace("MYC: Data serialization is from a future version? Odd. We'll just have to hope it works.")
 	EndIf
 	Return bUpgraded
+EndFunction
+
+Function AddToReqList(Int jCharacterData, Form akForm, String asType)
+{Take the form and add its provider/source to the required mods list of the specified jCharacterData.}
+	If !jCharacterData || !akForm || !asType 
+		Return
+	EndIf
+	Int jMetaInfo = JMap.getObj(jCharacterData,"_MYC")
+	If !jMetaInfo
+		jMetaInfo = JMap.Object()
+		JMap.setObj(jCharacterData,"_MYC",jMetaInfo)
+	EndIf
+	Int jReqList = JMap.getObj(jMetaInfo,"ReqList")
+	If !jReqList
+		jReqList = JMap.Object()
+		JMap.setObj(jMetaInfo,"ReqList",jReqList)
+	EndIf
+	String sModName = GetModName(akForm.GetFormID() / 0x1000000)
+	If sModName
+		Int JModFormTypes = JMap.getObj(jReqList,sModName)
+		If !JModFormTypes
+			JModFormTypes = JMap.Object()
+			JMap.setObj(jReqList,sModName,JModFormTypes)
+		EndIf
+		If !JMap.HasKey(JModFormTypes,asType)
+			JMap.SetObj(JModFormTypes,asType,JArray.Object())
+		EndIf
+		Int jModFormList = JMap.getObj(JModFormTypes,asType)
+		String sFormName = akForm.GetName()
+		If !sFormName
+			sFormName = GetFormIDString(akForm)
+		EndIf
+		If JArray.FindStr(jModFormList,sFormName) < 0
+			JArray.AddStr(jModFormList,sFormName)
+		EndIf
+	EndIf
+			
 EndFunction
 
 ActorBase Function GetFreeActorBase(Int iSex)
@@ -986,10 +1080,49 @@ EndFunction
 
 Function RepairSaves()
 {Update/Repair saved files, fixing all known bugs and setting them to the latest revision}
-	Int i = 0
-	While i < _sCharacterNames.Length
-		i += 1
+
+	Int jCharacterMap = JMap.Object()
+	If !JMap.hasKey(_jMYC,"CharacterList")
+		JMap.SetObj(_jMYC,"CharacterList",JMap.Object())
+	EndIf
+	jCharacterMap = JMap.getObj(_jMYC,"CharacterList")
+
+	Int jCharacterNames = JMap.allKeys(jCharacterMap)
+	;--- If there are any existing characters set their FilePresent to 0
+	Int i = JArray.Count(jCharacterNames)
+	While i > 0
+		i -= 1
+		SetLocalInt(jArray.getStr(jCharacterNames,i),"FilePresent",0)
 	EndWhile
+
+	;Debug.Trace("MYC: Reading directory...")
+	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Int jCharFiles = JMap.allKeys(jDirectoryScan)
+	Int jCharData = JMap.allValues(jDirectoryScan)
+	i = JMap.Count(jDirectoryScan)
+	
+	JValue.Retain(jCharacterNames)
+	JValue.Retain(jDirectoryScan)
+	JValue.Retain(jCharFiles)
+	JValue.Retain(jCharData)
+	
+	;--- Load and validate all files in the data directory
+	While i > 0
+		i -= 1
+		Int jCharacterData = JArray.getObj(jCharData,i)
+		If ValidateCharacterInfo(jCharacterData) > -1
+			If UpgradeCharacterInfo(jCharacterData)
+				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				WaitMenuMode(0.25)
+			EndIf
+		EndIf
+	EndWhile
+
+	JValue.Release(jCharacterNames)
+	JValue.Release(jDirectoryScan)
+	JValue.Release(jCharFiles)
+	JValue.Release(jCharData)
+
 EndFunction
 
 Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
@@ -1737,7 +1870,10 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	Bool isEnchantable = False
 	Bool isTwoHanded = False
 	Enchantment kItemEnchantment
-
+	If kItem
+		;Debug.Trace("MYC: " + kItem.GetName() + " is Mod ID " + (kItem.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItem.GetFormID() / 0x1000000))
+	EndIf
 	;Debug.Trace("MYC: Serializing " + kItem.GetName() + "...")
 	If (kItem as Weapon)
 		isWeapon = True
@@ -1761,6 +1897,8 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		;PlayerEnchantments[newindex] = kItemEnchantment
 		;Debug.Trace("MYC: " + kItem.GetName() + " has enchantment " + kItemEnchantment.GetFormID() + ", " + kItemEnchantment.GetName())
 		JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
+		JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentEnchantmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
 		JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",0)
 	EndIf
 	String sItemDisplayName = WornObject.GetDisplayName(kWornObjectActor,iHand,h)
@@ -1776,6 +1914,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
 		If kItemEnchantment
 			JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
+			JMap.SetStr(jEquipmentEnchantmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
 			JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",1)
 			Int iNumEffects = kItemEnchantment.GetNumEffects()
 			JMap.SetInt(jEquipmentEnchantmentInfo,"NumEffects",iNumEffects)
@@ -1787,6 +1926,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 				JMap.SetFlt(jEffectsInfo, "Area", kItemEnchantment.GetNthEffectArea(j))
 				JMap.SetFlt(jEffectsInfo, "Duration", kItemEnchantment.GetNthEffectDuration(j))
 				JMap.SetForm(jEffectsInfo,"MagicEffect", kItemEnchantment.GetNthEffectMagicEffect(j))
+				JMap.SetStr(jEffectsInfo,"Source",GetModName(kItemEnchantment.GetNthEffectMagicEffect(j).GetFormID() / 0x1000000))
 				JArray.AddObj(jEffectsArray,jEffectsInfo)
 				j += 1
 			EndWhile
@@ -1840,7 +1980,7 @@ Event OnSaveCurrentPlayerEquipment(string eventName, string strArg, float numArg
 					Int jPlayerArmorInfo = JMap.Object()
 
 					JArray.AddObj(jPlayerArmorInfoList,jPlayerArmorInfo)
-
+					AddToReqList(jPlayerData,WornForm,"Equipment")
 					SerializeEquipment(WornForm,jPlayerArmorInfo,1,h)
 
 				EndIf
@@ -1856,11 +1996,17 @@ Event OnSaveCurrentPlayerEquipment(string eventName, string strArg, float numArg
 
 	SerializeEquipment(PlayerREF.GetEquippedObject(0),jEquipLeft,0,0)
 	SerializeEquipment(PlayerREF.GetEquippedObject(1),jEquipRight,1,0)
-
+	
 	Int jEquipVoice = JMap.Object()
 	JMap.SetForm(jEquipVoice,"Form",PlayerREF.GetEquippedObject(2))
 
 	JMap.SetObj(jPlayerEquipment,"Voice",jEquipVoice)
+
+	AddToReqList(jPlayerData,PlayerREF.GetEquippedObject(0),"Equipment")
+	AddToReqList(jPlayerData,PlayerREF.GetEquippedObject(1),"Equipment")
+	AddToReqList(jPlayerData,PlayerREF.GetEquippedObject(2),"Equipment")
+
+
 	SendModEvent("vMYC_EquipmentSaveEnd")
 	_bSavedEquipment = True
 EndEvent
@@ -1877,7 +2023,10 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 	SendModEvent("vMYC_SpellsSaveBegin")
 	Int jPlayerSpells = JArray.Object()
 	JMap.SetObj(jPlayerData,"Spells",jPlayerSpells)
-
+	
+	Int jSpellSources = JArray.Object()
+	JMap.SetObj(jPlayerData,"SpellSources",jSpellSources)
+	
 	Int iSpellCount = PlayerREF.GetSpellCount()
 	Int iAddedCount = 0
 	Int i = 0
@@ -1897,6 +2046,8 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 			If bAddItem
 				;vMYC_PlayerFormlist.AddForm(kSpell)
 				JArray.AddForm(jPlayerSpells,kSpell)
+				JArray.AddStr(jSpellSources,GetModName(kSpell.GetFormID() / 0x1000000))
+				AddToReqList(jPlayerData,kSpell,"Spell")
 				iAddedCount += 1
 				If iAddedCount % 2 == 0
 					kSpell.SendModEvent("vMYC_SpellSaved")
@@ -2078,6 +2229,9 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	Int jPerkCounts = JMap.Object()
 	JMap.SetObj(jPlayerData,"PerkCounts",jPerkCounts)
 
+	Int jPerkSources = JArray.Object()
+	JMap.SetObj(jPlayerData,"PerkSources",jPerkSources)
+	
 	vMYC_PerkList.Revert()
 	Int iAdvSkills = 6
 	While iAdvSkills < 24
@@ -2096,6 +2250,8 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 		i -= 1
 		Perk kPerk = vMYC_PerkList.GetAt(i) as Perk
 		JArray.addForm(jPerks,kPerk)
+		JArray.AddStr(jPerkSources,GetModName(kPerk.GetFormID() / 0x1000000))
+		AddToReqList(jPlayerData,kPerk,"Perk")
 		If iAddedCount % 3 == 0
 			SendModEvent("vMYC_PerkSaved")
 		EndIf
@@ -2278,7 +2434,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.setInt(jMetaInfo,"SerializationVersion",2)
 
 	JMap.setObj(jPlayerData,"_MYC",jMetaInfo)
-
+	AddToReqList(jPlayerData,PlayerREF.GetActorBase().GetRace(),"Race")
 	;-----==== Save actorvalues
 
 	Float[] fPlayerBaseAVs = New Float[97]
@@ -2361,6 +2517,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	ColorForm kHairColor = PlayerBase.GetHairColor()
 	JMap.SetForm(jPlayerAppearance,"Haircolor",kHairColor)
 	If kHairColor
+		JMap.SetStr(jPlayerAppearance,"HaircolorSource",GetModName(kHairColor.GetFormID() / 0x1000000))
 		Int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
 		JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
 	EndIf
@@ -2369,17 +2526,27 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	Int jPlayerHeadparts = JArray.Object()
 	JMap.SetObj(jPlayerAppearance,"Headparts",jPlayerHeadparts)
-
+	Int jHeadpartSources = JArray.Object()
+	JMap.SetObj(jPlayerAppearance,"HeadpartSources",jHeadpartSources)
+	
 	i = 0
 	While i < PlayerBase.GetNumHeadParts()
 		HeadPart kHeadPart = PlayerBase.GetNthHeadPart(i)
-		JArray.AddForm(jPlayerHeadparts,kHeadPart)
 		Int j = 0
-		While j < kHeadPart.GetNumExtraParts()
-			HeadPart kExtraHeadPart = kHeadPart.GetNthExtraPart(j)
-			JArray.Addform(jPlayerHeadparts,kExtraHeadPart)
-			j += 1
-		EndWhile
+		If kHeadPart
+			JArray.AddForm(jPlayerHeadparts,kHeadPart)
+			JArray.AddStr(jHeadpartSources,GetModName(kHeadPart.GetFormID() / 0x1000000))
+			AddToReqList(jPlayerData,kHeadPart,"Headpart")
+			While j < kHeadPart.GetNumExtraParts()
+				HeadPart kExtraHeadPart = kHeadPart.GetNthExtraPart(j)
+				If kExtraHeadPart
+					JArray.Addform(jPlayerHeadparts,kExtraHeadPart)
+					JArray.AddStr(jHeadpartSources,GetModName(kExtraHeadPart.GetFormID() / 0x1000000))
+					AddToReqList(jPlayerData,kExtraHeadPart,"Headpart")
+				EndIf
+				j += 1
+			EndWhile
+		EndIf
 		i += 1
 	EndWhile
 
@@ -2571,5 +2738,12 @@ String[] Function PickPlayerSpawnPoints()
 		sResult[idx] = "Caravan"
 		idx += 1
 	EndIf
+	Return sResult
+EndFunction
+
+String Function GetFormIDString(Form kForm)
+	String sResult
+	sResult = kForm as String ; [FormName < (FF000000)>]
+	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
 	Return sResult
 EndFunction
