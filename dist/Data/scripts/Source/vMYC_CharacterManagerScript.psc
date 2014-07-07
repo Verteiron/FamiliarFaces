@@ -2588,7 +2588,13 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		i += 1
 	EndWhile
 
-	If CharGen.IsExternalEnabled()
+	Bool bUseExternal = False
+	If GetModByName("EnhancedCharacterEdit.esp") < 255
+		Debug.Notification("ECE detected, using SaveExternalCharacter!")
+		bUseExternal = True
+	EndIf
+	
+	If CharGen.IsExternalEnabled() || bUseExternal
 		 CharGen.SaveExternalCharacter(sPlayerName) 
 	Else
 		 CharGen.SaveCharacter(sPlayerName) 
