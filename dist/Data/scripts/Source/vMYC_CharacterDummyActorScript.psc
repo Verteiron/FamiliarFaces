@@ -77,6 +77,8 @@ Bool _bWarnedVoiceTypeNoFollower = False
 
 Bool _bWarnedVoiceTypeNoSpouse = False
 
+Bool _bInvalidRace = False
+
 String[] _sSkillNames
 
 Float _fDecapitationChance
@@ -305,11 +307,15 @@ Function CheckVars()
 			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterName was not set and could not be loaded from CharacterManager, this will cause problems!",1)
 		EndIf
 	EndIf
-	If !CharacterRace
+	If !CharacterRace || _bInvalidRace
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor/CheckVars) CharacterRace is missing, getting it from CharacterManager...")
 		CharacterRace = CharacterManager.GetCharacterForm(CharacterName,"Race") as Race
 		If !CharacterRace
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems!",1)
+			_bInvalidRace = True
+			Race kNordRace = GetFormFromFile(0x00013746,"Skyrim.esm") as Race ; InvisibleRace
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) CharacterRace was not set and could not be loaded from CharacterManager, this will cause problems! Setting to NordRace until this is fixed...",1)
+		Else
+			_bInvalidRace = False
 		EndIf
 	EndIf
 
@@ -354,6 +360,11 @@ Function DoUpkeep(Bool bInBackground = True)
 	GotoState("Busy")
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
+	If _bInvalidRace 
+		; Reset the race during upkeep in case the needed mod has been installed
+		CharacterRace = None
+		_bInvalidRace = False
+	EndIf
 	CheckVars()
 	SyncCharacterData()
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
@@ -539,6 +550,9 @@ Function RefreshMeshNewCG()
 	If _bHasFileSlot
 		Bool bLCSuccess = CharGenLoadCharacter(Self, CharacterRace, CharacterName)
 		Int iSafetyTimer = 30
+		If _bInvalidRace
+			iSafetyTimer = 1 ; LoadCharacter will fail if the race is missing, so don't let it hang things up.
+		EndIf
 		While !bLCSuccess && iSafetyTimer > 0
 			;Debug.Trace("MYC: (" + CharacterName + "/Actor) LoadCharacter failed, retrying...")
 			iSafetyTimer -= 1
@@ -572,14 +586,14 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 			Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
 			Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
 		EndIf
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is true, using LoadExternalCharacter...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is true, using LoadExternalCharacter...")
 		Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
 	Else
 		If _bExternalHeadExists
 			Debug.Trace("MYC: (" + CharacterName + "/Actor) Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
 			Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
 		EndIf
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is false, using LoadCharacter...")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) IsExternalEnabled is false, using LoadCharacter...")
 		Bool bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
 		Wait(1)
 		RegenerateHead()
