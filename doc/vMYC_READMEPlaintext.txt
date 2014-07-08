@@ -1,15 +1,13 @@
-Familiar Faces 1.0.3
+Familiar Faces
 
-1.0.3
+1.0.4
 
-	Character items, armor, and weapons will now be updated properly if their Shrine save is updated. This may cause them to flicker when loaded but should be fine otherwise. Items you have given your imported characters should remain with them unchanged.
-	Fix for getting stuck floating in the air while saving.
-	Destroying the Tome now actually frees up the Shrine. If you delete the last character in the Alcove, the Tome will still be named after them, but you can still use it.
-	Related to the previous, fixed every Tome saying "You've already written down your story."
-	Gracefully handle deletion of the the _shrineofheroes.json file. If your Shrine has become unusable, deleting the data file will cause it to be completely emptied without deleting your character data. You can then use MCM to refill it without having to re-save everybody manually.
-	Fixed a bug where the Portal Stone would strand you in the Shrine forever if used there.
-	Thanks to an update to RaceMenu (2.8.2), Vampire characters should now be saved without a gray face, though you'll need to update their Tome to fix their appearance.
-	Fixed trophies remaining in the shrine after character removal.
+*	Race, Armor, Weapon, Perk, and Spell dependencies are now written to the character save file. Files without dependency info will be automatically upgraded to include it the next time they are loaded. Dependency data is not yet read but this will support future features.
+*	Perks will now be loaded even if some are missing due to missing dependencies.
+*	A missing Race (for example because of missing plugins/mods) will now no longer hang the character loading process. Characters with an invalid Race will be set up as Nords, but will be updated to the correct Race if the required mods are later installed.
+*	If a Hangout is use, you will now receive a message telling you who is using it. Hangouts will receive an overhaul in the first feature release.
+*	NINode scale sizes are now saved with the character file. This allows for saving and loading of RaceMenu's extra sliders for things like Biceps. All NINodes provided by the vanilla skeletons and XPMS are checked. You must resave your characters for this to take effect.
+*	In combination with RaceMenu 2.8.3, experimental support for ECE. See the section under Compatibility below.
 
 
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the only way to do it!
@@ -70,20 +68,20 @@ Some ENB setups may interfere with ImageSpaceOverrides, meaning some animations 
 Sound effect overhauls, visual overhauls.
 Mods that add weapons and armor, including craftable ones. The mod must remain installed for the imported items to appear; if it is removed, the items it provides will be removed as usual and ignored by Familiar Faces.
 Body replacer mods such CBBE are fine, as long as they are compatible with RaceMenu.
-NEW: Follower Commentary Overhaul, as long as you assign your follower a Follower voicetype via MCM. Thanks to aetherious for testing this for me!
+Follower Commentary Overhaul, as long as you assign your follower a Follower voicetype via MCM. Thanks to aetherious for testing this for me!
 
 Works with caveats
 
-Perks provided by overhaul mods such as SkyRE should be imported with all attributes intact, but may not function as originally intended. Familiar Faces has not been tested with SkyRE.
-Face replacer mods should work as long as they are compatible with RaceMenu and they don't rely on ECE, but characters will probably not load properly if the face-altering mod is removed. Horrific monstrosities may result.
-AFT seems to be causing problems for some people when it comes to selecting VoiceTypes for characters, as well as setting up spell lists.
+NEW: Enhanced Character Edit now has experimental support, thanks to some wizardry by Expired. This requires RaceMenu 2.8.3 or higher be installed along with ECE. If ECE is found in the current load order, the character's head mesh will be written to a NIF located in Meshes/CharGen/Exported/. If a NIF is found for a character at load time, LoadExternalCharacter will be used to apply it to the actor's appearance. This will copy the NIF to This file will be copied to Meshes/Actors/Character/FaceGenData/FaceGeom/vMYC_MeetYourCharacters.esp/. It may be necessary to quicksave/quickload before the head appearance will update.
+UPDATED: Custom races work fine, but the race mod and skeleton mod they require must be installed on the loading game. That is, Races built on XPMS require XPMS be installed, etc. Ningheim have been tested as working, as have Drakian and several others. If you use or are the author of a popular custom race mod, PM me or create an issue over on the Github page to let me know if your race is not working properly under these circumstances.
+UPDATED: Perks provided by overhaul mods such as SkyRE should be imported with all attributes intact, but may not function as originally intended. I have mixed compatibility reports regarding SkyRE, with some people saying it causes majors problems when entering the Shrine and others saying it works fine. Use Familiar Faces and SkyRE together at your own risk!
+Face replacer mods should work as long as they are compatible with RaceMenu, but characters will probably not load properly if the face-altering mod is removed. Horrific monstrosities may result.
+AFT seems to be causing problems for some people when it comes to selecting VoiceTypes for characters, as well as clobbering Perk lists and Spells. This will be addressed at some point, AFT compatibility is a goal for 1.1.0.
 HDT body mods should work but have not been tested.
-NEW: Custom races work if and ONLY if they share the same skeleton as the vanilla playable races. This may be fixable, or it may not be. If you use or are the author of a popular custom race mod, PM me or create an issue over on the Github page to let me know if your race is not working properly.
 
 Known to NOT work
 
-Enhanced Character Edit (ECE) is **NOT** compatible with Familiar Faces and likely won't be any time in the near future. I have contacted the author about adding compatibility functions to ECE, but thus far they are unwilling or unable to do so. The way the mod is written currently, I have no way to apply ECE information to an NPC.
-HDT physics hair does not work. See this page for more information. HDT body mods should work but have not been tested.
+HDT physics hair does not work. Or maybe it does. Reports are mixed but generally negative. At least one tester reports it works for them as long as the player does not have HDT hair at the same time.
 
  
 Installation
@@ -227,22 +225,34 @@ Terrorfox1234
 
 
 Older changelog
+1.0.3
+
+Character items, armor, and weapons will now be updated properly if their Shrine save is updated. This may cause them to flicker when loaded but should be fine otherwise. Items you have given your imported characters should remain with them unchanged.
+Fix for getting stuck floating in the air while saving.
+Destroying the Tome now actually frees up the Shrine. If you delete the last character in the Alcove, the Tome will still be named after them, but you can still use it.
+Related to the previous, fixed every Tome saying "You've already written down your story."
+Gracefully handle deletion of the the _shrineofheroes.json file. If your Shrine has become unusable, deleting the data file will cause it to be completely emptied without deleting your character data. You can then use MCM to refill it without having to re-save everybody manually.
+Fixed a bug where the Portal Stone would strand you in the Shrine forever if used there.
+Thanks to an update to RaceMenu (2.8.2), Vampire characters should now be saved without a gray face, though you'll need to update their Tome to fix their appearance.
+Fixed trophies remaining in the shrine after character removal.
+
+
 1.0.2
 
-	Required for compatibility with RaceMenu 2.8.1.
-	GREATLY improved character appearance loading. Characters now load faster, more reliably, and flicker-free thanks to a change in the CharGen.dll plugin. No more ElderRace followers! RaceMenu 2.8.1 is required for this new system to take effect. Familiar Faces 1.0.2 is backward compatible with RM 2.8.0 but it is recommended that you upgrade to take advantage of the new system. After upgrading RaceMenu, it may be necessary to re-save Khajiit and Argonian characters in the Shrine to avoid a distorted appearance. Or it may not, results seem to be mixed.
-	Support for weapons with up to 8 enchantment effects (where are you people GETTING these?)
-	EFF compatibility moved to a quest to prevent issues with having the module attached to actors when EFF is installed and removed.
-	Additional checks on some translations in the Shrine that could cause a CTD in rare circumstances.
-	Fix for MCM Character Tracking box still not responding properly.
+Required for compatibility with RaceMenu 2.8.1.
+GREATLY improved character appearance loading. Characters now load faster, more reliably, and flicker-free thanks to a change in the CharGen.dll plugin. No more ElderRace followers! RaceMenu 2.8.1 is required for this new system to take effect. Familiar Faces 1.0.2 is backward compatible with RM 2.8.0 but it is recommended that you upgrade to take advantage of the new system. After upgrading RaceMenu, it may be necessary to re-save Khajiit and Argonian characters in the Shrine to avoid a distorted appearance. Or it may not, results seem to be mixed.
+Support for weapons with up to 8 enchantment effects (where are you people GETTING these?)
+EFF compatibility moved to a quest to prevent issues with having the module attached to actors when EFF is installed and removed.
+Additional checks on some translations in the Shrine that could cause a CTD in rare circumstances.
+Fix for MCM Character Tracking box still not responding properly.
 
 
 1.0.1
 
-	Expired has updated RaceMenu to version 2.8.0. It is very strongly recommended that you upgrade to 2.8.0 ASAP to ensure compatibility with Familiar Faces.
-	Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is very slow to load or you don't have the right version of RaceMenu/Chargen.dll installed.
-	Fixed "Character Tracking" option not working in MCM.
-	Fixed VoiceTypes being reset after a save/load.
-	Removed a ton of debug messages that were spamming the Papyrus file.
-	Fixed a potential (but unlikely) CTD that could occur while applying perks or shouts.
+Expired has updated RaceMenu to version 2.8.0. It is very strongly recommended that you upgrade to 2.8.0 ASAP to ensure compatibility with Familiar Faces.
+Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is very slow to load or you don't have the right version of RaceMenu/Chargen.dll installed.
+Fixed "Character Tracking" option not working in MCM.
+Fixed VoiceTypes being reset after a save/load.
+Removed a ton of debug messages that were spamming the Papyrus file.
+Fixed a potential (but unlikely) CTD that could occur while applying perks or shouts.
 
