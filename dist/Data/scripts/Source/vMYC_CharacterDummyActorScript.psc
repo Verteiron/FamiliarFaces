@@ -389,6 +389,27 @@ Function DoUpkeep(Bool bInBackground = True)
 	GotoState("")
 EndFunction
 
+Function SetNINodes()
+	Int jNINodeData = CharacterManager.GetCharacterObj(CharacterName,"NINodeData")
+	Int jNiNodeNames = JMap.allKeys(jNINodeData)
+	Int jNiNodeScales = JMap.allValues(jNINodeData)
+	
+	Int i = 0
+	Int iNodeCount = JArray.Count(jNiNodeNames)
+	While i < iNodeCount
+		String sNodeName = JArray.getStr(jNINodeNames,i)
+		If sNodeName
+			If NetImmerse.HasNode(Self,sNodeName,False)
+				;Float NINodeScale = CharacterManager.GetCharacterFlt(CharacterName,"NINodeData." + sNINodes[i] + ".Scale")
+				Float NINodeScale = JMap.GetFlt(JArray.getObj(jNiNodeScales,i),"Scale")
+				NetImmerse.SetNodeScale(Self,sNodeName,NINodeScale,False)
+				NetImmerse.SetNodeScale(Self,sNodeName,NINodeScale,True)
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
 Function SyncCharacterData()
 	If CharacterManager.GetLocalFlt(CharacterName,"PlayTime") != CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime")
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Our source data has changed!")
@@ -404,6 +425,7 @@ EndFunction
 Function SetNonpersistent()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	SetNameIfNeeded()
+	SetNINodes()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	Int iSafetyTimer = 10
 	While CharacterManager.ApplyCharacterPerks(CharacterName) < 0 && iSafetyTimer

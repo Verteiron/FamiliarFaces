@@ -2627,13 +2627,14 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 EndFunction
 
-Int Function GetNINodeInfo(Actor akActor)
-	String[] sNINodesToSave = New String[128]
-	
+
+String[] Function GetNINodeList()
 	;--NINodes from racemenuplugin.psc - Default racemenu plugin
 	;  There's no publicly available list of these so just hardcode 'em
 	;  If more racemenu plugins emerge, add them here
-	
+
+	String[] sNINodesToSave = New String[128]
+
 	sNINodesToSave[00] = "NPC" 
 	sNINodesToSave[01] = "NPC Head [Head]" 
 	sNINodesToSave[02] = "NPC L Breast" 
@@ -2655,7 +2656,13 @@ Int Function GetNINodeInfo(Actor akActor)
 	sNINodesToSave[17] = "SHIELD" 
 	sNINodesToSave[18] = "WeaponBack" 
 	sNINodesToSave[19] = "WEAPON" 
+	
+	Return sNINodesToSave
+EndFunction
 
+Int Function GetNINodeInfo(Actor akActor)
+	String[] sNINodesToSave = GetNINodeList()
+	
 	Int jNINodes = JMap.Object()
 	Int i = 0
 	Int iNodeCount = sNINodesToSave.Length
