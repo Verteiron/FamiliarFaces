@@ -2431,7 +2431,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.setStr(jMetaInfo,"Name",sPlayerName)
 	JMap.setStr(jMetaInfo,"RaceText",PlayerREF.GetActorBase().GetRace().GetName())
 	JMap.setFlt(jMetaInfo,"Playtime",GetRealHoursPassed())
-	JMap.setInt(jMetaInfo,"SerializationVersion",2)
+	JMap.setInt(jMetaInfo,"SerializationVersion",SerializationVersion)
 
 	JMap.setObj(jPlayerData,"_MYC",jMetaInfo)
 	AddToReqList(jPlayerData,PlayerREF.GetActorBase().GetRace(),"Race")
