@@ -425,7 +425,6 @@ EndFunction
 Function SetNonpersistent()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
 	SetNameIfNeeded()
-	SetNINodes()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	Int iSafetyTimer = 10
 	While CharacterManager.ApplyCharacterPerks(CharacterName) < 0 && iSafetyTimer
@@ -596,6 +595,7 @@ Function RefreshMeshNewCG()
 ;	QueueNiNodeUpdate()
 	_kActorBase.SetInvulnerable(False)
 	;vMYC_CharGenLoading.Mod(-1)
+	SetNINodes()
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
 EndFunction

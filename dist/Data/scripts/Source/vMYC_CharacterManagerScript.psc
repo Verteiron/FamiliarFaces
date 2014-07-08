@@ -2627,56 +2627,33 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 EndFunction
 
-
-String[] Function GetNINodeList()
-	;--NINodes from racemenuplugin.psc - Default racemenu plugin
-	;  There's no publicly available list of these so just hardcode 'em
-	;  If more racemenu plugins emerge, add them here
-
-	String[] sNINodesToSave = New String[128]
-
-	sNINodesToSave[00] = "NPC" 
-	sNINodesToSave[01] = "NPC Head [Head]" 
-	sNINodesToSave[02] = "NPC L Breast" 
-	sNINodesToSave[03] = "NPC R Breast" 
-	sNINodesToSave[04] = "NPC L Butt" 
-	sNINodesToSave[05] = "NPC R Butt" 
-	sNINodesToSave[06] = "NPC L Breast01" 
-	sNINodesToSave[07] = "NPC R Breast01" 
-	sNINodesToSave[08] = "NPC L UpperarmTwist1 [LUt1]" 
-	sNINodesToSave[09] = "NPC R UpperarmTwist1 [RUt1]" 
-	sNINodesToSave[10] = "NPC L UpperarmTwist2 [LUt2]" 
-	sNINodesToSave[11] = "NPC R UpperarmTwist2 [RUt2]" 
-
-	sNINodesToSave[12] = "QUIVER" 
-	sNINodesToSave[13] = "WeaponBow" 
-	sNINodesToSave[14] = "WeaponAxe" 
-	sNINodesToSave[15] = "WeaponSword" 
-	sNINodesToSave[16] = "WeaponMace" 
-	sNINodesToSave[17] = "SHIELD" 
-	sNINodesToSave[18] = "WeaponBack" 
-	sNINodesToSave[19] = "WEAPON" 
-	
-	Return sNINodesToSave
-EndFunction
-
 Int Function GetNINodeInfo(Actor akActor)
-	String[] sNINodesToSave = GetNINodeList()
+
+	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
+	JValue.Retain(jNINodeList)
+	Debug.Trace("MYC: NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
+	
 	
 	Int jNINodes = JMap.Object()
+	JValue.Retain(jNINodes)
 	Int i = 0
-	Int iNodeCount = sNINodesToSave.Length
+	Int iNodeCount = JArray.Count(jNINodeList)
 	While i < iNodeCount
-		If sNINodesToSave[i]
-			If NetImmerse.HasNode(akActor,sNINodesToSave[i],false)
-				Int jNINodeData = JMap.Object()
-				JMap.SetFlt(jNINodeData,"Scale",NetImmerse.GetNodeScale(akActor,sNINodesToSave[i],false))
-				JMap.SetObj(jNINodes,sNINodesToSave[i],jNINodeData)
+		String sNodeName = JArray.getStr(jNINodeList,i)
+		If sNodeName
+			If NetImmerse.HasNode(akActor,sNodeName,false)
+				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
+				If fNodeScale != 1.0
+					Debug.Trace("MYC: Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
+					Int jNINodeData = JMap.Object()
+					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
+					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
+				EndIf
 			EndIf
 		EndIf
 		i += 1
 	EndWhile
-	
+	JValue.Release(jNINodeList)
 	Return jNINodes
 EndFunction
 
