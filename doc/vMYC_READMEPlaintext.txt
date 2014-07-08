@@ -1,6 +1,4 @@
-Familiar Faces
-
-1.0.4
+Familiar Faces 1.0.4
 
 *	Race, Armor, Weapon, Perk, and Spell dependencies are now written to the character save file. Files without dependency info will be automatically upgraded to include it the next time they are loaded. Dependency data is not yet read but this will support future features.
 *	Perks will now be loaded even if some are missing due to missing dependencies.
@@ -8,6 +6,7 @@ Familiar Faces
 *	If a Hangout is use, you will now receive a message telling you who is using it. Hangouts will receive an overhaul in the first feature release.
 *	NINode scale sizes are now saved with the character file. This allows for saving and loading of RaceMenu's extra sliders for things like Biceps. All NINodes provided by the vanilla skeletons and XPMS are checked. You must resave your characters for this to take effect.
 *	In combination with RaceMenu 2.8.3, experimental support for ECE. See the section under Compatibility below.
+
 
 
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the only way to do it!
@@ -68,11 +67,12 @@ Some ENB setups may interfere with ImageSpaceOverrides, meaning some animations 
 Sound effect overhauls, visual overhauls.
 Mods that add weapons and armor, including craftable ones. The mod must remain installed for the imported items to appear; if it is removed, the items it provides will be removed as usual and ignored by Familiar Faces.
 Body replacer mods such CBBE are fine, as long as they are compatible with RaceMenu.
-Follower Commentary Overhaul, as long as you assign your follower a Follower voicetype via MCM. Thanks to aetherious for testing this for me!
+Follower Commentary Overhaul, as long as you assign your follower a Follower voicetype via MCM. Thanks to SunCe2112 for testing this for me!
 
 Works with caveats
 
 NEW: Enhanced Character Edit now has experimental support, thanks to some wizardry by Expired. This requires RaceMenu 2.8.3 or higher be installed along with ECE. If ECE is found in the current load order, the character's head mesh will be written to a NIF located in Meshes/CharGen/Exported/. If a NIF is found for a character at load time, LoadExternalCharacter will be used to apply it to the actor's appearance. This will copy the NIF to This file will be copied to Meshes/Actors/Character/FaceGenData/FaceGeom/vMYC_MeetYourCharacters.esp/. It may be necessary to quicksave/quickload before the head appearance will update.
+NEW: Dual Sheath Redux seems to work okay but the sheathed sword object glitches out on saved characters. This looks fixable, though, so hopefully I can take care of it soon.
 UPDATED: Custom races work fine, but the race mod and skeleton mod they require must be installed on the loading game. That is, Races built on XPMS require XPMS be installed, etc. Ningheim have been tested as working, as have Drakian and several others. If you use or are the author of a popular custom race mod, PM me or create an issue over on the Github page to let me know if your race is not working properly under these circumstances.
 UPDATED: Perks provided by overhaul mods such as SkyRE should be imported with all attributes intact, but may not function as originally intended. I have mixed compatibility reports regarding SkyRE, with some people saying it causes majors problems when entering the Shrine and others saying it works fine. Use Familiar Faces and SkyRE together at your own risk!
 Face replacer mods should work as long as they are compatible with RaceMenu, but characters will probably not load properly if the face-altering mod is removed. Horrific monstrosities may result.
@@ -215,7 +215,7 @@ For making sure the mod actually ran on computers other than my own.
 
 Cad'ika Orade - Also the catalyst for the mod's creation
 BLourenco
-aetherious
+SunCe2112 - For extra work in testing AFT and Dual Sheath Redux. 
 BerenOneHanded
 Cryptoss
 Terrorfox1234
