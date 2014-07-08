@@ -494,8 +494,11 @@ Event OnOptionMenuAccept(int option, int index)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == _iAliasOption
 		_iAliasSelections[_iCurrentCharacter] = index
-		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
-		CharacterManager.SetCharacterHangout(_sCharacterNames[_iCurrentCharacter],_kHangoutRefAliases[index])
+		If CharacterManager.SetCharacterHangout(_sCharacterNames[_iCurrentCharacter],_kHangoutRefAliases[index])
+			SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
+		Else
+			Debug.MessageBox("Sorry, but " + StringUtil.SubString(_sHangoutNames[index],1) + " is already in use by " + (_kHangoutRefAliases[index].GetReference() as Actor).GetActorBase().GetName() + "!")
+		EndIf
 	ElseIf Option == _iCurrentCharacterOption
 		_iCurrentCharacter = index
 		ForcePageReset()
