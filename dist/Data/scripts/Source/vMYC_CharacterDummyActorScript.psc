@@ -442,7 +442,7 @@ Function SetNonpersistent()
 		iSafetyTimer -= 1
 		Wait(0.5)
 	EndWhile
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
 	If CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")
 		iSafetyTimer = 10
 		While CharacterManager.ApplyCharacterShouts(CharacterName) < 0 && iSafetyTimer

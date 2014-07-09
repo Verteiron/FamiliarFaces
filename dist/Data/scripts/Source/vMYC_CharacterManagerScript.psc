@@ -1345,7 +1345,7 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 		;Debug.Trace("MYC: (" + sCharacterName + ") Perk is from " + JArray.getStr(jCharacterPerks,i))
 		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
 	If vMYC_PerkList.GetSize() + iMissingCount != JArray.Count(jCharacterPerks)
 		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyPerksBusy = False
@@ -1376,7 +1376,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	While i > 0
 		i -= 1
 		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
-		Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 		vMYC_ShoutList.AddForm(kShout)
 	EndWhile
 	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
@@ -1385,7 +1385,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		_bApplyShoutsBusy = False
 		Return -1
 	ElseIf vMYC_ShoutList.GetSize() == 0
-		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
+		;Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
 		Return 0
 	EndIf
