@@ -11,6 +11,7 @@ cd "%NEWTIME%_%COMPUTERNAME%"
 xcopy /y ..\data\*.esp .
 xcopy /y ..\datadep\*.bsa .
 xcopy /y ..\data\*readme* .
+xcopy /y ..\..\doc\*readme* .
 echo d | xcopy /e /y ..\data\skse skse
 echo d | xcopy /e /y ..\dep\skse skse
 echo d | xcopy /e /y ..\data\vMYC vMYC

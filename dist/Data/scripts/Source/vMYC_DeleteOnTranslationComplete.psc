@@ -1,4 +1,4 @@
-Scriptname vMYC_DeleteOnTranslationComplete extends ObjectReference  
+Scriptname vMYC_DeleteOnTranslationComplete extends ObjectReference
 
 Event OnTranslationComplete()
 	Utility.Wait(0.1)

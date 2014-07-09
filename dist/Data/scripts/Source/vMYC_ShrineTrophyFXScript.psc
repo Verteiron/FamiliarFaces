@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineTrophyFXScript extends ObjectReference  
+Scriptname vMYC_ShrineTrophyFXScript extends ObjectReference
 {Enables and adds a glow to all linked references}
 
 ;--=== Imports ===--
@@ -46,15 +46,15 @@ EndEvent
 Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
-	If iRequestingIndex != AlcoveIndex
+	If iRequestingIndex != AlcoveIndex && strArg == "Request"
 		HideTrophies()
-		Wait(5)
+	ElseIf iRequestingIndex != AlcoveIndex && strArg == "Release"
 		ShowTrophies(False)
 	EndIf
 EndEvent
 
 Event OnActivate(ObjectReference akTriggerRef)
-	
+
 EndEvent
 
 Event OnCellAttach()
@@ -78,12 +78,13 @@ EndEvent
 
 Event OnUnload()
 	;Debug.Trace("MYC: " + Self + " OnUnload!")
-	; Only hide trophies if unloaded while cell is attached. 
-	; Otherwise the trophy animation will play every time the player enters the Alcove. 
+	; Only hide trophies if unloaded while cell is attached.
+	; Otherwise the trophy animation will play every time the player enters the Alcove.
 	; Any unload we get while the cell is attached has to be the player resetting the Alcove.
-	If _bCellAttached 
+	If _bCellAttached
 		HideTrophies()
 	EndIf
+	UnRegisterForModEvent("vMYC_AlcoveLightingPriority")
 EndEvent
 
 Function HideTrophies()
@@ -130,7 +131,7 @@ Function ShowTrophies(Bool abPlayFX = True)
 		kLinkedObject = kLinkedObject.GetLinkedRef()
 	EndWhile
 	If iSafety == 0
-		;Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: Reached safety limit!",1)
+		Debug.Trace("MYC: " + Self + " AlcoveTrophyFX: Reached safety limit!",1)
 	EndIf
 	;Debug.Trace("MYC: " + Self + " Done!")
 EndFunction

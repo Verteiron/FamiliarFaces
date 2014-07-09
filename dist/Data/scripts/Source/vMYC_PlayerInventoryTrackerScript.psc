@@ -1,4 +1,4 @@
-Scriptname vMYC_PlayerInventoryTrackerScript extends ReferenceAlias  
+Scriptname vMYC_PlayerInventoryTrackerScript extends ReferenceAlias
 {Tracks player's inventory in the background to save time while saving}
 ;--=== Imports ===--
 
@@ -49,7 +49,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnPlayerLoadGame()
-	
+
 EndEvent
 
 Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
@@ -97,7 +97,7 @@ EndEvent
 Function RefreshInventory()
 	Busy = True
 	_iThreadCount += 1
-	Debug.Trace("MYC: " + Self + " Refreshing player inventory...")
+	;Debug.Trace("MYC: " + Self + " Refreshing player inventory...")
 	Float fStartTime = GetCurrentRealTime()
 	JFormMap.clear(_jInventory)
 	Int iItemCount = PlayerREF.GetNumItems()
@@ -119,21 +119,21 @@ State Overloaded
 	Event OnBeginState()
 		Busy = True
 		RegisterForSingleUpdate(5.0)
-		Debug.Trace("MYC: " + Self + " Too many items moving around at once, suspending item tracking...")	
+		;Debug.Trace("MYC: " + Self + " Too many items moving around at once, suspending item tracking...")
 	EndEvent
-	
+
 	Event OnUpdate()
-		Debug.Trace("MYC: " + Self + " Resuming item tracking...")
+		;Debug.Trace("MYC: " + Self + " Resuming item tracking...")
 		GoToState("")
 		_iThreadCount = 0
 		_bRefreshed = False
 		RegisterForSingleUpdate(0.1)
 	EndEvent
-	
+
 	Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	EndEvent
-	
+
 	Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	EndEvent
-	
+
 EndState

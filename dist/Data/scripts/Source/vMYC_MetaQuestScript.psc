@@ -1,4 +1,4 @@
-Scriptname vMYC_MetaQuestScript extends Quest  
+Scriptname vMYC_MetaQuestScript extends Quest
 {Do initialization and track variables for scripts}
 
 ;--=== Imports ===--
@@ -54,11 +54,11 @@ Event OnInit()
 EndEvent
 
 Event OnReset()
-	Debug.Trace("MYC: Metaquest event: OnReset")
+	;Debug.Trace("MYC: Metaquest event: OnReset")
 EndEvent
 
 Event OnUpdate()
-	
+
 EndEvent
 
 Event OnGameReloaded()
@@ -84,11 +84,12 @@ Function DoUpkeep(Bool DelayedStart = True)
 		DoShutdown()
 		Return
 	EndIf
-
+	_iUpkeepsExpected = 0
+	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 90
+	_CurrentVersion = 104
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
-	
+
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
 	RegisterForModEvent("vMYC_InitEnd","OnInitState")
 	RegisterForModEvent("vMYC_UpkeepBegin","OnUpkeepState")
@@ -127,6 +128,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		;CheckForOrphans()
 	EndIf
 	CheckForExtras()
+	CheckCompatibilityModules()
 	UpdateConfig()
 	Debug.Trace("MYC: Upkeep complete!")
 	Ready = True
@@ -148,7 +150,7 @@ Function DoInit()
 		;CharacterManager.DoInit()
 	EndIf
 
-	
+
 	;Wait(3)
 	;CharacterManager.SaveCurrentPlayer()
 	;Int i = 0
@@ -166,10 +168,20 @@ EndFunction
 Function DoUpgrade()
 	_Running = False
 	;version-specific upgrade code
-	If ModVersion < 50
-		Debug.MessageBox("Familiar Faces\nHEY! You REALLY need to start from a clean save! Upgrading from previous tests to this version is NOT SUPPORTED!\nHit ~ and type qqq in the console to quit now!")
+	If ModVersion < 90
+		Debug.MessageBox("Familiar Faces\nHEY! You REALLY need to start from a clean save! Upgrading from the beta to this version is NOT SUPPORTED!\nHit ~ and type qqq in the console to quit now!")
 		Debug.MessageBox("Familiar Faces\nI'm serious, there is so much stuff that's going to be broken if you keep going, and any bug reports you submit will be useless. PLEASE quit the game ASAP, do a clean install of FF, and try it again from scratch!")
 	EndIf
+	If ModVersion < 104
+		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
+		CharacterManager.SerializationVersion = 3
+		CharacterManager.RepairSaves()
+		CharacterManager.DoUpkeep()
+		ShrineOfHeroes.DoUpkeep()
+		ModVersion = 104
+		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
+	EndIf
+
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
 		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
@@ -183,6 +195,50 @@ Function DoUpgrade()
 	_Running = True
 	Debug.Trace("MYC: Upgrade complete!")
 EndFunction
+
+Function CheckCompatibilityModules()
+	If !CheckCompatibilityModule_EFF()
+		Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
+	EndIf
+
+EndFunction
+
+Bool Function CheckCompatibilityModule_EFF()
+	Quest vMYC_zCompat_EFFQuest = GetFormFromFile(0x0201eaf2,"vMYC_MeetYourCharacters.esp") as Quest
+	If !vMYC_zCompat_EFFQuest
+		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_EFFQuest!",1)
+		Return False
+	EndIf
+	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
+	If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
+		Debug.Trace("MYC:  EFF found!")
+		If !vMYC_zCompat_EFFQuest.IsRunning()
+			vMYC_zCompat_EFFQuest.Start()
+			Debug.Trace("MYC:  Started EFF compatibility module!")
+			If vMYC_zCompat_EFFQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		Else
+			Debug.Trace("MYC:  EFF compatibility module is already running.")
+			Return True
+		EndIf
+	Else
+		Debug.Trace("MYC:  EFF not found.")
+		If vMYC_zCompat_EFFQuest.IsRunning()
+			vMYC_zCompat_EFFQuest.Stop()
+			Debug.Trace("MYC:  Stopped EFF compatibility module!")
+			If !vMYC_zCompat_EFFQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		EndIf
+	EndIf
+	Return True
+EndFunction
+
 
 Function DoShutdown()
 	Ready = False
@@ -205,7 +261,7 @@ Bool Function CheckDependencies()
 	If fSKSE < 1.0700
 		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
 		Return False
-	Else 
+	Else
 		;Proceed
 	EndIf
 	If JContainers.APIVersion() != 2
@@ -214,7 +270,7 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	If SKSE.GetPluginVersion("chargen") != 2
+	If SKSE.GetPluginVersion("chargen") < 2
 		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.7.2 or higher, or at least the current version of CharGen.dll distributed with RaceMenu.\nThe mod will now shut down.")
 		Return False
 	Else

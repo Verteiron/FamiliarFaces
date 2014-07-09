@@ -1,4 +1,4 @@
-Scriptname vMYC_PortalStoneQuestScript extends Quest  
+Scriptname vMYC_PortalStoneQuestScript extends Quest
 {Give the player the portal script. This will be a bit more elaborate later.}
 
 ;--=== Imports ===--
@@ -29,7 +29,7 @@ ObjectReference _kPortalStone
 ;--=== Events ===--
 
 Event OnInit()
-	Debug.Trace("MYC/PortalStoneQuest: OnInit!")
+	;Debug.Trace("MYC/PortalStoneQuest: OnInit!")
 	RegisterForSingleUpdate(1.0)
 EndEvent
 

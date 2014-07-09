@@ -1,4 +1,4 @@
-Scriptname vMYC_PlayerLoadGameAliasScript extends ReferenceAlias  
+Scriptname vMYC_PlayerLoadGameAliasScript extends ReferenceAlias
 
 ;--=== Events ===--
 

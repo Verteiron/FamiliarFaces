@@ -1,4 +1,4 @@
-Scriptname vMYC_CharacterManagerScript extends Quest  
+Scriptname vMYC_CharacterManagerScript extends Quest
 {Save and restore character data independently of save files. Requires SKSE and PapyrusUtils}
 
 ;--=== Imports ===--
@@ -9,7 +9,7 @@ Import Game
 
 ;--=== Properties ===--
 
-Int Property SerializationVersion = 2 Auto Hidden
+Int Property SerializationVersion = 3 Auto Hidden
 
 String[] Property CharacterNames Hidden
 {List of character names}
@@ -48,9 +48,9 @@ String[] Property sHangoutNames Auto Hidden
 
 ReferenceAlias[] Property kHangoutRefAliases Auto Hidden
 
-ReferenceAlias	Property	CustomLocMarkerAlias	Auto 
+ReferenceAlias	Property	CustomLocMarkerAlias	Auto
 
-LocationAlias	Property	kLastPlayerLocation Auto 
+LocationAlias	Property	kLastPlayerLocation Auto
 
 LocationAlias[]	Property	kCustomLocations Auto
 
@@ -114,10 +114,10 @@ Faction Property CWSonsFaction Auto
 
 Quest Property CWSiegeObj Auto ; Battle for Solitude/Windhelm
 
-ReferenceAlias Property alias_MageCharacter Auto  
+ReferenceAlias Property alias_MageCharacter Auto
 {Hang around the College at Winterhold}
 
-ReferenceAlias Property alias_ThiefCharacter Auto  
+ReferenceAlias Property alias_ThiefCharacter Auto
 {Hang around Riften and the Ragged Flagon}
 
 ReferenceAlias Property alias_BardCharacter Auto
@@ -165,7 +165,7 @@ ReferenceAlias[] Property alias_CustomCharacters Auto
 Actor Property PlayerRef Auto
 {The Player, duh}
 
-ActorBase Property vMYC_InvisibleMActor	Auto 
+ActorBase Property vMYC_InvisibleMActor	Auto
 {Invisible actor for collecting custom weapons}
 
 Formlist Property vMYC_PlayerFormlist Auto
@@ -255,7 +255,7 @@ Float		_fLastPlayerPosZ
 
 Event OnInit()
 	_sCharacterNames = New String[128]
-	
+
 	_sAVNames = New String[86]
 	_sAVNames[00] = "Health"
 	_sAVNames[01] = "Magicka"
@@ -344,7 +344,7 @@ Event OnInit()
 
 	sHangoutNames = New String[32]
 	kHangoutRefAliases = New ReferenceAlias[32]
-	
+
 	sHangoutNames[0] = "$Winterhold College"
 	sHangoutNames[1] = "$The Ragged Flagon"
 	sHangoutNames[2] = "$Bard's College"
@@ -360,9 +360,9 @@ Event OnInit()
 	sHangoutNames[12] = "$Whiterun"
 	sHangoutNames[13] = "$Khajiit Caravan"
 	sHangoutNames[14] = "$Dushnikh Yal"
-	
-	kHangoutRefAliases[0] = alias_MageCharacter  
-	kHangoutRefAliases[1] = alias_ThiefCharacter  
+
+	kHangoutRefAliases[0] = alias_MageCharacter
+	kHangoutRefAliases[1] = alias_ThiefCharacter
 	kHangoutRefAliases[2] = alias_BardCharacter
 	kHangoutRefAliases[3] = alias_StormcloakCharacter
 	kHangoutRefAliases[4] = alias_ImperialCharacter
@@ -395,7 +395,7 @@ Event OnInit()
 ;13		Melee7
 ;14		Missile
 ;15		Tank1
-	
+
 	;CombatStyles match classes
 	kCombatStyles[0] = vMYC_CombatStyles.GetAt(0) as CombatStyle ; Default
 	kCombatStyles[1] = vMYC_CombatStyles.GetAt(7) as CombatStyle ; Assassin
@@ -433,7 +433,7 @@ Event OnSetLastPlayerLocation(string eventName, string strArg, float numArg, For
 	If sender as Location
 		_kLastPlayerLocation = sender as Location
 	EndIf
-	Debug.Trace("MYC: LastPlayerLocation is " + sender as Location + "(" + sender.GetName() + ")")
+	;Debug.Trace("MYC: LastPlayerLocation is " + sender as Location + "(" + sender.GetName() + ")")
 EndEvent
 
 Event OnSetLastPlayerCell(string eventName, string strArg, float numArg, Form sender)
@@ -441,7 +441,7 @@ Event OnSetLastPlayerCell(string eventName, string strArg, float numArg, Form se
 		JMap.setForm(_jMYC,"LastCell",sender as Cell)
 		_kLastPlayerCell = sender as Cell
 	EndIf
-	Debug.Trace("MYC: LastPlayerCell is " + sender as Cell + "(" + sender.GetName() + ")")
+	;Debug.Trace("MYC: LastPlayerCell is " + sender as Cell + "(" + sender.GetName() + ")")
 EndEvent
 
 Event OnSetLastPlayerPos(string eventName, string strArg, float numArg, Form sender)
@@ -452,7 +452,7 @@ Event OnSetLastPlayerPos(string eventName, string strArg, float numArg, Form sen
 	ElseIf strArg == "z"
 		_fLastPlayerPosZ = numArg
 	EndIf
-	Debug.Trace("MYC: LastPlayerPos is " + _fLastPlayerPosX + "," + _fLastPlayerPosY + "," + _fLastPlayerPosZ)
+	;Debug.Trace("MYC: LastPlayerPos is " + _fLastPlayerPosX + "," + _fLastPlayerPosY + "," + _fLastPlayerPosZ)
 EndEvent
 
 Event OnSetLocationAnchor(string eventName, string strArg, float numArg, Form sender)
@@ -461,13 +461,13 @@ Event OnSetLocationAnchor(string eventName, string strArg, float numArg, Form se
 		jLocationAnchors = JArray.Object()
 		JMap.setObj(_jMYC,"LocationAnchors",jLocationAnchors)
 	EndIf
-	Debug.Trace("MYC: LocationAnchor: " + sender)
+	;Debug.Trace("MYC: LocationAnchor: " + sender)
 	JArray.AddForm(jLocationAnchors,sender as ObjectReference)
-	Debug.Trace("MYC: LocationAnchor: " + sender + " added!")
+	;Debug.Trace("MYC: LocationAnchor: " + sender + " added!")
 EndEvent
 
 Event OnSetCustomLocation(Form sender, String sLocationName, Form kLocation, Form kCell, Form kAnchor1, Form kAnchor2, Form kAnchor3, Form kAnchor4, Form kAnchor5, Float fPlayerX, Float fPlayerY, Float fPlayerZ)
-	Debug.Trace("MYC: Received custom location!")
+	;Debug.Trace("MYC: Received custom location!")
 	Int jLocationData = JMap.Object()
 	JMap.setObj(_jMYC,"LocationData",jLocationData)
 	JMap.setStr(jLocationData,"LocationName",sLocationName)
@@ -483,11 +483,11 @@ Event OnSetCustomLocation(Form sender, String sLocationName, Form kLocation, For
 	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
 	JMap.setObj(jLocationData,"Position",jPlayerPos)
 EndEvent
-		
+
 ;--=== Functions ===--
 
 Function RegisterForModEvents()
-	Debug.Trace("MYC/CharacterManager: Registering for mod events...")
+	;Debug.Trace("MYC/CharacterManager: Registering for mod events...")
 	RegisterForModEvent("vMYC_SetCustomLocation","OnSetCustomLocation")
 EndFunction
 
@@ -512,7 +512,7 @@ Function DoInit()
 		_jMYC = JMap.object()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
-	RegisterForModEvents()	
+	RegisterForModEvents()
 	_kDummyActors = New ActorBase[128]
 	_kLoadedCharacters = New Actor[128]
 	Int i = vMYC_DummyActorsFList.GetSize()
@@ -531,7 +531,7 @@ Function DoInit()
 	idx = 0
 	While idx < _kDummyActors.Length
 		If _kDummyActors[idx]
-			;;Debug.Trace("MYC: Slot " + idx + " is ActorBase " + _kDummyActors[idx].GetName() + " " + _kDummyActors[idx])
+			;Debug.Trace("MYC: Slot " + idx + " is ActorBase " + _kDummyActors[idx].GetName() + " " + _kDummyActors[idx])
 ;			SetStringValue(_kDummyActors[idx],sKey + "Name","foo")
 ;			ExportFile(_kDummyActors[idx].GetName(),restrictForm = _kDummyActors[idx])
 		EndIf
@@ -540,7 +540,7 @@ Function DoInit()
 	LoadCharacterFiles()
 	If GetModByName("Dawnguard.esm") != 255
 		DLC1PlayingVampireLine = GetFormFromFile(0x0200587A,"Dawnguard.esm") as GlobalVariable
-		DLC1MQ02 = GetFormFromFile(0x02002F65,"Dawnguard.esm") as Quest 
+		DLC1MQ02 = GetFormFromFile(0x02002F65,"Dawnguard.esm") as Quest
 		DLC1MQ08 = GetFormFromFile(0x02007C25,"Dawnguard.esm") as Quest
 		DLC1VampireChange = GetFormFromFile(0x0200283B,"Dawnguard.esm") as Spell
 		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x02007CB6,"Dawnguard.esm")) ; Soul Tear
@@ -568,20 +568,20 @@ Function RefreshCharacters()
 			String sCharacterName = JFormMap.getStr(jActorMap,kActorBase)
 			Actor kTargetActor = GetCharacterActor(kActorBase)
 			If kTargetActor.Is3DLoaded()
-				Debug.Trace("MYC: Refreshing " + sCharacterName + ", ActorBase " + kActorBase)
+				;Debug.Trace("MYC: Refreshing " + sCharacterName + ", ActorBase " + kActorBase)
 				(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
 			Else
 				JArray.AddForm(jDeferredActors,kTargetActor)
 			EndIf
 		EndIf
 	EndWhile
-	JValue.Writetofile(jDeferredActors,"Data/vMYC/_jDeferredActors.json")
+	;JValue.Writetofile(jDeferredActors,"Data/vMYC/_jDeferredActors.json")
 	WaitMenuMode(8) ; Give loaded characters priority
 	i = JArray.Count(jDeferredActors)
 	While i > 0
 		i -= 1
 		Actor kTargetActor = JArray.getForm(jDeferredActors,i) as Actor
-		Debug.Trace("MYC: Refreshing Actor " + kTargetActor)
+		;Debug.Trace("MYC: Refreshing Actor " + kTargetActor)
 		(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
 	EndWhile
 	JValue.Release(jDeferredActors)
@@ -601,12 +601,17 @@ Function LoadCharacterFiles()
 		i -= 1
 		SetLocalInt(jArray.getStr(jCharacterNames,i),"FilePresent",0)
 	EndWhile
-	
-	Debug.Trace("MYC: Reading directory...")
+
+	;Debug.Trace("MYC: Reading directory...")
 	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
+	
+	JValue.Retain(jCharacterNames)
+	JValue.Retain(jDirectoryScan)
+	JValue.Retain(jCharFiles)
+	JValue.Retain(jCharData)
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
@@ -615,9 +620,10 @@ Function LoadCharacterFiles()
 		If ValidateCharacterInfo(jCharacterData) > -1
 			If UpgradeCharacterInfo(jCharacterData)
 				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				WaitMenuMode(0.25)
 			EndIf
 			String sCharacterName = JValue.solveStr(jCharacterData,".Name")
-			Debug.Trace("MYC: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - " + sCharacterName)
+			;Debug.Trace("MYC: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - " + sCharacterName)
 			If !JMap.hasKey(jCharacterMap,sCharacterName)
 				JMap.setStr(jCharacterMap,sCharacterName,JArray.getStr(jCharFiles,i))
 				Int jCharacterInfo = JMap.Object()
@@ -625,15 +631,22 @@ Function LoadCharacterFiles()
 				JMap.SetObj(jCharacterInfo,"Data",jCharacterData)
 				JMap.setObj(_jMYC,sCharacterName,jCharacterInfo)
 				SetLocalInt(sCharacterName,"FilePresent",1)
-				Debug.Trace("MYC: " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
+				;Debug.Trace("MYC: " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 			Else
 				;We're loading a file for a character we already have a record of.
 				Int jCharacterInfo = JMap.getObj(_jMYC,sCharacterName)
-				If JValue.solveFlt(jCharacterInfo,".Data._MYC.PlayTime") != JValue.solveFlt(jCharacterData,"._MYC.PlayTime")
+				Float fFilePlayTime = JValue.solveFlt(jCharacterData,"._MYC.PlayTime")
+				Float fLocalPlayTime = GetCharacterFlt(sCharacterName,"_MYC.PlayTime")
+				If !HasLocalKey(sCharacterName,"PlayTime") ; added to 1.0.3
+					SetLocalFlt(sCharacterName,"PlayTime",fLocalPlayTime)
+				EndIf
+				If fLocalPlayTime != fFilePlayTime
+					Debug.Trace("MYC: " + sCharacterName + "'s Local PlayTime is " + fLocalPlayTime + ", saved PlayTime is " + fFilePlayTime)
 					Debug.Trace("MYC: The saved data for " + sCharacterName + " HAS changed!")
+					;SetLocalFlt(sCharacterName,"PlayTime",fFilePlayTime)
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData)
 				Else
-					Debug.Trace("MYC: The saved data for " + sCharacterName + " hasn't changed.")
+					;Debug.Trace("MYC: The saved data for " + sCharacterName + " hasn't changed.")
 				EndIf
 				SetLocalInt(sCharacterName,"FilePresent",1)
 			EndIf
@@ -641,7 +654,7 @@ Function LoadCharacterFiles()
 			;Debug.Trace("MYC: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - No valid character data!")
 		EndIf
 	EndWhile
-	
+
 	;--- See if any existing characters lost their files
 	i = JArray.Count(jCharacterNames)
 	While i > 0
@@ -649,10 +662,15 @@ Function LoadCharacterFiles()
 		String sCharacterName = jArray.getStr(jCharacterNames,i)
 		If !GetLocalInt(sCharacterName,"FilePresent") && !GetLocalInt(sCharacterName,"ShowedMissingWarning")
 			SetLocalInt(sCharacterName,"ShowedMissingWarning",1)
-			Debug.Trace("MYC: The saved data for " + sCharacterName + " is missing! :(")
-			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! You can use MCM to remove (or restore) " + sCharacterName + "'s data from this session.")
+			;Debug.Trace("MYC: The saved data for " + sCharacterName + " is missing! :(")
+			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
 		EndIf
 	EndWhile
+	
+	JValue.Release(jCharacterNames)
+	JValue.Release(jDirectoryScan)
+	JValue.Release(jCharFiles)
+	JValue.Release(jCharData)
 EndFunction
 
 Int Function ValidateCharacterInfo(Int jCharacterData)
@@ -700,20 +718,103 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 	EndIf
 	iDataVer = JValue.solveInt(jCharacterData,"._MYC.SerializationVersion")
 	If iDataVer < SerializationVersion
-		;Debug.Trace("MYC: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
+		Debug.Trace("MYC: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
+		If iDataVer == 2 
+			Debug.Trace("MYC: Upgrading this file to serialization version 3...")
+			If !JValue.HasPath(jCharacterData,"._MYC.ReqList")
+				Debug.Trace("MYC: Attempting to generate character requirements, if this copy of the game is missing any they will not be added...")
+				
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Race"),"Race")
+				
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Left"),"Equipment")
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Right"),"Equipment")
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
+				
+				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
+			
+				Int jArmor = JValue.SolveObj(jCharacterData,".Equipment.Armor")
+				Int i = JArray.Count(jArmor)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jArmor,i),"Equipment")
+				EndWhile
+				
+				Int jHeadparts = JValue.SolveObj(jCharacterData,".Appearance.Headparts")
+				i = JArray.Count(jHeadparts)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jHeadparts,i),"Headpart")
+				EndWhile
+				
+				Int jPerks = JValue.SolveObj(jCharacterData,".Perks")
+				i = JArray.Count(jPerks)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jPerks,i),"Perk")
+				EndWhile
+				
+				Int jSpells = JValue.SolveObj(jCharacterData,".Spells")
+				i = JArray.Count(jSpells)
+				While i > 0
+					i -= 1
+					AddToReqList(jCharacterData,JArray.GetForm(jSpells,i),"Spell")
+				EndWhile
+			EndIf
+			JValue.SolveIntSetter(jCharacterData,"._MYC.SerializationVersion",3)
+			Debug.Trace("MYC: Finished upgrading the file!")
+			;JValue.WritetoFile("Data/vMYC/" + 
+			bUpgraded = True
+		EndIf
 		;Debug.Trace("MYC: Unfortunately no upgrade function is in place, so we'll just have to hope for the best!")
 	ElseIf iDataVer == SerializationVersion
 		;Debug.Trace("MYC: Data serialization is up to date!")
 	Else
-		;Debug.Trace("MYC: Data serialization is from a future version? Odd. We'll just have to hope it works.")
+		Debug.Trace("MYC: Data serialization is from a future version? Odd. We'll just have to hope it works.")
 	EndIf
 	Return bUpgraded
+EndFunction
+
+Function AddToReqList(Int jCharacterData, Form akForm, String asType)
+{Take the form and add its provider/source to the required mods list of the specified jCharacterData.}
+	If !jCharacterData || !akForm || !asType 
+		Return
+	EndIf
+	Int jMetaInfo = JMap.getObj(jCharacterData,"_MYC")
+	If !jMetaInfo
+		jMetaInfo = JMap.Object()
+		JMap.setObj(jCharacterData,"_MYC",jMetaInfo)
+	EndIf
+	Int jReqList = JMap.getObj(jMetaInfo,"ReqList")
+	If !jReqList
+		jReqList = JMap.Object()
+		JMap.setObj(jMetaInfo,"ReqList",jReqList)
+	EndIf
+	String sModName = GetModName(akForm.GetFormID() / 0x1000000)
+	If sModName
+		Int JModFormTypes = JMap.getObj(jReqList,sModName)
+		If !JModFormTypes
+			JModFormTypes = JMap.Object()
+			JMap.setObj(jReqList,sModName,JModFormTypes)
+		EndIf
+		If !JMap.HasKey(JModFormTypes,asType)
+			JMap.SetObj(JModFormTypes,asType,JArray.Object())
+		EndIf
+		Int jModFormList = JMap.getObj(JModFormTypes,asType)
+		String sFormName = akForm.GetName()
+		If !sFormName
+			sFormName = GetFormIDString(akForm)
+		EndIf
+		If JArray.FindStr(jModFormList,sFormName) < 0
+			JArray.AddStr(jModFormList,sFormName)
+		EndIf
+	EndIf
+			
 EndFunction
 
 ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
 	While _bFreeActorBaseBusy
-		Debug.Trace("MYC: Waiting for GetFreeActorBase...")
+		;Debug.Trace("MYC: Waiting for GetFreeActorBase...")
 		Wait(0.5)
 	EndWhile
 	_bFreeActorBaseBusy = True
@@ -814,7 +915,7 @@ Int Function AddCustomLocation(Int jLocationData)
 	String sLocationName = JMap.GetStr(jLocationData,"LocationName")
 	Location kLocation = JMap.GetForm(jLocationData,"Location") as Location
 	Cell kCell = JMap.GetForm(jLocationData,"Cell") as Cell
-	
+
 	ObjectReference kSpawnObject
 	ObjectReference[] kAnchorObjects = New ObjectReference[5]
 	Int jAnchorObjects = JMap.GetObj(jLocationData,"Anchors")
@@ -832,12 +933,12 @@ Int Function AddCustomLocation(Int jLocationData)
 	Float TargetX = JValue.SolveFlt(jLocationData,".Position.X")
 	Float TargetY = JValue.SolveFlt(jLocationData,".Position.Y")
 	Float TargetZ = JValue.SolveFlt(jLocationData,".Position.Z")
-	
-	Debug.Trace("MYC: Adding custom location: " + sLocationName)
-	Debug.Trace("MYC:   Location: " + kLocation)
-	Debug.Trace("MYC:       Cell: " + kCell)
-	Debug.Trace("MYC:    Anchors: " + iAnchorCount)
-	Debug.Trace("MYC:   Position: X: " + TargetX + ", Y: " + TargetY + ", Z:" + TargetZ)
+
+	;Debug.Trace("MYC: Adding custom location: " + sLocationName)
+	;Debug.Trace("MYC:   Location: " + kLocation)
+	;Debug.Trace("MYC:       Cell: " + kCell)
+	;Debug.Trace("MYC:    Anchors: " + iAnchorCount)
+	;Debug.Trace("MYC:   Position: X: " + TargetX + ", Y: " + TargetY + ", Z:" + TargetZ)
 
 	Int iEmptyIndex = -1
 	i = kCustomLocations.Length
@@ -845,7 +946,7 @@ Int Function AddCustomLocation(Int jLocationData)
 		i -= 1
 		Location kThisLocation = kCustomLocations[i].GetLocation()
 		If kLocation && kThisLocation == kLocation ; Even if !kLocation, we still need to find a empty spot
-			Debug.Trace("MYC:  Location already on the list!")
+			;Debug.Trace("MYC:  Location already on the list!")
 			Return -1 ; This location is already on the list
 		ElseIf !kThisLocation
 			iEmptyIndex = i
@@ -855,20 +956,20 @@ Int Function AddCustomLocation(Int jLocationData)
 	;--- If we got this far, then the new location is not on the list.
 	If kLocation
 		kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
-		Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+		;Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
 	ElseIf !kLocation
-		Debug.Trace("MYC:   No location form attached to this cell, assigning a custom one...")
+		;Debug.Trace("MYC:   No location form attached to this cell, assigning a custom one...")
 		kLocation = vMYC_CustomLocationsList.GetAt(iEmptyIndex) as Location
 		kLocation.SetName(sLocationName)
 		kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
-		Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
+		;Debug.Trace("MYC:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
 	EndIf
-	
-	Debug.Trace("MYC:    Finding space for new location on Hangouts list...")	
+
+	;Debug.Trace("MYC:    Finding space for new location on Hangouts list...")
 	Int iHOidx = sHangoutNames.Find("")
 	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
 	sHangoutNames[iHOidx] = sLocationName + " (Custom)"
-	Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
+	;Debug.Trace("MYC:    Added to Hangouts list at position " + iHOidx + "!")
 	If !CustomMapMarkers
 		CustomMapMarkers = New ObjectReference[32]
 	EndIf
@@ -876,7 +977,7 @@ Int Function AddCustomLocation(Int jLocationData)
 		CustomMapMarkers[iHOidx] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
 		CustomLocMarkerAlias.ForceRefTo(CustomMapMarkers[iHOidx]) ; Force target cell to load so we can get its data.
 		CustomMapMarkers[iHOidx].SetPosition(TargetX, TargetY, TargetZ)
-		Debug.Trace("MYC:    CustomMapMarker Placed, parent location is " + CustomMapMarkers[iHOidx].GetCurrentLocation() + ", cell is " + CustomMapMarkers[iHOidx].GetParentCell())
+		;Debug.Trace("MYC:    CustomMapMarker Placed, parent location is " + CustomMapMarkers[iHOidx].GetCurrentLocation() + ", cell is " + CustomMapMarkers[iHOidx].GetParentCell())
 		CustomLocMarkerAlias.Clear()
 	EndIf
 	Return iHOidx
@@ -896,7 +997,7 @@ Float Function GetCharacterAV(String asCharacterName,String asAVName)
 EndFunction
 
 Function SetCharacterEnabled(String asCharacterName, Bool abEnabled)
-	
+
 	ActorBase kTargetDummy = GetCharacterDummy(asCharacterName)
 	SetLocalInt(asCharacterName, "Enabled", abEnabled as Int)
 	Actor kTargetActor = GetCharacterActor(kTargetDummy)
@@ -936,9 +1037,9 @@ Function SetCharacterClass(String asCharacterName, Class akClass)
 EndFunction
 
 Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHangoutRefAlias)
-	
+
 	SetCharacterTracking(asCharacterName, False)
-	
+
 	Int i = 0
 	ActorBase kTargetDummy = GetCharacterDummy(asCharacterName)
 	Actor kTargetActor
@@ -952,13 +1053,13 @@ Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHango
 	EndWhile
 
 	If !akHangoutRefAlias.GetReference()
-		Int iHangoutIndex = JValue.solveInt(_jMYC,"." + asCharacterName + "._LocalData.HangoutIndex")
+		Int iHangoutIndex = GetLocalInt(asCharacterName,"HangoutIndex") ;JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData.HangoutIndex")
 		kHangoutRefAliases[iHangoutIndex].Clear()
 		akHangoutRefAlias.ForceRefTo(kTargetActor)
 		iHangoutIndex = kHangoutRefAliases.Find(akHangoutRefAlias)
 		SetLocalInt(asCharacterName, "HangoutIndex", iHangoutIndex)
 		;Debug.Trace("MYC: Set " + kTargetActor + " to HangoutIndex " + iHangoutIndex + " - " + akHangoutRefAlias)
-	Else 
+	Else
 		Return False
 	EndIf
 	SetCharacterTracking(asCharacterName, GetLocalInt(asCharacterName,"TrackingEnabled") as Bool)
@@ -979,58 +1080,97 @@ EndFunction
 
 Function RepairSaves()
 {Update/Repair saved files, fixing all known bugs and setting them to the latest revision}
-	Int i = 0
-	While i < _sCharacterNames.Length
 
+	Int jCharacterMap = JMap.Object()
+	If !JMap.hasKey(_jMYC,"CharacterList")
+		JMap.SetObj(_jMYC,"CharacterList",JMap.Object())
+	EndIf
+	jCharacterMap = JMap.getObj(_jMYC,"CharacterList")
+
+	Int jCharacterNames = JMap.allKeys(jCharacterMap)
+	;--- If there are any existing characters set their FilePresent to 0
+	Int i = JArray.Count(jCharacterNames)
+	While i > 0
+		i -= 1
+		SetLocalInt(jArray.getStr(jCharacterNames,i),"FilePresent",0)
 	EndWhile
+
+	;Debug.Trace("MYC: Reading directory...")
+	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Int jCharFiles = JMap.allKeys(jDirectoryScan)
+	Int jCharData = JMap.allValues(jDirectoryScan)
+	i = JMap.Count(jDirectoryScan)
+	
+	JValue.Retain(jCharacterNames)
+	JValue.Retain(jDirectoryScan)
+	JValue.Retain(jCharFiles)
+	JValue.Retain(jCharData)
+	
+	;--- Load and validate all files in the data directory
+	While i > 0
+		i -= 1
+		Int jCharacterData = JArray.getObj(jCharData,i)
+		If ValidateCharacterInfo(jCharacterData) > -1
+			If UpgradeCharacterInfo(jCharacterData)
+				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				WaitMenuMode(0.25)
+			EndIf
+		EndIf
+	EndWhile
+
+	JValue.Release(jCharacterNames)
+	JValue.Release(jDirectoryScan)
+	JValue.Release(jCharFiles)
+	JValue.Release(jCharData)
+
 EndFunction
 
 Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
-	Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter called!")
+	;Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter called!")
 	If !bConfirm
-		Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
+		;Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
 		Return
 	EndIf
-	Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter was confirmed. Byebye, " + asCharacterName + "...")
+	;Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter was confirmed. Byebye, " + asCharacterName + "...")
 ;	Wait(0.1)
-	Debug.Trace("MYC: Int jActorBaseMap = JMap.getObj(_jMYC,ActorBaseMap)")
+	;Debug.Trace("MYC: Int jActorBaseMap = JMap.getObj(_jMYC,ActorBaseMap)")
 	Int jActorBaseMap = JMap.getObj(_jMYC,"ActorBaseMap")
 ;	Wait(0.1)
-	Debug.Trace("MYC: Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)")
+	;Debug.Trace("MYC: Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)")
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
 ;	Wait(0.1)
-	Debug.Trace("MYC: ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)")
+	;Debug.Trace("MYC: ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)")
 	ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)
 ;	Wait(0.1)
-	Debug.Trace("MYC: Actor kDeadActor = GetCharacterActorByName(asCharacterName)")
+	;Debug.Trace("MYC: Actor kDeadActor = GetCharacterActorByName(asCharacterName)")
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
 ;	Wait(0.1)
-	Debug.Trace("MYC: Int jCharacterList = JMap.getObj(_jMYC,CharacterList)")
+	;Debug.Trace("MYC: Int jCharacterList = JMap.getObj(_jMYC,CharacterList)")
 	Int jCharacterList = JMap.getObj(_jMYC,"CharacterList")
 ;	Wait(0.1)
-	Debug.Trace("MYC: Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)")
+	;Debug.Trace("MYC: Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)")
 	Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)
 ;	Wait(0.1)
 	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
 	_kLoadedCharacters[iLCidx] = None
-	Debug.Trace("MYC: SetLocalInt(asCharacterName,Enabled,0)")
+	;Debug.Trace("MYC: SetLocalInt(asCharacterName,Enabled,0)")
 	SetLocalInt(asCharacterName,"Enabled",0)
 	Debug.Trace("MYC: SetLocalInt(asCharacterName,DoNotLoad,1)")
 	SetLocalInt(asCharacterName,"DoNotLoad",1)
-	Debug.Trace("MYC: SetLocalForm(asCharacterName,ActorBase,None)")
+	;Debug.Trace("MYC: SetLocalForm(asCharacterName,ActorBase,None)")
 	SetLocalForm(asCharacterName,"ActorBase",None)
-	Debug.Trace("MYC: JDB.writetoFile")
-	JDB.writeToFile("Data/vMYC/jdb_preformdelete.json")
-	Debug.Trace("MYC: SetLocalForm(asCharacterName,Actor,None)")
+	;Debug.Trace("MYC: JDB.writetoFile")
+	;JDB.writeToFile("Data/vMYC/jdb_preformdelete.json")
+	;Debug.Trace("MYC: SetLocalForm(asCharacterName,Actor,None)")
 	SetLocalForm(asCharacterName,"Actor",None)
 ;	Wait(0.1)
-	Debug.Trace("MYC: JMap.Clear(jDeadManWalking)")
+	;Debug.Trace("MYC: JMap.Clear(jDeadManWalking)")
 	JMap.Clear(jDeadManWalking)
 ;	Wait(0.1)
-	Debug.Trace("MYC: JArray.eraseIndex(jCharacterList,iDeadManIndex)")
+	;Debug.Trace("MYC: JArray.eraseIndex(jCharacterList,iDeadManIndex)")
 	JArray.eraseIndex(jCharacterList,iDeadManIndex)
 ;	Wait(0.1)
-	Debug.Trace("MYC: JFormMap.removeKey(jActorBaseMap,kDeadActorBase)")
+	;Debug.Trace("MYC: JFormMap.removeKey(jActorBaseMap,kDeadActorBase)")
 	JFormMap.removeKey(jActorBaseMap,kDeadActorBase)
 ;	Wait(0.1)
 	;kDeadActor.Disable(True)
@@ -1039,16 +1179,149 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
 EndFunction
 
 Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool abConjuration = True, Bool abDestruction = True, Bool abIllusion = True, Bool abRestoration = True, Bool abOther = True)
-	
+
 	SetLocalInt(sCharacterName,"MagicAllowAlteration",abAlteration as Int)
 	SetLocalInt(sCharacterName,"MagicAllowConjuration",abConjuration as Int)
 	SetLocalInt(sCharacterName,"MagicAllowDestruction",abDestruction as Int)
 	SetLocalInt(sCharacterName,"MagicAllowIllusion",abIllusion as Int)
 	SetLocalInt(sCharacterName,"MagicAllowRestoration",abRestoration as Int)
 	SetLocalInt(sCharacterName,"MagicAllowOther",abOther as Int)
-	
+
 	SendModEvent("vMYC_UpdateCharacterSpellList",sCharacterName)
+
+EndFunction
+
+Int Function ApplyCharacterWeapons(String sCharacterName)
+	Int i
+	Int iCount
+	While _bBusyEquipment
+		Wait(1.0)
+	EndWhile
+	_bBusyEquipment = True
+	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipped weapons...")
+	SetLocalInt(sCharacterName,"BowEquipped",0)
+	;SetLocalInt(sCharacterName,"SpellEquipped",0)
+
+	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
 	
+	Int jCustomItems = GetCharacterObj(sCharacterName,"InventoryCustomItems")
+	
+	i = JArray.Count(jCustomItems)
+	;Debug.Trace("MYC: (" + sCharacterName + ") has " + i + " items to be customized!")
+	While i > 0
+		i -= 1
+		Int jItem = JArray.GetObj(jCustomItems,i)
+		LoadWeapon(kCharacterActor,jItem,1,False)
+		iCount += 1
+	EndWhile
+
+	Int iHand = 1 ; start with right
+	While iHand >= 0
+		Bool bTwoHanded = False
+		String sHand = "Right"
+		If iHand == 0
+			sHand = "Left"
+		EndIf
+		Int jItem = GetCharacterObj(sCharacterName,"Equipment." + sHand)
+		LoadWeapon(kCharacterActor, jItem, iHand,False)
+		;If iHand == 1 ; Equip in proper hand and prevent removal
+			;kCharacterActor.UnEquipItem(kItem)
+			;kCharacterActor.EquipItemEx(kItem,1,True) ; Right
+		;ElseIf !bTwoHanded
+			;kCharacterActor.UnEquipItem(kItem)
+			;kCharacterActor.EquipItemEx(kItem,2,True) ; Left
+		;EndIf
+		iHand -= 1
+		iCount += 1
+		If bTwoHanded ; skip left hand
+			;Debug.Trace("MYC: (" + sCharacterName + ") two-handed weapon, so skipping further processing...")
+			iHand -= 1
+			iCount -= 1
+		EndIf
+	EndWhile
+	;Debug.Trace("MYC: (" + sCharacterName + ") Equipping power!")
+	;kCharacterActor.EquipItemEx(GetCharacterForm(sCharacterName,"Equipment.Voice"),0)
+	
+	_bBusyEquipment = False
+
+	If GetLocalInt(sCharacterName,"BowEquipped") == 0 && GetLocalForm(sCharacterName,"AmmoDefault")
+		kCharacterActor.UnEquipItem(GetLocalForm(sCharacterName,"AmmoDefault"))
+	EndIf
+	
+	Return iCount
+EndFunction
+
+Int Function ApplyCharacterArmor(String sCharacterName)
+	Int i
+	Int iCount
+	
+	While _bBusyEquipment
+		Wait(1.0)
+	EndWhile
+	_bBusyEquipment = True
+	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipment...")
+
+	Int jCharacterArmor = GetCharacterObj(sCharacterName,"Equipment.Armor")
+	Int jCharacterArmorInfo = GetCharacterObj(sCharacterName,"Equipment.ArmorInfo")
+
+	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
+	
+	i = JArray.Count(jCharacterArmorInfo)
+	While i > 0
+		i -= 1
+		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
+		Form kItem = JMap.GetForm(jArmor,"Form")
+		If kItem
+			If kCharacterActor.GetItemCount(kItem)
+				kCharacterActor.RemoveItem(kItem)
+			EndIf
+			kCharacterActor.AddItem(kItem)
+			kCharacterActor.EquipItemEx(kItem,0,True)
+			iCount += 1
+			Int h = (kItem as Armor).GetSlotMask()
+			;Debug.Trace("MYC: (" + sCharacterName + ") setting up " + kItem.GetName() + "...")
+			Enchantment kItemEnchantment = JMap.GetForm(jArmor,"Enchantment") as Enchantment
+			If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is enchanted!")
+				WornObject.SetEnchantment(kCharacterActor,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
+				;WornObject.SetItemCharge(
+			EndIf
+			If JMap.GetInt(jArmor,"IsCustom")
+				String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
+				WornObject.SetItemHealthPercent(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemHealthPercent"))
+				WornObject.SetItemMaxCharge(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemMaxCharge"))
+				If sDisplayName ; Will be blank if player hasn't renamed the item
+					WornObject.SetDisplayName(kCharacterActor,1,h,sDisplayName)
+				EndIf
+
+				Float[] fMagnitudes = New Float[8]
+				Int[] iDurations = New Int[8]
+				Int[] iAreas = New Int[8]
+				MagicEffect[] kMagicEffects = New MagicEffect[8]
+
+				If JValue.solveInt(jArmor,".Enchantment.IsCustom")
+					Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
+					;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
+					Int j = 0
+					Int jArmorEnchEffects = JValue.SolveObj(jArmor,".Enchantment.Effects")
+					While j < iNumEffects
+						Int jArmorEnchEffect = JArray.getObj(jArmorEnchEffects,j)
+						fMagnitudes[j] = JMap.GetFlt(jArmorEnchEffect,"Magnitude")
+						iDurations[j] = JMap.GetFlt(jArmorEnchEffect,"Duration") as Int
+						iAreas[j] = JMap.GetFlt(jArmorEnchEffect,"Area") as Int
+						kMagicEffects[j] = JMap.GetForm(jArmorEnchEffect,"MagicEffect") as MagicEffect
+						j += 1
+					EndWhile
+					WornObject.CreateEnchantment(kCharacterActor, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
+				EndIf
+			EndIf
+		EndIf
+	EndWhile
+
+	_bBusyEquipment = False
+	
+	Return iCount
 EndFunction
 
 Int Function ApplyCharacterPerks(String sCharacterName)
@@ -1060,17 +1333,30 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 	vMYC_Perklist.Revert()
 	Int jCharacterPerks = GetCharacterObj(sCharacterName,"Perks")
 	Int i = JArray.Count(jCharacterPerks)
+	Int iMissingCount = 0
 	While i > 0
 		i -= 1
 		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
+		If !kPerk
+			iMissingCount += 1
+		Else 
+			vMYC_PerkList.AddForm(kPerk)		
+		EndIf
+		;Debug.Trace("MYC: (" + sCharacterName + ") Perk is from " + JArray.getStr(jCharacterPerks,i))
 		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
-		vMYC_PerkList.AddForm(kPerk)
 	EndWhile
-	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
-	If vMYC_PerkList.GetSize() != JArray.Count(jCharacterPerks)
+	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	If vMYC_PerkList.GetSize() + iMissingCount != JArray.Count(jCharacterPerks)
 		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyPerksBusy = False
 		Return -1
+	ElseIf vMYC_PerkList.GetSize() == 0
+		;Debug.Trace("MYC: (" + sCharacterName + ") PerkList size is 0. Won't attempt to apply this.")
+		_bApplyPerksBusy = False
+		Return 0
+	EndIf
+	If iMissingCount
+		Debug.Trace("MYC: (" + sCharacterName + ") Perklist loaded with " + iMissingCount + " skipped, probably due to missing mods.",1)
 	EndIf
 	FFUtils.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
@@ -1090,18 +1376,18 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	While i > 0
 		i -= 1
 		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
-		Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 		vMYC_ShoutList.AddForm(kShout)
 	EndWhile
-	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
+	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
 	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
 		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyShoutsBusy = False
 		Return -1
 	ElseIf vMYC_ShoutList.GetSize() == 0
-		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Aborting!",1)
+		;Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
-		Return -1
+		Return 0
 	EndIf
 	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
 	WaitMenuMode(0.1)
@@ -1111,7 +1397,7 @@ EndFunction
 
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	Form kEquippedAmmo
-	
+
 	;Debug.Trace("MYC: (" + sCharacterName + ") Creating dummy's inventory...")
 	Int jCharacterInventory = GetCharacterObj(sCharacterName,"Inventory")
 	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
@@ -1119,7 +1405,7 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	Int jInvForms = JFormMap.allKeys(jCharacterInventory)
 	Int jInvCounts = JFormMap.allValues(jCharacterInventory)
 	Int iLastGoldValue = 0
-		
+
 	If abResetAll
 		kCharacterActor.RemoveAllItems()
 	EndIf
@@ -1132,8 +1418,8 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 				Int iItemCount = kCharacterActor.GetItemCount(kItem)
 				If iItemCount
 					kCharacterActor.RemoveItem(kItem,iItemCount)
-					kCharacterActor.AddItem(kItem,iItemCount)
-				Else 
+					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
+				Else
 					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				EndIf
 				;Debug.Trace("MYC: (" + sCharacterName + ") Ammo " + kItem.GetName() + " value is " + kItem.GetGoldValue() + ", iLastGoldValue is " + iLastGoldValue)
@@ -1147,12 +1433,12 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	EndWhile
 	If kEquippedAmmo
 		kCharacterActor.EquipItem(kEquippedAmmo) ; Equip ammo but allow character to remove it, otherwise bow behavior gets messed up
-		Debug.Trace("MYC: (" + sCharacterName + ") Ammo equipped: " + kEquippedAmmo.GetName())
+		;Debug.Trace("MYC: (" + sCharacterName + ") Ammo equipped: " + kEquippedAmmo.GetName())
 	EndIf
 EndFunction
 
 Bool Function LoadCharacter(String sCharacterName)
-	Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter called!")
+	;Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter called!")
 	Int i = 0
 	WaitMenuMode(RandomFloat(0.0,2.0)) ; Stagger startup slightly to be a little friendlier to the threading
 	While _bBusyLoading
@@ -1160,38 +1446,38 @@ Bool Function LoadCharacter(String sCharacterName)
 		Wait(1)
 	EndWhile
 	_bBusyLoading = True
-	
+
 	;----Load Character data from _jMYC--------------
 
 	Int jCharacterData
-	
+
 	If JValue.hasPath(_jMYC,"." + sCharacterName + ".Data")
-		Debug.Trace("MYC: (" + sCharacterName + ") Loading character data from _jMYC...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") Loading character data from _jMYC...")
 		jCharacterData = JValue.solveObj(_jMYC,"." + sCharacterName + ".Data")
-		Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")	
+		;Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 	Else
-		Debug.Trace("MYC: (" + sCharacterName + ") No _jMYC data for " + sCharacterName + "! BUT, we'll try loading a file by that name, just in case...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") No _jMYC data for " + sCharacterName + "! BUT, we'll try loading a file by that name, just in case...")
 		Int jCharacterFileData = JValue.ReadFromFile("Data/vMYC/" + sCharacterName + ".char.json")
 		If jCharacterFileData
-			Debug.Trace("MYC: (" + sCharacterName + ") Okay, weird, we apparently have data for this character after all and the character list is desynced.")
+			;Debug.Trace("MYC: (" + sCharacterName + ") Okay, weird, we apparently have data for this character after all and the character list is desynced.")
 			Int jCharacterTopLevel = JMap.Object()
 			JMap.SetObj(jCharacterTopLevel,"Data",jCharacterFileData)
 			JMap.setObj(_jMYC,sCharacterName,jCharacterTopLevel)
 			jCharacterData = JValue.solveObj(_jMYC,"." + sCharacterName + ".Data")
 		Else
-			Debug.Trace("MYC: (" + sCharacterName + ") Nope, no data, no file, no ticky, no shirty. ABORT! ABORT!")
+			;Debug.Trace("MYC: (" + sCharacterName + ") Nope, no data, no file, no ticky, no shirty. ABORT! ABORT!")
 			_bBusyLoading = False
 			Return False
 		EndIf
 	EndIf
-	
+
 	Int iHOidx = AddCustomLocation(JMap.getObj(jCharacterData,"LocationData"))
-	
+
 	;----Load or create ActorBaseMap--------------
-	
+
 	Int jActorBaseMap
 	If !JMap.hasKey(_jMYC,"ActorBaseMap")
-		Debug.Trace("MYC: (" + sCharacterName + ") First character load on this save, creating ActorBaseMap...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") First character load on this save, creating ActorBaseMap...")
 		jActorBaseMap = JFormMap.Object()
 		JMap.setObj(_jMYC,"ActorBaseMap",jActorBaseMap)
 	Else
@@ -1199,13 +1485,13 @@ Bool Function LoadCharacter(String sCharacterName)
 	EndIf
 
 	;----Check if this character is already loaded--------------
-	
-	Debug.Trace("MYC: (" + sCharacterName + ") Finding ActorBase for " + sCharacterName + "...")	
+
+	;Debug.Trace("MYC: (" + sCharacterName + ") Finding ActorBase for " + sCharacterName + "...")
 	ActorBase DummyActorBase = GetLocalForm(sCharacterName,"ActorBase") as ActorBase
 	Actor PlayerDupe = GetLocalForm(sCharacterName,"Actor") as Actor
-	
+
 	If PlayerDupe ; Already been loaded
-		Debug.Trace("MYC: (" + sCharacterName + ") This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + PlayerDupe)
+		;Debug.Trace("MYC: (" + sCharacterName + ") This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + PlayerDupe)
 		SetLocalInt(sCharacterName,"Enabled", 1)
 		PlayerDupe.RemoveallItems()
 		;PlayerDupe.Enable()
@@ -1214,47 +1500,47 @@ Bool Function LoadCharacter(String sCharacterName)
 		;_bBusyLoading = False
 		;Return True
 	EndIf
-	
+
 	;----Get ActorBase for character--------------
-	
+
 	If !DummyActorBase ; Not loaded on this save session
-		Debug.Trace("MYC: (" + sCharacterName + ") No saved ActorBase found, getting a new one...")
+		;Debug.Trace("MYC: (" + sCharacterName + ") No saved ActorBase found, getting a new one...")
 		DummyActorBase = GetFreeActorBase(JMap.getInt(jCharacterData,"Sex"))
 		If !DummyActorBase ; Not loaded on this save session
-			Debug.Trace("MYC: (" + sCharacterName + ") Could not find available ActorBase for " + sCharacterName + "!")
+			;Debug.Trace("MYC: (" + sCharacterName + ") Could not find available ActorBase for " + sCharacterName + "!")
 			_bBusyLoading = False
 			Return False
 		EndIf
 	EndIf
-	Debug.Trace("MYC: (" + sCharacterName + ") ActorBase will use " + DummyActorBase + "!")
+	;Debug.Trace("MYC: (" + sCharacterName + ") ActorBase will use " + DummyActorBase + "!")
 	SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
-	
+
 	JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
-	
+
 	;----Load Actor and begin setting up the ActorBase--------------
-	
+
 	DummyActorBase.SetEssential(True)
 	DummyActorBase.SetName(sCharacterName)
 	PlayerDupe = GetCharacterActor(DummyActorBase)
-	
+
 	ApplyCharacterPerks(sCharacterName)
-	
+
 	If !PlayerDupe
 		PlayerDupe = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
 	EndIf
-	
+
 	;-----==== NIOverride support ====-----
-	
+
 	;-----====                    ====-----
-	
-	
-	Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + PlayerDupe)
+
+
+	;Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + PlayerDupe)
 	SetLocalForm(sCharacterName,"Actor",PlayerDupe)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Made it through SetLocalForm...")
 	vMYC_CharacterDummyActorScript CharacterDummy = PlayerDupe as vMYC_CharacterDummyActorScript
 	CharacterDummy.NeedRefresh = True
 	SetLocalForm(sCharacterName,"Script",CharacterDummy)
-
+	SetLocalInt(sCharacterName,"TrackingEnabled",0)
 	;Wait(0.5) ; Don't remove this, the following statement locks up without it, god knows why
 	;Debug.Trace("MYC: (" + sCharacterName + ") About to set CharacterDummy.CharacterName property...")
 	CharacterDummy.CharacterName = JMap.getStr(jCharacterData,"Name")
@@ -1263,7 +1549,7 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	CharacterDummy.CharacterRace = JValue.solveForm(jCharacterData,".Race") as Race
 	;Debug.Trace("MYC: (" + sCharacterName + ") Stored race is " + CharacterDummy.CharacterRace + "!")
-	
+
 	;Debug.Trace("MYC: (" + sCharacterName + ") Setting voicetype to " + JValue.solveForm(jCharacterData,".Race") as VoiceType)
 	DummyActorBase.SetVoiceType(JValue.solveForm(jCharacterData,".Race") as VoiceType)
 
@@ -1273,82 +1559,26 @@ Bool Function LoadCharacter(String sCharacterName)
 	CharacterDummy.DoInit()
 	_bBusyLoading = False
 
-	;----Load and equip armor--------------	
-	
-	While _bBusyEquipment
-		Wait(1.0)
-	EndWhile
-	_bBusyEquipment = True
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipment...")
-	
-	Int jCharacterArmor = JValue.solveObj(jCharacterData,".Equipment.Armor")
-	Int jCharacterArmorInfo = JValue.solveObj(jCharacterData,".Equipment.ArmorInfo")
-	
-	i = JArray.Count(jCharacterArmorInfo)
-	While i > 0
-		i -= 1
-		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
-		Form kItem = JMap.GetForm(jArmor,"Form")
-		If kItem
-			PlayerDupe.AddItem(kItem)
-			PlayerDupe.EquipItemEx(kItem,0,True)
-			Int h = (kItem as Armor).GetSlotMask()
-			;Debug.Trace("MYC: (" + sCharacterName + ") setting up " + kItem.GetName() + "...")
-			Enchantment kItemEnchantment = JMap.GetForm(jArmor,"Enchantment") as Enchantment
-			If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is enchanted!")
-				WornObject.SetEnchantment(PlayerDupe,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
-				;WornObject.SetItemCharge(
-			EndIf
-			If JMap.GetInt(jArmor,"IsCustom")
-				String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
-				WornObject.SetItemHealthPercent(PlayerDupe,1,h,JMap.GetFlt(jArmor,"ItemHealthPercent"))
-				WornObject.SetItemMaxCharge(PlayerDupe,1,h,JMap.GetFlt(jArmor,"ItemMaxCharge"))
-				If sDisplayName ; Will be blank if player hasn't renamed the item
-					WornObject.SetDisplayName(PlayerDupe,1,h,sDisplayName)
-				EndIf
+	;----Load and equip armor--------------
 
-				Float[] fMagnitudes = New Float[4]
-				Int[] iDurations = New Int[4]
-				Int[] iAreas = New Int[4]
-				MagicEffect[] kMagicEffects = New MagicEffect[4]
-				
-				If JValue.solveInt(jArmor,".Enchantment.IsCustom")
-					Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
-					;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")				
-					Int j = 0
-					Int jArmorEnchEffects = JValue.SolveObj(jArmor,".Enchantment.Effects")
-					While j < iNumEffects
-						Int jArmorEnchEffect = JArray.getObj(jArmorEnchEffects,j)
-						fMagnitudes[j] = JMap.GetFlt(jArmorEnchEffect,"Magnitude")
-						iDurations[j] = JMap.GetFlt(jArmorEnchEffect,"Duration") as Int
-						iAreas[j] = JMap.GetFlt(jArmorEnchEffect,"Area") as Int
-						kMagicEffects[j] = JMap.GetForm(jArmorEnchEffect,"MagicEffect") as MagicEffect
-						j += 1
-					EndWhile
-					WornObject.CreateEnchantment(PlayerDupe, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
-				EndIf
-			EndIf
-		EndIf
-	EndWhile
-
-	_bBusyEquipment = False
+	Int iArmorCount = ApplyCharacterArmor(sCharacterName)
+	
+	
 	;----Populate inventory--------------
-	
+
 	PopulateInventory(sCharacterName)
-	
-	;----Add spells--------------	
 
-	SetAllowedSpells(sCharacterName)
+	;----Add spells--------------
 
-	;;Debug.Trace("MYC: (" + sCharacterName + ") Setting the dummy's actor values...")
+	SetLocalInt(sCharacterName,"MagicAutoSelect",1)
+
+	;Debug.Trace("MYC: (" + sCharacterName + ") Setting the dummy's actor values...")
 	;i = 0
 	;While i < _sAVNames.Length
 		;If _sAVNames[i]
 			;Float fAV = GetFloatValue(DummyActorBase,sKey + "Stat.AV." + _sAVNames[i])
 			;PlayerDupe.ForceActorValue(_sAVNames[i],fAV)
-			;;Debug.Trace("MYC: (" + sCharacterName + ") Set dummy's " + _sAVNames[i] + " to " + fAV)
+			;Debug.Trace("MYC: (" + sCharacterName + ") Set dummy's " + _sAVNames[i] + " to " + fAV)
 		;EndIf
 		;i += 1
 	;EndWhile
@@ -1359,59 +1589,13 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	PlayerDupe.Enable(True)
 	Wait(1)
-	
-	;----Load and equip weapons/hand gear--------------	
-	While _bBusyEquipment
-		Wait(1.0)
-	EndWhile
-	_bBusyEquipment = True
-	Debug.Trace("MYC: (" + sCharacterName + ") Setting equipped weapons...")
-	SetLocalInt(sCharacterName,"BowEquipped",0)
-	;SetLocalInt(sCharacterName,"SpellEquipped",0)
-	
-	Int jCustomItems = JValue.solveObj(jCharacterData,".InventoryCustomItems")
-	i = JArray.Count(jCustomItems)
-	Debug.Trace("MYC: (" + sCharacterName + ") has " + i + " items to be customized!")
-	While i > 0
-		i -= 1
-		Int jItem = JArray.GetObj(jCustomItems,i)
-		LoadWeapon(PlayerDupe,jItem,1,False)
-	EndWhile
-	
-	Int iHand = 1 ; start with right
-	While iHand >= 0
-		Bool bTwoHanded = False
-		String sHand = "Right"
-		If iHand == 0
-			sHand = "Left"
-		EndIf
-		Int jItem = JValue.solveObj(jCharacterData,".Equipment." + sHand)
-		LoadWeapon(PlayerDupe, jItem, iHand,False)
-		;If iHand == 1 ; Equip in proper hand and prevent removal
-			;PlayerDupe.UnEquipItem(kItem)
-			;PlayerDupe.EquipItemEx(kItem,1,True) ; Right
-		;ElseIf !bTwoHanded
-			;PlayerDupe.UnEquipItem(kItem)
-			;PlayerDupe.EquipItemEx(kItem,2,True) ; Left
-		;EndIf
-		iHand -= 1
-		If bTwoHanded ; skip left hand
-			;Debug.Trace("MYC: (" + sCharacterName + ") two-handed weapon, so skipping further processing...")				
-			iHand -= 1
-		EndIf
-	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Equipping power!")
-	PlayerDupe.EquipItemEx(JValue.solveForm(jCharacterData,".Equipment.Voice"),0)
 
-	_bBusyEquipment = False
+	;----Load and equip weapons/hand gear--------------
+	Int iWeaponCount = ApplyCharacterWeapons(sCharacterName)
 
-	If GetLocalInt(sCharacterName,"BowEquipped") == 0 && GetLocalForm(sCharacterName,"AmmoDefault")
-		PlayerDupe.UnEquipItem(GetLocalForm(sCharacterName,"AmmoDefault"))
-	EndIf
-	
 	SetLocalInt(sCharacterName,"Enabled", 1)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Enabling dummy...")
-	
+
 	SetLocalInt(sCharacterName,"HangoutIndexDefault",-1)
 	SetLocalInt(sCharacterName,"HangoutIndex",-1)
 	PickHangout(sCharacterName)
@@ -1434,7 +1618,10 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 			SetLocalInt(sCharacterName,"BowEquipped",1)
 		EndIf
 		;Debug.Trace("MYC: (" + sCharacterName + ") adding " + kItem.GetName() +"...")
-		If !(bTwoHanded && iHand == 0) 
+		If !(bTwoHanded && iHand == 0)
+			If kCharacterActor.GetItemCount(kItem)
+				kCharacterActor.RemoveItem(kItem)
+			EndIf
 			kCharacterActor.AddItem(kItem)
 		EndIf
 		;Wait(1)
@@ -1451,10 +1638,10 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 		;kCharacterActor.DrawWeapon()
 		;Wait(1)
 		;kCharacterActor.EquipItemEx(kItem)
-		
+
 		If JMap.getInt(jItem,"IsCustom")
 			String sDisplayName = JMap.getStr(jItem,"DisplayName")
-			Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
+			;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
 			;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetItemHealthPercent(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemHealthPercent"))
 			WornObject.SetItemHealthPercent(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemHealthPercent"))
 			;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetItemMaxCharge(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemMaxCharge"))
@@ -1464,14 +1651,14 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 				WornObject.SetDisplayName(kCharacterActor,iHand,0,sDisplayName)
 			EndIf
 
-			Float[] fMagnitudes = New Float[4]
-			Int[] iDurations = New Int[4]
-			Int[] iAreas = New Int[4]
-			MagicEffect[] kMagicEffects = New MagicEffect[4]
+			Float[] fMagnitudes = New Float[8]
+			Int[] iDurations = New Int[8]
+			Int[] iAreas = New Int[8]
+			MagicEffect[] kMagicEffects = New MagicEffect[8]
 			;Wait(1)
 			If JValue.solveInt(jItem,".Enchantment.IsCustom")
 				Int iNumEffects = JValue.solveInt(jItem,".Enchantment.NumEffects")
-				Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
+				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
 				Int j = 0
 				Int jWeaponEnchEffects = JValue.SolveObj(jItem,".Enchantment.Effects")
 				While j < iNumEffects
@@ -1484,7 +1671,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 				EndWhile
 				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " creating custom enchantment...")
 				WornObject.CreateEnchantment(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
-				
+
 				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " done!")
 			EndIf
 			If iHand == 1
@@ -1604,18 +1791,18 @@ ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
 	sCommonCities[2] = "Morthal"
 	sCommonCities[3] = "Falkreath"
 	sCommonCities[4] = "Whiterun"
-	
+
 	ReferenceAlias[] kCityAliases = New ReferenceAlias[5]
 	kCityAliases[0] = alias_DawnstarCharacter
 	kCityAliases[1] = alias_MarkarthCharacter
 	kCityAliases[2] = alias_MorthalCharacter
 	kCityAliases[3] = alias_FalkreathCharacter
 	kCityAliases[4] = alias_WhiterunCharacter
-	
+
 	Int iCityPick = RandomInt(0,4)
 
 	;FIXME: There is no spawnpoint/package for the Dark Brotherhood, but there probably should be.
-	
+
 	If sSpawnPoints.Find("Mage") > -1 && !alias_MageCharacter.GetReference()
 		Return alias_MageCharacter
 	ElseIf sSpawnPoints.Find("Blade") > -1 && !alias_BladeCharacter.GetReference()
@@ -1640,7 +1827,7 @@ ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
 		Return kCityAliases[iCityPick]
 	Else ; Try all cities in order
 		Int i = 0
-		While i < kCityAliases.Length 
+		While i < kCityAliases.Length
 			If sSpawnPoints.Find(sCommonCities[i]) > -1 && !kCityAliases[i].GetReference()
 				Return kCityAliases[i]
 			EndIf
@@ -1662,14 +1849,6 @@ ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
 	Return None
 EndFunction
 
-Function SaveCharacter(String sCharacterName)
-	
-
-	;Debug.Trace("MYC: Finding dummy for " + sCharacterName + "...")	
-	ActorBase DummyActorBase = GetCharacterDummy(sCharacterName)
-
-EndFunction
-
 State SerializeBusy
 	Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
 		Wait(RandomFloat(0.1,1))
@@ -1685,13 +1864,16 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	If !kWornObjectActor
 		kWornObjectActor = PlayerREF
 	EndIf
-	
-	Bool isWeapon = False 
+
+	Bool isWeapon = False
 	Bool isEnchantable = False
 	Bool isTwoHanded = False
 	Enchantment kItemEnchantment
-
-	Debug.Trace("MYC: Serializing " + kItem.GetName() + "...")
+	If kItem
+		;Debug.Trace("MYC: " + kItem.GetName() + " is Mod ID " + (kItem.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItem.GetFormID() / 0x1000000))
+	EndIf
+	;Debug.Trace("MYC: Serializing " + kItem.GetName() + "...")
 	If (kItem as Weapon)
 		isWeapon = True
 		isEnchantable = True
@@ -1709,18 +1891,20 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	If isEnchantable ; don't create enchantment block unless object can be enchanted
 		JMap.SetObj(jEquipmentInfo,"Enchantment",jEquipmentEnchantmentInfo)
 	EndIf
-	
+
 	If kItemEnchantment
 		;PlayerEnchantments[newindex] = kItemEnchantment
-		Debug.Trace("MYC: " + kItem.GetName() + " has enchantment " + kItemEnchantment.GetFormID() + ", " + kItemEnchantment.GetName())
+		;Debug.Trace("MYC: " + kItem.GetName() + " has enchantment " + kItemEnchantment.GetFormID() + ", " + kItemEnchantment.GetName())
 		JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
+		JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentEnchantmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
 		JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",0)
 	EndIf
 	String sItemDisplayName = WornObject.GetDisplayName(kWornObjectActor,iHand,h)
 	sItemDisplayName = StringUtil.SubString(sItemDisplayName,0,StringUtil.Find(sItemDisplayName,"(") - 1) ; Strip " (Legendary)"
 	kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
 	If sItemDisplayName || kItemEnchantment
-		Debug.Trace("MYC: " + kItem + " is enchanted/forged item " + sItemDisplayName)
+		;Debug.Trace("MYC: " + kItem + " is enchanted/forged item " + sItemDisplayName)
 		JMap.SetInt(jEquipmentInfo,"IsCustom",1)
 		JMap.SetFlt(jEquipmentInfo,"ItemHealthPercent",WornObject.GetItemHealthPercent(kWornObjectActor,iHand,h))
 		JMap.SetFlt(jEquipmentInfo,"ItemCharge",WornObject.GetItemCharge(kWornObjectActor,iHand,h))
@@ -1729,6 +1913,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
 		If kItemEnchantment
 			JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
+			JMap.SetStr(jEquipmentEnchantmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
 			JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",1)
 			Int iNumEffects = kItemEnchantment.GetNumEffects()
 			JMap.SetInt(jEquipmentEnchantmentInfo,"NumEffects",iNumEffects)
@@ -1740,6 +1925,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 				JMap.SetFlt(jEffectsInfo, "Area", kItemEnchantment.GetNthEffectArea(j))
 				JMap.SetFlt(jEffectsInfo, "Duration", kItemEnchantment.GetNthEffectDuration(j))
 				JMap.SetForm(jEffectsInfo,"MagicEffect", kItemEnchantment.GetNthEffectMagicEffect(j))
+				JMap.SetStr(jEffectsInfo,"Source",GetModName(kItemEnchantment.GetNthEffectMagicEffect(j).GetFormID() / 0x1000000))
 				JArray.AddObj(jEffectsArray,jEffectsInfo)
 				j += 1
 			EndWhile
@@ -1755,7 +1941,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 			kItem.SendModEvent("vMYC_EquipmentSaved","",-1)
 		EndIf
 	EndIf
-	Debug.Trace("MYC: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
+	;Debug.Trace("MYC: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
 	GotoState("")
 EndFunction
 
@@ -1767,18 +1953,18 @@ Event OnSaveCurrentPlayerEquipment(string eventName, string strArg, float numArg
 
 	Int jPlayerData = strArg as Int
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
-	
+
 	SendModEvent("vMYC_EquipmentSaveBegin")
-	
+
 	Int jPlayerEquipment = JMap.Object()
-	JMap.SetObj(jPlayerData,"Equipment",jPlayerEquipment)	
-	
+	JMap.SetObj(jPlayerData,"Equipment",jPlayerEquipment)
+
 	Int jPlayerArmorList = JArray.Object()
 	JMap.SetObj(jPlayerEquipment,"Armor",jPlayerArmorList)
-	
+
 	Int jPlayerArmorInfoList = JArray.Object()
 	JMap.SetObj(jPlayerEquipment,"ArmorInfo",jPlayerArmorInfoList)
-	
+
 	Int h = 0x00000001
 	While (h < 0x80000000)
 		Form WornForm = PlayerREF.GetWornForm(h)
@@ -1789,13 +1975,13 @@ Event OnSaveCurrentPlayerEquipment(string eventName, string strArg, float numArg
 				Int iArmorIndex = JArray.FindForm(jPlayerArmorList,WornForm)
 				If WornForm as Armor && iArmorIndex > -1
 					;Debug.Trace("MYC: Added " + WornForm.GetName())
-					
-					Int jPlayerArmorInfo = JMap.Object()
-					
-					JArray.AddObj(jPlayerArmorInfoList,jPlayerArmorInfo)
 
+					Int jPlayerArmorInfo = JMap.Object()
+
+					JArray.AddObj(jPlayerArmorInfoList,jPlayerArmorInfo)
+					AddToReqList(jPlayerData,WornForm,"Equipment")
 					SerializeEquipment(WornForm,jPlayerArmorInfo,1,h)
-				
+
 				EndIf
 			EndIf
 		EndIf
@@ -1806,14 +1992,20 @@ Event OnSaveCurrentPlayerEquipment(string eventName, string strArg, float numArg
 	JMap.SetObj(jPlayerEquipment,"Left",jEquipLeft)
 	Int jEquipRight = JMap.Object()
 	JMap.SetObj(jPlayerEquipment,"Right",jEquipRight)
-	
+
 	SerializeEquipment(PlayerREF.GetEquippedObject(0),jEquipLeft,0,0)
 	SerializeEquipment(PlayerREF.GetEquippedObject(1),jEquipRight,1,0)
 	
 	Int jEquipVoice = JMap.Object()
 	JMap.SetForm(jEquipVoice,"Form",PlayerREF.GetEquippedObject(2))
-	
+
 	JMap.SetObj(jPlayerEquipment,"Voice",jEquipVoice)
+
+	AddToReqList(jPlayerData,PlayerREF.GetEquippedObject(0),"Equipment")
+	AddToReqList(jPlayerData,PlayerREF.GetEquippedObject(1),"Equipment")
+	AddToReqList(jPlayerData,PlayerREF.GetEquippedObject(2),"Equipment")
+
+
 	SendModEvent("vMYC_EquipmentSaveEnd")
 	_bSavedEquipment = True
 EndEvent
@@ -1826,11 +2018,14 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 
 	Int jPlayerData = strArg as Int
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
-	
+
 	SendModEvent("vMYC_SpellsSaveBegin")
 	Int jPlayerSpells = JArray.Object()
 	JMap.SetObj(jPlayerData,"Spells",jPlayerSpells)
-
+	
+	Int jSpellSources = JArray.Object()
+	JMap.SetObj(jPlayerData,"SpellSources",jSpellSources)
+	
 	Int iSpellCount = PlayerREF.GetSpellCount()
 	Int iAddedCount = 0
 	Int i = 0
@@ -1842,7 +2037,7 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 		If kSpell
 			bAddItem = True
 			Int iSpellID = kSpell.GetFormID()
-			;;Debug.Trace("MYC: " + sPlayerName + " knows the spell " + kSpell + ", " + kSpell.GetName())
+			;Debug.Trace("MYC: " + sPlayerName + " knows the spell " + kSpell + ", " + kSpell.GetName())
 			If iSpellID > 0x05000000 || iSpellID < 0 ; Spell is NOT part of Skyrim, Dawnguard, Hearthfires, or Dragonborn
 				bAddItem = False
 				;Debug.Trace("MYC: " + kSpell + " is a mod-added item!")
@@ -1850,6 +2045,8 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 			If bAddItem
 				;vMYC_PlayerFormlist.AddForm(kSpell)
 				JArray.AddForm(jPlayerSpells,kSpell)
+				JArray.AddStr(jSpellSources,GetModName(kSpell.GetFormID() / 0x1000000))
+				AddToReqList(jPlayerData,kSpell,"Spell")
 				iAddedCount += 1
 				If iAddedCount % 2 == 0
 					kSpell.SendModEvent("vMYC_SpellSaved")
@@ -1863,7 +2060,7 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 
 	Int jPlayerShouts = JArray.Object()
 	JMap.SetObj(jPlayerData,"Shouts",jPlayerShouts)
-	
+
 	Int iShoutCount = vMYC_PlayerShoutCheckList.GetSize()
 	i = 0
 	While i < iShoutCount
@@ -1873,8 +2070,8 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 		EndIf
 		i += 1
 	EndWhile
-	Debug.Trace("MYC: Saved " + JArray.Count(jPlayerShouts) + " shouts for " + sPlayerName + ".")
-	
+	;Debug.Trace("MYC: Saved " + JArray.Count(jPlayerShouts) + " shouts for " + sPlayerName + ".")
+
 	_bSavedSpells = True
 EndEvent
 
@@ -1893,7 +2090,7 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 		iSafety -= 1
 		Wait(1.0)
 	EndWhile
-	
+
 	Int jInvMap = JMap.getObj(_jMYC,"PlayerInventory")
 	Int jInvForms = JFormMap.allKeys(jInvMap)
 	Int jInvCounts = JFormMap.allValues(jInvMap)
@@ -1901,19 +2098,19 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	JValue.Retain(jInvCounts)
 	Int jPlayerInventory = JFormMap.Object()
 	JMap.SetObj(jPlayerData,"Inventory",jPlayerInventory)
-	
+
 	Int jPlayerCustomItems = JArray.Object()
 	JMap.SetObj(jPlayerData,"InventoryCustomItems",jPlayerCustomItems)
-	
+
 	Bool bAddItem = False
 
 	Int iItemCount = JArray.Count(jInvForms)
 	Int i = 0
-	Debug.Trace("MYC: " + sPlayerName + " has " + iItemCount + " items.")
+	;Debug.Trace("MYC: " + sPlayerName + " has " + iItemCount + " items.")
 	Int iAddedCount = 0
 
 	;===== Create dummy actor for custom weapon scans =====----
-	
+
 	Actor kWeaponDummy = PlayerREF.PlaceAtMe(vMYC_InvisibleMActor,abInitiallyDisabled = True) as Actor
 	kWeaponDummy.SetScale(0.01)
 	kWeaponDummy.SetGhost(True)
@@ -1930,7 +2127,7 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 		Form kItem = JArray.getForm(jInvForms,i)
 
 		Int iType = kItem.GetType()
-		Debug.Trace("MYC: " + sPlayerName + " has " + kItem)
+		;Debug.Trace("MYC: " + sPlayerName + " has " + kItem)
 
 		;===== Save custom weapons =====----
 		If iType == 41 ;kWeapon
@@ -1943,7 +2140,7 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 
 					JMap.setForm(jCustomWeapon,"Form",kItem)
 					JMap.setInt(jCustomWeapon,"Count",JArray.getInt(jInvCounts,i))
-					
+
 					SerializeEquipment(kItem,jCustomWeapon,1,0,kWeaponDummy)
 					JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
 				EndIf
@@ -1953,17 +2150,17 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 			EndIf
 		EndIf
 		Int iItemID = kItem.GetFormID()
-		If iItemID > 0x05000000 || iItemID < 0 && !(iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF) 
+		If iItemID > 0x05000000 || iItemID < 0 && !(iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF)
 			; Item is NOT part of Skyrim, Dawnguard, Hearthfires, or Dragonborn and is not a custom item
-			Debug.Trace("MYC: " + kItem + " is a mod-added item!")
+			;Debug.Trace("MYC: " + kItem + " is a mod-added item!")
 			;bAddItem = False
-		ElseIf (iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF) 
+		ElseIf (iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF)
 			; This is a custom-made item
-			Debug.Trace("MYC: " + kItem + " is a customized/forged/mixed item!")
+			;Debug.Trace("MYC: " + kItem + " is a customized/forged/mixed item!")
 			bAddItem = False
 		EndIf
 		If kItem as ObjectReference
-			Debug.Trace("MYC: " + kItem + " is an ObjectReference named " + (kItem as ObjectReference).GetDisplayName())
+			;Debug.Trace("MYC: " + kItem + " is an ObjectReference named " + (kItem as ObjectReference).GetDisplayName())
 		EndIf
 		If bAddItem
 			JFormMap.SetInt(jPlayerInventory,kItem,JArray.getInt(jInvCounts,i))
@@ -1972,7 +2169,7 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 		EndIf
 		i += 1
 	EndWhile
-	Debug.Trace("MYC: Saved " + iAddedCount + " items for " + sPlayerName + ".")
+	;Debug.Trace("MYC: Saved " + iAddedCount + " items for " + sPlayerName + ".")
 
 
 
@@ -1981,11 +2178,11 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 ;		i -= 1
 ;		Form kItem = jArray.getForm(jWeaponsToCheck,i)
 ;	EndWhile
-	Debug.Trace("MYC: Saved " + JArray.Count(jPlayerCustomItems) + " custom items for " + sPlayerName + ".")
+	;Debug.Trace("MYC: Saved " + JArray.Count(jPlayerCustomItems) + " custom items for " + sPlayerName + ".")
 
 	SendModEvent("vMYC_InventorySaveEnd",iAddedCount)
-	JValue.WriteTofile(jPlayerInventory,"Data/vMYC/_jPlayerInventory.json")
-	JValue.WriteTofile(jPlayerCustomItems,"Data/vMYC/_jPlayerCustomItems.json")
+	;JValue.WriteTofile(jPlayerInventory,"Data/vMYC/_jPlayerInventory.json")
+	;JValue.WriteTofile(jPlayerCustomItems,"Data/vMYC/_jPlayerCustomItems.json")
 	_bSavedInventory = True
 	JValue.Release(jInvForms)
 	JValue.Release(jInvCounts)
@@ -2005,7 +2202,7 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	SendModEvent("vMYC_PerksSaveBegin")
 
 	String[] SkillNames = New String[24]
-	
+
 	SkillNames[6] = "OneHanded"
 	SkillNames[7] = "TwoHanded"
 	SkillNames[8] = "Marksman"
@@ -2025,11 +2222,14 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 	SkillNames[22] = "Restoration"
 	SkillNames[23] = "Enchanting"
 
-	Int jPerks = JArray.Object() 
+	Int jPerks = JArray.Object()
 	JMap.SetObj(jPlayerData,"Perks",jPerks)
-	
-	Int jPerkCounts = JMap.Object() 
+
+	Int jPerkCounts = JMap.Object()
 	JMap.SetObj(jPlayerData,"PerkCounts",jPerkCounts)
+
+	Int jPerkSources = JArray.Object()
+	JMap.SetObj(jPlayerData,"PerkSources",jPerkSources)
 	
 	vMYC_PerkList.Revert()
 	Int iAdvSkills = 6
@@ -2039,7 +2239,7 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 		AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
 		Int iThisCount = vMYC_PerkList.GetSize()
 		JMap.SetInt(jPerkCounts,SkillNames[iAdvSkills],iThisCount - iLastCount)
-		Debug.Trace("MYC: Saved " + (iThisCount - iLastCount) + " perks in the " + SkillNames[iAdvSkills] + " tree!")
+		;Debug.Trace("MYC: Saved " + (iThisCount - iLastCount) + " perks in the " + SkillNames[iAdvSkills] + " tree!")
 		iAdvSkills += 1
 	EndWhile
 
@@ -2049,14 +2249,16 @@ Event OnSaveCurrentPlayerPerks(string eventName, string strArg, float numArg, Fo
 		i -= 1
 		Perk kPerk = vMYC_PerkList.GetAt(i) as Perk
 		JArray.addForm(jPerks,kPerk)
-		If iAddedCount % 3 == 0 
+		JArray.AddStr(jPerkSources,GetModName(kPerk.GetFormID() / 0x1000000))
+		AddToReqList(jPlayerData,kPerk,"Perk")
+		If iAddedCount % 3 == 0
 			SendModEvent("vMYC_PerkSaved")
 		EndIf
 		iAddedCount += 1
 	EndWhile
 
 	SendModEvent("vMYC_PerksSaveEnd",iAddedCount)
-	
+
 	_bSavedPerks = True
 EndEvent
 
@@ -2064,7 +2266,7 @@ Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount, Actor kTar
 	If !kTargetActor
 		kTargetActor = PlayerREF
 	EndIf
-	Int i 
+	Int i
 	Int jOverlayData = JArray.Object()
 	While i < iTintCount
 		String nodeName = sTintTemplate + i + "]"
@@ -2118,7 +2320,7 @@ Function NIO_DoApplyOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
 	While i < iLayerCount
 		Int jLayer = JArray.GetObj(jLayers,i)
 		String sNodeName = sNodeTemplate + i + "]"
-		
+
 		;rgb = NiOverride.GetNodePropertyInt(_targetActor, false, nodeName, 7, -1)
 		;glow = NiOverride.GetNodePropertyInt(_targetActor, false, nodeName, 0, -1)
 		;alpha = NiOverride.GetNodePropertyFloat(_targetActor, false, nodeName, 8, -1)
@@ -2130,7 +2332,7 @@ Function NIO_DoApplyOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
 		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), True) ; Set the alpha
 		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), True) ; Set the tint texture
 		;NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 1, -1, JMap.GetFlt(jLayer,"Multiple"), True) ; Set the emissive multiple
-		
+
 		Int iGlowData = JMap.GetInt(jLayer,"GlowData")
 		Int iGlowColor = iGlowData
 		Int iGlowEmissive = Math.RightShift(iGlowColor, 24)
@@ -2149,12 +2351,12 @@ Function NIO_ApplyCharacterOverlays(String sCharacterName)
 	If !NiOverride.HasOverlays(kCharacter)
 		NiOverride.AddOverlays(kCharacter)
 	EndIf
-	NiOverride.RevertOverlays(kCharacter)	
+	NiOverride.RevertOverlays(kCharacter)
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
 	NIO_DoApplyOverlay(kCharacter,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
-	
+
 EndFunction
 
 Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment = True, Bool bSaveInventory = True, Bool bSaveFullInventory = True, Bool bSavePluginItems = False, Bool bForceSave = False)
@@ -2166,7 +2368,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	Form[] PlayerEquipment = New Form[64]
 	Enchantment[] PlayerEnchantments = New Enchantment[64]
 
-	ActorBase PlayerBase = PlayerREF.GetActorBase()	
+	ActorBase PlayerBase = PlayerREF.GetActorBase()
 	ActorBase DummyActorBase = GetFreeActorBase(PlayerBase.GetSex())
 
 	String sPlayerName = PlayerBase.GetName()
@@ -2176,22 +2378,22 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	EndIf
 	If !sPlayerName
 		sPlayerName = PlayerREF.GetBaseObject().GetName()
-		;Debug.Trace("MYC: Name from GetBaseObject: " + sPlayerName)		
+		;Debug.Trace("MYC: Name from GetBaseObject: " + sPlayerName)
 	EndIf
-	
+
 	Int jCharacterNames = JMap.allKeys(JValue.solveObj(_jMYC,".CharacterList"))
-	
+
 	If JArray.findStr(jCharacterNames,sPlayerName) > -1
-		Debug.Trace("MYC: Player " + sPlayerName + " is already saved!")
+		;Debug.Trace("MYC: Player " + sPlayerName + " is already saved!")
 		If bForceSave
-			Debug.Trace("MYC: bForceSave is True, so saving anyway...")
+			;Debug.Trace("MYC: bForceSave is True, so saving anyway...")
 		Else
 			Return
 		EndIf
 	EndIf
-	
+
 	;Debug.Trace("MYC: Getting basic data from " + sPlayerName + "...")
-	
+
 	;Debug.Trace("MYC:            Race: " + PlayerREF.GetRace() + ", " + PlayerREF.GetRace().GetName())
 	;Debug.Trace("MYC:          Weight: " + PlayerREF.GetWeight() + ", " + PlayerREF.GetActorBase().GetWeight())
 	;Debug.Trace("MYC:          Height: " + PlayerREF.GetHeight() + ", " + PlayerREF.GetActorBase().GetHeight())
@@ -2206,17 +2408,17 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	Int jPlayerData = JMap.Object()
 	JValue.Retain(jPlayerData)
-	
+
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
 	JMap.SetForm(jPlayerData,"Race",PlayerREF.GetActorBase().GetRace())
-	
+
 	;-----==== Save custom location data
-	
+
 	JMap.setObj(jPlayerData,"LocationData",JMap.GetObj(_jMYC,"LocationData"))
-	
+
 	;-----==== Save some metainfo. Some is duplicated for reasons that made sense at the time. I swear I wasn't drunk
-	
+
 	Int jPlayerModList = JArray.Object()
 	Int iModCount = GetModCount()
 	i = 0
@@ -2224,22 +2426,22 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		JArray.AddStr(jPlayerModList,GetModName(i))
 		i += 1
 	EndWhile
-	
+
 	Int jMetaInfo = JMap.Object()
 	JMap.setObj(jMetaInfo,"Modlist",jPlayerModList)
-	
+
 	JMap.setStr(jMetaInfo,"Name",sPlayerName)
 	JMap.setStr(jMetaInfo,"RaceText",PlayerREF.GetActorBase().GetRace().GetName())
 	JMap.setFlt(jMetaInfo,"Playtime",GetRealHoursPassed())
-	JMap.setInt(jMetaInfo,"SerializationVersion",2)
+	JMap.setInt(jMetaInfo,"SerializationVersion",SerializationVersion)
 
 	JMap.setObj(jPlayerData,"_MYC",jMetaInfo)
-	
+	AddToReqList(jPlayerData,PlayerREF.GetActorBase().GetRace(),"Race")
 	;-----==== Save actorvalues
-	
+
 	Float[] fPlayerBaseAVs = New Float[97]
 	String sBlank = "                             "
-	
+
 	Int jPlayerAVs = JMap.Object()
 	Int i = 0
 	While i < _sAVNames.Length
@@ -2259,10 +2461,10 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	JMap.SetObj(jPlayerStats,"AV",jPlayerAVs)
 	JMap.SetObj(jPlayerData,"Stats",jPlayerStats)
-	
-	
+
+
 	;-----==== Save spawnpoints/trophies
-	
+
 	i = 0
 
 	Int jPlayerSpawnPoints = JArray.Object()
@@ -2275,12 +2477,12 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	EndWhile
 
 	JMap.SetObj(jPlayerData,"SpawnPoints",jPlayerSpawnPoints)
-	
+
 	;-----==== Start parallel saving of equipment, perks, spells, and inventory
-	
+
 	RegisterForModEvent("vMYC_SaveCurrentPlayerEquipment","OnSaveCurrentPlayerEquipment")
 	SendModEvent("vMYC_SaveCurrentPlayerEquipment",jPlayerData)
-	
+
 	RegisterForModEvent("vMYC_SaveCurrentPlayerPerks","OnSaveCurrentPlayerPerks")
 	SendModEvent("vMYC_SaveCurrentPlayerPerks",jPlayerData)
 
@@ -2289,16 +2491,16 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 	RegisterForModEvent("vMYC_SaveCurrentPlayerInventory","OnSaveCurrentPlayerInventory")
 	SendModEvent("vMYC_SaveCurrentPlayerInventory",jPlayerData)
-	
+
 	VoiceType kPlayerVoiceType = PlayerREF.GetVoiceType()
 	If !kPlayerVoiceType
 		kPlayerVoiceType = PlayerREF.GetActorBase().GetVoiceType()
 	EndIf
-	
+
 	JMap.SetForm(jPlayerData,"VoiceType",kPlayerVoiceType)
 
 	;-----==== Support for NIOverride ====-----
-	
+
 	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
 		Int jNIOData = JMap.Object()
 		JMap.SetObj(jPlayerData,"NIOverrideData",jNIOData)
@@ -2307,41 +2509,55 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		JMap.setObj(jNIOData,"FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumFeetOverlays()))
 		JMap.setObj(jNIOData,"FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumFaceOverlays()))
 	EndIf
-	
-	;-----==== None of this is needed anymore thanks to the new chargen 
+
+	;-----==== Support for RaceMenuPlugin.psc ====-----
+	JMap.SetObj(jPlayerData,"NINodeData",GetNINodeInfo(PlayerREF))
+		
+	;-----==== None of this is needed anymore thanks to the new chargen
 	;  function, but it doesn't take long to collect so why not ====-----
-	
+
 	Int jPlayerAppearance = JMap.Object()
 	JMap.SetObj(jPlayerData,"Appearance",jPlayerAppearance)
 
 	ColorForm kHairColor = PlayerBase.GetHairColor()
 	JMap.SetForm(jPlayerAppearance,"Haircolor",kHairColor)
 	If kHairColor
+		JMap.SetStr(jPlayerAppearance,"HaircolorSource",GetModName(kHairColor.GetFormID() / 0x1000000))
 		Int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
 		JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
 	EndIf
 	JMap.SetForm(jPlayerAppearance,"Skin",PlayerBase.GetSkin())
 	JMap.SetForm(jPlayerAppearance,"SkinFar",PlayerBase.GetSkinFar())
-	
+
 	Int jPlayerHeadparts = JArray.Object()
 	JMap.SetObj(jPlayerAppearance,"Headparts",jPlayerHeadparts)
+	Int jHeadpartSources = JArray.Object()
+	JMap.SetObj(jPlayerAppearance,"HeadpartSources",jHeadpartSources)
 	
 	i = 0
 	While i < PlayerBase.GetNumHeadParts()
 		HeadPart kHeadPart = PlayerBase.GetNthHeadPart(i)
-		JArray.AddForm(jPlayerHeadparts,kHeadPart)
 		Int j = 0
-		While j < kHeadPart.GetNumExtraParts()
-			HeadPart kExtraHeadPart = kHeadPart.GetNthExtraPart(j)
-			JArray.Addform(jPlayerHeadparts,kExtraHeadPart)
-			j += 1
-		EndWhile
+		If kHeadPart
+			JArray.AddForm(jPlayerHeadparts,kHeadPart)
+			JArray.AddStr(jHeadpartSources,GetModName(kHeadPart.GetFormID() / 0x1000000))
+			AddToReqList(jPlayerData,kHeadPart,"Headpart")
+			While j < kHeadPart.GetNumExtraParts()
+				HeadPart kExtraHeadPart = kHeadPart.GetNthExtraPart(j)
+				If kExtraHeadPart
+					JArray.Addform(jPlayerHeadparts,kExtraHeadPart)
+					JArray.AddStr(jHeadpartSources,GetModName(kExtraHeadPart.GetFormID() / 0x1000000))
+					AddToReqList(jPlayerData,kExtraHeadPart,"Headpart")
+				EndIf
+				j += 1
+			EndWhile
+		EndIf
 		i += 1
 	EndWhile
-	
+
 	Int jPlayerFace = JMap.Object()
 	JMap.SetObj(jPlayerAppearance,"Face",jPlayerFace)
-	
+
 	Int jPlayerFaceTextureSet = JMap.Object()
 	JMap.SetObj(jPlayerFace,"TextureSet",jPlayerFaceTextureSet)
 	Int jPlayerFaceTexturePaths = JArray.Object()
@@ -2352,22 +2568,22 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		JMap.SetForm(jPlayerFaceTextureSet,"Form",vMYC_PlayerFaceTexture)
 		i = 0
 		While i < vMYC_PlayerFaceTexture.GetNumTexturePaths()
-			;;Debug.Trace("MYC: PlayerFaceTexture path " + i + " is " + vMYC_PlayerFaceTexture.GetNthTexturePath(i))
+			;Debug.Trace("MYC: PlayerFaceTexture path " + i + " is " + vMYC_PlayerFaceTexture.GetNthTexturePath(i))
 			JArray.AddStr(jPlayerFaceTexturePaths,vMYC_PlayerFaceTexture.GetNthTexturePath(i))
 			i += 1
 		EndWhile
 	EndIf
-	
+
 	Int jPlayerFacePresets = JArray.Object()
 	JMap.SetObj(jPlayerFace,"Presets",jPlayerFacePresets)
 
 	i = 0
 	While i < PlayerBase.GetNumHeadParts()
-		;;Debug.Trace("MYC: Copying face preset " + i)
+		;Debug.Trace("MYC: Copying face preset " + i)
 		JArray.AddInt(jPlayerFacePresets,PlayerBase.GetFacePreset(i))
 		i += 1
 	EndWhile
-	
+
 	Int jPlayerFaceMorphs = JArray.Object()
 	JMap.SetObj(jPlayerFace,"Morphs",jPlayerFaceMorphs)
 	i = 0
@@ -2376,26 +2592,35 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		JArray.AddFlt(jPlayerFaceMorphs,fFaceMorph)
 		i += 1
 	EndWhile
-	
-	If SKSE.GetPluginVersion("CharGen") > 0
-		CharGen.SaveCharacter(sPlayerName)
+
+	Bool bUseExternal = False
+	If GetModByName("EnhancedCharacterEdit.esp") < 255
+		Debug.Notification("ECE detected, using SaveExternalCharacter!")
+		bUseExternal = True
 	EndIf
 	
+	If CharGen.IsExternalEnabled() || bUseExternal
+		 CharGen.SaveExternalCharacter(sPlayerName) 
+	Else
+		 CharGen.SaveCharacter(sPlayerName) 
+	EndIf
+	
+
 	;Old head export function
 	;Debug.MessageBox("Chargen Version is " + SKSE.GetPluginVersion("CharGen"))
 	;If SKSE.GetPluginVersion("CharGen") > 0
-		;;Debug.Trace("MYC: Exporting head with CharGen...")
+		;Debug.Trace("MYC: Exporting head with CharGen...")
 		;UI.InvokeString("HUD Menu", "_global.skse.plugins.CharGen.ExportHead", "Data\\Textures\\actors\\character\\FaceGenData\\FaceTint\\vMYC_MeetYourCharacters.esp\\" + sPlayerName)
-		;;Debug.Trace("MYC: Done!")
+		;Debug.Trace("MYC: Done!")
 	;Else
 	;	Debug.MessageBox("No CharGen, MAN!")
 	;EndIf
 
-	
+
 	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
 		Wait(0.5)
 	EndWhile
-	
+
 	JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
 	Debug.Notification("Exported character data!")
 	JValue.Release(jPlayerData)
@@ -2404,10 +2629,40 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 
 EndFunction
 
+Int Function GetNINodeInfo(Actor akActor)
+
+	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
+	JValue.Retain(jNINodeList)
+	Debug.Trace("MYC: NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
+	
+	
+	Int jNINodes = JMap.Object()
+	JValue.Retain(jNINodes)
+	Int i = 0
+	Int iNodeCount = JArray.Count(jNINodeList)
+	While i < iNodeCount
+		String sNodeName = JArray.getStr(jNINodeList,i)
+		If sNodeName
+			If NetImmerse.HasNode(akActor,sNodeName,false)
+				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
+				If fNodeScale != 1.0
+					Debug.Trace("MYC: Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
+					Int jNINodeData = JMap.Object()
+					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
+					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
+				EndIf
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	JValue.Release(jNINodeList)
+	Return jNINodes
+EndFunction
+
 String[] Function PickPlayerSpawnPoints()
 {Return an array of default spawn points based on accomplishments}
 	String[] sResult = New String[32]
-	Int idx = 0 
+	Int idx = 0
 	If MQ305.IsCompleted()
 		sResult[idx] = "Hero"
 		idx += 1
@@ -2453,17 +2708,17 @@ String[] Function PickPlayerSpawnPoints()
 	EndIf
 
 	; Dawnguard
-	
+
 	If PlayerREF.HasSpell(WerewolfChange) ; Player is a worwelf
 		sResult[idx] = "Werewolf"
 		idx += 1
-	ElseIf DLC1VampireChange 
+	ElseIf DLC1VampireChange
 		If PlayerREF.HasSpell(DLC1VampireChange) ; Player is a vampire lord
 			sResult[idx] = "VampireLord"
 			idx += 1
 		EndIf
 	EndIf
-	
+
 	If DLC1MQ02 ;Only filled if Dawnguard is loaded
 		If DLC1MQ02.IsCompleted() ; Only handle dawnguard if player is actually doing the questline
 			If DLC1PlayingVampireLine.GetValue() == 1
@@ -2483,7 +2738,7 @@ String[] Function PickPlayerSpawnPoints()
 		;DLC1BloodPotion 02018EF3
 		;DLC1NightPowerShrine 02009404
 	EndIf
-	
+
 	; Dragonborn
 	If DLC2MQ06 ;Only filled if Dragonborn is loaded
 		If DLC2MQ06.IsCompleted()
@@ -2492,7 +2747,7 @@ String[] Function PickPlayerSpawnPoints()
 		EndIf
 		;DLC2MiraakMaskNew 02029A62
 	EndIf
-	
+
 	If ThaneTracker.PaleImpGetOutOfJail > 0 || ThaneTracker.PaleSonsGetOutOfJail > 0
 		sResult[idx] = "Dawnstar"
 		idx += 1
@@ -2513,8 +2768,8 @@ String[] Function PickPlayerSpawnPoints()
 		sResult[idx] = "Falkreath"
 		idx += 1
 	EndIf
-	
-	
+
+
 	;Debug.Trace("MYC: PlayerREF.GetActorBase().GetRace().GetName() = " + PlayerREF.GetActorBase().GetRace().GetName())
 	If StringUtil.Find(PlayerREF.GetActorBase().GetRace().GetName(),"Orc") > -1
 		sResult[idx] = "Orc"
@@ -2524,5 +2779,12 @@ String[] Function PickPlayerSpawnPoints()
 		sResult[idx] = "Caravan"
 		idx += 1
 	EndIf
+	Return sResult
+EndFunction
+
+String Function GetFormIDString(Form kForm)
+	String sResult
+	sResult = kForm as String ; [FormName < (FF000000)>]
+	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
 	Return sResult
 EndFunction

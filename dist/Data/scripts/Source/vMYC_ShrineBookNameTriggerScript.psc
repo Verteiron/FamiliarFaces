@@ -1,4 +1,4 @@
-Scriptname vMYC_ShrineBookNameTriggerScript extends ObjectReference  
+Scriptname vMYC_ShrineBookNameTriggerScript extends ObjectReference
 {Cheat the system by renaming the book when the player gets close.}
 
 ;--=== Imports ===--
@@ -45,7 +45,7 @@ Event OnTriggerEnter(ObjectReference akActionRef)
 		Int iAlcoveIndex = _BookScript.AlcoveIndex
 		String sCharacterName = ShrineOfHeroes.GetAlcoveCharacterName(iAlcoveIndex)
 		Actor kCharacterActor = CharacterManager.GetCharacterActorByName(sCharacterName)
-		Debug.Trace("MYC: " + Self + " I am Book #" + _BookScript.AlcoveIndex + ", shrine character is " + ShrineOfHeroes.GetAlcoveCharacterName(_BookScript.AlcoveIndex) + ", shrine actor is " + CharacterManager.GetCharacterActorByName(ShrineOfHeroes.GetAlcoveCharacterName(_BookScript.AlcoveIndex)) + "!")
+		;Debug.Trace("MYC: " + Self + " I am Book #" + _BookScript.AlcoveIndex + ", shrine character is " + ShrineOfHeroes.GetAlcoveCharacterName(_BookScript.AlcoveIndex) + ", shrine actor is " + CharacterManager.GetCharacterActorByName(ShrineOfHeroes.GetAlcoveCharacterName(_BookScript.AlcoveIndex)) + "!")
 		If kCharacterActor
 			ShrineOwner.ForceRefTo(kCharacterActor)
 			ShrineBook.ForceRefTo(_Book)

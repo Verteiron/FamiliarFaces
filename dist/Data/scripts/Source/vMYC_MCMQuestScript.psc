@@ -1,4 +1,4 @@
-Scriptname vMYC_MCMQuestScript extends SKI_ConfigBase  
+Scriptname vMYC_MCMQuestScript extends SKI_ConfigBase
 
 Import vMYC_Config
 
@@ -84,7 +84,7 @@ Int[]		_iAlcoveResetOption
 Int		_iShowDebugOption
 
 Int Function GetVersion()
-    return 3 ; Default version
+    return 4 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -94,40 +94,46 @@ Event OnVersionUpdate(int a_version)
 	ElseIf (a_version >= 3 && CurrentVersion < 3)
 		Debug.Trace("MYC/MCM: Updating script to version 3...")
 		_iMagicSchoolOptions = New Int[6]
+	ElseIf (a_version >= 4 && CurrentVersion < 4)
+		Debug.Trace("MYC/MCM: Updating script to version 4...")
+		OnConfigInit()
+	ElseIf (a_version >= 3 && CurrentVersion < 3)
+		Debug.Trace("MYC/MCM: Updating script to version 3...")
+		_iMagicSchoolOptions = New Int[6]
 	EndIf
 
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[3]
+	Pages = New String[2]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Shrine of Heroes"
-	Pages[2] = "$Global Options"
-	
+	;Pages[2] = "$Global Options"
+
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
 	_iVoiceTypeSelections = New Int[128]
 	_iAliasSelections = New Int[128]
 
 	_iMagicSchoolOptions = New Int[6]
-	
+
 	_iAlcoveIndices 		= New Int[12]
 	_iAlcoveStates			= New Int[12]
 	_sAlcoveCharacterNames	= New String[12]
-	
+
 	_sAlcoveStateEnum		= New String[5]
 	_sAlcoveStateEnum[0]	= "$Empty"
 	_sAlcoveStateEnum[1]	= "$Busy"
 	_sAlcoveStateEnum[2] 	= "$Ready"
 	_sAlcoveStateEnum[3] 	= "$Summoned"
 	_sAlcoveStateEnum[4] 	= "$Error"
-	
+
 	_iAlcoveCharacterOption	= New Int[12]
 	_iAlcoveResetOption		= New Int[12]
 
 	FilterVoiceTypes(VOICETYPE_NOFILTER)
-	
+
 EndEvent
 
 Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
@@ -163,7 +169,7 @@ Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 		If !iVoiceTypeFilter || iVoiceTypeFilter == VOICETYPE_NOFILTER
 			bInclude = True
 		EndIf
-		
+
 		If bInclude
 			_kVoiceTypesFiltered[idx] = kThisVoiceType
 			_sVoiceTypesFiltered[idx] = _kVoiceTypesFiltered[idx] as String
@@ -177,7 +183,7 @@ Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 		EndIf
 		i += 1
 	EndWhile
-	Debug.Trace("MYC/MCM: Displaying " + idx + "/" + i + " voicetypes")
+	;Debug.Trace("MYC/MCM: Displaying " + idx + "/" + i + " voicetypes")
 EndFunction
 
 event OnGameReload()
@@ -188,36 +194,36 @@ event OnPageReset(string a_page)
 	String sKey = "vMYC."
 	_sCurrentPage = a_page
 	UpdateSettings()
-	
+
 	If (a_page == "")
         LoadCustomContent("vMYC_fflogo.dds")
         Return
     Else
         UnloadCustomContent()
-    EndIf	
-	
+    EndIf
+
 	If a_page == "$Character Setup"
-		
+
 		;===== Character Setup page =====
-		
+
 		SetCursorFillMode(TOP_TO_BOTTOM)
-		
+
 		_sCharacterName = _sCharacterNames[_iCurrentCharacter]
 
-		
+
 		Int OptionFlags = 0
 		;====================================----
-		
+
 
 		;===== Character header =============----
 		AddHeaderOption(_sCharacterName)
 		;====================================----
-		
+
 
 		;===== Character enable option ======----
 		OPTION_TOGGLE_TRACKING = AddToggleOption("$Track this character",CharacterManager.GetLocalInt(_sCharacterName,"TrackingEnabled"))
 		;====================================----
-		
+
 
 		;===== Character voicetype option ==----
 		VoiceType kCharVoiceType = CharacterManager.GetCharacterVoiceType(_sCharacterName)
@@ -231,15 +237,15 @@ event OnPageReset(string a_page)
 		String sShortVoiceType = _sVoiceTypesFiltered[_iVoiceTypeSelections[_iCurrentCharacter]]
 		sShortVoiceType = StringUtil.Substring(sShortVoiceType,0,StringUtil.Find(sShortVoiceType," "))
 		_iVoiceTypeOption = AddMenuOption("$VoiceType",sShortVoiceType,OptionFlags)
-		
+
 		;====================================----
 
 
-		;===== Character hangout option =====----		
+		;===== Character hangout option =====----
 		_iAliasSelections[_iCurrentCharacter] = CharacterManager.GetLocalInt(_sCharacterName,"HangoutIndex")
 		_iAliasOption = AddMenuOption("$Hangout",_sHangoutNames[_iAliasSelections[_iCurrentCharacter]],OptionFlags)
 		;====================================----
-		
+
 		;===== Character class option =======----
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
 		_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
@@ -252,7 +258,28 @@ event OnPageReset(string a_page)
 		_iCharacterIsFoeOption = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
 		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
-		
+
+		;===== Character magic option =======----
+		AddHeaderOption("Magic")
+		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
+		OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
+		OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+		;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+
+		_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION
+		_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
+		_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+		_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION
+		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
+		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
+
+
+		;====================================----
+
 		;===== Character magic option =======----
 		AddHeaderOption("Magic")
 		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
@@ -281,9 +308,9 @@ event OnPageReset(string a_page)
 			_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
 			;====================================----
 		EndIf
-		
+
 		;===== Begin info column ============----
-		
+
 		SetCursorPosition(1)
 
 		;===== Character selection menu =====----
@@ -293,13 +320,13 @@ event OnPageReset(string a_page)
 		String[] sSex = New String[2]
 		sSex[0] = "Male"
 		sSex[1] = "Female"
-		
+
 		AddTextOption("Level " + (CharacterManager.GetCharacterStat(_sCharacterName,"Level") as Int) + " " + CharacterManager.GetCharacterMetaString(_sCharacterName,"RaceText") + " " + sSex[CharacterManager.GetCharacterInt(_sCharacterName,"Sex")],"",OPTION_FLAG_DISABLED)
 
 		AddTextOption("Health: " + (CharacterManager.GetCharacterAV(_sCharacterName,"Health") as Int) + \
 						", Stamina:" + (CharacterManager.GetCharacterAV(_sCharacterName,"Stamina") as Int) + \
 						", Magicka:" + (CharacterManager.GetCharacterAV(_sCharacterName,"Magicka") as Int), "",OPTION_FLAG_DISABLED)
-		
+
 		Form kRightWeapon = CharacterManager.GetCharacterForm(_sCharacterName,"Equipment.Right.Form")
 		Form kLeftWeapon = CharacterManager.GetCharacterForm(_sCharacterName,"Equipment.Left.Form")
 		String sWeaponName = CharacterManager.GetCharacterEquipmentName(_sCharacterName,"Right")
@@ -310,17 +337,17 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		AddTextOption("ActorBase: " + GetFormIDString(CharacterManager.GetCharacterDummy(_sCharacterName)),"",OPTION_FLAG_DISABLED)
 		AddTextOption("Actor: " + GetFormIDString(CharacterManager.GetCharacterActorByName(_sCharacterName)),"",OPTION_FLAG_DISABLED)
-		
+
 		;===== END info column =============----
-		
+
 	;===== END Character Setup page =====----
-		
+
 	ElseIf a_page == "$Shrine of Heroes"
-	
+
 	;===== Shrine of Heroes page =====----
-		RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")		
+		RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")
 		SetCursorFillMode(TOP_TO_BOTTOM)
-		
+
 		Int i = 0
 		Int iAlcoveCount = ShrineOfHeroes.Alcoves.Length
 		Int iAddedCount = 0
@@ -337,7 +364,7 @@ event OnPageReset(string a_page)
 			_iAlcoveIndices[iAlcoveIndex] = iAlcoveIndex
 			_iAlcoveStates[iAlcoveIndex] = kThisAlcove.AlcoveState
 			_sAlcoveCharacterNames[iAlcoveIndex] = ShrineOfHeroes.GetAlcoveStr(i,"CharacterName")
-			
+
 			If _iAlcoveStates[iAlcoveIndex] == 0
 				iInactivePos += 2
 				SetCursorPosition(iInactivePos)
@@ -348,22 +375,21 @@ event OnPageReset(string a_page)
 			_iAlcoveCharacterOption[iAlcoveIndex] = AddMenuOption("Alcove {" + (iAlcoveIndex + 1) + "}: {" + _sAlcoveStateEnum[_iAlcoveStates[iAlcoveIndex]] + "}",_sAlcoveCharacterNames[iAlcoveIndex])
 			i += 1
 		EndWhile
-		
-		
+
+
 	;===== END Shrine of Heroes page =====----
-	
+
 	ElseIf a_page == "$Global Options"
-	
+
 	;===== Global Options page =====----
-	
+
 		_iShowDebugOption = AddToggleOption("Show debug options",_bShowDebugOptions)
 		AddEmptyOption()
 		AddTextOption("More options will go here","")
-		OPTION_TOGGLE_MAGICALLOW_HEALING = AddToggleOption("$Always allow healing spells",GetConfigInt("MagicAllowHealing") as Bool)
 	;===== END Global Options page =----
 	EndIf
 
-	
+
 EndEvent
 
 Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form sender)
@@ -373,15 +399,12 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 EndEvent
 
 Event OnOptionSelect(Int Option)
-	Debug.Trace("MYC: MCM: OnOptionSelect(" + Option + ")")
-	If Option == _iCharacterEnabledOption
-		_bCharacterEnabled[_iCurrentCharacter] = !_bCharacterEnabled[_iCurrentCharacter]
-		CharacterManager.SetCharacterEnabled(_sCharacterNames[_iCurrentCharacter],_bCharacterEnabled[_iCurrentCharacter])
-
-		SetOptionFlags(_iVoiceTypeOption, Math.LogicalAnd(OPTION_FLAG_DISABLED,_bCharacterEnabled[_iCurrentCharacter] as Int),True)
-		SetOptionFlags(_iAliasOption, Math.LogicalAnd(OPTION_FLAG_DISABLED,_bCharacterEnabled[_iCurrentCharacter] as Int),True)
-
-		SetToggleOptionValue(Option,_bCharacterEnabled[_iCurrentCharacter])		
+	;Debug.Trace("MYC: MCM: OnOptionSelect(" + Option + ")")
+	If Option == OPTION_TOGGLE_TRACKING
+		Bool bEnabled = CharacterManager.GetLocalInt(_sCharacterName,"TrackingEnabled") as Bool
+		bEnabled = !bEnabled
+		CharacterManager.SetCharacterTracking(_sCharacterName, bEnabled)
+		SetToggleOptionValue(Option,bEnabled)
 		;ForcePageReset()
 	ElseIf Option == _iCharacterIsFoeOption
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe") as Bool
@@ -419,6 +442,7 @@ Event OnOptionSelect(Int Option)
 			SetOptionFlags(_iMagicSchoolOptions[i],Math.LogicalAnd(OPTION_FLAG_DISABLED,bAutoMagic as Int),True)
 		EndWhile
 		SetToggleOptionValue(Option,bAutoMagic)
+		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf _iMagicSchoolOptions.Find(Option) > -1
 		String sSchool
 		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
@@ -457,7 +481,7 @@ Event OnOptionSelect(Int Option)
 EndEvent
 
 Event OnOptionMenuOpen(Int Option)
-	Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
+	;Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
 	If Option == _iVoiceTypeOption
 		SetMenuDialogOptions(_sVoiceTypesFiltered)
 		SetMenuDialogStartIndex(_iVoiceTypeSelections[_iCurrentCharacter])
@@ -496,7 +520,7 @@ Event OnOptionMenuOpen(Int Option)
 EndEvent
 
 Event OnOptionMenuAccept(int option, int index)
-	Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
+	;Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
 	If Option == _iVoiceTypeOption
 		_iVoiceTypeSelections[_iCurrentCharacter] = index
 		String sShortVoiceType = StringUtil.Substring(_sVoiceTypesFiltered[index],0,StringUtil.Find(_sVoiceTypesFiltered[index]," "))
@@ -504,8 +528,11 @@ Event OnOptionMenuAccept(int option, int index)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == _iAliasOption
 		_iAliasSelections[_iCurrentCharacter] = index
-		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
-		CharacterManager.SetCharacterHangout(_sCharacterNames[_iCurrentCharacter],_kHangoutRefAliases[index])
+		If CharacterManager.SetCharacterHangout(_sCharacterNames[_iCurrentCharacter],_kHangoutRefAliases[index])
+			SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
+		Else
+			Debug.MessageBox("Sorry, but " + StringUtil.SubString(_sHangoutNames[index],1) + " is already in use by " + (_kHangoutRefAliases[index].GetReference() as Actor).GetActorBase().GetName() + "!")
+		EndIf
 	ElseIf Option == _iCurrentCharacterOption
 		_iCurrentCharacter = index
 		ForcePageReset()
@@ -553,8 +580,8 @@ EndFunction
 
 event OnConfigOpen()
 	UpdateSettings()
-	
-	
+
+
 endEvent
 
 event OnConfigClose()
@@ -564,19 +591,19 @@ endEvent
 Function UpdateSettings()
 	_Changed  = (vMYC_CFG_Changed.GetValue() as Int) As Bool
 	_Shutdown = (vMYC_CFG_Shutdown.GetValue() as Int) As Bool
-	
+
 	_sCharacterNames = CharacterManager.CharacterNames
 	_kHangoutRefAliases = CharacterManager.kHangoutRefAliases
 	_sHangoutNames = CharacterManager.sHangoutNames
-	
+
 	_sClassNames = CharacterManager.sClassNames
 EndFunction
 
 function ApplySettings()
 	vMYC_CFG_Shutdown.SetValue(_Shutdown as Int)
-	
+
 	vMYC_CFG_Changed.SetValue(1)
-	
+
 	;If _Shutdown && MetaQuestScript.ModVersion > 0
 		;MetaQuestScript.DoShutdown()
 	;ElseIf !_Shutdown && MetaQuestScript.ModVersion == 0
