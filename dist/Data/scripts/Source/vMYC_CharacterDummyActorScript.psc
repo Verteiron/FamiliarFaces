@@ -102,6 +102,7 @@ Event OnLoad()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
 	SetNameIfNeeded()
 	CheckVars()
+	SetNINodes()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
 		If _iCharGenVersion == 3
@@ -449,7 +450,7 @@ Function SetNonpersistent()
 	If !kVoiceType
 		kVoiceType = CharacterManager.GetCharacterForm(CharacterName,"VoiceType") as VoiceType
 	EndIf
-
+	SetNINodes()
 	If kVoiceType
 		_kActorBase.SetVoiceType(kVoiceType)
 	Else ; No voicetype is saved, so set the default voicetype as the local voicetype
@@ -595,7 +596,6 @@ Function RefreshMeshNewCG()
 ;	QueueNiNodeUpdate()
 	_kActorBase.SetInvulnerable(False)
 	;vMYC_CharGenLoading.Mod(-1)
-	SetNINodes()
 	SendModEvent("vMYC_CharacterReady",CharacterName)
 	GotoState("")
 EndFunction
