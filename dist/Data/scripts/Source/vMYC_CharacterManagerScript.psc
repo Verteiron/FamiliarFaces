@@ -1376,16 +1376,16 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	While i > 0
 		i -= 1
 		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
-		;Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
+		Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 		vMYC_ShoutList.AddForm(kShout)
 	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
 	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
 		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyShoutsBusy = False
 		Return -1
 	ElseIf vMYC_ShoutList.GetSize() == 0
-		;Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
+		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
 		Return 0
 	EndIf
@@ -1393,6 +1393,21 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	WaitMenuMode(0.1)
 	_bApplyShoutsBusy = False
 	Return vMYC_ShoutList.GetSize()
+EndFunction
+
+Function RemoveCharacterShouts(String sCharacterName)
+{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
+	While _bApplyShoutsBusy
+		WaitMenuMode(0.1)
+	EndWhile
+	_bApplyShoutsBusy = True
+	Debug.Trace("MYC: (" + sCharacterName + ") Character is not allowed to use shouts, removing them!")
+	vMYC_Shoutlist.Revert()
+	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
+	vMYC_ShoutList.AddForm(vMYC_NullShout)
+	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
+	WaitMenuMode(0.1)
+	_bApplyShoutsBusy = False
 EndFunction
 
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)

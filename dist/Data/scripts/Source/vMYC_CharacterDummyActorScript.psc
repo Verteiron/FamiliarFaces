@@ -290,6 +290,13 @@ Event OnUpdateCharacterSpellList(string eventName, string strArg, float numArg, 
 	If iAdded || iRemoved
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
+
+	If CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")
+		CharacterManager.RemoveCharacterShouts(CharacterName)
+	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout)
+		CharacterManager.ApplyCharacterShouts(CharacterName)
+	EndIf
+
 EndEvent
 
 Function CheckVars()
@@ -374,6 +381,9 @@ Function DoUpkeep(Bool bInBackground = True)
 	ElseIf _iCharGenVersion == 3
 		RefreshMeshNewCG()
 	EndIf
+	If !CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster")
+		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
+	EndIf
 	SetNonpersistent()
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
@@ -432,12 +442,14 @@ Function SetNonpersistent()
 		iSafetyTimer -= 1
 		Wait(0.5)
 	EndWhile
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
-	iSafetyTimer = 10
-	While CharacterManager.ApplyCharacterShouts(CharacterName) < 0 && iSafetyTimer
-		iSafetyTimer -= 1
-		Wait(0.5)
-	EndWhile
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying Shouts...")
+	If CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")
+		iSafetyTimer = 10
+		While CharacterManager.ApplyCharacterShouts(CharacterName) < 0 && iSafetyTimer
+			iSafetyTimer -= 1
+			Wait(0.5)
+		EndWhile
+	EndIf
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying haircolor...")
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") as ColorForm
 	_kActorBase.SetHairColor(kHairColor)
