@@ -7,7 +7,6 @@
 
 [b][size=4]1.0.4[/size][/b]
 [LIST]
-[*][/*]
 [*]Race, Armor, Weapon, Perk, and Spell dependencies are now written to the character save file. Files without dependency info will be automatically upgraded to include it the next time they are loaded. Dependency data is not yet read but this will support future features.[/*]
 [*]Perks will now be loaded even if some are missing due to missing dependencies.[/*]
 [*]A missing Race (for example because of missing plugins/mods) will now no longer hang the character loading process. Characters with an invalid Race will be set up as Nords, but will be updated to the correct Race if the required mods are later installed.[/*]
