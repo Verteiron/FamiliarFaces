@@ -87,7 +87,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 105
+	_CurrentVersion = 108
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
@@ -275,6 +275,18 @@ Bool Function CheckDependencies()
 		Return False
 	Else
 		;Proceed
+	EndIf
+	
+	Int iRandom = RandomInt(0,999999)
+	Int jTestMap = JMap.Object()
+	JMap.setInt(jTestMap,"RandomInt",iRandom)
+	JValue.WriteToFile(jTestMap,"Data/vMYC/vMYC_testfile.json")
+	WaitMenuMode(0.1)
+	jTestMap = JValue.Release(jTestMap)
+	jTestMap = JValue.ReadFromFile("Data/vMYC/vMYC_testfile.json")
+	If JMap.getInt(jTestMap,"RandomInt") != iRandom
+		Debug.MessageBox("Familiar Faces\nCould not write to Data/vMYC! This may be because your Skyrim directory's permissions are wrong, or the vMYC is missing.\nThe mod will shut down until this is fixed!")
+		Return False
 	EndIf
 	Return True
 EndFunction
