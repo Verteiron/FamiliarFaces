@@ -25,10 +25,9 @@ Int Property	OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_RESTORATION	Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_OTHER			Auto Hidden
 
-Int Property	OPTION_TOGGLE_MAGICALLOW_HEALING		Auto Hidden
-Int Property	OPTION_TOGGLE_MAGICALLOW_DEFENSE		Auto Hidden
+Int Property	OPTION_TOGGLE_SHOUTSALLOW_MASTER			Auto Hidden
 
-Bool _Changed 
+Bool _Changed
 Bool _Shutdown
 
 Bool _bShowDebugOptions
@@ -259,8 +258,11 @@ event OnPageReset(string a_page)
 		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
 
-		;===== Character magic option =======----
-		AddHeaderOption("Magic")
+		AddEmptyOption()
+		;===== Character skill options ======----
+		AddHeaderOption("$Skill settings")
+		OPTION_TOGGLE_SHOUTSALLOW_MASTER = AddToggleOption("{$Allow} {$Shouts}",CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool,OptionFlags)
+		AddEmptyOption()
 		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
 		OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
 		OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
@@ -276,9 +278,6 @@ event OnPageReset(string a_page)
 		_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION
 		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
 		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
-
-
-		;====================================----
 
 		;===== Character magic option =======----
 		AddHeaderOption("Magic")
@@ -462,6 +461,12 @@ Event OnOptionSelect(Int Option)
 		bAllowed = !bAllowed
 		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
 		SetToggleOptionValue(Option,bAllowed)
+		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf Option == OPTION_TOGGLE_SHOUTSALLOW_MASTER 
+		Bool bAllowShouts = CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool
+		bAllowShouts = !bAllowShouts
+		CharacterManager.SetLocalInt(_sCharacterName,"ShoutsAllowMaster",bAllowShouts as Int)
+		SetToggleOptionValue(OPTION_TOGGLE_SHOUTSALLOW_MASTER,bAllowShouts)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf Option == _iWarpOption
 		Bool bResult = ShowMessage("$Really warp?",True)

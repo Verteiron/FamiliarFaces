@@ -1345,7 +1345,7 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 		;Debug.Trace("MYC: (" + sCharacterName + ") Perk is from " + JArray.getStr(jCharacterPerks,i))
 		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
 	If vMYC_PerkList.GetSize() + iMissingCount != JArray.Count(jCharacterPerks)
 		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyPerksBusy = False
@@ -1379,7 +1379,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		;Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 		vMYC_ShoutList.AddForm(kShout)
 	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
+	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
 	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
 		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyShoutsBusy = False
@@ -1393,6 +1393,21 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	WaitMenuMode(0.1)
 	_bApplyShoutsBusy = False
 	Return vMYC_ShoutList.GetSize()
+EndFunction
+
+Function RemoveCharacterShouts(String sCharacterName)
+{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
+	While _bApplyShoutsBusy
+		WaitMenuMode(0.1)
+	EndWhile
+	_bApplyShoutsBusy = True
+	Debug.Trace("MYC: (" + sCharacterName + ") Character is not allowed to use shouts, removing them!")
+	vMYC_Shoutlist.Revert()
+	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
+	vMYC_ShoutList.AddForm(vMYC_NullShout)
+	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
+	WaitMenuMode(0.1)
+	_bApplyShoutsBusy = False
 EndFunction
 
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)

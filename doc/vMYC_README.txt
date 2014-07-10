@@ -5,6 +5,11 @@
 [youtube]5nE6BEAPG4A[/youtube]
 [/center]
 
+[b][size=4]1.0.5[/size][/b]
+[LIST]
+[*]Shouts can now be disabled for a character via MCM.[/*]
+[/LIST]
+
 [b][size=4]1.0.4[/size][/b]
 [LIST]
 [*]Race, Armor, Weapon, Perk, and Spell dependencies are now written to the character save file. Files without dependency info will be automatically upgraded to include it the next time they are loaded. Dependency data is not yet read but this will support future features.[/*]
