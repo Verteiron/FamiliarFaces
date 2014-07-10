@@ -14,6 +14,14 @@ Function SendConfigEvent(String asPath) Global
 	EndIf
 EndFunction
 
+Function InitConfig() Global
+	Int jConfigData = CreateConfigDataIfMissing()
+EndFunction
+
+Function LoadConfig() Global
+
+EndFunction
+
 Function SaveConfig() Global
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
 	JMap.setInt(jConfigData,"DataSerial",JMap.getInt(jConfigData,"DataSerial") + 1)
@@ -25,16 +33,17 @@ Int Function CreateConfigDataIfMissing() Global
 	If jConfigData
 		Return jConfigData
 	EndIf
-	Debug.Trace("MYC/Config: First Config data access, creating ConfigData key!")
-	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	Debug.Trace("MYC/Config: First ConfigData access, creating JDB key!")
+	Int _jMYC = JDB.solveObj(".vMYC")
+	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")	
 	If jConfigData
 		Debug.Trace("MYC/Config: Loaded config file!")
-		Return jConfigData
+	Else
+		Debug.Trace("MYC/Config: No config file found, creating new ConfigData data!")
+		jConfigData = JMap.Object()
+		JMap.setInt(jConfigData,"DataSerial",0)
 	EndIf
-	jConfigData = JMap.Object()
-	Int _jMYC = JDB.solveObj(".vMYC")
 	JMap.setObj(_jMYC,"_ConfigData",jConfigData)
-	JMap.setInt(jConfigData,"DataSerial",0)
 	Return jConfigData
 EndFunction
 
