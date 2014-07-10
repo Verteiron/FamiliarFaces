@@ -96,9 +96,6 @@ Event OnVersionUpdate(int a_version)
 	ElseIf (a_version >= 4 && CurrentVersion < 4)
 		Debug.Trace("MYC/MCM: Updating script to version 4...")
 		OnConfigInit()
-	ElseIf (a_version >= 3 && CurrentVersion < 3)
-		Debug.Trace("MYC/MCM: Updating script to version 3...")
-		_iMagicSchoolOptions = New Int[6]
 	EndIf
 
 EndEvent
@@ -279,27 +276,6 @@ event OnPageReset(string a_page)
 		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
 		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
 
-		;===== Character magic option =======----
-		AddHeaderOption("Magic")
-		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
-		OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
-		OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
-		
-		_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION	
-		_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
-		_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
-		_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION	
-		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
-		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER		
-		
-		
-		;====================================----
-		
 		If _bShowDebugOptions
 			AddEmptyOption()
 			AddHeaderOption("Debug")
@@ -473,11 +449,6 @@ Event OnOptionSelect(Int Option)
 		If bResult
 			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
 		EndIf
-	ElseIf Option == OPTION_TOGGLE_MAGICALLOW_HEALING
-		Bool bAllowed = GetConfigInt("MagicAllowHealing") as Bool
-		bAllowed == !bAllowed
-		SetConfigInt("MagicAllowHealing",bAllowed as Int)
-		SetToggleOptionValue(Option,bAllowed)
 	ElseIf Option == _iShowDebugOption
 		_bShowDebugOptions = !_bShowDebugOptions
 		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)

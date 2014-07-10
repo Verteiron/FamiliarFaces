@@ -226,7 +226,7 @@ EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
 	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive"
-		UpdateCharacterSpellList()
+		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
 	EndIf	
 EndEvent
 
