@@ -143,6 +143,7 @@ Function DoInit()
 		WaitMenuMode(0.5)
 		CharacterManager.DoInit()
 	EndIf
+	InitConfig()
 	SetConfigDefaults()
 	If !(ShrineOfHeroes as Quest).IsRunning()
 		WaitMenuMode(0.5)
@@ -182,6 +183,18 @@ Function DoUpgrade()
 		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
 	EndIf
 
+	If ModVersion < 108
+		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
+		InitConfig()
+		SetConfigDefaults()
+		CharacterManager.RepairSaves()
+		CharacterManager.DoUpkeep()
+		ShrineOfHeroes.DoUpkeep()
+		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
+		ModVersion = 108
+	EndIf
+	
+	
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
 		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
