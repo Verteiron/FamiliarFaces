@@ -836,7 +836,7 @@ EndFunction
 
 ActorBase Function GetCharacterDummy(String sCharacterName)
 	Int i = 0
-	Return JValue.solveForm(_jMYC,"." + sCharacterName + "._LocalData.ActorBase") as ActorBase
+	Return JValue.solveForm(_jMYC,"." + sCharacterName + ".!LocalData.ActorBase") as ActorBase
 EndFunction
 
 Actor Function GetCharacterActor(ActorBase kTargetDummy)
@@ -1068,7 +1068,7 @@ EndFunction
 
 Function SetCharacterTracking(String asCharacterName, Bool abEnable)
 {Enable the quest objective for target character's refalias}
-	Int iRefIndex = JValue.solveInt(_jMYC,"." + asCharacterName + "._LocalData.HangoutIndex")
+	Int iRefIndex = JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData.HangoutIndex")
 	If iRefIndex == -1 && abEnable
 		PickHangout(asCharacterName)
 	EndIf
@@ -1737,13 +1737,13 @@ EndFunction
 
 Int Function CreateLocalDataIfMissing(String asCharacterName)
 	Int jCharacter = JMap.getObj(_jMYC,asCharacterName)
-	Int jCharLocalData = JMap.getObj(jCharacter,"_LocalData")
+	Int jCharLocalData = JMap.getObj(jCharacter,"!LocalData")
 	If jCharLocalData
 		Return jCharLocalData
 	EndIf
 	;Debug.Trace("MYC: (" + asCharacterName + ") First local data access, creating LocalData key!")
 	jCharLocalData = JMap.Object()
-	JMap.setObj(jCharacter,"_LocalData",jCharLocalData)
+	JMap.setObj(jCharacter,"!LocalData",jCharLocalData)
 	Return jCharLocalData
 EndFunction
 
@@ -1758,7 +1758,7 @@ Function SetLocalString(String asCharacterName, String asPath, String asString)
 EndFunction
 
 String Function GetLocalString(String asCharacterName, String asPath)
-	Return JValue.solveStr(_jMYC,"." + asCharacterName + "._LocalData." + asPath)
+	Return JValue.solveStr(_jMYC,"." + asCharacterName + ".!LocalData." + asPath)
 EndFunction
 
 Function SetLocalInt(String asCharacterName, String asPath, Int aiInt)
@@ -1767,7 +1767,7 @@ Function SetLocalInt(String asCharacterName, String asPath, Int aiInt)
 EndFunction
 
 Int Function GetLocalInt(String asCharacterName, String asPath)
-	Return JValue.solveInt(_jMYC,"." + asCharacterName + "._LocalData." + asPath)
+	Return JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData." + asPath)
 EndFunction
 
 Function SetLocalFlt(String asCharacterName, String asPath, Float afFloat)
@@ -1776,7 +1776,7 @@ Function SetLocalFlt(String asCharacterName, String asPath, Float afFloat)
 EndFunction
 
 Float Function GetLocalFlt(String asCharacterName, String asPath)
-	Return JValue.solveFlt(_jMYC,"." + asCharacterName + "._LocalData." + asPath)
+	Return JValue.solveFlt(_jMYC,"." + asCharacterName + ".!LocalData." + asPath)
 EndFunction
 
 Function SetLocalForm(String asCharacterName, String asPath, Form akForm)
@@ -1785,7 +1785,7 @@ Function SetLocalForm(String asCharacterName, String asPath, Form akForm)
 EndFunction
 
 Form Function GetLocalForm(String asCharacterName, String asPath)
-	Return JValue.solveForm(_jMYC,"." + asCharacterName + "._LocalData." + asPath)
+	Return JValue.solveForm(_jMYC,"." + asCharacterName + ".!LocalData." + asPath)
 EndFunction
 
 Function SetLocalObj(String asCharacterName, String asPath, Int ajObj)
@@ -1794,7 +1794,7 @@ Function SetLocalObj(String asCharacterName, String asPath, Int ajObj)
 EndFunction
 
 Int Function GetLocalObj(String asCharacterName, String asPath)
-	Return JValue.solveObj(_jMYC,"." + asCharacterName + "._LocalData." + asPath)
+	Return JValue.solveObj(_jMYC,"." + asCharacterName + ".!LocalData." + asPath)
 EndFunction
 
 ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
