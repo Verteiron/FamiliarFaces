@@ -16,10 +16,28 @@ EndFunction
 
 Function InitConfig() Global
 	Int jConfigData = CreateConfigDataIfMissing()
+	SyncConfig()
+EndFunction
+
+Function SyncConfig() Global
+	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
+	Int jConfigFileData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	Int DataSerial = JMap.getInt(jConfigData,"DataSerial")
+	Int DataFileSerial = JMap.getInt(jConfigFileData,"DataSerial")
+	If DataSerial > DataFileSerial
+		Debug.Trace("MYC/Config: Our data is newer than the saved file, overwriting it!")
+		JValue.WriteToFile(jConfigData,"Data/vMYC/vMYC_config.json")
+	ElseIf DataSerial < DataFileSerial
+		Debug.Trace("MYC/Config: Our data is older than the saved file, loading it!")
+		JConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	Else
+		;Already synced. Sunc?
+	EndIf
 EndFunction
 
 Function LoadConfig() Global
-
+	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
+	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
 EndFunction
 
 Function SaveConfig() Global
