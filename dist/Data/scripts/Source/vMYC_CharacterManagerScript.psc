@@ -1455,10 +1455,10 @@ EndFunction
 Bool Function LoadCharacter(String sCharacterName)
 	;Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter called!")
 	Int i = 0
-	WaitMenuMode(RandomFloat(0.0,2.0)) ; Stagger startup slightly to be a little friendlier to the threading
+	;WaitMenuMode(RandomFloat(0.0,2.0)) ; Stagger startup slightly to be a little friendlier to the threading
 	While _bBusyLoading
 		;Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter is busy, waiting...")
-		Wait(1)
+		WaitMenuMode(1)
 	EndWhile
 	_bBusyLoading = True
 
