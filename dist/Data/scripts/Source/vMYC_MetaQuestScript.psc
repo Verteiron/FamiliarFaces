@@ -87,7 +87,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 108
+	_CurrentVersion = 109
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
@@ -183,17 +183,25 @@ Function DoUpgrade()
 		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
 	EndIf
 
-	If ModVersion < 108
+	If ModVersion < 109
 		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
+		Debug.Trace("MYC: Initialize new config storage...")
 		InitConfig()
 		SetConfigDefaults()
 		CharacterManager.RepairSaves()
 		CharacterManager.DoUpkeep()
-		ShrineOfHeroes.DoUpkeep()
+		Debug.Trace("MYC: Shutting down Shrine of Heroes...")
+		ShrineOfHeroes.Stop()
+		While ShrineOfHeroes.IsRunning()
+			Wait(0.5)
+			ShrineOfHeroes.Stop()
+			Debug.Trace("MYC: Waiting for Shrine to shut down...")
+		EndWhile
+		Debug.Trace("MYC: Restarting Shrine of Heroes...")
+		ShrineOfHeroes.Start()
 		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
 		ModVersion = 108
 	EndIf
-	
 	
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
