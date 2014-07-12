@@ -256,6 +256,7 @@ Int 			_iAlcoveToSwap = -1
 
 Int				_iValidateStateCount = 0
 
+Float			_fValidationTime = 0.0
 Bool			_bLastValidation = False
 
 ;Legacy variables, do not use
@@ -313,6 +314,7 @@ Function DoUpkeep()
 		_bCharacterSummoned = True
 	EndIf
 	InitTrophies()
+	_bLastValidation = False
 	RegisterForSingleUpdate(1)
 EndFunction
 
@@ -448,7 +450,7 @@ Bool Function ValidateAlcove()
 	Float fTimeStart = GetCurrentRealTime()
 	If AlcoveActor
 		AlcoveActor.EnableNoWait(0)
-		If AlcoveActor.GetDistance(_StatueMarker) > 150 || AlcoveActor.GetParentCell() != GetParentCell()
+		If AlcoveActor.GetDistance(_StatueMarker) > 150 || AlcoveActor.GetParentCell() != GetParentCell() || !AlcoveActor.IsEnabled()
 			bActorInAlcove = False
 		Else
 			bActorInAlcove = True
@@ -458,7 +460,9 @@ Bool Function ValidateAlcove()
 		If !sActorName
 			sActorName = AlcoveActor.GetName()
 		EndIf
-
+		If StringUtil.Find(AlcoveActor.GetActorBase().GetName(),"Dummy") > -1
+			(AlcoveActor as vMYC_CharacterDummyActorScript).SetNameIfNeeded(True)
+		EndIf
 	EndIf
 	Actor kCharacterToUse
 
@@ -653,12 +657,15 @@ Bool Function ValidateAlcove()
 	Float fValidationTime = GetCurrentRealTime() - fTimeStart
 	
 	If bValidate 
+		_fValidationTime += fValidationTime
 		If !_bLastValidation
 			_bLastValidation = True
-			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** Passed validation!" + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)	
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)	
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
+		_fValidationTime = 0.0
 	Else
+		_fValidationTime += fValidationTime
 		_bLastValidation = False
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForSingleUpdate(1)
