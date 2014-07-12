@@ -655,6 +655,7 @@ Function LoadCharacterFiles()
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData)
 				Else
 					;Debug.Trace("MYC: The saved data for " + sCharacterName + " hasn't changed.")
+					JMap.setObj(jCharacterInfo,"Data",jCharacterData) ; Set the object anyway in case new forms are available from the importing game
 				EndIf
 				SetLocalInt(sCharacterName,"FilePresent",1)
 			EndIf
