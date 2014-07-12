@@ -324,7 +324,9 @@ Event OnUpdate()
 			RegisterForSingleUpdate(5)
 		EndIf
 	Else
-		
+		If Is3DLoaded()
+			RegisterForSingleUpdate(RandomFloat(9,12))
+		EndIf
 	EndIf
 EndEvent
 
