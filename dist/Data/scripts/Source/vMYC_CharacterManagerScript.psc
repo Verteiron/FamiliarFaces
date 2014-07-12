@@ -1503,17 +1503,20 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	;Debug.Trace("MYC: (" + sCharacterName + ") Finding ActorBase for " + sCharacterName + "...")
 	ActorBase DummyActorBase = GetLocalForm(sCharacterName,"ActorBase") as ActorBase
-	Actor PlayerDupe = GetLocalForm(sCharacterName,"Actor") as Actor
+	Actor kCharacterActor = GetLocalForm(sCharacterName,"Actor") as Actor
+	If !kCharacterActor
+		kCharacterActor = GetCharacterActorByName(sCharacterName)
+	EndIf
 
-	If PlayerDupe ; Already been loaded
-		;Debug.Trace("MYC: (" + sCharacterName + ") This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + PlayerDupe)
+	If kCharacterActor ; Already been loaded
+		Debug.Trace("MYC: (" + sCharacterName + ") This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + kCharacterActor)
 		SetLocalInt(sCharacterName,"Enabled", 1)
-		PlayerDupe.RemoveallItems()
-		;PlayerDupe.Enable()
-		Wait(1.0)
-		(PlayerDupe as vMYC_CharacterDummyActorScript).DoUpkeep()
-		;_bBusyLoading = False
-		;Return True
+		;kCharacterActor.RemoveallItems()
+		kCharacterActor.Enable()
+		;Wait(1.0)
+		(kCharacterActor as vMYC_CharacterDummyActorScript).DoUpkeep()
+		_bBusyLoading = False
+		Return True
 	EndIf
 
 	;----Get ActorBase for character--------------
@@ -1536,12 +1539,12 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	DummyActorBase.SetEssential(True)
 	DummyActorBase.SetName(sCharacterName)
-	PlayerDupe = GetCharacterActor(DummyActorBase)
+	kCharacterActor = GetCharacterActor(DummyActorBase)
 
-	ApplyCharacterPerks(sCharacterName)
+	;ApplyCharacterPerks(sCharacterName)
 
-	If !PlayerDupe
-		PlayerDupe = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
+	If !kCharacterActor
+		kCharacterActor = LoadPoint.PlaceAtMe(DummyActorBase, abInitiallyDisabled = True) as Actor
 	EndIf
 
 	;-----==== NIOverride support ====-----
@@ -1549,10 +1552,10 @@ Bool Function LoadCharacter(String sCharacterName)
 	;-----====                    ====-----
 
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + PlayerDupe)
-	SetLocalForm(sCharacterName,"Actor",PlayerDupe)
+	;Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + kCharacterActor)
+	SetLocalForm(sCharacterName,"Actor",kCharacterActor)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Made it through SetLocalForm...")
-	vMYC_CharacterDummyActorScript CharacterDummy = PlayerDupe as vMYC_CharacterDummyActorScript
+	vMYC_CharacterDummyActorScript CharacterDummy = kCharacterActor as vMYC_CharacterDummyActorScript
 	CharacterDummy.NeedRefresh = True
 	SetLocalForm(sCharacterName,"Script",CharacterDummy)
 	SetLocalInt(sCharacterName,"TrackingEnabled",0)
@@ -1566,22 +1569,22 @@ Bool Function LoadCharacter(String sCharacterName)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Stored race is " + CharacterDummy.CharacterRace + "!")
 
 	;Debug.Trace("MYC: (" + sCharacterName + ") Setting voicetype to " + JValue.solveForm(jCharacterData,".Race") as VoiceType)
-	DummyActorBase.SetVoiceType(JValue.solveForm(jCharacterData,".Race") as VoiceType)
+	;DummyActorBase.SetVoiceType(JValue.solveForm(jCharacterData,".Race") as VoiceType)
 
 	Int idx = _kLoadedCharacters.Find(None)
-	_kLoadedCharacters[idx] = PlayerDupe
+	_kLoadedCharacters[idx] = kCharacterActor
 
 	CharacterDummy.DoInit()
 	_bBusyLoading = False
 
 	;----Load and equip armor--------------
 
-	Int iArmorCount = ApplyCharacterArmor(sCharacterName)
+	;Int iArmorCount = ApplyCharacterArmor(sCharacterName)
 	
 	
 	;----Populate inventory--------------
 
-	PopulateInventory(sCharacterName)
+	;PopulateInventory(sCharacterName)
 
 	;----Add spells--------------
 
@@ -1592,21 +1595,21 @@ Bool Function LoadCharacter(String sCharacterName)
 	;While i < _sAVNames.Length
 		;If _sAVNames[i]
 			;Float fAV = GetFloatValue(DummyActorBase,sKey + "Stat.AV." + _sAVNames[i])
-			;PlayerDupe.ForceActorValue(_sAVNames[i],fAV)
+			;kCharacterActor.ForceActorValue(_sAVNames[i],fAV)
 			;Debug.Trace("MYC: (" + sCharacterName + ") Set dummy's " + _sAVNames[i] + " to " + fAV)
 		;EndIf
 		;i += 1
 	;EndWhile
 
-	PlayerDupe.SetAV("Confidence",3)
-	PlayerDupe.SetAV("Assistance",2)
-	;PlayerDupe.SetAV("Confidence",3)
+	kCharacterActor.SetAV("Confidence",3)
+	kCharacterActor.SetAV("Assistance",2)
+	;kCharacterActor.SetAV("Confidence",3)
 
-	PlayerDupe.Enable(True)
+	kCharacterActor.Enable(True)
 	Wait(1)
 
 	;----Load and equip weapons/hand gear--------------
-	Int iWeaponCount = ApplyCharacterWeapons(sCharacterName)
+	;Int iWeaponCount = ApplyCharacterWeapons(sCharacterName)
 
 	SetLocalInt(sCharacterName,"Enabled", 1)
 	;Debug.Trace("MYC: (" + sCharacterName + ") Enabling dummy...")

@@ -105,8 +105,8 @@ EndEvent
 
 Event OnLoad()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
-	SetNameIfNeeded()
 	CheckVars()
+	SetNameIfNeeded()
 	SetNINodes()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
@@ -402,7 +402,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	GotoState("Busy")
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	If _bInvalidRace 
 		; Reset the race during upkeep in case the needed mod has been installed
@@ -476,7 +476,7 @@ Function SetNonpersistent()
 		Return
 	EndIf
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting name...")
-	SetNameIfNeeded()
+	SetNameIfNeeded(True)
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Applying perks...")
 	Int iSafetyTimer = 10
 	_bNeedPerks = True
@@ -841,9 +841,9 @@ EndFunction
 
 Function SetNameIfNeeded(Bool abForce = False)
 	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
 		_kActorBase.SetName(CharacterName)
-		
+		SetName(CharacterName)
 		Int i = GetNumReferenceAliases()
 		While i > 0
 			i -= 1
