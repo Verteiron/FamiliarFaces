@@ -1273,6 +1273,9 @@ Function EraseAlcove()
 	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 	ReleaseActor()
 	ValidateAlcove()
+	If sCharacterName
+		CharacterManager.DeleteCharacterActor(sCharacterName)
+	EndIf
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 EndFunction
 
