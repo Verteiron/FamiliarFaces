@@ -1126,28 +1126,48 @@ Function RepairSaves()
 
 EndFunction
 
+Function ClearCharacterRefs(String asCharacterName)
+	Actor kCharacterActor = GetCharacterActorByName(asCharacterName)
+	Int i = kCharacterActor.GetNumReferenceAliases()
+	Debug.Trace("MYC: (" + asCharacterName + ") Clearing the following RefAliases from " + asCharacterName + "...")
+	While i > 0
+		i -= 1
+		ReferenceAlias kThisRefAlias = kCharacterActor.GetNthReferenceAlias(i)
+		If kThisRefAlias
+			Debug.Trace("MYC: (" + asCharacterName + ")   " + kThisRefAlias)
+			kThisRefAlias.Clear()
+		EndIf
+	EndWhile
+EndFunction
+
+Function DeleteCharacterActor(String asCharacterName)
+	Int jActorBaseMap = JMap.getObj(_jMYC,"ActorBaseMap")
+	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
+	ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)
+	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
+	Debug.Trace("MYC: (" + asCharacterName + ") Deleting actor " + kDeadActor + "!")
+	Int jCharacterList = JMap.getObj(_jMYC,"CharacterList")
+	Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)
+	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
+	ClearCharacterRefs(asCharacterName)
+	_kLoadedCharacters[iLCidx] = None
+	SetLocalInt(asCharacterName,"Enabled",0)
+	SetLocalForm(asCharacterName,"ActorBase",None)
+	SetLocalForm(asCharacterName,"Actor",None)
+	JArray.eraseIndex(jCharacterList,iDeadManIndex)
+	JFormMap.removeKey(jActorBaseMap,kDeadActorBase)
+	kDeadActor.Delete()
+EndFunction
+
 Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPreserveLocal = True)
 	Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter called!")
 	If !bConfirm
 		Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
 		Return
 	EndIf
-	Int jActorBaseMap = JMap.getObj(_jMYC,"ActorBaseMap")
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
-	ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)
-	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
-	CharGen.EraseCharacter(kDeadActor,asCharacterName)
-	Int jCharacterList = JMap.getObj(_jMYC,"CharacterList")
-	Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)
-	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
-	_kLoadedCharacters[iLCidx] = None
-	SetLocalInt(asCharacterName,"Enabled",0)
+	DeleteCharacterActor(asCharacterName)
 	SetLocalInt(asCharacterName,"DoNotLoad",1)
-	SetLocalForm(asCharacterName,"ActorBase",None)
-	SetLocalForm(asCharacterName,"Actor",None)
-	JArray.eraseIndex(jCharacterList,iDeadManIndex)
-	JFormMap.removeKey(jActorBaseMap,kDeadActorBase)
-	kDeadActor.Delete()
 	If bPreserveLocal
 		JMap.RemoveKey(jDeadManWalking,"Data")
 	Else
