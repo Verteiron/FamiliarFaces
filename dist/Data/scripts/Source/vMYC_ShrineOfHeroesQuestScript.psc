@@ -148,7 +148,7 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	Debug.Trace("MYC/Shrine: DataSerial is " + DataSerial + ", DataFileSerial is " + DataFileSerial)
 	If !jShrineFileData && DataSerial
 		Debug.Trace("MYC/Shrine: Shrine data file was deleted, blanking out the Shrine...")
-		Debug.Trace("MYC/Shrine: FIXME!")
+		
 	EndIf
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
