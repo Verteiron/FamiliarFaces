@@ -465,6 +465,7 @@ EndFunction
 
 Function SyncCharacterData()
 	If CharacterManager.GetLocalFlt(CharacterName,"PlayTime") != CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime")
+		IsBusy = True
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Our source data has changed!")
 		;RemoveAllItems(PlayerREF)
 		Int iResult

@@ -108,6 +108,7 @@ Int Property AlcoveLightState Hidden
 	EndFunction
 EndProperty
 
+Bool Property DisableLights	= False Auto Hidden
 
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
 vMYC_ShrineOfHeroesQuestScript 	Property ShrineOfHeroes 	Auto
@@ -371,6 +372,9 @@ EndFunction
 
 Bool Function DeportUnknownActors()
 {Check for an unknown actor in the Alcove and send them to limbo. Return true if one was found.}
+	If _bPlayerisSaving
+		Return False
+	EndIf
 	Actor kUnknownActor
 	Int i = 5
 	While i > 0 && !kUnknownActor
@@ -404,6 +408,10 @@ State Validating
 EndState
 
 Bool Function ValidateAlcove()
+	If _bPlayerIsSaving ;Disable validation if player is saving here!
+		AlcoveLightState = ALCOVE_LIGHTS_LOADING
+		Return True
+	EndIf
 	GoToState("Validating")
 	_iValidateStateCount = 0
 	Bool bValidate = True
@@ -660,6 +668,9 @@ Bool Function ValidateAlcove()
 		_fValidationTime += fValidationTime
 		If !_bLastValidation
 			_bLastValidation = True
+			If AlcoveActor
+				SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
+			EndIf
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)	
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
@@ -680,15 +691,16 @@ Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Fo
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
 	If iRequestingIndex != AlcoveIndex && strArg == "Request"
-		If AlcoveLightState == 2
-			_Torches.DisableNoWait(True)
-			GetLinkedRef(vMYC_ShrineLightingMaster).DisableNoWait(True)
-		EndIf
-		If AlcoveLightState > 0
-			_Light.DisableNoWait(True)
-		EndIf
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling my lights by request of " + iRequestingIndex)
+		DisableLights = True
+		_Torches.DisableNoWait(True)
+		GetLinkedRef(vMYC_ShrineLightingMaster).DisableNoWait(True)
+		_Light.StopTranslation()
+		_Light.DisableNoWait(True)
 	ElseIf iRequestingIndex != AlcoveIndex && strArg == "Release"
-		If AlcoveLightState == 2
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Restoring my lights by request of " + iRequestingIndex)
+		DisableLights = False
+		If AlcoveLightState == ALCOVE_LIGHTS_ON
 			_Torches.EnableNoWait(True)
 			GetLinkedRef(vMYC_ShrineLightingMaster).EnableNoWait(True)
 		EndIf
@@ -740,14 +752,14 @@ Function SetAlcoveLightState(Int iNewLightState)
 	Int iLightState = iNewLightState
 	_LightAmbientTarget	= _Light.GetLinkedRef()
 
-	If iLightState == 2
+	If iLightState == ALCOVE_LIGHTS_ON
 		ShowTrophies()
 	Else
 		HideTrophies()
 	EndIf
-	
+
 	If _Light.IsDisabled() && iLightState > 0
-		_Light.Enable()
+		_Light.EnableNoWait()
 		Int iSafety = 0
 		While !_Light.Is3DLoaded() && iSafety < 4
 			iSafety += 1
@@ -886,7 +898,7 @@ Function SavePlayer(Bool abForceSave = False)
 	Wait(0.25)
 	DisablePlayerControls(abCamSwitch = True)
 	ForceThirdPerson()
-	AlcoveLightState = 1
+	AlcoveLightState = ALCOVE_LIGHTS_LOADING
 	SendModEvent("vMYC_AlcoveLightingPriority","Request",AlcoveIndex)
 	Wait(0.5)
 	DisablePlayerControls(abCamSwitch = True)
@@ -966,12 +978,11 @@ Function DoSaveAnimation()
 	Wait(1.0)
 	_Book.FlipPages = False
 	ShrineOfHeroes.SetAlcoveStr(_iAlcoveIndex,"CharacterName",PlayerREF.GetActorBase().GetName())
-	CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
 	;ActivateAlcove()
 	SendModEvent("vMYC_AlcoveLightingPriority","Release",AlcoveIndex)
 	;Saving is done, return the character to the ground
 	vMYC_ShrineLightISMD.PopTo(vMYC_ShrineLightWhiteoutISMD) ; white out in 2.5 seconds
-
+	_bPlayerIsSaving = False
 	;Force the book to update with the player's name
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 
@@ -1249,35 +1260,20 @@ Function ResetAlcove()
 EndFunction
 
 Function UpdateAlcove()
-	;GotoState("Inactive")
-	AlcoveLightState = 1
+	AlcoveState = ALCOVE_STATE_BUSY
 	String sCharacterName = CharacterName
-	EraseAlcove(abAutoLights = False)
-	Wait(0.1)
-	CharacterManager.EraseCharacter(sCharacterName,True)
-	;Wait(0.1)
-	;CharacterName = ""
-;	Wait(0.1)
+	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
+	ReleaseActor()
 	SavePlayer(True)
-	;GoToState("Active")
 EndFunction
 
-Function EraseAlcove(Bool abAutoLights = True)
-	If abAutoLights
-		AlcoveLightState = 0
-	EndIf
-	HideTrophies()
-	If AlcoveActor
-		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
-		AlcoveActor.MoveTo(kNowhere)
-	EndIf
+Function EraseAlcove()
+	AlcoveState = ALCOVE_STATE_BUSY
+	String sCharacterName = CharacterName
 	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
-	ShrineOfHeroes.SetAlcoveInt(AlcoveIndex,"State",0)
-	CharacterName = ""
-	AlcoveActor = None
-	;Wait(0.1)
+	ReleaseActor()
+	ValidateAlcove()
 	SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
-	AlcoveState = 0
 EndFunction
 
 Function PlayerActivate()

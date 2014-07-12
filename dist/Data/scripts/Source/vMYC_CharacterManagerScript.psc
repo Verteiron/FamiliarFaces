@@ -1126,10 +1126,10 @@ Function RepairSaves()
 
 EndFunction
 
-Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
-	;Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter called!")
+Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPreserveLocal = True)
+	Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter called!")
 	If !bConfirm
-		;Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
+		Debug.Trace("MYC: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
 		Return
 	EndIf
 	Int jActorBaseMap = JMap.getObj(_jMYC,"ActorBaseMap")
@@ -1142,14 +1142,18 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False)
 	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
 	_kLoadedCharacters[iLCidx] = None
 	SetLocalInt(asCharacterName,"Enabled",0)
-	Debug.Trace("MYC: SetLocalInt(asCharacterName,DoNotLoad,1)")
 	SetLocalInt(asCharacterName,"DoNotLoad",1)
 	SetLocalForm(asCharacterName,"ActorBase",None)
 	SetLocalForm(asCharacterName,"Actor",None)
-	JMap.Clear(jDeadManWalking)
 	JArray.eraseIndex(jCharacterList,iDeadManIndex)
 	JFormMap.removeKey(jActorBaseMap,kDeadActorBase)
 	kDeadActor.Delete()
+	If bPreserveLocal
+		JMap.RemoveKey(jDeadManWalking,"Data")
+	Else
+		JMap.RemoveKey(_jMYC,asCharacterName)
+	EndIf
+	Debug.Trace("MYC: (" + asCharacterName + ") erased character!")
 EndFunction
 
 Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool abConjuration = True, Bool abDestruction = True, Bool abIllusion = True, Bool abRestoration = True, Bool abOther = True)
