@@ -47,6 +47,7 @@ Bool 	_bNeedSync
 
 Bool	_bShrineNeedsUpdate = False
 
+Bool	_bNoTick = False
 ;--=== Events ===--
 
 Event OnInit()
@@ -71,6 +72,10 @@ Event OnUpdate()
 	If _bNeedSync
 		_bNeedSync = False
 		SyncShrineData()
+	EndIf
+	If _bShrineNeedsUpdate
+		_bShrineNeedsUpdate = False
+		SendModEvent("vMYC_AlcoveValidateState")
 	EndIf
 	SendModEvent("vMYC_RequestLatencyCheck","",10)
 	RegisterForSingleUpdate(10) ; Make sure alcoves aren't stuck
@@ -116,6 +121,11 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
+Event OnShrineNeedsUpdate(string eventName, string strArg, float numArg, Form sender)
+	_bShrineNeedsUpdate = True
+	RegisterForSingleUpdate(1)
+EndEvent
+
 String Function GetAlcoveCharacterName(Int iAlcoveIndex)
 	Return JValue.solveStr(_jShrineData,".Alcove" + iAlcoveIndex + ".CharacterName")
 EndFunction
@@ -137,7 +147,27 @@ vMYC_ShrineAlcoveController Function GetAlcoveByIndex(Int iAlcoveIndex)
 	Return JValue.solveForm(_jShrineData,".Alcove" + iAlcoveIndex + ".Controller") as vMYC_ShrineAlcoveController
 EndFunction
 
+Function SanityCheck()
+{Read through the alcoves and remove duplicate names.}
+	Int i = 0
+	String[] sUsedNames = New String[32]
+	While i < AlcoveControllers.Length
+		String sName = JValue.solveStr(_jShrineData,".Alcove" + i + ".CharacterName")
+		If sName
+			If sUsedNames.Find(sName) < 0
+				sUsedNames[i] = sName
+			Else
+				Debug.Trace("MYC/Shrine: WARNING! Duplicate name '" + sName + "' detected in Alcove " + i + "! Clearing it.",1)
+				JValue.solveStrSetter(_jShrineData,".Alcove" + i + ".CharacterName","")
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+
+EndFunction
+
 Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
+	GotoState("SyncLocked")
 	Bool bShrineDataUpdated = False
 	
 	Int jShrineFileData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
@@ -145,10 +175,13 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	JMap.SetInt(_jShrineData,"DataSerial",ShrineDataSerial)
 	
 	Int DataFileSerial = JMap.getInt(jShrineFileData,"DataSerial")
-	Debug.Trace("MYC/Shrine: DataSerial is " + DataSerial + ", DataFileSerial is " + DataFileSerial)
+	;Debug.Trace("MYC/Shrine: DataSerial is " + DataSerial + ", DataFileSerial is " + DataFileSerial)
 	If !jShrineFileData && DataSerial
 		Debug.Trace("MYC/Shrine: Shrine data file was deleted, blanking out the Shrine...")
-		
+		InitShrineData()
+		JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
+		ShrineDataSerial += 1
+		DataSerial = ShrineDataSerial
 	EndIf
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
@@ -163,6 +196,10 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	Else
 		;Already synced. Sunc?
 	EndIf
+	If bShrineDataUpdated
+		SanityCheck()
+	EndIf
+	GotoState("")
 	Return bShrineDataUpdated
 	
 ;	JMap.setInt(_jShrineData,"DataSerial",ShrineDataSerial)
@@ -258,9 +295,12 @@ Function StartPortalStoneQuestIfNeeded()
 EndFunction
 
 Function TickDataSerial(Bool abForceSync = False)
+	If _bNoTick
+		Return
+	EndIf
 	ShrineDataSerial += 1
 	JMap.setInt(_jShrineData,"DataSerial",ShrineDataSerial)
-	Debug.Trace("MYC/Shrine: Ticking Shrine Data from " + (ShrineDataSerial - 1) + " to " + ShrineDataSerial)
+	;Debug.Trace("MYC/Shrine: Ticking Shrine Data from " + (ShrineDataSerial - 1) + " to " + ShrineDataSerial)
 	If abForceSync
 		SyncShrineData()
 	Else
@@ -294,6 +334,7 @@ Function InitShrineData()
 	JMap.setObj(_jShrineData,"AlcoveForms",jAlcoveRefs)
 	Int i
 	Int iCount = Alcoves.Length
+	_bNoTick = True
 	While i < iCount
 		JArray.addForm(jAlcoveRefs,Alcoves[i].GetReference() as vMYC_ShrineAlcoveController)
 		SetAlcoveInt(i,"Index",i)
@@ -303,6 +344,7 @@ Function InitShrineData()
 		(Alcoves[i].GetReference() as vMYC_ShrineAlcoveController).AlcoveIndex = i
 		i += 1
 	EndWhile
+	_bNoTick = False
 	;SetAlcoveCharacterNames()
 EndFunction
 
