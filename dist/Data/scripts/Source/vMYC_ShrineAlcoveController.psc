@@ -710,21 +710,6 @@ EndEvent
 Event OnAttachedToCell()
 EndEvent
 
-;Event OnUpdate()
-;	If ShrineOfHeroes.Ready
-;		CharacterName = ShrineOfHeroes.GetAlcoveStr(AlcoveIndex,"CharacterName")
-;		CheckVars()
-;		_Book.AlcoveIndex = AlcoveIndex
-;		InitTrophies()
-;		If CharacterName
-;			ActivateAlcove()
-;		EndIf
-;	Else
-;		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ShrineOfHeroes is NOT ready, will try again in a second :(")
-;		RegisterForSingleUpdate(1.0)
-;	EndIf
-;EndEvent
-
 Event OnAlcoveValidateState(string eventName, string strArg, float numArg, Form sender)
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnAlcoveValidateState!")
 	ValidateAlcove()
