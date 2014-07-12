@@ -655,15 +655,15 @@ Bool Function ValidateAlcove()
 	If bValidate 
 		If !_bLastValidation
 			_bLastValidation = True
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** Passed validation!" + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)	
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** Passed validation!" + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)	
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
 	Else
 		_bLastValidation = False
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForSingleUpdate(1)
 	EndIf
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ":     Validation pass took " + fValidationTime + " seconds.")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ":     Validation pass took " + fValidationTime + " seconds.")
 	GoToState("")
 	Return bValidate
 EndFunction
