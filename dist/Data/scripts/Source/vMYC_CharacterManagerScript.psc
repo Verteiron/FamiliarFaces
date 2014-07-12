@@ -1515,8 +1515,8 @@ Bool Function LoadCharacter(String sCharacterName)
 		kCharacterActor.Enable()
 		;Wait(1.0)
 		(kCharacterActor as vMYC_CharacterDummyActorScript).DoUpkeep()
-		_bBusyLoading = False
-		Return True
+		;_bBusyLoading = False
+		;Return True
 	EndIf
 
 	;----Get ActorBase for character--------------

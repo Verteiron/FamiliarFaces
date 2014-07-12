@@ -298,9 +298,7 @@ EndEvent
 Event OnLoad()
 	CheckVars()
 	RegisterForModEvents()
-	While !ValidateAlcove()
-		Wait(1)
-	EndWhile
+	RegisterForSingleUpdate(1)
 EndEvent
 
 Function RegisterForModEvents()
@@ -319,7 +317,15 @@ Function DoUpkeep()
 EndFunction
 
 Event OnUpdate()
-	ValidateAlcove()
+	If !ValidateAlcove()
+		If Is3DLoaded()
+			RegisterForSingleUpdate(1)
+		Else
+			RegisterForSingleUpdate(5)
+		EndIf
+	Else
+		
+	EndIf
 EndEvent
 
 Function ClaimActor(String asCharacterName)
@@ -357,6 +363,27 @@ Function ReleaseActor()
 	AlcoveActor = None
 	AlcoveStatueState = ALCOVE_STATUE_NONE
 	CharacterName = ""
+EndFunction
+
+Bool Function DeportUnknownActors()
+{Check for an unknown actor in the Alcove and send them to limbo. Return true if one was found.}
+	Actor kUnknownActor
+	Int i = 5
+	While i > 0 && !kUnknownActor
+		i -= 1
+		kUnknownActor = FindRandomActorFromRef(_StatueMarker,250)
+		If kUnknownActor == AlcoveActor || kUnknownActor == PlayerREF
+			kUnknownActor = None
+		EndIf
+	EndWhile
+	
+	If kUnknownActor
+		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
+		kUnknownActor.MoveTo(kNowhere)
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Found unknown Actor " + kUnknownActor + " aka " + kUnknownActor.GetActorBase().GetName() + " in shrine and banished them into limbo.",1)
+		Return True
+	EndIf
+	Return False
 EndFunction
 
 State Validating
@@ -409,14 +436,16 @@ Bool Function ValidateAlcove()
 		AlcoveState == ALCOVE_STATE_BUSY
 	EndIf
 	
+	String sWantCharacterName = WantCharacterName ; 'cache' it locally, sort of
+	
 	String sFailureReason
 	
 	String sActorName
 	
 	Bool bActorInAlcove
-	
+	Float fTimeStart = GetCurrentRealTime()
 	If AlcoveActor
-		AlcoveActor.Enable()
+		AlcoveActor.EnableNoWait(0)
 		If AlcoveActor.GetDistance(_StatueMarker) > 150 || AlcoveActor.GetParentCell() != GetParentCell()
 			bActorInAlcove = False
 		Else
@@ -430,58 +459,57 @@ Bool Function ValidateAlcove()
 
 	EndIf
 	Actor kCharacterToUse
-	Actor kUnknownActor
-	If WantCharacterName
-		kCharacterToUse = CharacterManager.GetCharacterActorByName(WantCharacterName)
+
+	If sWantCharacterName
+		kCharacterToUse = CharacterManager.GetCharacterActorByName(sWantCharacterName)
 	EndIf
-	
-	Int i = 5
-	While i > 0 && !kUnknownActor
-		i -= 1
-		kUnknownActor = FindRandomActorFromRef(_StatueMarker,250)
-		If kUnknownActor == AlcoveActor || kUnknownActor == PlayerREF
-			kUnknownActor = None
-		EndIf
-	EndWhile
 	
 	If AlcoveState == ALCOVE_STATE_EMPTY
 	;We're empty and our lights should be out.
-		If AlcoveActor
-			sFailureReason = "We're empty but we have an actor, send them to limbo."
-			ReleaseActor()
-			bValidate = False
-		ElseIf CharacterName != WantCharacterName
-			sFailureReason = "We're empty and have no actor, but we want one. Become busy."
-			AlcoveState = ALCOVE_STATE_BUSY
-			bValidate = False
-		ElseIf WantCharacterName
-			sFailureReason = "We're empty and have no actor, and we think we've got the right character, but we don't! Become busy."
-			AlcoveState = ALCOVE_STATE_BUSY
-			bValidate = False
+		If !AlcoveActor && CharacterName == sWantCharacterName && !sWantCharacterName
+			bValidate = True
+		Else
+			If AlcoveActor
+				sFailureReason = "We're empty but we have an actor, send them to limbo."
+				ReleaseActor()
+				bValidate = False
+			ElseIf CharacterName != sWantCharacterName
+				sFailureReason = "We're empty and have no actor, but we want one. Become busy."
+				AlcoveState = ALCOVE_STATE_BUSY
+				bValidate = False
+			ElseIf sWantCharacterName
+				sFailureReason = "We're empty and have no actor, and we think we've got the right character, but we don't! Become busy."
+				AlcoveState = ALCOVE_STATE_BUSY
+				bValidate = False
+			EndIf
 		EndIf
 	ElseIf (AlcoveState == ALCOVE_STATE_READY || AlcoveState == ALCOVE_STATE_SUMMONED)
 	;We're occupied and the torches are lit
-		If !AlcoveActor
-			sFailureReason = "We're ready, but we have no actor, become busy."
-			AlcoveState = ALCOVE_STATE_BUSY
-			bValidate = False
-		ElseIf CharacterName != WantCharacterName
-			sFailureReason = "We're ready and we have an actor, but not the one we want. Become busy."
-			AlcoveState = ALCOVE_STATE_BUSY
-			bValidate = False
-		ElseIf !WantCharacterName
-			sFailureReason = "We're ready and we have an actor, but we don't want one and don't think we have one! Become busy."
-			AlcoveState = ALCOVE_STATE_BUSY
-			bValidate = False
-		ElseIf AlcoveActor != kCharacterToUse
-			sFailureReason = "We're ready, we have an actor, we want an actor, but this isn't our actor!"
-			AlcoveState = ALCOVE_STATE_BUSY
-			bValidate = False
-		ElseIf !bActorInAlcove
-			If AlcoveStatueState != ALCOVE_STATUE_SUMMONED
-				sFailureReason = "We're ready, we have an actor, we want an actor, we have the right actor, but they're not in the Alcove!"
+		If AlcoveActor && CharacterName == sWantCharacterName && sWantCharacterName && (bActorInAlcove || AlcoveStatueState == ALCOVE_STATUE_SUMMONED)
+			bValidate = True
+		Else
+			If !AlcoveActor
+				sFailureReason = "We're ready, but we have no actor, become busy."
 				AlcoveState = ALCOVE_STATE_BUSY
 				bValidate = False
+			ElseIf CharacterName != sWantCharacterName
+				sFailureReason = "We're ready and we have an actor, but not the one we want. Become busy."
+				AlcoveState = ALCOVE_STATE_BUSY
+				bValidate = False
+			ElseIf !sWantCharacterName
+				sFailureReason = "We're ready and we have an actor, but we don't want one and don't think we have one! Become busy."
+				AlcoveState = ALCOVE_STATE_BUSY
+				bValidate = False
+			ElseIf AlcoveActor != kCharacterToUse
+				sFailureReason = "We're ready, we have an actor, we want an actor, but this isn't our actor!"
+				AlcoveState = ALCOVE_STATE_BUSY
+				bValidate = False
+			ElseIf !bActorInAlcove
+				If AlcoveStatueState != ALCOVE_STATUE_SUMMONED
+					sFailureReason = "We're ready, we have an actor, we want an actor, we have the right actor, but they're not in the Alcove!"
+					AlcoveState = ALCOVE_STATE_BUSY
+					bValidate = False
+				EndIf
 			EndIf
 		EndIf
 	ElseIf AlcoveState == ALCOVE_STATE_BUSY
@@ -489,20 +517,25 @@ Bool Function ValidateAlcove()
 		If AlcoveActor
 			AlcoveActor.EnableAI(True) ; Otherwise they don't MoveTo properly, god knows why
 		EndIf
-		If CharacterName == WantCharacterName
+		If CharacterName == sWantCharacterName
 		;We think we have the name we want...
-			If WantCharacterName
+			If sWantCharacterName
 			;And we do want a character
 				If AlcoveActor
 				;And we do have an actor!
-					If sActorName == WantCharacterName
+					If sActorName == sWantCharacterName
 					;And our actor is named correctly!
 						If bActorInAlcove
-						;And they are here in the Alcove already (or they don't need to be)!
-							sFailureReason = "Actor present, need switch to Ready state!"
-							AlcoveState = ALCOVE_STATE_READY
-							AlcoveStatueState = ALCOVE_STATUE_PRESENT
-							bValidate = False
+						;And they are here in the Alcove already!
+							If (AlcoveActor as vMYC_CharacterDummyActorScript).IsBusy
+								sFailureReason = "Actor present, but still busy!"
+								bValidate = False	
+							Else
+								sFailureReason = "Actor present, need switch to Ready state!"
+								AlcoveState = ALCOVE_STATE_READY
+								AlcoveStatueState = ALCOVE_STATUE_PRESENT
+								bValidate = False
+							EndIf
 						ElseIf AlcoveStatueState == ALCOVE_STATUE_SUMMONED
 							;And they are NOT here in the Alcove, but they don't need to be!!
 							sFailureReason = "Actor summoned, need switch to Ready state!"
@@ -544,29 +577,34 @@ Bool Function ValidateAlcove()
 			EndIf
 		Else
 		;We DON'T have the name we want!
-			If WantCharacterName
+			If sWantCharacterName
 			;And we DO want a name!
 				If AlcoveActor
 				;And we do have an actor!
-					If sActorName == WantCharacterName
+					If sActorName == sWantCharacterName
 					;And our actor is named correctly!
 						If bActorInAlcove 
 						;And they are here in the Alcove already!
-							sFailureReason = "Actor present, Need switch to Ready state!"
-							CharacterName = WantCharacterName
-							AlcoveState = ALCOVE_STATE_READY
-							AlcoveStatueState = ALCOVE_STATUE_PRESENT
-							bValidate = False
+							If (AlcoveActor as vMYC_CharacterDummyActorScript).IsBusy
+								sFailureReason = "Actor present, but still busy!"
+								bValidate = False	
+							Else
+								sFailureReason = "Actor present, Need switch to Ready state!"
+								CharacterName = sWantCharacterName
+								AlcoveState = ALCOVE_STATE_READY
+								AlcoveStatueState = ALCOVE_STATUE_PRESENT
+								bValidate = False
+							EndIf
 						ElseIf AlcoveStatueState == ALCOVE_STATUE_SUMMONED
 						;And they are NOT here in the Alcove, but they don't need to be!!
 							sFailureReason = "Actor summoned, need switch to Ready state!"
-							CharacterName = WantCharacterName
+							CharacterName = sWantCharacterName
 							AlcoveState = ALCOVE_STATE_READY
 							bValidate = False
 						Else 
 						;... they're not in the Alcove yet!
 							sFailureReason = "Wrong name and Actor missing from Alcove!"
-							CharacterName = WantCharacterName
+							CharacterName = sWantCharacterName
 							AlcoveActor.MoveTo(_StatueMarker)
 							AlcoveStatueState = ALCOVE_STATUE_PRESENT
 							bValidate = False
@@ -581,7 +619,7 @@ Bool Function ValidateAlcove()
 				Else
 				; but we don't have an actor!
 					sFailureReason = "Wrong name and missing Actor!"
-					ClaimActor(WantCharacterName)
+					ClaimActor(sWantCharacterName)
 					bValidate = False
 				EndIf
 			Else
@@ -594,7 +632,7 @@ Bool Function ValidateAlcove()
 				EndIf
 				;Gondor has no Actor. Gondor needs no Actor.
 				sFailureReason = "Need switch to Empty state!"
-				CharacterName = WantCharacterName
+				CharacterName = sWantCharacterName
 				AlcoveState = ALCOVE_STATE_EMPTY
 				bValidate = False
 			EndIf
@@ -606,24 +644,24 @@ Bool Function ValidateAlcove()
 		bValidate = False
 	EndIf
 
-	If kUnknownActor
-		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
-		kUnknownActor.MoveTo(kNowhere)
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Found unknown Actor " + kUnknownActor + " aka " + kUnknownActor.GetActorBase().GetName() + " in shrine and banished them into limbo.")
-	EndIf
+	While DeportUnknownActors()
+		Wait(0.5)
+	EndWhile
+
+	Float fValidationTime = GetCurrentRealTime() - fTimeStart
 	
 	If bValidate 
 		If !_bLastValidation
 			_bLastValidation = True
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** Passed validation!" + " CharacterName is " + CharacterName + ", WantCharacterName is " + WantCharacterName + ", AlcoveActor is " + AlcoveActor)	
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** Passed validation!" + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)	
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
 	Else
 		_bLastValidation = False
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", WantCharacterName is " + WantCharacterName + ", AlcoveActor is " + AlcoveActor)	
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForSingleUpdate(1)
 	EndIf
-	
+	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ":     Validation pass took " + fValidationTime + " seconds.")
 	GoToState("")
 	Return bValidate
 EndFunction
@@ -664,14 +702,7 @@ Function SetAlcoveCharacterName(string sCharacterName)
 EndFunction
 
 Event OnCellAttach()
-	If AlcoveLightState == 1
-		If AlcoveState == 2 || AlcoveState == 3
-			AlcoveLightState = 2
-		ElseIf AlcoveState == 0
-			AlcoveLightState = 0
-		EndIf
-	EndIf
-		
+	RegisterForSingleUpdate(1)
 EndEvent
 
 Event OnAttachedToCell()

@@ -21,6 +21,8 @@ EndProperty
 
 Actor Property PlayerREF Auto
 
+Bool Property IsBusy Auto
+
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 
@@ -105,6 +107,7 @@ EndEvent
 
 Event OnLoad()
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) OnLoad!")
+	IsBusy = True
 	CheckVars()
 	SetNameIfNeeded()
 	SetNINodes()
@@ -183,6 +186,7 @@ Event OnUpdate()
 	If _bNeedPerks || _bNeedShouts
 		RegisterForSingleUpdate(1.0)
 	Else 
+		IsBusy = False
 		RegisterForSingleUpdate(5.0)
 	EndIf
 EndEvent
@@ -217,7 +221,7 @@ Event OnActivate(ObjectReference akActionRef)
 EndEvent
 
 Event OnPackageChange(Package akOldPackage)
-	;Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
+	Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
 	If IsInCombat() && GetCombatTarget() == PlayerREF && DecapitationChance.GetValue()
 		_fDecapitationChance = DecapitationChance.GetValue()
 		DecapitationChance.SetValue(0)
@@ -402,6 +406,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		Return
 	EndIf
 	GotoState("Busy")
+	IsBusy = True
 	Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	If _bInvalidRace 
@@ -680,6 +685,7 @@ EndFunction
 
 Function RefreshMesh()
 	GotoState("Busy")
+	IsBusy = True
 	;Race kDummyRace = GetFormFromFile(0x00071E6A,"Skyrim.esm") as Race ; InvisibleRace
 	Race kDummyRace = GetFormFromFile(0x00067CD8,"Skyrim.esm") As Race ; ElderRace
 	

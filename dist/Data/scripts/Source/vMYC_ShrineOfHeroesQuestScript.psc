@@ -72,7 +72,7 @@ Event OnUpdate()
 		_bNeedSync = False
 		SyncShrineData()
 	EndIf
-	SendModEvent("vMYC_AlcoveValidateState")
+	SendModEvent("vMYC_RequestLatencyCheck","",10)
 	RegisterForSingleUpdate(10) ; Make sure alcoves aren't stuck
 EndEvent
 
@@ -110,7 +110,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		EndIf
 	EndWhile
 	If bUpdateNames
-		;UpdateShrineNames()
+		SendModEvent("vMYC_AlcoveValidateState")
 	EndIf
 	StartPortalStoneQuestIfNeeded()
 	SendModEvent("vMYC_UpkeepEnd")
