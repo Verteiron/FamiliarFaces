@@ -92,6 +92,9 @@ Float _fDecapitationChance
 
 Int _iMagicUpdateCounter
 
+Float 	_fOrphanedTime
+Bool 	_bOrphaned
+
 ;Int _jCharacterData
 
 CombatStyle _kCombatStyle
@@ -189,6 +192,7 @@ Event OnUpdate()
 		IsBusy = False
 		RegisterForSingleUpdate(5.0)
 	EndIf
+	DeleteIfOrphaned()
 EndEvent
 
 Event OnActivate(ObjectReference akActionRef)
@@ -440,6 +444,27 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
 	GotoState("")
+EndFunction
+
+Function DeleteIfOrphaned()
+	String sCellName
+	If GetParentCell()
+		sCellName = GetParentCell().GetName()
+	EndIf
+	If sCellName == "vMYC_Staging"
+		If _bOrphaned
+			If GetCurrentRealTime() - _fOrphanedTime > 30
+				Debug.Trace("MYC: (" + CharacterName + "/Actor) Orphaned in staging cell for over 30 seconds, nobody loves me! Might as well delete myself :(")
+				UnregisterForUpdate()
+				CharacterManager.DeleteCharacterActor(CharacterName)
+			EndIf
+		Else
+			_bOrphaned = True
+			_fOrphanedTime = GetCurrentRealTime()
+		EndIf
+	Else
+		_bOrphaned = False
+	EndIf
 EndFunction
 
 Function SetNINodes()
