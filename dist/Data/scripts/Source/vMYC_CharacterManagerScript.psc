@@ -1150,6 +1150,7 @@ Function DeleteCharacterActor(String asCharacterName)
 	Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)
 	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
 	ClearCharacterRefs(asCharacterName)
+	CharGen.ClearPreset(kDeadActor,asCharacterName)
 	_kLoadedCharacters[iLCidx] = None
 	SetLocalInt(asCharacterName,"Enabled",0)
 	SetLocalForm(asCharacterName,"ActorBase",None)
@@ -1166,6 +1167,8 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 		Return
 	EndIf
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
+	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
+	CharGen.EraseCharacter(kDeadActor,asCharacterName)
 	DeleteCharacterActor(asCharacterName)
 	SetLocalInt(asCharacterName,"DoNotLoad",1)
 	If bPreserveLocal
