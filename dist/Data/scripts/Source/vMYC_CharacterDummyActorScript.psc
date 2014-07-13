@@ -176,6 +176,7 @@ Event OnUpdate()
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor) AI disabled while InAlcove is false, enabling AI!")
 		EnableAI(True)
 	EndIf
+	IsBusy = False
 	If _bNeedPerks
 		If CharacterManager.ApplyCharacterPerks(CharacterName) >= 0
 			_bNeedPerks = False
@@ -186,7 +187,6 @@ Event OnUpdate()
 			_bNeedShouts = False
 		EndIf
 	EndIf
-	IsBusy = False
 	If _bNeedPerks || _bNeedShouts
 		RegisterForSingleUpdate(1.0)
 	Else 
@@ -444,8 +444,17 @@ Function DoUpkeep(Bool bInBackground = True)
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) finished upkeep!")
+	RegisterForSingleLOSGain(PlayerREF,Self)
 	GotoState("")
 EndFunction
+
+Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
+	If _iCharGenVersion == 2
+		_bNeedRefresh = True
+	ElseIf _iCharGenVersion == 3
+		RefreshMeshNewCG()
+	EndIf
+EndEvent
 
 Function DeleteIfOrphaned()
 	String sCellName
