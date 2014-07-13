@@ -259,6 +259,9 @@ Int				_iValidateStateCount = 0
 
 Float			_fValidationTime = 0.0
 Bool			_bLastValidation = False
+String			_sLastFailureReason = ""
+Int				_iRepeatFailureCount = 0
+
 
 ;Legacy variables, do not use
 
@@ -675,13 +678,31 @@ Bool Function ValidateAlcove()
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
 		_fValidationTime = 0.0
+		_sLastFailureReason = ""
+		_iRepeatFailureCount == 0
 	Else
 		If _bLastValidation
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Failed validation! Initial reason: " + sFailureReason)
 			_fValidationTime = 0.0
 		EndIf
+		If _sLastFailureReason == sFailureReason
+			_iRepeatFailureCount += 1
+		Else
+			_iRepeatFailureCount == 0
+		EndIf
+		If _iRepeatFailureCount > 60
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed repeatedly with: " + sFailureReason + "! Notify the player.")
+			Debug.Notification("Alcove " + _iAlcoveIndex + " appears to be stuck. You can reset it from the MCM panel.")
+			;ResetAlcove()
+		ElseIf _fValidationTime > 120
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation has been stuck for over 2 minutes. Last failure reason was " + sFailureReason + " Notify the player.")
+			Debug.Notification("Alcove " + _iAlcoveIndex + " has been busy for a long time. You can reset it from the MCM panel.")
+			ResetAlcove()
+		EndIf
+		_sLastFailureReason = sFailureReason
 		_bLastValidation = False
 		_fValidationTime += fValidationTime
+		;If _fValidationTime > 
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForSingleUpdate(1)
 	EndIf
@@ -1251,6 +1272,7 @@ Function ResetAlcove()
 
 	_bCharacterSummoned = False
 	AlcoveActor = None
+	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 	CharacterName = ""
 
 	HideTrophies()
