@@ -186,10 +186,10 @@ Event OnUpdate()
 			_bNeedShouts = False
 		EndIf
 	EndIf
+	IsBusy = False
 	If _bNeedPerks || _bNeedShouts
 		RegisterForSingleUpdate(1.0)
 	Else 
-		IsBusy = False
 		RegisterForSingleUpdate(5.0)
 	EndIf
 	DeleteIfOrphaned()
@@ -405,8 +405,9 @@ Function DoUpkeep(Bool bInBackground = True)
 	{Run whenever the player loads up the Game. Sets the name and such.}
 	SetNameIfNeeded()
 	If bInBackground
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Backgrounding upkeep!")
 		_bDoUpkeep = True
-		RegisterForSingleUpdate(0.1)
+		RegisterForSingleUpdate(0.25)
 		Return
 	EndIf
 	GotoState("Busy")
@@ -460,6 +461,7 @@ Function DeleteIfOrphaned()
 			EndIf
 		Else
 			_bOrphaned = True
+			Debug.Trace("MYC: (" + CharacterName + "/Actor) I am apparently orphaned in the staging cell.")
 			_fOrphanedTime = GetCurrentRealTime()
 		EndIf
 	Else
