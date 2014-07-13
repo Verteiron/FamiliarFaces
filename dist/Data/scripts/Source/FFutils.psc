@@ -6,3 +6,6 @@ Function LoadCharacterPerks(ActorBase akActorbase, FormList perkList) native glo
 
 ; Replaces the actorbase's shouts with the shouts listed in the FormList
 Function LoadCharacterShouts(ActorBase akActorbase, FormList shoutList) native global
+
+; Removes <formid>.nif and .dds from the respective directories.
+Function ClearFaceGenData(ActorBase akActorbase) native global

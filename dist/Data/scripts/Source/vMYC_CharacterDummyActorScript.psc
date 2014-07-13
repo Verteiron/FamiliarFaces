@@ -653,7 +653,6 @@ Function RefreshMeshNewCG()
 	If !_bHasFileTexture
 		Debug.MessageBox("Familiar Faces\nThe texture file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, " + CharacterName + "'s face will lack the proper color.")
 	EndIf
-	
 	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
 	If _bHasFileSlot
 		Bool bLCSuccess = CharGenLoadCharacter(Self, CharacterRace, CharacterName)
@@ -687,7 +686,8 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
+	FFUtils.ClearFaceGenData(Self.GetActorBase())
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	If CharGen.IsExternalEnabled()
 		If !_bExternalHeadExists
