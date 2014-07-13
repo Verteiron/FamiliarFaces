@@ -1153,6 +1153,7 @@ Function DeleteCharacterActor(String asCharacterName)
 	CharGen.ClearPreset(kDeadActor,asCharacterName)
 	_kLoadedCharacters[iLCidx] = None
 	SetLocalInt(asCharacterName,"Enabled",0)
+	SetLocalFlt(asCharacterName,"PlayTime",0.0)
 	SetLocalForm(asCharacterName,"ActorBase",None)
 	SetLocalForm(asCharacterName,"Actor",None)
 	JArray.eraseIndex(jCharacterList,iDeadManIndex)
