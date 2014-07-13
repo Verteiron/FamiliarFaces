@@ -77,8 +77,7 @@ Event OnUpdate()
 		_bShrineNeedsUpdate = False
 		SendModEvent("vMYC_AlcoveValidateState")
 	EndIf
-	SendModEvent("vMYC_RequestLatencyCheck","",10)
-	RegisterForSingleUpdate(10) ; Make sure alcoves aren't stuck
+	RegisterForSingleUpdate(10)
 EndEvent
 
 Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form sender)
@@ -114,9 +113,7 @@ Function DoUpkeep(Bool bInBackground = True)
 			AlcoveControllers[i].DoUpkeep()
 		EndIf
 	EndWhile
-	If bUpdateNames
-		SendModEvent("vMYC_AlcoveValidateState")
-	EndIf
+	SendModEvent("vMYC_AlcoveValidateState")
 	StartPortalStoneQuestIfNeeded()
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
@@ -167,7 +164,6 @@ Function SanityCheck()
 EndFunction
 
 Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
-	GotoState("SyncLocked")
 	Bool bShrineDataUpdated = False
 	
 	Int jShrineFileData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
@@ -177,16 +173,17 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	Int DataFileSerial = JMap.getInt(jShrineFileData,"DataSerial")
 	;Debug.Trace("MYC/Shrine: DataSerial is " + DataSerial + ", DataFileSerial is " + DataFileSerial)
 	If !jShrineFileData && DataSerial
-		Debug.Trace("MYC/Shrine: Shrine data file was deleted, blanking out the Shrine...")
+		GotoState("SyncLocked")
+		Debug.Trace("MYC/Shrine: Shrine data file was deleted, blanking out the Shrine...",1)
 		InitShrineData()
 		JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 		ShrineDataSerial += 1
 		DataSerial = ShrineDataSerial
+		GotoState("")
 	EndIf
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
 		JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
-		Debug.Trace("MYC/Shrine: File should be written now!")
 	ElseIf DataSerial < DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is older than the saved file, loading it!")
 		_jShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
@@ -199,79 +196,8 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	If bShrineDataUpdated
 		SanityCheck()
 	EndIf
-	GotoState("")
 	Return bShrineDataUpdated
 	
-;	JMap.setInt(_jShrineData,"DataSerial",ShrineDataSerial)
-;	Int jSavedShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
-;	JValue.Retain(jSavedShrineData)
-;	Int iSavedDataSerial
-;	If jSavedShrineData
-;		;Debug.Trace("MYC/Shrine: Found saved data!")
-;		If JMap.hasKey(jSavedShrineData,"DataSerial")
-;			iSavedDataSerial = JMap.getInt(jSavedShrineData,"DataSerial")
-;		Else
-;			;Debug.Trace("MYC/Shrine: Shrine data is from an older version, forcing an update...")
-;			abForceLoadFile = True
-;			abRewriteFile = True
-;		EndIf
-;		;Debug.Trace("MYC/Shrine: Saved data serial is " + iSavedDataSerial + ", our data serial is " + ShrineDataSerial)
-;		If abForceLoadFile
-;			Debug.Trace("MYC/Shrine: ForceLoadFile set, loading from file regardless...",1)
-;			iSavedDataSerial = ShrineDataSerial + 1
-;		EndIf
-;		If iSavedDataSerial > ShrineDataSerial
-;			;Debug.Trace("MYC/Shrine: Our data is old, updating it to saved version!")
-;			JMap.setObj(_jMYC,"ShrineOfHeroes",jSavedShrineData)
-;			_jShrineData = JMap.getObj(_jMYC,"ShrineOfHeroes")
-;		ElseIf iSavedDataSerial < ShrineDataSerial
-;			;Debug.Trace("MYC/Shrine: Our data is newer than the saved data, so we'll save it to the file.")
-;			JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
-;			iSavedDataSerial = ShrineDataSerial
-;		Else
-;			;Debug.Trace("MYC/Shrine: Data is already synced. Sunc?")
-;		EndIf
-;	ElseIf JValue.hasPath(_jMYC,".ShrineOfHeroes")
-;		If GetState() == "SyncLocked"
-;			Return False
-;		EndIf
-;		GotoState("SyncLocked")
-;		Debug.Trace("MYC/Shrine: No saved data, but found data in _jMYC! This means the file was deleted, so we'll blank out the shrine.",1)
-;		Int iShrineDataSerial = ShrineDataSerial
-;		Int i = 0
-;		Int iCount = AlcoveControllers.Length
-;		While i < iCount
-;			Debug.Trace("MYC/Shrine: Resetting alcove " + i,1)
-;			AlcoveControllers[i].ResetAlcove()
-;			SetAlcoveInt(i,"State",0)
-;			SetAlcoveStr(i,"CharacterName","")
-;			i += 1
-;		EndWhile
-;		ShrineDataSerial = iShrineDataSerial + 1
-;		JMap.setInt(_jShrineData,"DataSerial",ShrineDataSerial)
-;		JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
-;		GotoState("")
-;		i = 0
-;		While i < iCount
-;		;	Debug.Trace("MYC/Shrine: Activating alcove " + i,1)
-;		;	AlcoveControllers[i].ActivateAlcove()
-;			i += 1
-;		EndWhile
-;		iSavedDataSerial = ShrineDataSerial
-;		JValue.WriteToFile(_jMYC,"Data/vMYC/_jMYC_postreset.json")
-;		Return False
-;	EndIf
-;	If abRewriteFile
-;		TickDataSerial()
-;		JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
-;	EndIf
-;	JValue.Release(jSavedShrineData)
-;	If ShrineDataSerial != iSavedDataSerial
-;		;Debug.Trace("MYC/Shrine: Data serial mismatch, Alcoves need to be updated!")
-;		ShrineDataSerial = iSavedDataSerial
-;		Return True
-;	EndIf
-	Return False
 EndFunction
 
 Function StartPortalStoneQuestIfNeeded()

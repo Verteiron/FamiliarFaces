@@ -676,8 +676,12 @@ Bool Function ValidateAlcove()
 		EndIf
 		_fValidationTime = 0.0
 	Else
-		_fValidationTime += fValidationTime
+		If _bLastValidation
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Failed validation! Initial reason: " + sFailureReason)
+			_fValidationTime = 0.0
+		EndIf
 		_bLastValidation = False
+		_fValidationTime += fValidationTime
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + sFailureReason + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForSingleUpdate(1)
 	EndIf
