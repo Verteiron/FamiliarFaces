@@ -1196,9 +1196,9 @@ EndFunction
 Int Function ApplyCharacterWeapons(String sCharacterName)
 	Int i
 	Int iCount
-	While _bBusyEquipment
-		Wait(1.0)
-	EndWhile
+	;While _bBusyEquipment
+		;Wait(1.0)
+	;EndWhile
 	_bBusyEquipment = True
 	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipped weapons...")
 	SetLocalInt(sCharacterName,"BowEquipped",0)
@@ -1257,9 +1257,9 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 	Int i
 	Int iCount
 	
-	While _bBusyEquipment
-		Wait(1.0)
-	EndWhile
+	;While _bBusyEquipment
+		;Wait(1.0)
+	;EndWhile
 	_bBusyEquipment = True
 	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipment...")
 
