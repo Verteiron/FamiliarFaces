@@ -473,6 +473,7 @@ Function DeleteIfOrphaned()
 			;Debug.Trace("MYC/Actor/" + CharacterName + ": I am apparently orphaned in the staging cell.")
 			_fOrphanedTime = GetCurrentRealTime()
 		EndIf
+		SendModEvent("vMYC_OrphanedActor",CharacterName,_fOrphanedTime)
 	Else
 		_bOrphaned = False
 	EndIf
