@@ -52,6 +52,7 @@ Bool	_bNoTick = False
 
 Event OnInit()
 	RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")
+	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
 	If IsRunning()
 		_bDoInit = True
 		RegisterForSingleUpdate(0.1)
@@ -91,9 +92,30 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 		AlcoveState[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = strArg as Int
 		SyncShrineData()
 	EndIf
+	UpdateShrineStatus()
 EndEvent
 
 ;--=== Functions ===--
+
+Function UpdateShrineStatus()
+	Bool bReady = True
+	Int i = AlcoveState.Length
+	While i > 0
+		i -= 1
+		If !AlcoveControllers[i]
+			bReady = False
+		Else
+			If AlcoveState[i] == 1 || AlcoveControllers[i].AlcoveIndex < 0
+				bReady = False
+			EndIf
+		EndIf
+	EndWhile
+	If Ready != bReady
+		Debug.Trace("MYC/Shrine: Ready: " + bReady)
+		Ready = bReady
+		SendModEvent("vMYC_ShrineReady","",bReady as Int)
+	EndIf
+EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 	If bInBackground
@@ -114,9 +136,15 @@ Function DoUpkeep(Bool bInBackground = True)
 		EndIf
 	EndWhile
 	SendModEvent("vMYC_AlcoveValidateState")
-	StartPortalStoneQuestIfNeeded()
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
+
+Event OnShrineReady(string eventName, string strArg, float numArg, Form sender)
+{When Shrine's ready state changes. numArg 0 or 1.}
+	If numArg
+		vMYC_PortalStoneQuest.Start()
+	EndIf
+EndEvent
 
 Event OnShrineNeedsUpdate(string eventName, string strArg, float numArg, Form sender)
 	_bShrineNeedsUpdate = True
@@ -200,26 +228,6 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	
 EndFunction
 
-Function StartPortalStoneQuestIfNeeded()
-	Int iCount = AlcoveState.Length
-	Bool bAllReady = True
-	Int i = 0
-	While i < iCount
-		If AlcoveState[i] == 1 ; Shrine is loading
-			bAllReady = False
-		EndIf
-		i += 1
-	EndWhile
-	If bAllReady && ShrineDataSerial > 0
-		SendModEvent("vMYC_AllAlcovesReady",1,CharacterManager.CharacterNames.Length)
-		;Debug.Trace("MYC: ====================== DINGDINGDINGDINGDINGDINGDING ALL Alcoves READY W00pw00pw00pw00p! ===============")
-		vMYC_PortalStoneQuest.Start()
-	Else
-		SendModEvent("vMYC_AllAlcovesReady",0)
-		;Debug.Trace("MYC: ====================== W00pw00pw00pw00p Alcoves NOT READY :(((((((((((((((( ===============")
-	EndIf
-EndFunction
-
 Function TickDataSerial(Bool abForceSync = False)
 	If _bNoTick
 		Return
@@ -251,7 +259,6 @@ Function DoInit(Bool abForce = False)
 	JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 	TickDataSerial(True)
 	UpdateAlcoveControllers()
-	StartPortalStoneQuestIfNeeded()
 EndFunction
 
 Function InitShrineData()
