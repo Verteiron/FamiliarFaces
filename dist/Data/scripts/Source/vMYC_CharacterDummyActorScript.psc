@@ -462,7 +462,7 @@ Function DeleteIfOrphaned()
 		sCellName = GetParentCell().GetName()
 	EndIf
 	If sCellName == "vMYC_Staging"
-		If _bOrphaned
+		If _bOrphaned && !CharacterManager.GetLocalInt(CharacterName,"IsSummoned") ; Prevent deletion if we got marooned here due to a bad Hangout.
 			If GetCurrentRealTime() - _fOrphanedTime > 30
 				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over 30 seconds, nobody loves me! Might as well delete myself :(")
 				UnregisterForUpdate()
