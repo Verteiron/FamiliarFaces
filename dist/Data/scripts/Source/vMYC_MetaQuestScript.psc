@@ -23,6 +23,7 @@ Message Property vMYC_ModShutdownMSG Auto
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+vMYC_HangoutManager Property HangoutManager Auto
 
 ;--=== Config variables ===--
 
@@ -87,7 +88,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 109
+	_CurrentVersion = 110
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
@@ -183,8 +184,8 @@ Function DoUpgrade()
 		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
 	EndIf
 
-	If ModVersion < 109
-		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
+	If ModVersion < 106
+		Debug.Trace("MYC: Upgrading to 1.0.6...")
 		Debug.Trace("MYC: Initialize new config storage...")
 		InitConfig()
 		SetConfigDefaults()
@@ -200,7 +201,18 @@ Function DoUpgrade()
 		Debug.Trace("MYC: Restarting Shrine of Heroes...")
 		ShrineOfHeroes.Start()
 		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
-		ModVersion = 108
+		ModVersion = 106
+	EndIf
+	
+	If ModVersion < 110
+		Debug.Trace("MYC: Upgrading to 1.1.0...")
+		CharacterManager.RepairSaves()
+		CharacterManager.DoUpkeep()
+		ShrineOfHeroes.DoUpkeep()
+		HangoutManager.InitHangouts()
+		HangoutManager.ImportOldHangouts()
+		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
+		ModVersion = 110
 	EndIf
 	
 	;Generic upgrade code
