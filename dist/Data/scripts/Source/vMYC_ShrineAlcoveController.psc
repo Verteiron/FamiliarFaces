@@ -32,6 +32,7 @@ Int	Property AlcoveIndex Hidden
 		_iAlcoveIndex = iAlcoveIndex
 		;Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
 		SendModEvent("vMYC_AlcoveStatusUpdate",0)
+		_Book.AlcoveIndex = AlcoveIndex
 		RegisterForSingleUpdate(1)
 	EndFunction
 EndProperty
@@ -298,6 +299,7 @@ EndFunction
 
 Event OnInit()
 	CheckVars()
+	InitTrophies()
 EndEvent
 
 Event OnLoad()
