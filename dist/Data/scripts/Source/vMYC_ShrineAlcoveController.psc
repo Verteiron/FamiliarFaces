@@ -339,12 +339,12 @@ EndEvent
 Function ClaimActor(String asCharacterName)
 	AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
 	If !AlcoveActor
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Asking CharacterManager to load " + asCharacterName + "...")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Asking CharacterManager to load " + asCharacterName + "...")
 		If CharacterManager.LoadCharacter(asCharacterName)
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager finished loading " + asCharacterName + "!")
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager finished loading " + asCharacterName + "!")
 			AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
 		Else
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
 		EndIf
 	EndIf
 	If AlcoveActor
@@ -682,7 +682,7 @@ Bool Function ValidateAlcove()
 		_iRepeatFailureCount == 0
 	Else
 		If _bLastValidation
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Failed validation! Initial reason: " + sFailureReason)
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Failed validation! Initial reason: " + sFailureReason)
 			_fValidationTime = 0.0
 		EndIf
 		If _sLastFailureReason == sFailureReason
@@ -693,11 +693,12 @@ Bool Function ValidateAlcove()
 		If _iRepeatFailureCount > 60
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed repeatedly with: " + sFailureReason + "! Notify the player.")
 			Debug.Notification("Alcove " + _iAlcoveIndex + " appears to be stuck. You can reset it from the MCM panel.")
+			_iRepeatFailureCount = 0
 			;ResetAlcove()
 		ElseIf _fValidationTime > 120
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation has been stuck for over 2 minutes. Last failure reason was " + sFailureReason + " Notify the player.")
 			Debug.Notification("Alcove " + _iAlcoveIndex + " has been busy for a long time. You can reset it from the MCM panel.")
-			ResetAlcove()
+			;ResetAlcove()
 		EndIf
 		_sLastFailureReason = sFailureReason
 		_bLastValidation = False

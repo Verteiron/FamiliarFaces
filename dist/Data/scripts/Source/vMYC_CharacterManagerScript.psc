@@ -1200,7 +1200,7 @@ Int Function ApplyCharacterWeapons(String sCharacterName)
 		;Wait(1.0)
 	;EndWhile
 	_bBusyEquipment = True
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipped weapons...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Setting equipped weapons...")
 	SetLocalInt(sCharacterName,"BowEquipped",0)
 	;SetLocalInt(sCharacterName,"SpellEquipped",0)
 
@@ -1209,7 +1209,7 @@ Int Function ApplyCharacterWeapons(String sCharacterName)
 	Int jCustomItems = GetCharacterObj(sCharacterName,"InventoryCustomItems")
 	
 	i = JArray.Count(jCustomItems)
-	;Debug.Trace("MYC: (" + sCharacterName + ") has " + i + " items to be customized!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  has " + i + " items to be customized!")
 	While i > 0
 		i -= 1
 		Int jItem = JArray.GetObj(jCustomItems,i)
@@ -1236,12 +1236,12 @@ Int Function ApplyCharacterWeapons(String sCharacterName)
 		iHand -= 1
 		iCount += 1
 		If bTwoHanded ; skip left hand
-			;Debug.Trace("MYC: (" + sCharacterName + ") two-handed weapon, so skipping further processing...")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  two-handed weapon, so skipping further processing...")
 			iHand -= 1
 			iCount -= 1
 		EndIf
 	EndWhile
-	;Debug.Trace("MYC: (" + sCharacterName + ") Equipping power!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Equipping power!")
 	;kCharacterActor.EquipItemEx(GetCharacterForm(sCharacterName,"Equipment.Voice"),0)
 	
 	_bBusyEquipment = False
@@ -1261,7 +1261,7 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 		;Wait(1.0)
 	;EndWhile
 	_bBusyEquipment = True
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting equipment...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Setting equipment...")
 
 	Int jCharacterArmor = GetCharacterObj(sCharacterName,"Equipment.Armor")
 	Int jCharacterArmorInfo = GetCharacterObj(sCharacterName,"Equipment.ArmorInfo")
@@ -1281,16 +1281,16 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 			kCharacterActor.EquipItemEx(kItem,0,True)
 			iCount += 1
 			Int h = (kItem as Armor).GetSlotMask()
-			;Debug.Trace("MYC: (" + sCharacterName + ") setting up " + kItem.GetName() + "...")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  setting up " + kItem.GetName() + "...")
 			Enchantment kItemEnchantment = JMap.GetForm(jArmor,"Enchantment") as Enchantment
 			If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is enchanted!")
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + kItem.GetName() + " is enchanted!")
 				WornObject.SetEnchantment(kCharacterActor,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
 				;WornObject.SetItemCharge(
 			EndIf
 			If JMap.GetInt(jArmor,"IsCustom")
 				String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + kItem.GetName() + " is customized item " + sDisplayName + "!")
 				WornObject.SetItemHealthPercent(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemHealthPercent"))
 				WornObject.SetItemMaxCharge(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemMaxCharge"))
 				If sDisplayName ; Will be blank if player hasn't renamed the item
@@ -1304,7 +1304,7 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 
 				If JValue.solveInt(jArmor,".Enchantment.IsCustom")
 					Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
-					;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
+					;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
 					Int j = 0
 					Int jArmorEnchEffects = JValue.SolveObj(jArmor,".Enchantment.Effects")
 					While j < iNumEffects
@@ -1344,21 +1344,23 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 		Else 
 			vMYC_PerkList.AddForm(kPerk)		
 		EndIf
-		;Debug.Trace("MYC: (" + sCharacterName + ") Perk is from " + JArray.getStr(jCharacterPerks,i))
-		;Debug.Trace("MYC: (" + sCharacterName + ") Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Perk is from " + JArray.getStr(jCharacterPerks,i))
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 	EndWhile
-	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_PerkList.GetSize() + " perks to Actorbase...")
 	If vMYC_PerkList.GetSize() + iMissingCount != JArray.Count(jCharacterPerks)
-		Debug.Trace("MYC: (" + sCharacterName + ") PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyPerksBusy = False
 		Return -1
 	ElseIf vMYC_PerkList.GetSize() == 0
-		;Debug.Trace("MYC: (" + sCharacterName + ") PerkList size is 0. Won't attempt to apply this.")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  PerkList size is 0. Won't attempt to apply this.")
 		_bApplyPerksBusy = False
 		Return 0
 	EndIf
 	If iMissingCount
-		Debug.Trace("MYC: (" + sCharacterName + ") Perklist loaded with " + iMissingCount + " skipped, probably due to missing mods.",1)
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_PerkList.GetSize() + " Perks with " + iMissingCount + " skipped, probably due to missing mods.",1)
+	Else
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_PerkList.GetSize() + " Perks.")
 	EndIf
 	FFUtils.LoadCharacterPerks(GetCharacterDummy(sCharacterName),vMYC_Perklist)
 	WaitMenuMode(0.1)
@@ -1375,21 +1377,31 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	vMYC_Shoutlist.Revert()
 	Int jCharacterShouts = GetCharacterObj(sCharacterName,"Shouts")
 	Int i = JArray.Count(jCharacterShouts)
+	Int iMissingCount = 0
 	While i > 0
 		i -= 1
 		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
-		;Debug.Trace("MYC: (" + sCharacterName + ") Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
-		vMYC_ShoutList.AddForm(kShout)
+		If !kShout
+			iMissingCount += 1
+		Else 
+			vMYC_ShoutList.AddForm(kShout)
+		EndIf
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 	EndWhile
-	Debug.Trace("MYC: (" + sCharacterName + ") Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
 	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
-		Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
 		_bApplyShoutsBusy = False
 		Return -1
 	ElseIf vMYC_ShoutList.GetSize() == 0
-		;Debug.Trace("MYC: (" + sCharacterName + ") ShoutList size is 0. Won't attempt to apply this.")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
 		Return 0
+	EndIf
+	If iMissingCount
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts with " + iMissingCount + " skipped.",1)
+	Else
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
 	EndIf
 	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
 	WaitMenuMode(0.1)
@@ -1403,7 +1415,7 @@ Function RemoveCharacterShouts(String sCharacterName)
 		WaitMenuMode(0.1)
 	EndWhile
 	_bApplyShoutsBusy = True
-	Debug.Trace("MYC: (" + sCharacterName + ") Character is not allowed to use shouts, removing them!")
+	Debug.Trace("MYC/CM/" + sCharacterName + ":  Character is not allowed to use shouts, removing them!")
 	vMYC_Shoutlist.Revert()
 	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
 	vMYC_ShoutList.AddForm(vMYC_NullShout)
@@ -1415,7 +1427,7 @@ EndFunction
 Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	Form kEquippedAmmo
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") Creating dummy's inventory...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Creating dummy's inventory...")
 	Int jCharacterInventory = GetCharacterObj(sCharacterName,"Inventory")
 	Actor kCharacterActor = GetCharacterActorByName(sCharacterName)
 	Int i = JFormMap.Count(jCharacterInventory)
@@ -1439,7 +1451,7 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 				Else
 					kCharacterActor.AddItem(kItem,JArray.getInt(jInvCounts,i))
 				EndIf
-				;Debug.Trace("MYC: (" + sCharacterName + ") Ammo " + kItem.GetName() + " value is " + kItem.GetGoldValue() + ", iLastGoldValue is " + iLastGoldValue)
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  Ammo " + kItem.GetName() + " value is " + kItem.GetGoldValue() + ", iLastGoldValue is " + iLastGoldValue)
 				If kItem.GetGoldValue() > iLastGoldValue
 					kEquippedAmmo = kItem
 					SetLocalForm(sCharacterName,"AmmoDefault",kEquippedAmmo)
@@ -1450,16 +1462,16 @@ Function PopulateInventory(String sCharacterName, Bool abResetAll = False)
 	EndWhile
 	If kEquippedAmmo
 		kCharacterActor.EquipItem(kEquippedAmmo) ; Equip ammo but allow character to remove it, otherwise bow behavior gets messed up
-		;Debug.Trace("MYC: (" + sCharacterName + ") Ammo equipped: " + kEquippedAmmo.GetName())
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Ammo equipped: " + kEquippedAmmo.GetName())
 	EndIf
 EndFunction
 
 Bool Function LoadCharacter(String sCharacterName)
-	;Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter called!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called!")
 	Int i = 0
 	;WaitMenuMode(RandomFloat(0.0,2.0)) ; Stagger startup slightly to be a little friendlier to the threading
 	While _bBusyLoading
-		;Debug.Trace("MYC: (" + sCharacterName + ") LoadCharacter is busy, waiting...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter is busy, waiting...")
 		WaitMenuMode(1)
 	EndWhile
 	_bBusyLoading = True
@@ -1469,20 +1481,20 @@ Bool Function LoadCharacter(String sCharacterName)
 	Int jCharacterData
 
 	If JValue.hasPath(_jMYC,"." + sCharacterName + ".Data")
-		;Debug.Trace("MYC: (" + sCharacterName + ") Loading character data from _jMYC...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading character data from _jMYC...")
 		jCharacterData = JValue.solveObj(_jMYC,"." + sCharacterName + ".Data")
-		;Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 	Else
-		;Debug.Trace("MYC: (" + sCharacterName + ") No _jMYC data for " + sCharacterName + "! BUT, we'll try loading a file by that name, just in case...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No _jMYC data for " + sCharacterName + "! BUT, we'll try loading a file by that name, just in case...")
 		Int jCharacterFileData = JValue.ReadFromFile("Data/vMYC/" + sCharacterName + ".char.json")
 		If jCharacterFileData
-			;Debug.Trace("MYC: (" + sCharacterName + ") Okay, weird, we apparently have data for this character after all and the character list is desynced.")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Okay, weird, we apparently have data for this character after all and the character list is desynced.")
 			Int jCharacterTopLevel = JMap.Object()
 			JMap.SetObj(jCharacterTopLevel,"Data",jCharacterFileData)
 			JMap.setObj(_jMYC,sCharacterName,jCharacterTopLevel)
 			jCharacterData = JValue.solveObj(_jMYC,"." + sCharacterName + ".Data")
 		Else
-			;Debug.Trace("MYC: (" + sCharacterName + ") Nope, no data, no file, no ticky, no shirty. ABORT! ABORT!")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Nope, no data, no file, no ticky, no shirty. ABORT! ABORT!")
 			_bBusyLoading = False
 			Return False
 		EndIf
@@ -1494,7 +1506,7 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	Int jActorBaseMap
 	If !JMap.hasKey(_jMYC,"ActorBaseMap")
-		;Debug.Trace("MYC: (" + sCharacterName + ") First character load on this save, creating ActorBaseMap...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  First character load on this save, creating ActorBaseMap...")
 		jActorBaseMap = JFormMap.Object()
 		JMap.setObj(_jMYC,"ActorBaseMap",jActorBaseMap)
 	Else
@@ -1503,7 +1515,7 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	;----Check if this character is already loaded--------------
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") Finding ActorBase for " + sCharacterName + "...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Finding ActorBase for " + sCharacterName + "...")
 	ActorBase DummyActorBase = GetLocalForm(sCharacterName,"ActorBase") as ActorBase
 	Actor kCharacterActor = GetLocalForm(sCharacterName,"Actor") as Actor
 	If !kCharacterActor
@@ -1511,7 +1523,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	EndIf
 
 	If kCharacterActor ; Already been loaded
-		Debug.Trace("MYC: (" + sCharacterName + ") This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + kCharacterActor)
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + kCharacterActor)
 		SetLocalInt(sCharacterName,"Enabled", 1)
 		;kCharacterActor.RemoveallItems()
 		kCharacterActor.Enable()
@@ -1524,15 +1536,15 @@ Bool Function LoadCharacter(String sCharacterName)
 	;----Get ActorBase for character--------------
 
 	If !DummyActorBase ; Not loaded on this save session
-		;Debug.Trace("MYC: (" + sCharacterName + ") No saved ActorBase found, getting a new one...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No saved ActorBase found, getting a new one...")
 		DummyActorBase = GetFreeActorBase(JMap.getInt(jCharacterData,"Sex"))
 		If !DummyActorBase ; Not loaded on this save session
-			;Debug.Trace("MYC: (" + sCharacterName + ") Could not find available ActorBase for " + sCharacterName + "!")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
 			_bBusyLoading = False
 			Return False
 		EndIf
 	EndIf
-	;Debug.Trace("MYC: (" + sCharacterName + ") ActorBase will use " + DummyActorBase + "!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
 	SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
 
 	JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
@@ -1554,23 +1566,23 @@ Bool Function LoadCharacter(String sCharacterName)
 	;-----====                    ====-----
 
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") " + sCharacterName + " is actor " + kCharacterActor)
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
 	SetLocalForm(sCharacterName,"Actor",kCharacterActor)
-	;Debug.Trace("MYC: (" + sCharacterName + ") Made it through SetLocalForm...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Made it through SetLocalForm...")
 	vMYC_CharacterDummyActorScript CharacterDummy = kCharacterActor as vMYC_CharacterDummyActorScript
 	CharacterDummy.NeedRefresh = True
 	SetLocalForm(sCharacterName,"Script",CharacterDummy)
 	SetLocalInt(sCharacterName,"TrackingEnabled",0)
 	;Wait(0.5) ; Don't remove this, the following statement locks up without it, god knows why
-	;Debug.Trace("MYC: (" + sCharacterName + ") About to set CharacterDummy.CharacterName property...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  About to set CharacterDummy.CharacterName property...")
 	CharacterDummy.CharacterName = JMap.getStr(jCharacterData,"Name")
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") Stored name is " + CharacterDummy.CharacterName + "!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Stored name is " + CharacterDummy.CharacterName + "!")
 
 	CharacterDummy.CharacterRace = JValue.solveForm(jCharacterData,".Race") as Race
-	;Debug.Trace("MYC: (" + sCharacterName + ") Stored race is " + CharacterDummy.CharacterRace + "!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Stored race is " + CharacterDummy.CharacterRace + "!")
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting voicetype to " + JValue.solveForm(jCharacterData,".Race") as VoiceType)
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Setting voicetype to " + JValue.solveForm(jCharacterData,".Race") as VoiceType)
 	;DummyActorBase.SetVoiceType(JValue.solveForm(jCharacterData,".Race") as VoiceType)
 
 	Int idx = _kLoadedCharacters.Find(None)
@@ -1592,13 +1604,13 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	SetLocalInt(sCharacterName,"MagicAutoSelect",1)
 
-	;Debug.Trace("MYC: (" + sCharacterName + ") Setting the dummy's actor values...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Setting the dummy's actor values...")
 	;i = 0
 	;While i < _sAVNames.Length
 		;If _sAVNames[i]
 			;Float fAV = GetFloatValue(DummyActorBase,sKey + "Stat.AV." + _sAVNames[i])
 			;kCharacterActor.ForceActorValue(_sAVNames[i],fAV)
-			;Debug.Trace("MYC: (" + sCharacterName + ") Set dummy's " + _sAVNames[i] + " to " + fAV)
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Set dummy's " + _sAVNames[i] + " to " + fAV)
 		;EndIf
 		;i += 1
 	;EndWhile
@@ -1614,7 +1626,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	;Int iWeaponCount = ApplyCharacterWeapons(sCharacterName)
 
 	SetLocalInt(sCharacterName,"Enabled", 1)
-	;Debug.Trace("MYC: (" + sCharacterName + ") Enabling dummy...")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Enabling dummy...")
 
 	SetLocalInt(sCharacterName,"HangoutIndexDefault",-1)
 	SetLocalInt(sCharacterName,"HangoutIndex",-1)
@@ -1637,7 +1649,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 		If iWeaponType == 7
 			SetLocalInt(sCharacterName,"BowEquipped",1)
 		EndIf
-		;Debug.Trace("MYC: (" + sCharacterName + ") adding " + kItem.GetName() +"...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  adding " + kItem.GetName() +"...")
 		If !(bTwoHanded && iHand == 0)
 			If kCharacterActor.GetItemCount(kItem)
 				kCharacterActor.RemoveItem(kItem)
@@ -1648,7 +1660,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 		;kCharacterActor.DrawWeapon()
 		;Wait(1)
 		;WaitMenuMode(0.1)
-		;Debug.Trace("MYC: (" + sCharacterName + ") equipping " + kItem.GetName() +"...")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  equipping " + kItem.GetName() +"...")
 		If iHand == 1 ; Equip in proper hand and prevent removal
 			kCharacterActor.EquipItemEx(kItem,1,True) ; Right
 		ElseIf !bTwoHanded
@@ -1661,13 +1673,13 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 
 		If JMap.getInt(jItem,"IsCustom")
 			String sDisplayName = JMap.getStr(jItem,"DisplayName")
-			;Debug.Trace("MYC: (" + sCharacterName + ") " + kItem.GetName() + " is customized item " + sDisplayName + "!")
-			;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetItemHealthPercent(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemHealthPercent"))
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + kItem.GetName() + " is customized item " + sDisplayName + "!")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  WornObject.SetItemHealthPercent(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemHealthPercent"))
 			WornObject.SetItemHealthPercent(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemHealthPercent"))
-			;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetItemMaxCharge(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemMaxCharge"))
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  WornObject.SetItemMaxCharge(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemMaxCharge"))
 			WornObject.SetItemMaxCharge(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemMaxCharge"))
 			If sDisplayName ; Will be blank if player hasn't renamed the item
-				;Debug.Trace("MYC: (" + sCharacterName + ") WornObject.SetDisplayName(kCharacterActor," + iHand + ",0," + sDisplayName)
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  WornObject.SetDisplayName(kCharacterActor," + iHand + ",0," + sDisplayName)
 				WornObject.SetDisplayName(kCharacterActor,iHand,0,sDisplayName)
 			EndIf
 
@@ -1678,7 +1690,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 			;Wait(1)
 			If JValue.solveInt(jItem,".Enchantment.IsCustom")
 				Int iNumEffects = JValue.solveInt(jItem,".Enchantment.NumEffects")
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
 				Int j = 0
 				Int jWeaponEnchEffects = JValue.SolveObj(jItem,".Enchantment.Effects")
 				While j < iNumEffects
@@ -1689,10 +1701,10 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 					kMagicEffects[j] = JMap.GetForm(jWeaponEnchEffect,"MagicEffect") as MagicEffect
 					j += 1
 				EndWhile
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " creating custom enchantment...")
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " creating custom enchantment...")
 				WornObject.CreateEnchantment(kCharacterActor,iHand,0,JMap.getFlt(jItem,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
 
-				;Debug.Trace("MYC: (" + sCharacterName + ") " + sDisplayName + " done!")
+				;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " done!")
 			EndIf
 			If iHand == 1
 				kCharacterActor.SetActorValue("RightItemCharge",JMap.getFlt(jItem,"ItemCharge"))

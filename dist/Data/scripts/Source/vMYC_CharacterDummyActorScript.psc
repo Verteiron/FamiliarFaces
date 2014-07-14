@@ -225,7 +225,7 @@ Event OnActivate(ObjectReference akActionRef)
 EndEvent
 
 Event OnPackageChange(Package akOldPackage)
-	Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
+	;Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
 	If IsInCombat() && GetCombatTarget() == PlayerREF && DecapitationChance.GetValue()
 		_fDecapitationChance = DecapitationChance.GetValue()
 		DecapitationChance.SetValue(0)
@@ -405,14 +405,14 @@ Function DoUpkeep(Bool bInBackground = True)
 	{Run whenever the player loads up the Game. Sets the name and such.}
 	SetNameIfNeeded()
 	If bInBackground
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Backgrounding upkeep!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Backgrounding upkeep!")
 		_bDoUpkeep = True
 		RegisterForSingleUpdate(0.25)
 		Return
 	EndIf
 	GotoState("Busy")
 	IsBusy = True
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
 	If _bInvalidRace 
 		; Reset the race during upkeep in case the needed mod has been installed
@@ -470,7 +470,7 @@ Function DeleteIfOrphaned()
 			EndIf
 		Else
 			_bOrphaned = True
-			Debug.Trace("MYC: (" + CharacterName + "/Actor) I am apparently orphaned in the staging cell.")
+			;Debug.Trace("MYC: (" + CharacterName + "/Actor) I am apparently orphaned in the staging cell.")
 			_fOrphanedTime = GetCurrentRealTime()
 		EndIf
 	Else
@@ -506,9 +506,9 @@ Function SyncCharacterData()
 		;RemoveAllItems(PlayerREF)
 		Int iResult
 		CharacterManager.SetLocalFlt(CharacterName,"PlayTime",CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime"))
-		CharacterManager.PopulateInventory(CharacterName)
 		iResult = CharacterManager.ApplyCharacterArmor(CharacterName)
 		iResult = CharacterManager.ApplyCharacterWeapons(CharacterName)
+		CharacterManager.PopulateInventory(CharacterName)
 	EndIf
 EndFunction
 
@@ -698,7 +698,7 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
-	Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	If CharGen.IsExternalEnabled()
 		If !_bExternalHeadExists
@@ -884,7 +884,7 @@ EndFunction
 
 Function SetNameIfNeeded(Bool abForce = False)
 	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Setting actorbase name!")
 		_kActorBase.SetName(CharacterName)
 		SetName(CharacterName)
 		Int i = GetNumReferenceAliases()

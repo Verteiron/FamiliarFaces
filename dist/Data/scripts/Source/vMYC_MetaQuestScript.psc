@@ -73,7 +73,7 @@ Event OnUpkeepState(string eventName, string strArg, float numArg, Form sender)
 		_iUpkeepsExpected += 1
 	ElseIf eventName == "vMYC_UpkeepEnd"
 		_iUpkeepsCompleted += 1
-		Debug.Trace("MYC: Metaquest Upkeep finished for " + sender + ". (" + _iUpkeepsCompleted + "/" + _iUpkeepsExpected + ")")
+		;Debug.Trace("MYC: Metaquest Upkeep finished for " + sender + ". (" + _iUpkeepsCompleted + "/" + _iUpkeepsExpected + ")")
 	EndIf
 EndEvent
 
