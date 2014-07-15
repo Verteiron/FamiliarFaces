@@ -11,12 +11,14 @@ Import Game
 String[] Property HangoutNames Hidden
 {List of Hangout names}
 	String[] Function Get()
-		Int jHangoutNames = JMap.allKeys(JValue.solveObj(_jMYC,".Hangouts"))
+		Int jHangoutNames = JMap.allKeys(_jHangoutData)
 		String[] sHangoutNames = New String[128]
-		Int i = JArray.Count(jHangoutNames)
-		While i > 0
-			i -= 1
+		Int i = 0 
+		Int iCount = JArray.Count(jHangoutNames)
+		Debug.Trace("MYC/HOM: iCount is " + iCount)
+		While i < iCount
 			sHangoutNames[i] = JArray.getStr(jHangoutNames,i)
+			i += 1
 		EndWhile
 		Return sHangoutNames
 	EndFunction
@@ -34,6 +36,7 @@ LocationAlias[]		Property	HangoutLocations	Auto
 
 Location[]			Property	CustomLocations		Auto
 
+ObjectReference[] 	Property	CustomMapMarkers 	Auto
 
 FormList			Property	vMYC_LocationAnchorsList	Auto
 
@@ -97,6 +100,7 @@ Function DoInit()
 		JMap.SetObj(_jMYC,"Hangouts",_jHangoutData)
 		JMap.SetObj(_jHangoutData,"DataSerial",1)
 	EndIf
+	CustomMapMarkers = New ObjectReference[32]
 	Int jCustomLocationsMap = JFormMap.Object()
 	JMap.SetObj(_jHangoutData,JKEY_LOCATION_NAME_MAP,jCustomLocationsMap)
 	Int i = 0
@@ -189,12 +193,39 @@ Function ImportOldHangouts()
 		EndIf
 		i += 1
 	EndWhile
-	
+
 	i = 0
-	While i < CustomLocations.Length
-		
+	sHangoutNames = HangoutNames
+	While i < sHangoutNames.Length
+		If sHangoutNames[i]
+			PlaceHangoutMarker(sHangoutNames[i])
+		EndIf
 		i += 1
 	EndWhile
+EndFunction
+
+Function PlaceHangoutMarker(String sHangoutName)
+	Float TargetX = GetHangoutFlt(sHangoutName,"Position.X")
+	Float TargetY = GetHangoutFlt(sHangoutName,"Position.Y")
+	Float TargetZ = GetHangoutFlt(sHangoutName,"Position.Z")
+	Int jAnchorObjects = GetHangoutObj(sHangoutName,"Anchors")
+	If !jAnchorObjects
+		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't place map marker because there are no anchor objects!",1)
+		Return
+	EndIf
+	Int i = JArray.Count(jAnchorObjects)
+	ObjectReference kSpawnObject
+	While i > 0
+		i -= 1
+		ObjectReference kAnchor = JArray.GetForm(jAnchorObjects,i) as ObjectReference
+		If kAnchor
+			kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
+		EndIf
+	EndWhile
+	Int iFreeMarker = CustomMapMarkers.Find(None)
+	CustomMapMarkers[iFreeMarker] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
+	CustomMapMarkers[iFreeMarker].SetPosition(TargetX, TargetY, TargetZ)
+	Debug.Trace("MYC/HOM/" + sHangoutName + ": Placed map marker " + CustomMapMarkers[iFreeMarker] + "!")
 EndFunction
 
 Function SetLocationName(Location kLocation, String sHangoutName)
@@ -300,7 +331,7 @@ Function SetHangoutStr(String asHangoutName, String asPath, String asString)
 EndFunction
 
 String Function GetHangoutStr(String asHangoutName, String asPath)
-	Return JValue.solveStr(_jHangoutData,asHangoutName + "." + asPath)
+	Return JValue.solveStr(_jHangoutData,"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutInt(String asHangoutName, String asPath, Int aiInt)
@@ -309,7 +340,7 @@ Function SetHangoutInt(String asHangoutName, String asPath, Int aiInt)
 EndFunction
 
 Int Function GetHangoutInt(String asHangoutName, String asPath)
-	Return JValue.solveInt(_jHangoutData,asHangoutName + "." + asPath)
+	Return JValue.solveInt(_jHangoutData,"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutFlt(String asHangoutName, String asPath, Float afFloat)
@@ -318,7 +349,7 @@ Function SetHangoutFlt(String asHangoutName, String asPath, Float afFloat)
 EndFunction
 
 Float Function GetHangoutFlt(String asHangoutName, String asPath)
-	Return JValue.solveFlt(_jHangoutData,asHangoutName + "." + asPath)
+	Return JValue.solveFlt(_jHangoutData,"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutForm(String asHangoutName, String asPath, Form akForm)
@@ -327,7 +358,7 @@ Function SetHangoutForm(String asHangoutName, String asPath, Form akForm)
 EndFunction
 
 Form Function GetHangoutForm(String asHangoutName, String asPath)
-	Return JValue.solveForm(_jHangoutData,asHangoutName + "." + asPath)
+	Return JValue.solveForm(_jHangoutData,"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutObj(String asHangoutName, String asPath, Int ajObj)
@@ -336,7 +367,7 @@ Function SetHangoutObj(String asHangoutName, String asPath, Int ajObj)
 EndFunction
 
 Int Function GetHangoutObj(String asHangoutName, String asPath)
-	Return JValue.solveObj(_jHangoutData,asHangoutName + "." + asPath)
+	Return JValue.solveObj(_jHangoutData,"." + asHangoutName + "." + asPath)
 EndFunction
 
 
