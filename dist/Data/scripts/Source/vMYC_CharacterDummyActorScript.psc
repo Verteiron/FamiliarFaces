@@ -686,7 +686,7 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
-	FFUtils.ClearFaceGenData(Self.GetActorBase())
+	FFUtils.DeleteFaceGenData(Self.GetActorBase())
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	If CharGen.IsExternalEnabled()
