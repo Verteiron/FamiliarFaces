@@ -207,10 +207,14 @@ Function DoUpgrade()
 	If ModVersion < 110
 		Debug.Trace("MYC: Upgrading to 1.1.0...")
 		CharacterManager.RepairSaves()
-		CharacterManager.DoUpkeep()
-		ShrineOfHeroes.DoUpkeep()
-		HangoutManager.InitHangouts()
+		CharacterManager.DoUpkeep(False)
+		ShrineOfHeroes.DoUpkeep(False)
+		HangoutManager.Stop()
+		HangoutManager.Start()
+		HangoutManager.DoInit()
 		HangoutManager.ImportOldHangouts()
+		Wait(2)
+		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Tolvald's Cave")
 		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
 		ModVersion = 110
 	EndIf

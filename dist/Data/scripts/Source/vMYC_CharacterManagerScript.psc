@@ -9,6 +9,8 @@ Import Game
 
 ;--=== Properties ===--
 
+vMYC_HangoutManager Property HangoutManager Auto
+
 Int Property SerializationVersion = 3 Auto Hidden
 
 String[] Property CharacterNames Hidden

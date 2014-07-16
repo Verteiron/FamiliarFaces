@@ -222,7 +222,13 @@ Function PlaceHangoutMarker(String sHangoutName)
 			kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
 		EndIf
 	EndWhile
-	Int iFreeMarker = CustomMapMarkers.Find(None)
+	Int iFreeMarker
+	If HasHangoutKey(sHangoutName,"MarkerIndex")
+		iFreeMarker = GetHangoutInt(sHangoutName,"MarkerIndex")
+	Else
+		iFreeMarker = CustomMapMarkers.Find(None)
+		SetHangoutInt(sHangoutName,"MarkerIndex",iFreeMarker)
+	EndIf
 	CustomMapMarkers[iFreeMarker] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
 	CustomMapMarkers[iFreeMarker].SetPosition(TargetX, TargetY, TargetZ)
 	Debug.Trace("MYC/HOM/" + sHangoutName + ": Placed map marker " + CustomMapMarkers[iFreeMarker] + "!")
@@ -242,6 +248,16 @@ Int Function GetFreeLocationIndex()
 		EndIf
 		i += 1
 	EndWhile
+EndFunction
+
+Function AssignActorToHangout(Actor akActor, String sHangoutName)
+	If HasHangoutKey(sHangoutName,"MarkerIndex")
+		HangoutActors[0].ForceRefTo(akActor)
+		HangoutMarkers[0].ForceRefTo(CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")])
+		Debug.Trace("MYC/HOM/" + sHangoutName + ": Assigned " + akActor.GetActorBase().GetName() + " successfully!",1)
+	Else
+		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker!",1)
+	EndIf
 EndFunction
 
 ;=== Data management ===----
@@ -290,9 +306,9 @@ Function SaveHangouts()
 	JValue.WriteToFile(jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
 EndFunction
 
-
-
-
+Function AssignHangout()
+	
+EndFunction
 
 ;==== Generic functions for get/setting Hangout-specific data
 
