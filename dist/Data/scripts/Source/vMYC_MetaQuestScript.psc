@@ -88,6 +88,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
+	Modversion = 109
 	_CurrentVersion = 110
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 
@@ -133,6 +134,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	UpdateConfig()
 	Debug.Trace("MYC: Upkeep complete!")
 	Ready = True
+	HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Whiterun")
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
@@ -214,7 +216,7 @@ Function DoUpgrade()
 		HangoutManager.DoInit()
 		HangoutManager.ImportOldHangouts()
 		Wait(2)
-		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Tolvald's Cave")
+		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Whiterun")
 		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
 		ModVersion = 110
 	EndIf

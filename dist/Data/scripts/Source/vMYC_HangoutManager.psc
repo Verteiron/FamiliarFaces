@@ -27,9 +27,10 @@ EndProperty
 vMYC_CharacterManagerScript Property CharacterManager Auto
 {Character manager}
 
+Quest				Property	vMYC_HangoutQuest00	Auto
+
 ReferenceAlias[]	Property	HangoutActors		Auto
 ReferenceAlias[]	Property	HangoutAnchors		Auto
-ReferenceAlias[]	Property	HangoutCells		Auto
 ReferenceAlias[]	Property	HangoutMarkers		Auto
 LocationAlias[]		Property	HangoutLocations	Auto
 
@@ -41,6 +42,8 @@ ObjectReference[] 	Property	CustomMapMarkers 	Auto
 FormList			Property	vMYC_LocationAnchorsList	Auto
 
 Activator 			Property 	vMYC_CustomMapMarker		Auto
+
+Keyword				Property	vMYC_Hangout				Auto
 
 ;--=== Constants ===--
 
@@ -222,6 +225,7 @@ Function PlaceHangoutMarker(String sHangoutName)
 			kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
 		EndIf
 	EndWhile
+	SetHangoutForm(sHangoutName,"SpawnObject",kSpawnObject)
 	Int iFreeMarker
 	If HasHangoutKey(sHangoutName,"MarkerIndex")
 		iFreeMarker = GetHangoutInt(sHangoutName,"MarkerIndex")
@@ -252,9 +256,28 @@ EndFunction
 
 Function AssignActorToHangout(Actor akActor, String sHangoutName)
 	If HasHangoutKey(sHangoutName,"MarkerIndex")
-		HangoutActors[0].ForceRefTo(akActor)
-		HangoutMarkers[0].ForceRefTo(CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")])
-		Debug.Trace("MYC/HOM/" + sHangoutName + ": Assigned " + akActor.GetActorBase().GetName() + " successfully!",1)
+		;HangoutActors[0].Clear()
+		;HangoutAnchors[0].Clear()
+		;HangoutMarkers[0].Clear()
+		;HangoutLocations[0].Clear()
+		
+		vMYC_HangoutQuest00.Stop()
+		If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(sHangoutName,"Location") as Location,CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")],akActor)
+			Debug.Trace("MYC/HOM/" + sHangoutName + ": Sent story event successfully!")
+		Else
+			Debug.Trace("MYC/HOM/" + sHangoutName + ": Couldn't send story event!",1)
+		EndIf
+		;HangoutAnchors[0].ForceRefTo(GetHangoutForm(sHangoutName,"SpawnObject") as ObjectReference)
+		;HangoutMarkers[0].ForceRefTo(CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")])
+		;HangoutLocations[0].ForceLocationTo(GetHangoutForm(sHangoutName,"Location") as Location)
+		Int i = 0
+		While i < HangoutLocations.Length
+			If HangoutLocations[i].GetLocation()
+				Debug.Trace("MYC/HOM/" + sHangoutName + ": Location[" + i + "]: " + HangoutLocations[i].GetLocation().GetName() + " " + HangoutLocations[i].GetLocation())
+			EndIf
+			i += 1
+		EndWhile
+		akActor.EvaluatePackage()
 	Else
 		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker!",1)
 	EndIf
