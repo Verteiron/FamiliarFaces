@@ -88,7 +88,6 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	Modversion = 109
 	_CurrentVersion = 110
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 
@@ -134,7 +133,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	UpdateConfig()
 	Debug.Trace("MYC: Upkeep complete!")
 	Ready = True
-	HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Whiterun")
+	;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
@@ -153,7 +152,11 @@ Function DoInit()
 		(ShrineOfHeroes as Quest).Start()
 		;CharacterManager.DoInit()
 	EndIf
-
+	If !(HangoutManager as Quest).IsRunning()
+		(HangoutManager as Quest).Start()
+		WaitMenuMode(0.5)
+		HangoutManager.DoInit()
+	EndIf
 
 	;Wait(3)
 	;CharacterManager.SaveCurrentPlayer()
@@ -216,7 +219,7 @@ Function DoUpgrade()
 		HangoutManager.DoInit()
 		HangoutManager.ImportOldHangouts()
 		Wait(2)
-		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Whiterun")
+		;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
 		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
 		ModVersion = 110
 	EndIf

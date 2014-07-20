@@ -1502,7 +1502,7 @@ Bool Function LoadCharacter(String sCharacterName)
 		EndIf
 	EndIf
 
-	Int iHOidx = AddCustomLocation(JMap.getObj(jCharacterData,"LocationData"))
+	HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"LocationData"),sCharacterName)
 
 	;----Load or create ActorBaseMap--------------
 
