@@ -44,3 +44,14 @@ Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRe
 		EndIf
 	EndIf
 EndEvent
+
+;--=== Functions ===--
+
+Function EnableTracking(Bool abTracking = True)
+	ObjectReference kHangoutMarker = (GetAliasByName("HangoutMarker") as ReferenceAlias).GetReference()
+	Int iObjective = 1
+	If kHangoutMarker.IsInInterior()
+		iObjective = 0
+	EndIf
+	SetObjectiveDisplayed(iObjective,abTracking)
+EndFunction

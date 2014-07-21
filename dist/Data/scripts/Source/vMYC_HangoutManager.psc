@@ -102,7 +102,7 @@ Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation,
 	SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
 	Wait(0.1)
 	(akSendingQuest as Quest).SetActive(True)
-	(akSendingQuest as Quest).SetObjectiveDisplayed(0,True)
+	(akSendingQuest as vMYC_HangoutQuestScript).EnableTracking()
 	TickDataSerial()
 EndEvent
 
