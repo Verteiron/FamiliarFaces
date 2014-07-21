@@ -108,6 +108,7 @@ EndEvent
 Event OnShrineReady(string eventName, string strArg, float numArg, Form sender)
 	If numArg && CharacterManager.GetCharacterActorByName("Kmiru")
 		AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Ansilvund")
+		AssignActorToHangout(CharacterManager.GetCharacterActorByName("Magraz"),"Blackreach")
 	EndIf
 EndEvent
 
