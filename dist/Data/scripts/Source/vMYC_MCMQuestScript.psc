@@ -5,6 +5,7 @@ Import vMYC_Config
 vMYC_MetaQuestScript Property MetaQuestScript Auto
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+vMYC_HangoutManager	Property HangoutManager Auto
 
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
@@ -238,8 +239,7 @@ event OnPageReset(string a_page)
 
 
 		;===== Character hangout option =====----
-		_iAliasSelections[_iCurrentCharacter] = CharacterManager.GetLocalInt(_sCharacterName,"HangoutIndex")
-		_iAliasOption = AddMenuOption("$Hangout",_sHangoutNames[_iAliasSelections[_iCurrentCharacter]],OptionFlags)
+		_iAliasOption = AddMenuOption("$Hangout",CharacterManager.GetLocalString(_sCharacterName,"HangoutName"),OptionFlags)
 		;====================================----
 
 		;===== Character class option =======----
@@ -464,8 +464,10 @@ Event OnOptionMenuOpen(Int Option)
 		SetMenuDialogDefaultIndex(0)
 	ElseIf Option == _iAliasOption
 		SetMenuDialogOptions(_sHangoutNames)
-		SetMenuDialogStartIndex(_iAliasSelections[_iCurrentCharacter])
-		SetMenuDialogDefaultIndex(_iAliasSelections[_iCurrentCharacter])
+		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
+		Int index = _sHangoutNames.Find(sHangoutName)
+		SetMenuDialogStartIndex(index)
+		SetMenuDialogDefaultIndex(index)
 	ElseIf Option == _iCurrentCharacterOption
 		SetMenuDialogOptions(_sCharacterNames)
 		SetMenuDialogStartIndex(_iCurrentCharacter)
@@ -503,12 +505,8 @@ Event OnOptionMenuAccept(int option, int index)
 		SetMenuOptionValue(_iVoiceTypeOption,sShortVoiceType)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == _iAliasOption
-		_iAliasSelections[_iCurrentCharacter] = index
-		If CharacterManager.SetCharacterHangout(_sCharacterNames[_iCurrentCharacter],_kHangoutRefAliases[index])
-			SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
-		Else
-			Debug.MessageBox("Sorry, but " + StringUtil.SubString(_sHangoutNames[index],1) + " is already in use by " + (_kHangoutRefAliases[index].GetReference() as Actor).GetActorBase().GetName() + "!")
-		EndIf
+		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
+		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
 	ElseIf Option == _iCurrentCharacterOption
 		_iCurrentCharacter = index
 		ForcePageReset()
@@ -569,8 +567,7 @@ Function UpdateSettings()
 	_Shutdown = (vMYC_CFG_Shutdown.GetValue() as Int) As Bool
 
 	_sCharacterNames = CharacterManager.CharacterNames
-	_kHangoutRefAliases = CharacterManager.kHangoutRefAliases
-	_sHangoutNames = CharacterManager.sHangoutNames
+	_sHangoutNames = HangoutManager.HangoutNames
 
 	_sClassNames = CharacterManager.sClassNames
 EndFunction
