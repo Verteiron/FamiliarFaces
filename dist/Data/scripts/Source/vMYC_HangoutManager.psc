@@ -15,7 +15,7 @@ String[] Property HangoutNames Hidden
 		String[] sHangoutNames = New String[128]
 		Int i = 0 
 		Int iCount = JArray.Count(jHangoutNames)
-		Debug.Trace("MYC/HOM: iCount is " + iCount)
+		;Debug.Trace("MYC/HOM: iCount is " + iCount)
 		While i < iCount
 			sHangoutNames[i] = JArray.getStr(jHangoutNames,i)
 			i += 1
@@ -31,7 +31,6 @@ ReferenceAlias[]	Property	HangoutActors		Auto
 ReferenceAlias[]	Property	HangoutAnchors		Auto
 ReferenceAlias[]	Property	HangoutMarkers		Auto
 LocationAlias[]		Property	HangoutLocations	Auto
-
 
 Location[]			Property	CustomLocations		Auto
 
@@ -110,6 +109,24 @@ Event OnShrineReady(string eventName, string strArg, float numArg, Form sender)
 	If numArg && CharacterManager.GetCharacterActorByName("Kmiru")
 		AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Ansilvund")
 		AssignActorToHangout(CharacterManager.GetCharacterActorByName("Magraz"),"Blackreach")
+		SendHangoutPing()
+	EndIf
+EndEvent
+
+Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
+	Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
+	If asHangoutName && akLocation
+		vMYC_HangoutQuestScript kHangout = akHangout as vMYC_HangoutQuestScript
+		If kHangout.IsPreset
+			Debug.Trace("MYC/HOM: Registering Preset Hangout " + asHangoutName + " " + akHangout + " with Location " + akLocation.GetName() + " " + akLocation + "!")
+			SetHangoutForm(asHangoutName,"Location",akLocation)
+			SetHangoutForm(asHangoutName,"Quest",akHangout)
+			SetHangoutInt(asHangoutName,"Preset",1)
+		EndIf
+		If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
+			Debug.Trace("MYC/HOM: Stopping HangoutQuest for " + asHangoutName + " " + akHangout + " because no Actor is assigned to it.")
+			(akHangout as Quest).Stop()
+		EndIf
 	EndIf
 EndEvent
 
@@ -134,6 +151,7 @@ Function DoInit()
 	EndIf
 	RegisterForModEvents()
 	SyncHangoutData()
+	SendHangoutPing()
 EndFunction
 
 Function DoUpkeep()
@@ -334,10 +352,10 @@ EndFunction
 
 Function AssignActorToHangout(Actor akActor, String sHangoutName)
 	Debug.Trace("MYC/HOM/" + sHangoutName + ": Assigning " + akActor + " to this Hangout!")
+	String sCharacterName = akActor.GetActorBase().GetName()
 	PlaceHangoutMarker(sHangoutName)
 	If HasHangoutKey(sHangoutName,"MarkerIndex")
 		CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")].SetName(sHangoutName)
-		String sCharacterName = akActor.GetActorBase().GetName()
 		String sCurrentHangout = CharacterManager.GetLocalString(sCharacterName,"HangoutName")
 		If sCurrentHangout
 			CancelActorHangout(akActor, sCurrentHangout)
@@ -352,8 +370,24 @@ Function AssignActorToHangout(Actor akActor, String sHangoutName)
 		;HangoutMarkers[0].ForceRefTo(CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")])
 		;HangoutLocations[0].ForceLocationTo(GetHangoutForm(sHangoutName,"Location") as Location)
 		akActor.EvaluatePackage()
+	ElseIf GetHangoutInt(sHangoutName,"Preset")
+		;Presets don't require anchors or marker objects
+		vMYC_HangoutQuestScript kHangout = GetHangoutForm(sHangoutName,"Quest") as vMYC_HangoutQuestScript
+		If kHangout
+			If !kHangout.IsRunning()
+				String sCurrentHangout = CharacterManager.GetLocalString(sCharacterName,"HangoutName")
+				If sCurrentHangout
+					CancelActorHangout(akActor, sCurrentHangout)
+				EndIf
+				kHangout.Start()
+				(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
+				kHangout.EnableTracking(True)
+			EndIf
+		Else
+			Debug.Trace("MYC/HOM/" + sHangoutName + ": Couldn't find a HangoutQuest!",1)
+		EndIf
 	Else
-		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker!",1)
+		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker and it's not a preset!",1)
 	EndIf
 EndFunction
 
@@ -429,6 +463,15 @@ EndFunction
 
 Function AssignHangout()
 	
+EndFunction
+
+Function SendHangoutPing()
+	RegisterForModEvent("vMYC_HangoutPong","OnHangoutPong")
+	Int iHandle = ModEvent.Create("vMYC_HangoutPing")
+	If iHandle
+		ModEvent.PushForm(iHandle,Self)
+		ModEvent.Send(iHandle)
+	EndIf
 EndFunction
 
 ;==== Generic functions for get/setting Hangout-specific data
