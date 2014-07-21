@@ -11,7 +11,7 @@ Import Game
 String[] Property HangoutNames Hidden
 {List of Hangout names}
 	String[] Function Get()
-		Int jHangoutNames = JMap.allKeys(_jHangoutData)
+		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
 		String[] sHangoutNames = New String[128]
 		Int i = 0 
 		Int iCount = JArray.Count(jHangoutNames)
@@ -48,8 +48,9 @@ Keyword				Property	vMYC_Hangout				Auto
 Int		Property	MAX_LOCATIONS = 24		AutoReadOnly
 
 
-String	Property	JKEY_LOCATION_NAME_MAP 	= "CustomLocationNameMap"		AutoReadOnly
-String	Property	JKEY_HANGOUTQUEST_MAP 	= "HangoutQuestMap"				AutoReadOnly
+String	Property	JKEY_LOCATION_NAME_FMAP 	= "CustomLocationNameMap"		AutoReadOnly
+String	Property	JKEY_HANGOUTQUEST_FMAP 	= "HangoutQuestMap"				AutoReadOnly
+String	Property	JKEY_HANGOUT_MAP	 	= "Hangouts"					AutoReadOnly
 
 ;--=== Config variables ===--
 
@@ -96,7 +97,7 @@ EndEvent
 
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
 	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + akActor + "!")
-	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_MAP)
+	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
 	JFormMap.SetStr(jHangoutQuestMap,akSendingQuest,asHangoutName)
 	SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
 	Wait(0.1)
@@ -122,11 +123,14 @@ Function DoInit()
 	EndIf
 	SyncHangoutData()
 	CustomMapMarkers = New ObjectReference[32]
-	If !JMap.HasKey(_jHangoutData,JKEY_LOCATION_NAME_MAP)
-		JMap.SetObj(_jHangoutData,JKEY_LOCATION_NAME_MAP,JFormMap.Object())
+	If !JMap.HasKey(_jHangoutData,JKEY_LOCATION_NAME_FMAP)
+		JMap.SetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP,JFormMap.Object())
 	EndIf
-	If !JMap.HasKey(_jHangoutData,JKEY_HANGOUTQUEST_MAP)
-		JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_MAP,JFormMap.Object())
+	If !JMap.HasKey(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+		JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,JFormMap.Object())
+	EndIf
+	If !JMap.HasKey(_jHangoutData,JKEY_HANGOUT_MAP)
+		JMap.SetObj(_jHangoutData,JKEY_HANGOUT_MAP,JMap.Object())
 	EndIf
 	RegisterForModEvents()
 	SyncHangoutData()
@@ -134,7 +138,7 @@ EndFunction
 
 Function DoUpkeep()
 	RegisterForModEvents()
-	Int jCustomLocationsMap = JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_MAP)
+	Int jCustomLocationsMap = JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP)
 	Int i = CustomLocations.Length
 	While i > 0
 		i -= 1
@@ -143,7 +147,7 @@ Function DoUpkeep()
 			CustomLocations[i].SetName(sLocationName)
 		EndIf
 	EndWhile
-	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_MAP)
+	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
 	If !jHangoutQuestMap 
 		jHangoutQuestMap = JFormMap.Object()
 	EndIf
@@ -250,14 +254,36 @@ Function ImportOldHangouts()
 	EndWhile
 EndFunction
 
+Function DeleteHangout(String sHangoutName)
+	If HasHangoutKey(sHangoutName,"MarkerIndex")
+		Int iMarkerIndex = GetHangoutInt(sHangoutName,"MarkerIndex")
+		Int iNumRefs = CustomMapMarkers[iMarkerIndex].GetNumReferenceAliases()
+		While iNumRefs > 0
+			iNumRefs -= 1
+			Quest kHangoutQuest = CustomMapMarkers[iMarkerIndex].GetNthReferenceAlias(iNumRefs).GetOwningQuest()
+			If kHangoutQuest
+				Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangoutQuest + "...",1)
+				Actor kHangoutActor = (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() as Actor
+				If kHangoutActor
+					Debug.Trace("MYC/HOM/" + sHangoutName + ": * This will orphan " + kHangoutActor.GetName() + " " + kHangoutActor + "!",1)
+					kHangoutActor.SendModEvent("vMYC_LostHangout")
+				EndIf
+				kHangoutQuest.Stop()
+			EndIf
+		EndWhile
+		SetHangoutInt(sHangoutName,"MarkerIndex",-1)
+		CustomMapMarkers[iMarkerIndex].Delete()
+		CustomMapMarkers[iMarkerIndex] = None
+	EndIf
+EndFunction
+
 Function PlaceHangoutMarker(String sHangoutName)
 	Int iFreeMarker = -1
 	If HasHangoutKey(sHangoutName,"MarkerIndex")
 		iFreeMarker = GetHangoutInt(sHangoutName,"MarkerIndex")
 		If CustomMapMarkers[iFreeMarker]
-			Debug.Trace("MYC/HOM/" + sHangoutName + ": Previous marker " + CustomMapMarkers[iFreeMarker] + " will be deleted!",1)
-			CustomMapMarkers[iFreeMarker].Delete()
-			CustomMapMarkers[iFreeMarker] = None
+			Debug.Trace("MYC/HOM/" + sHangoutName + ": Previous marker " + CustomMapMarkers[iFreeMarker] + " exists!",1)
+			Return
 		EndIf
 	EndIf
 	Float TargetX = GetHangoutFlt(sHangoutName,"Position.X")
@@ -290,12 +316,12 @@ Function PlaceHangoutMarker(String sHangoutName)
 EndFunction
 
 Function SetLocationName(Location kLocation, String sHangoutName)
-	JFormMap.SetStr(JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_MAP),kLocation,sHangoutName)
+	JFormMap.SetStr(JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP),kLocation,sHangoutName)
 	
 EndFunction
 
 Int Function GetFreeLocationIndex()
-	Int jCustomLocationsMap = JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_MAP)
+	Int jCustomLocationsMap = JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP)
 	Int i = 0
 	While i < CustomLocations.Length
 		If !JFormMap.GetStr(jCustomLocationsMap,CustomLocations[i])
@@ -311,8 +337,14 @@ Function AssignActorToHangout(Actor akActor, String sHangoutName)
 	PlaceHangoutMarker(sHangoutName)
 	If HasHangoutKey(sHangoutName,"MarkerIndex")
 		CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")].SetName(sHangoutName)
+		String sCharacterName = akActor.GetActorBase().GetName()
+		String sCurrentHangout = CharacterManager.GetLocalString(sCharacterName,"HangoutName")
+		If sCurrentHangout
+			CancelActorHangout(akActor, sCurrentHangout)
+		EndIf
 		If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(sHangoutName,"Location") as Location,CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")],akActor)
 			Debug.Trace("MYC/HOM/" + sHangoutName + ": Sent story event successfully!")
+			CharacterManager.SetLocalString(sCharacterName,"HangoutName",sHangoutName)
 		Else
 			Debug.Trace("MYC/HOM/" + sHangoutName + ": Couldn't send story event!",1)
 		EndIf
@@ -323,6 +355,24 @@ Function AssignActorToHangout(Actor akActor, String sHangoutName)
 	Else
 		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker!",1)
 	EndIf
+EndFunction
+
+Function CancelActorHangout(Actor akActor, String sHangoutName)
+	Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+	Int jAssignedQuests = JFormMap.AllKeys(jHangoutQuestMap)
+	Int i = JArray.Count(jAssignedQuests)
+	While i > 0
+		i -= 1
+		Quest kHangoutQuest = JArray.GetForm(jAssignedQuests,i) as Quest
+		If JFormMap.GetStr(jHangoutQuestMap,kHangoutQuest) == sHangoutName
+			If (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() == akActor
+				Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangoutQuest + "...",1)
+				(kHangoutQuest as vMYC_HangoutQuestScript).EnableTracking(False)
+				kHangoutQuest.Stop()
+				JFormMap.RemoveKey(jHangoutQuestMap,kHangoutQuest)
+			EndIf
+		EndIf
+	EndWhile
 EndFunction
 
 Actor Function GetHangoutActor(String sHangoutName)
@@ -389,13 +439,13 @@ Int Function CreateHangoutDataIfMissing(String asHangoutName)
 		Return 0
 	EndIf
 	TickDataSerial()
-	Int jHangout = JMap.getObj(_jHangoutData,asHangoutName)
+	Int jHangout = JMap.getObj(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),asHangoutName)
 	If jHangout
 		Return jHangout
 	EndIf
 	Debug.Trace("MYC/HOM/" + asHangoutName + ": First Hangout data access, creating HangoutData key!")
 	jHangout = JMap.Object()
-	JMap.setObj(_jHangoutData,asHangoutName,jHangout)
+	JMap.setObj(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),asHangoutName,jHangout)
 	Return jHangout
 EndFunction
 
@@ -422,7 +472,7 @@ Function SetHangoutStr(String asHangoutName, String asPath, String asString)
 EndFunction
 
 String Function GetHangoutStr(String asHangoutName, String asPath)
-	Return JValue.solveStr(_jHangoutData,"." + asHangoutName + "." + asPath)
+	Return JValue.solveStr(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutInt(String asHangoutName, String asPath, Int aiInt)
@@ -431,7 +481,7 @@ Function SetHangoutInt(String asHangoutName, String asPath, Int aiInt)
 EndFunction
 
 Int Function GetHangoutInt(String asHangoutName, String asPath)
-	Return JValue.solveInt(_jHangoutData,"." + asHangoutName + "." + asPath)
+	Return JValue.solveInt(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutFlt(String asHangoutName, String asPath, Float afFloat)
@@ -440,7 +490,7 @@ Function SetHangoutFlt(String asHangoutName, String asPath, Float afFloat)
 EndFunction
 
 Float Function GetHangoutFlt(String asHangoutName, String asPath)
-	Return JValue.solveFlt(_jHangoutData,"." + asHangoutName + "." + asPath)
+	Return JValue.solveFlt(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutForm(String asHangoutName, String asPath, Form akForm)
@@ -449,7 +499,7 @@ Function SetHangoutForm(String asHangoutName, String asPath, Form akForm)
 EndFunction
 
 Form Function GetHangoutForm(String asHangoutName, String asPath)
-	Return JValue.solveForm(_jHangoutData,"." + asHangoutName + "." + asPath)
+	Return JValue.solveForm(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),"." + asHangoutName + "." + asPath)
 EndFunction
 
 Function SetHangoutObj(String asHangoutName, String asPath, Int ajObj)
@@ -458,5 +508,5 @@ Function SetHangoutObj(String asHangoutName, String asPath, Int ajObj)
 EndFunction
 
 Int Function GetHangoutObj(String asHangoutName, String asPath)
-	Return JValue.solveObj(_jHangoutData,"." + asHangoutName + "." + asPath)
+	Return JValue.solveObj(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),"." + asHangoutName + "." + asPath)
 EndFunction
