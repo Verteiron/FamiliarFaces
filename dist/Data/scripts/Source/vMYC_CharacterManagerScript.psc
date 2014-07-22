@@ -1003,6 +1003,12 @@ Float Function GetCharacterAV(String asCharacterName,String asAVName)
 	Return JValue.solveFlt(_jMYC,"." + asCharacterName + ".Data.Stats.AV." + asAVName)
 EndFunction
 
+Function ResetCharacterPosition(String asCharacterName)
+	If GetLocalString(asCharacterName,"HangoutName")
+		HangoutManager.MoveActorToHangout(GetCharacterActorByName(asCharacterName),GetLocalString(asCharacterName,"HangoutName"))
+	EndIf
+EndFunction
+
 Function SetCharacterEnabled(String asCharacterName, Bool abEnabled)
 
 	ActorBase kTargetDummy = GetCharacterDummy(asCharacterName)

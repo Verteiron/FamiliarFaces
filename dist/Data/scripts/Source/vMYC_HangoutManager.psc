@@ -106,9 +106,9 @@ Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation,
 EndEvent
 
 Event OnShrineReady(string eventName, string strArg, float numArg, Form sender)
-	If numArg && CharacterManager.GetCharacterActorByName("Kmiru")
-		AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Ansilvund")
-		AssignActorToHangout(CharacterManager.GetCharacterActorByName("Magraz"),"Blackreach")
+	If numArg ;&& CharacterManager.GetCharacterActorByName("Kmiru")
+		;AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Ansilvund")
+		;AssignActorToHangout(CharacterManager.GetCharacterActorByName("Magraz"),"Blackreach")
 		SendHangoutPing()
 	EndIf
 EndEvent
@@ -333,6 +333,39 @@ Function PlaceHangoutMarker(String sHangoutName)
 	Debug.Trace("MYC/HOM/" + sHangoutName + ": Placed map marker " + CustomMapMarkers[iFreeMarker] + "!")
 EndFunction
 
+ObjectReference Function GetHangoutMarker(String asHangoutName)
+	If HasHangoutKey(asHangoutName,"MarkerIndex") 
+		If CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")] as ObjectReference
+			Return CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")] as ObjectReference
+		EndIf
+	Else
+		vMYC_HangoutQuestScript kHangout = GetHangoutQuest(asHangoutName)
+		ObjectReference kMarker = (kHangout.GetAliasByName("HangoutMarker") as ReferenceAlias).GetReference()
+		If !kMarker
+			kMarker = (kHangout.GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference()
+		EndIf
+		Return kMarker
+	EndIf
+	Return None
+EndFunction
+
+vMYC_HangoutQuestScript Function GetHangoutQuest(String asHangoutName)
+	vMYC_HangoutQuestScript kHangout = GetHangoutForm(asHangoutName,"Quest") as vMYC_HangoutQuestScript
+	If !kHangout
+		Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+		Int jAssignedQuests = JFormMap.AllKeys(jHangoutQuestMap)
+		Int i = JArray.Count(jAssignedQuests)
+		While i > 0
+			i -= 1
+			kHangout = JArray.GetForm(jAssignedQuests,i) as vMYC_HangoutQuestScript
+			If JFormMap.GetStr(jHangoutQuestMap,kHangout) == asHangoutName
+				Return kHangout
+			EndIf
+		EndWhile
+	EndIf
+	Return kHangout
+EndFunction
+
 Function SetLocationName(Location kLocation, String sHangoutName)
 	JFormMap.SetStr(JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP),kLocation,sHangoutName)
 	
@@ -381,13 +414,32 @@ Function AssignActorToHangout(Actor akActor, String sHangoutName)
 				EndIf
 				kHangout.Start()
 				(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
-				kHangout.EnableTracking(True)
+				CharacterManager.SetLocalString(sCharacterName,"HangoutName",sHangoutName)
+				;kHangout.EnableTracking(True)
 			EndIf
 		Else
 			Debug.Trace("MYC/HOM/" + sHangoutName + ": Couldn't find a HangoutQuest!",1)
 		EndIf
 	Else
 		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker and it's not a preset!",1)
+	EndIf
+	SendHangoutPing()
+EndFunction
+
+Function MoveActorToHangout(Actor akActor, String asHangoutName)
+	akActor.EvaluatePackage()
+	akActor.MoveToPackageLocation()
+	If akActor.GetCurrentLocation() != GetHangoutForm(asHangoutName,"Location")
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Actor's AI package didn't send them to the right place!",1)
+		ObjectReference kMarker = GetHangoutMarker(asHangoutName)
+		If kMarker
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Moving Actor " + akActor.GetName() + " " + akActor + " to " + kMarker + "!")
+			akActor.MoveTo(kMarker)
+		Else
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Couldn't find anything to moving the Actor to! MoveActorToHangout failed!",1)
+		EndIf
+	Else
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Actor's AI package appears to have sent them to the right place.")
 	EndIf
 EndFunction
 
@@ -412,6 +464,11 @@ EndFunction
 Actor Function GetHangoutActor(String sHangoutName)
 	
 
+
+EndFunction
+
+Function EnableTracking(Actor akActor, Bool abTracking = True)
+	
 
 EndFunction
 
