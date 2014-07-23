@@ -50,6 +50,7 @@ Int		Property	MAX_LOCATIONS = 24		AutoReadOnly
 String	Property	JKEY_LOCATION_NAME_FMAP 	= "CustomLocationNameMap"		AutoReadOnly
 String	Property	JKEY_HANGOUTQUEST_FMAP 	= "HangoutQuestMap"				AutoReadOnly
 String	Property	JKEY_HANGOUT_MAP	 	= "Hangouts"					AutoReadOnly
+String 	Property	JKEY_HANGOUT_POOL		= "HangoutPool"					AutoReadOnly
 
 ;--=== Config variables ===--
 
@@ -115,21 +116,27 @@ EndEvent
 
 Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 	Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
-	If asHangoutName && akLocation
-		vMYC_HangoutQuestScript kHangout = akHangout as vMYC_HangoutQuestScript
-		Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
-		JFormMap.SetStr(jHangoutQuestMap,kHangout,asHangoutName)
-		If kHangout.IsPreset && !kHangout.Registered
-			Debug.Trace("MYC/HOM: Registering Preset Hangout " + asHangoutName + " " + akHangout + " with Location " + akLocation.GetName() + " " + akLocation + "!")
-			SetHangoutForm(asHangoutName,"Location",akLocation)
-			SetHangoutForm(asHangoutName,"Quest",akHangout)
-			SetHangoutInt(asHangoutName,"Preset",1)
-			kHangout.Registered = True
+	vMYC_HangoutQuestScript kHangout = akHangout as vMYC_HangoutQuestScript
+	If !kHangout
+		Debug.Trace("MYC/HOM: " + akHangout + " sent us a Pong but isn't the right type of object.")
+		Return
+	EndIf
+	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+	JFormMap.SetStr(jHangoutQuestMap,kHangout,asHangoutName)
+	If asHangoutName
+		SetHangoutForm(asHangoutName,"Location",akLocation)
+		SetHangoutForm(asHangoutName,"Quest",akHangout)
+		Debug.Trace("MYC/HOM: " + akHangout + " is a preset named " + asHangoutName + " for location " + akLocation)
+	Else
+		Int jHangoutPool = JMap.GetObj(_jHangoutData,JKEY_HANGOUT_POOL)
+		If JArray.FindForm(jHangoutPool,kHangout) < 0
+			JArray.AddForm(jHangoutPool,kHangout)
+			Debug.Trace("MYC/HOM: Added " + kHangout + " to the Hangout pool!")
 		EndIf
-		If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
-			Debug.Trace("MYC/HOM: Stopping HangoutQuest for " + asHangoutName + " " + akHangout + " because no Actor is assigned to it.")
-			(akHangout as Quest).Stop()
-		EndIf
+	EndIf
+	If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
+		Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
+		(akHangout as Quest).Stop()
 	EndIf
 EndEvent
 
@@ -151,6 +158,9 @@ Function DoInit()
 	EndIf
 	If !JMap.HasKey(_jHangoutData,JKEY_HANGOUT_MAP)
 		JMap.SetObj(_jHangoutData,JKEY_HANGOUT_MAP,JMap.Object())
+	EndIf
+	If !JMap.HasKey(_jHangoutData,JKEY_HANGOUT_POOL)
+		JMap.SetObj(_jHangoutData,JKEY_HANGOUT_POOL,JArray.Object())
 	EndIf
 	RegisterForModEvents()
 	SyncHangoutData()
@@ -392,34 +402,55 @@ Event OnAssignActorToHangout(Actor akActor, String sHangoutName)
 
 EndEvent
 
+vMYC_HangoutQuestScript Function GetFreeHangoutFromPool()
+	Int jHangoutPool = JMap.GetObj(_jHangoutData,JKEY_HANGOUT_POOL)
+	Int i = JArray.Count(jHangoutPool)
+	While i > 0
+		i -= 1
+		vMYC_HangoutQuestScript kHangout = JArray.GetForm(jHangoutPool,i) as vMYC_HangoutQuestScript
+		If kHangout
+			If !kHangout.IsRunning()
+				Return kHangout
+			EndIf
+		EndIf
+	EndWhile
+	Return None
+EndFunction
+
 Function AssignActorToHangout(Actor akActor, String asHangoutName)
 	Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 	String sCharacterName = akActor.GetActorBase().GetName()
 	PlaceHangoutMarker(asHangoutName)
-	If HasHangoutKey(asHangoutName,"MarkerIndex")
-		CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")].SetName(asHangoutName)
-		CancelActorHangout(akActor)
-		vMYC_Hangout.SendStoryEvent(GetHangoutForm(asHangoutName,"Location") as Location,CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")],akActor)
-		Debug.Trace("MYC/HOM/" + asHangoutName + ": Sent story event!")
-		CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
-	ElseIf GetHangoutInt(asHangoutName,"Preset")
-		;Presets don't require anchors or marker objects
-		vMYC_HangoutQuestScript kHangout = GetHangoutForm(asHangoutName,"Quest") as vMYC_HangoutQuestScript
-		If kHangout
-			If !kHangout.IsRunning()
-				CancelActorHangout(akActor)
-				kHangout.Start()
-				(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
-				CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
-				;kHangout.EnableTracking(True)
-			EndIf
-		Else
-			Debug.Trace("MYC/HOM/" + asHangoutName + ": Couldn't find a HangoutQuest!",1)
+	CancelActorHangout(akActor)
+	vMYC_HangoutQuestScript kHangout = GetHangoutForm(asHangoutName,"Quest") as vMYC_HangoutQuestScript
+	Bool bHasPreset = False
+	If kHangout
+		If !kHangout.IsRunning()
+			bHasPreset = True
 		EndIf
-	Else
-		Debug.Trace("MYC/HOM/" + asHangoutName + ": Can't assign this location because there is no MapMarker and it's not a preset!",1)
 	EndIf
-	SendHangoutPing()
+	If bHasPreset
+		kHangout.Start()
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Forcing HangoutActor of " + kHangout + " to " + akActor)
+		(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
+		kHangout.EnableTracking()
+	Else
+		kHangout = GetFreeHangoutFromPool()
+		If !kHangout
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Could not find an available HangoutQuest!")
+			Return
+		EndIf
+		kHangout.Start()
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Forcing HangoutLocation of " + kHangout + " to " + GetHangoutForm(asHangoutName,"Location") as Location)
+		(kHangout.GetAliasByName("HangoutLocation") as LocationAlias).ForceLocationTo(GetHangoutForm(asHangoutName,"Location") as Location)
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Forcing HangoutMarker of " + kHangout + " to " + CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")])
+		(kHangout.GetAliasByName("HangoutMarker") as ReferenceAlias).ForceRefTo(CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")])
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Forcing HangoutActor of " + kHangout + " to " + akActor)
+		(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
+		kHangout.EnableTracking()
+	EndIf
+	CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
+	;SendHangoutPing()
 EndFunction
 
 Function MoveActorToHangout(Actor akActor, String asHangoutName)

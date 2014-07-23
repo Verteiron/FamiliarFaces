@@ -29,20 +29,6 @@ Event OnHangoutPing(Form akHangoutManager)
 		ModEvent.PushString(iHandle,HangoutName)
 		ModEvent.Send(iHandle)
 	EndIf
-	If !Registered && (GetAliasByName("HangoutActor") as ReferenceAlias).GetReference()
-		SendRegistrationEvent()
-	EndIf
-EndEvent
-
-Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRef1, ObjectReference akRef2, Int aiValue1, Int aiValue2)
-	If IsRunning()
-		If !HangoutName
-			HangoutName = (GetAliasByName("HangoutLocation") as LocationAlias).GetLocation().GetName()
-		EndIf
-		RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
-		;OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker)
-		SendRegistrationEvent()
-	EndIf
 EndEvent
 
 ;--=== Functions ===--
@@ -63,13 +49,14 @@ EndFunction
 
 Function EnableTracking(Bool abTracking = True)
 	ObjectReference kHangoutMarker = (GetAliasByName("HangoutMarker") as ReferenceAlias).GetReference()
-	Int iObjective = 1
-	If !kHangoutMarker || IsPreset
-		SetObjectiveDisplayed(0,abTracking)
-	Else 
+	;FIXME: Temporary change to avoid log errors
+	Int iObjective = 0
+	If kHangoutMarker
 		If kHangoutMarker.IsInInterior() || IsPreset
 			iObjective = 0
 		EndIf
+	ElseIf IsPreset
+		iObjective = 0
 	EndIf
 	SetObjectiveDisplayed(iObjective,abTracking)
 EndFunction
