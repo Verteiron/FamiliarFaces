@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/Verteiron/FamiliarFaces.png?label=ready&title=Ready)](https://waffle.io/Verteiron/FamiliarFaces)
 #FamiliarFaces
 Skyrim mod that allow characters to be shared between different playthroughs. Download the current build from Releases or from the [Skyrim Nexus](http://www.nexusmods.com/skyrim/mods/54509).
 
