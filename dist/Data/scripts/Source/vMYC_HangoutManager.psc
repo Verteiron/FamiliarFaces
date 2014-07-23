@@ -117,11 +117,14 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 	Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
 	If asHangoutName && akLocation
 		vMYC_HangoutQuestScript kHangout = akHangout as vMYC_HangoutQuestScript
-		If kHangout.IsPreset
+		Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+		JFormMap.SetStr(jHangoutQuestMap,kHangout,asHangoutName)
+		If kHangout.IsPreset && !kHangout.Registered
 			Debug.Trace("MYC/HOM: Registering Preset Hangout " + asHangoutName + " " + akHangout + " with Location " + akLocation.GetName() + " " + akLocation + "!")
 			SetHangoutForm(asHangoutName,"Location",akLocation)
 			SetHangoutForm(asHangoutName,"Quest",akHangout)
 			SetHangoutInt(asHangoutName,"Preset",1)
+			kHangout.Registered = True
 		EndIf
 		If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
 			Debug.Trace("MYC/HOM: Stopping HangoutQuest for " + asHangoutName + " " + akHangout + " because no Actor is assigned to it.")
@@ -318,7 +321,9 @@ Function PlaceHangoutMarker(String sHangoutName)
 		i -= 1
 		ObjectReference kAnchor = JArray.GetForm(jAnchorObjects,i) as ObjectReference
 		If kAnchor
-			kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
+			If kAnchor.IsEnabled()
+				kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
+			EndIf
 		EndIf
 	EndWhile
 	SetHangoutForm(sHangoutName,"SpawnObject",kSpawnObject)
@@ -383,45 +388,36 @@ Int Function GetFreeLocationIndex()
 	Return -1
 EndFunction
 
-Function AssignActorToHangout(Actor akActor, String sHangoutName)
-	Debug.Trace("MYC/HOM/" + sHangoutName + ": Assigning " + akActor + " to this Hangout!")
+Event OnAssignActorToHangout(Actor akActor, String sHangoutName)
+
+EndEvent
+
+Function AssignActorToHangout(Actor akActor, String asHangoutName)
+	Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 	String sCharacterName = akActor.GetActorBase().GetName()
-	PlaceHangoutMarker(sHangoutName)
-	If HasHangoutKey(sHangoutName,"MarkerIndex")
-		CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")].SetName(sHangoutName)
-		String sCurrentHangout = CharacterManager.GetLocalString(sCharacterName,"HangoutName")
-		If sCurrentHangout
-			CancelActorHangout(akActor, sCurrentHangout)
-		EndIf
-		If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(sHangoutName,"Location") as Location,CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")],akActor)
-			Debug.Trace("MYC/HOM/" + sHangoutName + ": Sent story event successfully!")
-			CharacterManager.SetLocalString(sCharacterName,"HangoutName",sHangoutName)
-		Else
-			Debug.Trace("MYC/HOM/" + sHangoutName + ": Couldn't send story event!",1)
-		EndIf
-		;HangoutAnchors[0].ForceRefTo(GetHangoutForm(sHangoutName,"SpawnObject") as ObjectReference)
-		;HangoutMarkers[0].ForceRefTo(CustomMapMarkers[GetHangoutInt(sHangoutName,"MarkerIndex")])
-		;HangoutLocations[0].ForceLocationTo(GetHangoutForm(sHangoutName,"Location") as Location)
-		akActor.EvaluatePackage()
-	ElseIf GetHangoutInt(sHangoutName,"Preset")
+	PlaceHangoutMarker(asHangoutName)
+	If HasHangoutKey(asHangoutName,"MarkerIndex")
+		CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")].SetName(asHangoutName)
+		CancelActorHangout(akActor)
+		vMYC_Hangout.SendStoryEvent(GetHangoutForm(asHangoutName,"Location") as Location,CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")],akActor)
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Sent story event!")
+		CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
+	ElseIf GetHangoutInt(asHangoutName,"Preset")
 		;Presets don't require anchors or marker objects
-		vMYC_HangoutQuestScript kHangout = GetHangoutForm(sHangoutName,"Quest") as vMYC_HangoutQuestScript
+		vMYC_HangoutQuestScript kHangout = GetHangoutForm(asHangoutName,"Quest") as vMYC_HangoutQuestScript
 		If kHangout
 			If !kHangout.IsRunning()
-				String sCurrentHangout = CharacterManager.GetLocalString(sCharacterName,"HangoutName")
-				If sCurrentHangout
-					CancelActorHangout(akActor, sCurrentHangout)
-				EndIf
+				CancelActorHangout(akActor)
 				kHangout.Start()
 				(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
-				CharacterManager.SetLocalString(sCharacterName,"HangoutName",sHangoutName)
+				CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
 				;kHangout.EnableTracking(True)
 			EndIf
 		Else
-			Debug.Trace("MYC/HOM/" + sHangoutName + ": Couldn't find a HangoutQuest!",1)
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Couldn't find a HangoutQuest!",1)
 		EndIf
 	Else
-		Debug.Trace("MYC/HOM/" + sHangoutName + ": Can't assign this location because there is no MapMarker and it's not a preset!",1)
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Can't assign this location because there is no MapMarker and it's not a preset!",1)
 	EndIf
 	SendHangoutPing()
 EndFunction
@@ -443,16 +439,16 @@ Function MoveActorToHangout(Actor akActor, String asHangoutName)
 	EndIf
 EndFunction
 
-Function CancelActorHangout(Actor akActor, String sHangoutName)
+Function CancelActorHangout(Actor akActor)
 	Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
 	Int jAssignedQuests = JFormMap.AllKeys(jHangoutQuestMap)
 	Int i = JArray.Count(jAssignedQuests)
 	While i > 0
 		i -= 1
 		Quest kHangoutQuest = JArray.GetForm(jAssignedQuests,i) as Quest
-		If JFormMap.GetStr(jHangoutQuestMap,kHangoutQuest) == sHangoutName
+		If kHangoutQuest
 			If (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() == akActor
-				Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangoutQuest + "...",1)
+				Debug.Trace("MYC/HOM/" + JFormMap.GetStr(jHangoutQuestMap,kHangoutQuest) + ": Stopping " + kHangoutQuest + "...",1)
 				(kHangoutQuest as vMYC_HangoutQuestScript).EnableTracking(False)
 				kHangoutQuest.Stop()
 				JFormMap.RemoveKey(jHangoutQuestMap,kHangoutQuest)
