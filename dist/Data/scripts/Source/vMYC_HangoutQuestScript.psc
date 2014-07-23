@@ -63,12 +63,13 @@ EndFunction
 
 Function EnableTracking(Bool abTracking = True)
 	ObjectReference kHangoutMarker = (GetAliasByName("HangoutMarker") as ReferenceAlias).GetReference()
-	If !kHangoutMarker
-		SetObjectiveDisplayed(0,abTracking)
-	EndIf
 	Int iObjective = 1
-	If kHangoutMarker.IsInInterior() || IsPreset
-		iObjective = 0
+	If !kHangoutMarker || IsPreset
+		SetObjectiveDisplayed(0,abTracking)
+	Else 
+		If kHangoutMarker.IsInInterior() || IsPreset
+			iObjective = 0
+		EndIf
 	EndIf
 	SetObjectiveDisplayed(iObjective,abTracking)
 EndFunction
