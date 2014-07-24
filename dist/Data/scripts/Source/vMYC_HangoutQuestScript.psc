@@ -34,14 +34,27 @@ EndEvent
 ;--=== Functions ===--
 
 Function SendRegistrationEvent()
+	Location kLocation = (GetAliasByName("HangoutLocation") as LocationAlias).GetLocation()
 	Int iEventHandle = ModEvent.Create("vMYC_HangoutQuestRegister")
 	If iEventHandle
 		ModEvent.PushForm(iEventHandle,Self)
 		ModEvent.PushForm(iEventHandle,(GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
-		ModEvent.PushForm(iEventHandle,(GetAliasByName("HangoutLocation") as LocationAlias).GetLocation())
+		ModEvent.PushForm(iEventHandle,kLocation)
 		ModEvent.PushForm(iEventHandle,(GetAliasByName("HangoutMarker") as ReferenceAlias).GetReference())
 		ModEvent.PushForm(iEventHandle,(GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference())
-		ModEvent.PushString(iEventHandle,HangoutName)
+		If HangoutName
+			ModEvent.PushString(iEventHandle,HangoutName)
+		Else
+			If kLocation
+				If kLocation.GetName()
+					ModEvent.PushString(iEventHandle,kLocation.GetName())
+				Else
+					ModEvent.PushString(iEventHandle,"")
+				EndIf
+			Else
+				ModEvent.PushString(iEventHandle,"")
+			EndIf
+		EndIf
 		ModEvent.Send(iEventHandle)
 		Registered = True
 	EndIf
@@ -58,5 +71,6 @@ Function EnableTracking(Bool abTracking = True)
 	ElseIf IsPreset
 		iObjective = 0
 	EndIf
+	SetActive(abTracking)
 	SetObjectiveDisplayed(iObjective,abTracking)
 EndFunction
