@@ -97,11 +97,8 @@ EndEvent
 
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
 	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + akActor + "!")
-	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
-	JFormMap.SetStr(jHangoutQuestMap,akSendingQuest,asHangoutName)
-	SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
+	;SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
 	Wait(0.1)
-	(akSendingQuest as Quest).SetActive(True)
 	(akSendingQuest as vMYC_HangoutQuestScript).EnableTracking()
 	TickDataSerial()
 EndEvent
@@ -398,10 +395,6 @@ Int Function GetFreeLocationIndex()
 	Return -1
 EndFunction
 
-Event OnAssignActorToHangout(Actor akActor, String sHangoutName)
-
-EndEvent
-
 vMYC_HangoutQuestScript Function GetFreeHangoutFromPool()
 	Int jHangoutPool = JMap.GetObj(_jHangoutData,JKEY_HANGOUT_POOL)
 	Int i = JArray.Count(jHangoutPool)
@@ -417,11 +410,19 @@ vMYC_HangoutQuestScript Function GetFreeHangoutFromPool()
 	Return None
 EndFunction
 
-Function AssignActorToHangout(Actor akActor, String asHangoutName)
-	Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
+Event OnAssignActorToHangout(Form akActorForm, String asHangoutName)
+	Actor akActor = akActorForm as Actor
+	If !akActor || !asHangoutName
+		Debug.Trace("MYC/HOM: OnAssignActorToHangout received empty parameter, aborting!")
+		Return
+	EndIf
+	Wait(0.1) ; Pause while in menu mode
 	String sCharacterName = akActor.GetActorBase().GetName()
-	PlaceHangoutMarker(asHangoutName)
-	CancelActorHangout(akActor)
+	If CharacterManager.GetLocalString(sCharacterName,"HangoutName") != asHangoutName
+		Debug.Trace("MYC/HOM/" + asHangoutName + ": Not " + akActor + "'s Hangout, aborting!")
+		Return
+	EndIf
+	Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 	vMYC_HangoutQuestScript kHangout = GetHangoutForm(asHangoutName,"Quest") as vMYC_HangoutQuestScript
 	Bool bHasPreset = False
 	If kHangout
@@ -449,8 +450,25 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName)
 		(kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).ForceRefTo(akActor)
 		kHangout.EnableTracking()
 	EndIf
-	CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
+	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+	JFormMap.SetStr(jHangoutQuestMap,kHangout,asHangoutName)
+	kHangout.SendRegistrationEvent()
 	;SendHangoutPing()
+EndEvent
+
+Function AssignActorToHangout(Actor akActor, String asHangoutName)
+	Debug.Trace("MYC/HOM/" + asHangoutName + ": Queuing " + akActor + " for this Hangout...")
+	String sCharacterName = akActor.GetActorBase().GetName()
+	PlaceHangoutMarker(asHangoutName)
+	CancelActorHangout(akActor)
+	CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
+	RegisterForModEvent("vMYC_AssignActorToHangout","OnAssignActorToHangout")
+	Int iEventHandle = ModEvent.Create("vMYC_AssignActorToHangout")
+	If iEventHandle
+		ModEvent.PushForm(iEventHandle,akActor)
+		ModEvent.PushString(iEventHandle,asHangoutName)
+		ModEvent.Send(iEventHandle)
+	EndIf
 EndFunction
 
 Function MoveActorToHangout(Actor akActor, String asHangoutName)
