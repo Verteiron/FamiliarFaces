@@ -84,7 +84,7 @@ Int[]		_iAlcoveResetOption
 Int		_iShowDebugOption
 
 Int Function GetVersion()
-    return 4 ; Default version
+    return 5 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -97,16 +97,24 @@ Event OnVersionUpdate(int a_version)
 	ElseIf (a_version >= 4 && CurrentVersion < 4)
 		Debug.Trace("MYC/MCM: Updating script to version 4...")
 		OnConfigInit()
+	ElseIf (a_version >= 5 && CurrentVersion < 5)
+		Debug.Trace("MYC/MCM: Updating script to version 5...")
+		Pages = New String[3]
+		Pages[0] = "$Character Setup"
+		Pages[1] = "$Shrine of Heroes"
+		Pages[2] = "$Hangout Manager"
+		Pages[3] = "$Global Options"
 	EndIf
 
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[2]
+	Pages = New String[3]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Shrine of Heroes"
-	;Pages[2] = "$Global Options"
+	Pages[2] = "$Hangout Manager"
+	Pages[3] = "$Global Options"
 
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
@@ -239,7 +247,11 @@ event OnPageReset(string a_page)
 
 
 		;===== Character hangout option =====----
-		_iAliasOption = AddMenuOption("$Hangout",CharacterManager.GetLocalString(_sCharacterName,"HangoutName"),OptionFlags)
+		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
+		If !sHangoutName
+			sHangoutName = "Unassigned"
+		EndIf
+		_iAliasOption = AddMenuOption("$Hangout",sHangoutName,OptionFlags)
 		;====================================----
 
 		;===== Character class option =======----
@@ -353,6 +365,18 @@ event OnPageReset(string a_page)
 
 
 	;===== END Shrine of Heroes page =====----
+
+	ElseIf a_page == "$Hangout Manager"
+
+	;===== Hangout Manager page =====----
+
+	Int i = 0
+	While i < _sHangoutNames.Length
+		AddHeaderOption(_sHangoutNames[i])
+		i += 1
+	EndWhile
+	
+	;===== END Hangout Manager page =====----
 
 	ElseIf a_page == "$Global Options"
 
