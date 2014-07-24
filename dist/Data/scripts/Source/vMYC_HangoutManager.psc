@@ -471,21 +471,38 @@ Function MoveActorToHangout(Actor akActor, String asHangoutName)
 EndFunction
 
 Function CancelActorHangout(Actor akActor)
-	Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
-	Int jAssignedQuests = JFormMap.AllKeys(jHangoutQuestMap)
-	Int i = JArray.Count(jAssignedQuests)
+	Int i = akActor.GetNumReferenceAliases()
 	While i > 0
 		i -= 1
-		Quest kHangoutQuest = JArray.GetForm(jAssignedQuests,i) as Quest
-		If kHangoutQuest
-			If (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() == akActor
-				Debug.Trace("MYC/HOM/" + JFormMap.GetStr(jHangoutQuestMap,kHangoutQuest) + ": Stopping " + kHangoutQuest + "...",1)
-				(kHangoutQuest as vMYC_HangoutQuestScript).EnableTracking(False)
-				kHangoutQuest.Stop()
-				JFormMap.RemoveKey(jHangoutQuestMap,kHangoutQuest)
+		ReferenceAlias kRefAlias = akActor.GetNthReferenceAlias(i)
+		If kRefAlias
+			Quest kQuest = kRefAlias.GetOwningQuest()
+			If kQuest as vMYC_HangoutQuestScript
+				vMYC_HangoutQuestScript kHangout = kQuest as vMYC_HangoutQuestScript
+				Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+				Debug.Trace("MYC/HOM/" + JFormMap.GetStr(jHangoutQuestMap,kHangout) + ": Stopping " + kHangout + "...",1)
+				JFormMap.RemoveKey(jHangoutQuestMap,kHangout)
+				kHangout.EnableTracking(False)
+				kHangout.Stop()
 			EndIf
 		EndIf
 	EndWhile
+;	Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+;	Int jAssignedQuests = JFormMap.AllKeys(jHangoutQuestMap)
+;	Int i = JArray.Count(jAssignedQuests)
+;	While i > 0
+;		i -= 1
+;		Quest kHangoutQuest = JArray.GetForm(jAssignedQuests,i) as Quest
+;		If kHangoutQuest
+;			If (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() == akActor
+;				Debug.Trace("MYC/HOM/" + JFormMap.GetStr(jHangoutQuestMap,kHangoutQuest) + ": Stopping " + kHangoutQuest + "...",1)
+;				(kHangoutQuest as vMYC_HangoutQuestScript).EnableTracking(False)
+;				((kHangoutQuest as vMYC_HangoutQuestScript).GetAliasByName("HangoutActor") as ReferenceAlias).Clear()
+;				kHangoutQuest.Stop()
+;				JFormMap.RemoveKey(jHangoutQuestMap,kHangoutQuest)
+;			EndIf
+;		EndIf
+;	EndWhile
 EndFunction
 
 Actor Function GetHangoutActor(String sHangoutName)
