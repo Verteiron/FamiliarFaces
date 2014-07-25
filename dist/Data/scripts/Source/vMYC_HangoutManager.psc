@@ -48,7 +48,7 @@ Keyword				Property	vMYC_Hangout				Auto
 Int		Property	MAX_LOCATIONS = 24		AutoReadOnly
 
 
-String	Property	JKEY_LOCALCONFIG		= "Hangouts"					AutoReadOnly
+String	Property	JKEY_LOCALCONFIG		= "Hangouts_"					AutoReadOnly
 String	Property	JKEY_LOCATION_NAME_FMAP = "CustomLocationNameMap"		AutoReadOnly
 String	Property	JKEY_HANGOUTQUEST_FMAP 	= "HangoutQuestMap"				AutoReadOnly
 String	Property	JKEY_HANGOUT_MAP	 	= "Hangouts"					AutoReadOnly
@@ -105,8 +105,6 @@ EndEvent
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
 	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + akActor + "!")
 	;SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
-	Wait(0.1)
-	(akSendingQuest as vMYC_HangoutQuestScript).EnableTracking()
 	TickDataSerial()
 EndEvent
 
@@ -185,6 +183,7 @@ Function DoUpkeep()
 	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
 	If !jHangoutQuestMap 
 		jHangoutQuestMap = JFormMap.Object()
+		JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,jHangoutQuestMap)
 	EndIf
 EndFunction
 
@@ -506,6 +505,7 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 		Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
 		JFormMap.SetStr(jHangoutQuestMap,kHangout,asHangoutName)
 		kHangout.SendRegistrationEvent()
+		SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
 		WaitMenuMode(0.5)
 		If (kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() != akActor
 			Debug.Trace("MYC/HOM/" + asHangoutName + ": Hrm, another request has overwritten this Hangout. Retrying!")
@@ -546,6 +546,7 @@ Function CancelActorHangout(Actor akActor)
 				JFormMap.RemoveKey(jHangoutQuestMap,kHangout)
 				kHangout.EnableTracking(False)
 				kHangout.Stop()
+				SetLocalHangoutInt(sHangoutName,"ActorCount",GetLocalHangoutInt(sHangoutName,"ActorCount") - 1)
 				Int iSafetyCounter = 50
 				sHangoutName = kHangout.HangoutName
 				While !kHangout.IsStopped() && iSafetyCounter
@@ -731,4 +732,70 @@ EndFunction
 
 Int Function GetHangoutObj(String asHangoutName, String asPath)
 	Return JValue.solveObj(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),"." + asHangoutName + "." + asPath)
+EndFunction
+
+
+Int Function CreateLocalHangoutDataIfMissing(String asLocalHangoutName)
+	If !asLocalHangoutName
+		Debug.Trace("MYC/HOM: SetLocalHangoutData function called without LocalHangoutName specified!")
+		Return 0
+	EndIf
+	Int jLocalHangout = GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName)
+	If jLocalHangout
+		Return jLocalHangout
+	EndIf
+	Debug.Trace("MYC/HOM/" + asLocalHangoutName + ": First LocalHangout data access, creating LocalHangoutData key!")
+	jLocalHangout = JMap.Object()
+	SetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName,jLocalHangout)
+	Return jLocalHangout
+EndFunction
+
+Bool Function HasLocalHangoutKey(String asLocalHangoutName, String asPath)
+	Int jLocalHangout = CreateLocalHangoutDataIfMissing(asLocalHangoutName)
+	Return JMap.HasKey(jLocalHangout,asPath)
+EndFunction
+
+Function SetLocalHangoutStr(String asLocalHangoutName, String asPath, String asString)
+	Int jLocalHangout = CreateLocalHangoutDataIfMissing(asLocalHangoutName)
+	JMap.setStr(jLocalHangout,asPath,asString)
+EndFunction
+
+String Function GetLocalHangoutStr(String asLocalHangoutName, String asPath)
+	Return JValue.solveStr(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
+EndFunction
+
+Function SetLocalHangoutInt(String asLocalHangoutName, String asPath, Int aiInt)
+	Int jLocalHangout = CreateLocalHangoutDataIfMissing(asLocalHangoutName)
+	JMap.setInt(jLocalHangout,asPath,aiInt)
+EndFunction
+
+Int Function GetLocalHangoutInt(String asLocalHangoutName, String asPath)
+	Return JValue.solveInt(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
+EndFunction
+
+Function SetLocalHangoutFlt(String asLocalHangoutName, String asPath, Float afFloat)
+	Int jLocalHangout = CreateLocalHangoutDataIfMissing(asLocalHangoutName)
+	JMap.setFlt(jLocalHangout,asPath,afFloat)
+EndFunction
+
+Float Function GetLocalHangoutFlt(String asLocalHangoutName, String asPath)
+	Return JValue.solveFlt(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
+EndFunction
+
+Function SetLocalHangoutForm(String asLocalHangoutName, String asPath, Form akForm)
+	Int jLocalHangout = CreateLocalHangoutDataIfMissing(asLocalHangoutName)
+	JMap.setForm(jLocalHangout,asPath,akForm)
+EndFunction
+
+Form Function GetLocalHangoutForm(String asLocalHangoutName, String asPath)
+	Return JValue.solveForm(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
+EndFunction
+
+Function SetLocalHangoutObj(String asLocalHangoutName, String asPath, Int ajObj)
+	Int jLocalHangout = CreateLocalHangoutDataIfMissing(asLocalHangoutName)
+	JMap.setObj(jLocalHangout,asPath,ajObj)
+EndFunction
+
+Int Function GetLocalHangoutObj(String asLocalHangoutName, String asPath)
+	Return JValue.solveObj(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
 EndFunction
