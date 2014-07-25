@@ -654,6 +654,10 @@ Function SendHangoutPing()
 	EndIf
 EndFunction
 
+Int Function GetNumActorsInHangout(String asHangoutName)
+	Return GetLocalHangoutInt(asHangoutName,"ActorCount")
+EndFunction
+
 ;==== Generic functions for get/setting Hangout-specific data
 
 Int Function CreateHangoutDataIfMissing(String asHangoutName)

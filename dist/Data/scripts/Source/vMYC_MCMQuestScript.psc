@@ -373,6 +373,7 @@ event OnPageReset(string a_page)
 	Int i = 0
 	While i < _sHangoutNames.Length
 		AddHeaderOption(_sHangoutNames[i])
+		AddTextOption("Actor count",HangoutManager.GetNumActorsInHangout(_sHangoutNames[i]))
 		i += 1
 	EndWhile
 	
