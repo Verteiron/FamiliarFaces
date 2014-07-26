@@ -515,6 +515,14 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 EndFunction
 
 Function MoveActorToHangout(Actor akActor, String asHangoutName)
+	If !asHangoutName
+		Quest kWanderQuest = Quest.GetQuest("vMYC_WanderQuest_Inn00")
+		(kWanderQuest.GetAliasByName("WanderActor") as ReferenceAlias).ForceRefTo(akActor)
+		kWanderQuest.Start()
+		(kWanderQuest.GetAliasByName("WanderActor") as ReferenceAlias).ForceRefTo(akActor)
+		WaitMenuMode(0.25)
+		kWanderQuest.SetObjectiveDisplayed(0,True)
+	EndIf
 	akActor.EvaluatePackage()
 	akActor.MoveToPackageLocation()
 	If akActor.GetCurrentLocation() != GetHangoutForm(asHangoutName,"Location")
