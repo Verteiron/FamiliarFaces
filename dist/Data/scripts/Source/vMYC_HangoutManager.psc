@@ -42,6 +42,7 @@ FormList			Property	vMYC_LocationAnchorsList	Auto
 Activator 			Property 	vMYC_CustomMapMarker		Auto
 
 Keyword				Property	vMYC_Hangout				Auto
+Keyword				Property	vMYC_Wanderer				Auto
 
 ;--=== Constants ===--
 
@@ -516,12 +517,14 @@ EndFunction
 
 Function MoveActorToHangout(Actor akActor, String asHangoutName)
 	If !asHangoutName
-		Quest kWanderQuest = Quest.GetQuest("vMYC_WanderQuest_Inn00")
-		(kWanderQuest.GetAliasByName("WanderActor") as ReferenceAlias).ForceRefTo(akActor)
-		kWanderQuest.Start()
-		(kWanderQuest.GetAliasByName("WanderActor") as ReferenceAlias).ForceRefTo(akActor)
-		WaitMenuMode(0.25)
-		kWanderQuest.SetObjectiveDisplayed(0,True)
+		If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = akActor)
+			Debug.Trace("MYC/HOM: Sent story event to begin wandering!")
+			akActor.EvaluatePackage()
+			akActor.MoveToPackageLocation()
+			Return
+		Else
+			Debug.Trace("MYC/HOM: Couldn't send story event to resume wandering!")
+		EndIf
 	EndIf
 	akActor.EvaluatePackage()
 	akActor.MoveToPackageLocation()
