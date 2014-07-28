@@ -10,8 +10,8 @@ vMYC_HangoutManager	Property HangoutManager Auto
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
 
-Int Property	VOICETYPE_NOFILTER = 0	AutoReadOnly Hidden
-Int Property	VOICETYPE_FOLLOWER = 1	AutoReadOnly Hidden
+Int Property	VOICETYPE_NOFILTER  = 0	AutoReadOnly Hidden
+Int Property	VOICETYPE_FOLLOWER  = 1	AutoReadOnly Hidden
 Int Property	VOICETYPE_SPOUSE 	= 2	AutoReadOnly Hidden
 Int Property	VOICETYPE_ADOPT 	= 4	AutoReadOnly Hidden
 Int Property	VOICETYPE_GENDER	= 8 AutoReadOnly Hidden
@@ -27,6 +27,11 @@ Int Property	OPTION_TOGGLE_MAGICALLOW_RESTORATION	Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_OTHER			Auto Hidden
 
 Int Property	OPTION_TOGGLE_SHOUTSALLOW_MASTER			Auto Hidden
+
+Int Property	OPTION_MENU_HANGOUT_SELECT					Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_ENABLE				Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_CLEAR					Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_CLEARALL				Auto Hidden
 
 Bool _Changed
 Bool _Shutdown
@@ -64,6 +69,8 @@ Int		_iAliasOption
 Int[]	_iAliasSelections
 ReferenceAlias[]	_kHangoutRefAliases
 String[]	_sHangoutNames
+Int		_iCurrentHangout
+String	_sHangoutName
 
 Int 	_iClassOption
 Int 	_iClassSelection
@@ -82,6 +89,8 @@ Int[] 		_iAlcoveCharacterOption
 Int[]		_iAlcoveResetOption
 
 Int		_iShowDebugOption
+
+Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
     return 5 ; Default version
@@ -370,12 +379,83 @@ event OnPageReset(string a_page)
 
 	;===== Hangout Manager page =====----
 
-	Int i = 0
-	While i < _sHangoutNames.Length
-		AddHeaderOption(_sHangoutNames[i])
-		AddTextOption("Actor count",HangoutManager.GetNumActorsInHangout(_sHangoutNames[i]))
-		i += 1
-	EndWhile
+		SetCursorFillMode(TOP_TO_BOTTOM)
+
+		_sHangoutName = _sHangoutNames[_iCurrentHangout]
+
+
+		Int OptionFlags = 0
+		;====================================----
+
+		
+		;===== Global Hangout options =====----
+		AddHeaderOption("$Global Hangout options")
+		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("Clear all Hangouts",False)
+		
+		SetCursorPosition(1)
+		AddHeaderOption("$Stats")
+		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
+		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
+		AddTextOption("$Hangouts: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
+		AddTextOption("$Running: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
+		
+		;====================================----
+		SetCursorPosition(8)
+		;===== Hangout header =============----
+		AddHeaderOption(_sHangoutName)
+		;====================================----
+
+
+		;===== Hangout enable option ======----
+		OPTION_TOGGLE_HANGOUT_ENABLE = AddToggleOption("$Enable this Hangout",HangoutManager.IsHangoutEnabled(_sHangoutName))
+		;====================================----
+
+		;===== Begin info column ============----
+
+		SetCursorPosition(9)
+
+		;===== Hangout selection menu =====----
+		OPTION_MENU_HANGOUT_SELECT = AddMenuOption("$Settings for",_sHangoutName)
+		;====================================----
+
+		AddTextOption("Number of characters: " + HangoutManager.GetNumActorsInHangout(_sHangoutName),"",OPTION_FLAG_DISABLED)
+		AddEmptyOption()
+		Form kLocation = HangoutManager.GetHangoutForm(_sHangoutName,"Location")
+		String sLocationString = "N/A"
+		If kLocation
+			sLocationString = kLocation.GetName() + "(" + GetformIDString(kLocation) + ")"
+		EndIf
+		String sSourceString = HangoutManager.GetHangoutStr(_sHangoutName,"SourceCharacter")
+		If !sSourceString
+			sSourceString = "Preset"
+		EndIf
+		Form kCell = HangoutManager.GetHangoutForm(_sHangoutName,"Cell")
+		String sCellString = "Not loaded"
+		If sSourceString == "Preset"
+			sCellString = "N/A"
+		EndIf
+		If kCell
+			sCellString = kCell.GetName() + "(" + GetformIDString(kCell) + ")"
+		EndIf
+		ObjectReference kMarkerRef = HangoutManager.GetHangoutMarker(_sHangoutName)
+		String sMarkerString = "N/A"
+		If kMarkerRef
+			sMarkerString = GetFormIDString(kMarkerRef)
+		EndIf
+		AddTextOption("Source: " + sSourceString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("Parent location: " + sLocationString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("Cell: " + sCellString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("Marker: " + sMarkerString,"",OPTION_FLAG_DISABLED)
+
+
+	
+;	Int i = 0
+;	While i < _sHangoutNames.Length
+;		AddHeaderOption(_sHangoutNames[i])
+;		AddTextOption("Actor count",HangoutManager.GetNumActorsInHangout(_sHangoutNames[i]))
+;		
+;		i += 1
+;	EndWhile
 	
 	;===== END Hangout Manager page =====----
 
@@ -477,6 +557,11 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == _iShowDebugOption
 		_bShowDebugOptions = !_bShowDebugOptions
 		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
+	ElseIf Option == OPTION_TOGGLE_HANGOUT_ENABLE
+		Bool bHangoutEnabled = HangoutManager.IsHangoutEnabled(_sHangoutName)
+		bHangoutEnabled = !bHangoutEnabled
+		HangoutManager.SetHangoutEnabled(_sHangoutName, bHangoutEnabled)
+		SetToggleOptionValue(OPTION_TOGGLE_HANGOUT_ENABLE,bHangoutEnabled)
 	EndIf
 
 EndEvent
@@ -519,6 +604,12 @@ Event OnOptionMenuOpen(Int Option)
 			SetMenuDialogStartIndex(0)
 			SetMenuDialogDefaultIndex(0)
 		EndIf
+	ElseIf Option == OPTION_MENU_HANGOUT_SELECT
+		SetMenuDialogOptions(_sHangoutNames)
+		String sHangoutName = _sHangoutName
+		Int index = _sHangoutNames.Find(sHangoutName)
+		SetMenuDialogStartIndex(index)
+		SetMenuDialogDefaultIndex(index)
 	EndIf
 EndEvent
 
@@ -555,6 +646,11 @@ Event OnOptionMenuAccept(int option, int index)
 			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName",_sCharacterNames[index])
 		EndIf
 		SendModEvent("vMYC_ShrineNeedsUpdate")
+	ElseIf Option == OPTION_MENU_HANGOUT_SELECT
+		_iCurrentHangout = index 
+		_sHangoutName = _sHangoutNames[_iCurrentHangout]
+		SetMenuOptionValue(OPTION_MENU_HANGOUT_SELECT,_sHangoutNames[_iCurrentHangout])
+		ForcePageReset()
 	EndIf
 EndEvent
 

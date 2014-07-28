@@ -130,6 +130,7 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 		SetHangoutForm(asHangoutName,"Location",akLocation)
 		SetHangoutForm(asHangoutName,"Quest",akHangout)
 		Debug.Trace("MYC/HOM: " + akHangout + " is a preset named " + asHangoutName + " for location " + akLocation)
+		SetHangoutInt(asHangoutName,"Preset",1)
 	Else
 		Int jHangoutPool = JMap.GetObj(_jHangoutData,JKEY_HANGOUT_POOL)
 		If JArray.FindForm(jHangoutPool,kHangout) < 0
@@ -606,6 +607,38 @@ Function EnableTracking(Actor akActor, Bool abTracking = True)
 
 EndFunction
 
+Int[] Function GetHangoutStats()
+{Return [iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable}
+	String[] sHangoutNames = HangoutNames
+	Int i = 0
+	Int iNumHangouts = 0
+	Int iNumPresets = 0
+	Int iNumQuestsRunning = 0
+	Int iNumQuestsAvailable = 0
+	While i < sHangoutNames.Length
+		If sHangoutNames[i]
+			iNumHangouts += 1
+			vMYC_HangoutQuestScript kHangout = GetHangoutQuest(sHangoutNames[i])
+			If kHangout
+				If kHangout.IsRunning()
+					iNumQuestsRunning += 1
+				EndIf
+				If kHangout.HangoutName || kHangout.IsPreset
+					iNumPresets += 1
+				EndIf
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	iNumQuestsAvailable = JArray.Count(JMap.GetObj(_jHangoutData,JKEY_HANGOUT_POOL)) + iNumPresets - iNumQuestsRunning
+	Int[] iReturn = New Int[4]
+	iReturn[0] = iNumHangouts
+	iReturn[1] = iNumPresets
+	iReturn[2] = iNumQuestsRunning
+	iReturn[3] = iNumQuestsAvailable
+	Return iReturn
+EndFunction
+
 ;=== Data management ===----
 
 Function SetHangoutDefaults() 
@@ -667,6 +700,18 @@ EndFunction
 
 Int Function GetNumActorsInHangout(String asHangoutName)
 	Return GetLocalHangoutInt(asHangoutName,"ActorCount")
+EndFunction
+
+Function SetHangoutEnabled(String asHangoutName, Bool abEnabled)
+	SetLocalHangoutInt(asHangoutName,"IsEnabled",abEnabled as Int)
+EndFunction
+
+Bool Function IsHangoutEnabled(String asHangoutName)
+	;Hangouts are enabled by default so return true if there's no entry
+	If HasLocalHangoutKey(asHangoutName,"IsEnabled") 
+		Return GetLocalHangoutInt(asHangoutName,"IsEnabled") as Bool
+	EndIf
+	Return True
 EndFunction
 
 ;==== Generic functions for get/setting Hangout-specific data
