@@ -125,6 +125,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		;FIXME: Do init stuff in other quests
 		CharacterManager.DoUpkeep()
 		ShrineOfHeroes.DoUpkeep()
+		HangoutManager.DoUpkeep()
 		Debug.Trace("MYC: Loaded, no updates.")
 		;CheckForOrphans()
 	EndIf

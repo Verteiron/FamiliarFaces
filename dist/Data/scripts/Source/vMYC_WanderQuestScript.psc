@@ -42,11 +42,7 @@ Event OnUpdate()
 	UpdateObjective()
 	If IsObjectiveDisplayed(2) && GameHour.GetValue() > 6 && GameHour.GetValue() < 9
 		If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = _WanderActor)
-			UnregisterForUpdate()
-			SetObjectiveDisplayed(0,False)
-			SetObjectiveDisplayed(1,False)
-			SetObjectiveDisplayed(2,False)
-			Stop()
+			DoShutdown()
 			Return
 		Else
 			Debug.Trace("MYC/WQ: Couldn't send story event to resume wandering, staying in " + _City + " for now!")
@@ -58,6 +54,14 @@ Event OnUpdate()
 EndEvent
 
 ;--=== Functions ===--
+
+Function DoShutdown()
+	UnregisterForUpdate()
+	SetObjectiveDisplayed(0,False)
+	SetObjectiveDisplayed(1,False)
+	SetObjectiveDisplayed(2,False)
+	Stop()
+EndFunction
 
 Function UpdateObjective()
 	UpdateVariables()

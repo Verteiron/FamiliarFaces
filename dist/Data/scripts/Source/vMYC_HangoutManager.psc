@@ -104,7 +104,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
-	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + akActor + "!")
+	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + ", Inn: " + ((akSendingQuest as Quest).GetAliasByName("HangoutInn0") as LocationAlias).GetLocation().GetName() + "!")
 	;SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
 	TickDataSerial()
 EndEvent
@@ -140,7 +140,7 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 	EndIf
 	If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
 		Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
-		(akHangout as Quest).Stop()
+		(akHangout as vMYC_HangoutQuestScript).DoShutdown()
 	EndIf
 EndEvent
 
@@ -187,6 +187,16 @@ Function DoUpkeep()
 		jHangoutQuestMap = JFormMap.Object()
 		JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,jHangoutQuestMap)
 	EndIf
+	Int jQuestList = JFormMap.AllKeys(jHangoutQuestMap)
+	i = JArray.Count(jQuestList)
+	While i > 0
+		i -= 1
+		vMYC_HangoutQuestScript kHangout = JArray.GetForm(jQuestList,i) as vMYC_HangoutQuestScript
+		If kHangout
+			kHangout.DoUpkeep()
+		EndIf
+	EndWhile
+	SendHangoutPing()
 EndFunction
 
 Function RegisterForModEvents()
@@ -304,7 +314,7 @@ Function DeleteHangout(String sHangoutName)
 					Debug.Trace("MYC/HOM/" + sHangoutName + ": * This will orphan " + kHangoutActor.GetName() + " " + kHangoutActor + "!",1)
 					kHangoutActor.SendModEvent("vMYC_LostHangout")
 				EndIf
-				kHangoutQuest.Stop()
+				(kHangoutQuest as vMYC_HangoutQuestScript).DoShutdown()
 			EndIf
 		EndWhile
 		SetHangoutInt(sHangoutName,"MarkerIndex",-1)
@@ -434,7 +444,7 @@ Function AssignActorHangouts()
 			CancelActorHangout(kActor)
 		EndIf
 	EndWhile
-	SendHangoutPing()
+	;SendHangoutPing()
 	i = 0
 	While i < iCount
 		Actor kActor = JArray.GetForm(jPendingActors,i) as Actor
@@ -557,7 +567,7 @@ Function CancelActorHangout(Actor akActor)
 				Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangout + "...",1)
 				JFormMap.RemoveKey(jHangoutQuestMap,kHangout)
 				kHangout.EnableTracking(False)
-				kHangout.Stop()
+				kHangout.DoShutdown()
 				SetLocalHangoutInt(sHangoutName,"ActorCount",GetLocalHangoutInt(sHangoutName,"ActorCount") - 1)
 				Int iSafetyCounter = 50
 				sHangoutName = kHangout.HangoutName
@@ -575,6 +585,9 @@ Function CancelActorHangout(Actor akActor)
 						Debug.Trace("MYC/HOM: Added " + kHangout + " to the Hangout pool!")
 					EndIf
 				EndIf
+			ElseIf kQuest as vMYC_WanderQuestScript
+				Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on + " + akActor + "...",1)
+				(kQuest as vMYC_WanderQuestScript).DoShutdown()
 			EndIf
 		EndIf
 	EndWhile

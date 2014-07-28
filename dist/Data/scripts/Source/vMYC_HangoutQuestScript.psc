@@ -33,6 +33,18 @@ EndEvent
 
 ;--=== Functions ===--
 
+Function DoUpkeep()
+	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
+EndFunction
+
+Function DoShutdown()
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_HangoutPing")
+	SetObjectiveDisplayed(0,False)
+	SetObjectiveDisplayed(1,False)
+	Stop()
+EndFunction
+
 Function SendRegistrationEvent()
 	Location kLocation = (GetAliasByName("HangoutLocation") as LocationAlias).GetLocation()
 	Int iEventHandle = ModEvent.Create("vMYC_HangoutQuestRegister")
