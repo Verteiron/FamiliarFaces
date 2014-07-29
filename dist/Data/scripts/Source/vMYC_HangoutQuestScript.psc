@@ -31,6 +31,12 @@ Event OnHangoutPing(Form akHangoutManager)
 	EndIf
 EndEvent
 
+Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRef1, ObjectReference akRef2, int aiValue1, int aiValue2)
+	FillSleepLocation()
+	SendRegistrationEvent()
+	EnableTracking(True)
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoUpkeep()
@@ -43,6 +49,23 @@ Function DoShutdown()
 	SetObjectiveDisplayed(0,False)
 	SetObjectiveDisplayed(1,False)
 	Stop()
+EndFunction
+
+Function FillSleepLocation()
+	LocationAlias kHangoutLocation = GetAliasByName("HangoutLocation") as LocationAlias
+	LocationAlias kInnLocation = GetAliasByName("HangoutInn0") as LocationAlias
+	LocationAlias kGuildLocation = GetAliasByName("HangoutGuildDwelling0") as LocationAlias
+	LocationAlias kDwellingLocation = GetAliasByName("HangoutDwelling0") as LocationAlias
+	
+	;If the hangout is in a Guild, Dwelling, or Castle, use it for eating and sleeping instead of the Inn.
+	If kHangoutLocation.GetLocation().HasKeywordString("LocTypeGuild") || kHangoutLocation.GetLocation().HasKeywordString("LocTypeCastle") || kHangoutLocation.GetLocation().HasKeywordString("LocTypeDwelling")
+		kInnLocation.ForceLocationTo(kHangoutLocation.GetLocation())
+	EndIf
+
+	If !kInnLocation.GetLocation()
+		kInnLocation.ForceLocationTo(kHangoutLocation.GetLocation())
+	EndIf
+	
 EndFunction
 
 Function SendRegistrationEvent()
