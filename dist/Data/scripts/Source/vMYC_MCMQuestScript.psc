@@ -32,6 +32,7 @@ Int Property	OPTION_MENU_HANGOUT_SELECT					Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_ENABLE				Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_CLEAR					Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_CLEARALL				Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_PARTY					Auto Hidden
 
 Bool _Changed
 Bool _Shutdown
@@ -409,7 +410,7 @@ event OnPageReset(string a_page)
 		;===== Hangout enable option ======----
 		OPTION_TOGGLE_HANGOUT_ENABLE = AddToggleOption("$Enable this Hangout",HangoutManager.IsHangoutEnabled(_sHangoutName))
 		;====================================----
-
+		OPTION_TOGGLE_HANGOUT_PARTY = AddToggleOption("$Assign all characters here",False)
 		;===== Begin info column ============----
 
 		SetCursorPosition(9)
@@ -562,6 +563,15 @@ Event OnOptionSelect(Int Option)
 		bHangoutEnabled = !bHangoutEnabled
 		HangoutManager.SetHangoutEnabled(_sHangoutName, bHangoutEnabled)
 		SetToggleOptionValue(OPTION_TOGGLE_HANGOUT_ENABLE,bHangoutEnabled)
+	ElseIf Option == OPTION_TOGGLE_HANGOUT_PARTY
+		Int i = _sCharacterNames.Length
+		While i > 0
+			i -= 1
+			Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
+			If kActor
+				HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
+			EndIf
+		EndWhile
 	EndIf
 
 EndEvent
