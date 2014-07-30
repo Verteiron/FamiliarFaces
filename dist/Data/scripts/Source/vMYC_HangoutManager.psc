@@ -486,7 +486,11 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 		EndIf
 		Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 		Debug.Trace("MYC/HOM/" + asHangoutName + ": Sending story event with Actor: " + akActor.GetActorBase().GetName() + ", Location: " + (GetHangoutForm(asHangoutName,"Location") as Location).GetName() + ", MarkerIndex: " + GetHangoutInt(asHangoutName,"MarkerIndex"))
-		If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(asHangoutName,"Location") as Location,CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")],akActor)
+		ObjectReference kMarkerObject
+		If HasHangoutKey(asHangoutName,"MarkerIndex")
+			kMarkerObject = CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")]
+		EndIf
+		If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(asHangoutName,"Location") as Location,kMarkerObject,akActor)
 			Debug.Trace("MYC/HOM/" + asHangoutName + ": Started the quest successfully!")
 			SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
 		Else

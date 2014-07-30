@@ -33,6 +33,12 @@ EndEvent
 
 Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRef1, ObjectReference akRef2, int aiValue1, int aiValue2)
 	FillSleepLocation()
+	ReferenceAlias kMarkerRef = GetAliasByName("HangoutMarker") as ReferenceAlias
+	ObjectReference kMarkerObj = kMarkerRef.GetReference()
+	If !kMarkerObj
+		Debug.Trace("MYC/HQ: Missing HangoutMarker, using HangoutCenter!")
+		kMarkerRef.ForceRefTo((GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference())
+	EndIf
 	SendRegistrationEvent()
 	EnableTracking(True)
 EndEvent
