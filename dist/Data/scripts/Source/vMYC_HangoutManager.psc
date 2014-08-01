@@ -460,12 +460,11 @@ Function AssignActorHangouts()
 EndFunction
 
 Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer = True)
-	If !akActor || !asHangoutName
-		Debug.Trace("MYC/HOM: AssignActorToHangout received empty parameter, aborting!")
+	If !akActor 
+		Debug.Trace("MYC/HOM: AssignActorToHangout received empty Actor parameter, aborting!")
 		Return
 	EndIf
 	String sCharacterName = akActor.GetActorBase().GetName()
-	PlaceHangoutMarker(asHangoutName)
 	CharacterManager.SetLocalString(sCharacterName,"HangoutName",asHangoutName)
 	
 	If abDefer
@@ -484,17 +483,30 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 			Debug.Trace("MYC/HOM/" + asHangoutName + ": Not " + akActor + "'s Hangout, aborting!")
 			Return
 		EndIf
+		
 		Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 		Debug.Trace("MYC/HOM/" + asHangoutName + ": Sending story event with Actor: " + akActor.GetActorBase().GetName() + ", Location: " + (GetHangoutForm(asHangoutName,"Location") as Location).GetName() + ", MarkerIndex: " + GetHangoutInt(asHangoutName,"MarkerIndex"))
-		ObjectReference kMarkerObject
-		If HasHangoutKey(asHangoutName,"MarkerIndex")
-			kMarkerObject = CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")]
-		EndIf
-		If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(asHangoutName,"Location") as Location,kMarkerObject,akActor)
-			Debug.Trace("MYC/HOM/" + asHangoutName + ": Started the quest successfully!")
-			SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
-		Else
-			Debug.Trace("MYC/HOM/" + asHangoutName + ": Could not find an available HangoutQuest!")
+		If asHangoutName
+			PlaceHangoutMarker(asHangoutName)
+			ObjectReference kMarkerObject
+			If HasHangoutKey(asHangoutName,"MarkerIndex")
+				kMarkerObject = CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")]
+			EndIf
+			If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(asHangoutName,"Location") as Location,kMarkerObject,akActor)
+				Debug.Trace("MYC/HOM/" + asHangoutName + ": Started the quest successfully!")
+				SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
+				akActor.EvaluatePackage()
+			Else
+				Debug.Trace("MYC/HOM/" + asHangoutName + ": Could not find an available HangoutQuest!")
+			EndIf
+		Else 
+		;No HangoutName, set to wander
+			If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = akActor)
+				Debug.Trace("MYC/HOM: Sent story event to begin wandering!")
+				akActor.EvaluatePackage()
+			Else
+				Debug.Trace("MYC/HOM: Couldn't send story event to resume wandering!")
+			EndIf
 		EndIf
 	EndIf
 EndFunction
