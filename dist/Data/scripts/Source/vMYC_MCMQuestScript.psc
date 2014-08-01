@@ -547,18 +547,22 @@ Event OnOptionSelect(Int Option)
 		Int i = _sCharacterNames.Length
 		While i > 0
 			i -= 1
-			Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
-			If kActor
-				HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
+			If _sCharacterNames[i]
+				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
+				If kActor
+					HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
+				EndIf
 			EndIf
 		EndWhile
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_CLEARALL
 		Int i = _sCharacterNames.Length
 		While i > 0
 			i -= 1
-			Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
-			If kActor
-				HangoutManager.AssignActorToHangout(kActor,"")
+			If _sCharacterNames[i]
+				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
+				If kActor
+					HangoutManager.AssignActorToHangout(kActor,"")
+				EndIf
 			EndIf
 		EndWhile
 	ElseIf _iMagicSchoolOptions.Find(Option) > -1
