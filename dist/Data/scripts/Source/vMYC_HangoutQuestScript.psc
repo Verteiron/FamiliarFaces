@@ -12,7 +12,13 @@ String Property HangoutName Auto
 
 Bool Property IsPreset = False Auto
 
-Bool Property Registered = False Auto
+Location Property HangoutLocation = None Auto
+
+ObjectReference Property MarkerObject = None Auto
+
+Bool Property Registered = False Auto Hidden
+
+
 
 ;--=== Events ===--
 
@@ -25,7 +31,11 @@ Event OnHangoutPing(Form akHangoutManager)
 	Int iHandle = ModEvent.Create("vMYC_HangoutPong")
 	If iHandle
 		ModEvent.PushForm(iHandle,Self)
-		ModEvent.PushForm(iHandle,(GetAliasByName("HangoutLocation") as LocationAlias).GetLocation())
+		Location kLocation = (GetAliasByName("HangoutLocation") as LocationAlias).GetLocation()
+		If !kLocation
+			kLocation = HangoutLocation
+		EndIf
+		ModEvent.PushForm(iHandle,kLocation)
 		ModEvent.PushString(iHandle,HangoutName)
 		ModEvent.Send(iHandle)
 	EndIf
