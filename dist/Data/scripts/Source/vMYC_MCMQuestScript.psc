@@ -391,14 +391,14 @@ event OnPageReset(string a_page)
 		
 		;===== Global Hangout options =====----
 		AddHeaderOption("$Global Hangout options")
-		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("Clear all Hangouts",False)
+		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("$Clear all Hangouts",False)
 		
 		SetCursorPosition(1)
 		AddHeaderOption("$Stats")
 		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
 		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
-		AddTextOption("$Hangouts: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
-		AddTextOption("$Running: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
 		
 		;====================================----
 		SetCursorPosition(8)
@@ -416,10 +416,10 @@ event OnPageReset(string a_page)
 		SetCursorPosition(9)
 
 		;===== Hangout selection menu =====----
-		OPTION_MENU_HANGOUT_SELECT = AddMenuOption("$Settings for",_sHangoutName)
+		OPTION_MENU_HANGOUT_SELECT = AddMenuOption("{$Settings for} ",_sHangoutName)
 		;====================================----
 
-		AddTextOption("Number of characters: " + HangoutManager.GetNumActorsInHangout(_sHangoutName),"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Number of characters}: " + HangoutManager.GetNumActorsInHangout(_sHangoutName),"",OPTION_FLAG_DISABLED)
 		AddEmptyOption()
 		Form kLocation = HangoutManager.GetHangoutForm(_sHangoutName,"Location")
 		String sLocationString = "N/A"
@@ -443,10 +443,10 @@ event OnPageReset(string a_page)
 		If kMarkerRef
 			sMarkerString = GetFormIDString(kMarkerRef)
 		EndIf
-		AddTextOption("Source: " + sSourceString,"",OPTION_FLAG_DISABLED)
-		AddTextOption("Parent location: " + sLocationString,"",OPTION_FLAG_DISABLED)
-		AddTextOption("Cell: " + sCellString,"",OPTION_FLAG_DISABLED)
-		AddTextOption("Marker: " + sMarkerString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Source}: " + sSourceString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Parent location}: " + sLocationString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Cell}: " + sCellString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Marker}: " + sMarkerString,"",OPTION_FLAG_DISABLED)
 
 
 	
@@ -524,26 +524,6 @@ Event OnOptionSelect(Int Option)
 		EndWhile
 		SetToggleOptionValue(Option,bAutoMagic)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
-	ElseIf _iMagicSchoolOptions.Find(Option) > -1
-		String sSchool
-		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
-			sSchool = "Alteration"
-		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_CONJURATION
-			sSchool = "Conjuration"
-		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
-			sSchool = "Destruction"
-		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_ILLUSION
-			sSchool = "Illusion"
-		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_RESTORATION
-			sSchool = "Restoration"
-		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_OTHER
-			sSchool = "Other"
-		EndIf
-		Bool bAllowed = CharacterManager.GetLocalInt(_sCharacterName,"MagicAllow" + sSchool) as Bool
-		bAllowed = !bAllowed
-		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
-		SetToggleOptionValue(Option,bAllowed)
-		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf Option == OPTION_TOGGLE_SHOUTSALLOW_MASTER 
 		Bool bAllowShouts = CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool
 		bAllowShouts = !bAllowShouts
@@ -572,6 +552,35 @@ Event OnOptionSelect(Int Option)
 				HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
 			EndIf
 		EndWhile
+	ElseIf Option == OPTION_TOGGLE_HANGOUT_CLEARALL
+		Int i = _sCharacterNames.Length
+		While i > 0
+			i -= 1
+			Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
+			If kActor
+				HangoutManager.AssignActorToHangout(kActor,"")
+			EndIf
+		EndWhile
+	ElseIf _iMagicSchoolOptions.Find(Option) > -1
+		String sSchool
+		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
+			sSchool = "Alteration"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_CONJURATION
+			sSchool = "Conjuration"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+			sSchool = "Destruction"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_ILLUSION
+			sSchool = "Illusion"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_RESTORATION
+			sSchool = "Restoration"
+		ElseIf Option == OPTION_TOGGLE_MAGICALLOW_OTHER
+			sSchool = "Other"
+		EndIf
+		Bool bAllowed = CharacterManager.GetLocalInt(_sCharacterName,"MagicAllow" + sSchool) as Bool
+		bAllowed = !bAllowed
+		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
+		SetToggleOptionValue(Option,bAllowed)
+		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	EndIf
 
 EndEvent
