@@ -72,24 +72,27 @@ Event OnInit()
 	_jMYC = CharacterManager.jMYC
 EndEvent
 
-Event OnSetCustomLocation(Form sender, String sLocationName, Form kLocation, Form kCell, Form kAnchor1, Form kAnchor2, Form kAnchor3, Form kAnchor4, Form kAnchor5, Float fPlayerX, Float fPlayerY, Float fPlayerZ)
-	Debug.Trace("MYC/HOM: Received custom location event!")
+Event OnSetCustomHangout(String sCharacterName, String sLocationName, Form kLocation, Form kCell, Form kAnchor1, Form kAnchor2, Form kAnchor3, Form kAnchor4, Form kAnchor5, Float fPlayerX, Float fPlayerY, Float fPlayerZ)
+	Debug.Trace("MYC/HOM: Received custom hangout event!")
 	If !sLocationName
 		Return
 	EndIf
-	;SetHangoutStr(sLocationName,"Name",
-;	JMap.setStr(jHangoutData,"LocationName",sLocationName)
-;	JMap.setForm(jHangoutData,"Location",kLocation as Location)
-;	JMap.setForm(jHangoutData,"Cell",kCell as Cell)
-;	Int jHangoutAnchors = JArray.Object()
-;	JMap.setObj(jHangoutData,"Anchors",jHangoutAnchors)
-;	JArray.AddForm(jHangoutAnchors,kAnchor1)
-;	JArray.AddForm(jHangoutAnchors,kAnchor2)
-;	JArray.AddForm(jHangoutAnchors,kAnchor3)
-;	JArray.AddForm(jHangoutAnchors,kAnchor4)
-;	JArray.AddForm(jHangoutAnchors,kAnchor5)
-;	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
-;	JMap.setObj(jHangoutData,"Position",jPlayerPos)
+	Int jHangoutData = JMap.Object()
+	JMap.setStr(jHangoutData,"LocationName",sLocationName) ;For compatibility
+	JMap.setStr(jHangoutData,"HangoutName",sLocationName) ;For compatibility
+	JMap.setForm(jHangoutData,"Location",kLocation as Location)
+	JMap.setForm(jHangoutData,"Cell",kCell as Cell)
+	Int jHangoutAnchors = JArray.Object()
+	JMap.setObj(jHangoutData,"Anchors",jHangoutAnchors)
+	JArray.AddForm(jHangoutAnchors,kAnchor1)
+	JArray.AddForm(jHangoutAnchors,kAnchor2)
+	JArray.AddForm(jHangoutAnchors,kAnchor3)
+	JArray.AddForm(jHangoutAnchors,kAnchor4)
+	JArray.AddForm(jHangoutAnchors,kAnchor5)
+	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
+	JMap.setObj(jHangoutData,"Position",jPlayerPos)
+	JMap.setStr(jHangoutData,"Source",sCharacterName)
+	ImportCharacterHangout(jHangoutData,sCharacterName)
 EndEvent
 
 Event OnUpdate()
@@ -202,6 +205,7 @@ EndFunction
 Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_HangoutQuestRegister","OnHangoutQuestRegister")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
+	RegisterForModEvent("vMYC_SetCustomHangout","OnSetCustomHangout")
 EndFunction
 
 Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, String asHangoutName = "")
@@ -635,6 +639,24 @@ Int[] Function GetHangoutStats()
 	iReturn[2] = iNumQuestsRunning
 	iReturn[3] = iNumQuestsAvailable
 	Return iReturn
+EndFunction
+
+Int Function GetFullHangoutObj(String asHangoutName)
+	Return JMap.getObj(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),asHangoutName)
+EndFunction
+
+Int Function GetHangoutObjBySourceCharacter(String asCharacterName)
+	String[] sHangoutNames = HangoutNames
+	Int i = 0
+	While i < sHangoutNames.Length
+		If sHangoutNames[i]
+			If asCharacterName == GetHangoutStr(sHangoutNames[i],"SourceCharacter")
+				Return JMap.getObj(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP),sHangoutNames[i])
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	Return 0
 EndFunction
 
 ;=== Data management ===----
