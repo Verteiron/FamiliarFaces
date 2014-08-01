@@ -481,7 +481,7 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 			JArray.AddForm(jPendingActors,akActor)
 		EndIf
 		_bNeedHangoutUpdate = True
-		RegisterForSingleUpdate(0.1)
+		RegisterForSingleUpdate(3)
 	Else
 		If CharacterManager.GetLocalString(sCharacterName,"HangoutName") != asHangoutName
 			Debug.Trace("MYC/HOM/" + asHangoutName + ": Not " + akActor + "'s Hangout, aborting!")
