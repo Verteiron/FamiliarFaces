@@ -312,7 +312,7 @@ Function DeleteHangout(String sHangoutName)
 				Actor kHangoutActor = (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() as Actor
 				If kHangoutActor
 					Debug.Trace("MYC/HOM/" + sHangoutName + ": * This will orphan " + kHangoutActor.GetName() + " " + kHangoutActor + "!",1)
-					kHangoutActor.SendModEvent("vMYC_LostHangout")
+					AssignActorToHangout(kHangoutActor,"")
 				EndIf
 				(kHangoutQuest as vMYC_HangoutQuestScript).DoShutdown()
 			EndIf
