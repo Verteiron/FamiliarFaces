@@ -470,6 +470,9 @@ Bool Function ValidateAlcove()
 		Else
 			AlcoveState = ALCOVE_STATE_EMPTY
 		EndIf
+	ElseIf ValidationState == VALIDATION_FAILURE_ACTOR_LOADING && AlcoveState == ALCOVE_STATE_READY
+		; Prevent validation failure if this is just the initial load during upkeep
+		ValidationState = 0
 	ElseIf ValidationState ; Other problems, so stay Busy
 		AlcoveState = ALCOVE_STATE_BUSY
 	EndIf
