@@ -13,12 +13,36 @@ String[] Property HangoutNames Hidden
 {List of Hangout names}
 	String[] Function Get()
 		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
+		JValue.Retain(jHangoutNames)
+		String[] sHangoutNames = New String[128]
+		Int i = 0 
+		Int iCount = JArray.Count(jHangoutNames)
+		;Debug.Trace("MYC/HOM: iCount is " + iCount)
+		Int iNameCount = 0
+		While i < iCount
+			String sHangoutName = JArray.getStr(jHangoutNames,i)
+			If IsHangoutEnabled(sHangoutName)
+				sHangoutNames[iNameCount] = sHangoutName
+				iNameCount += 1
+			EndIf
+			i += 1
+		EndWhile
+		JValue.Release(jHangoutNames)
+		Return sHangoutNames
+	EndFunction
+EndProperty
+
+String[] Property HangoutNamesDisabled Hidden
+{List of Hangout names}
+	String[] Function Get()
+		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
 		String[] sHangoutNames = New String[128]
 		Int i = 0 
 		Int iCount = JArray.Count(jHangoutNames)
 		;Debug.Trace("MYC/HOM: iCount is " + iCount)
 		While i < iCount
-			sHangoutNames[i] = JArray.getStr(jHangoutNames,i)
+			String sHangoutName = JArray.getStr(jHangoutNames,i)
+			sHangoutNames[i] = sHangoutName
 			i += 1
 		EndWhile
 		Return sHangoutNames

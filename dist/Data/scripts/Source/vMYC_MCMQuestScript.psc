@@ -70,6 +70,7 @@ Int		_iAliasOption
 Int[]	_iAliasSelections
 ReferenceAlias[]	_kHangoutRefAliases
 String[]	_sHangoutNames
+String[]	_sHangoutNamesDisabled
 Int		_iCurrentHangout
 String	_sHangoutName
 
@@ -628,9 +629,9 @@ Event OnOptionMenuOpen(Int Option)
 			SetMenuDialogDefaultIndex(0)
 		EndIf
 	ElseIf Option == OPTION_MENU_HANGOUT_SELECT
-		SetMenuDialogOptions(_sHangoutNames)
+		SetMenuDialogOptions(_sHangoutNamesDisabled)
 		String sHangoutName = _sHangoutName
-		Int index = _sHangoutNames.Find(sHangoutName)
+		Int index = _sHangoutNamesDisabled.Find(sHangoutName)
 		SetMenuDialogStartIndex(index)
 		SetMenuDialogDefaultIndex(index)
 	EndIf
@@ -671,8 +672,8 @@ Event OnOptionMenuAccept(int option, int index)
 		SendModEvent("vMYC_ShrineNeedsUpdate")
 	ElseIf Option == OPTION_MENU_HANGOUT_SELECT
 		_iCurrentHangout = index 
-		_sHangoutName = _sHangoutNames[_iCurrentHangout]
-		SetMenuOptionValue(OPTION_MENU_HANGOUT_SELECT,_sHangoutNames[_iCurrentHangout])
+		_sHangoutName = _sHangoutNamesDisabled[_iCurrentHangout]
+		SetMenuOptionValue(OPTION_MENU_HANGOUT_SELECT,_sHangoutNamesDisabled[_iCurrentHangout])
 		ForcePageReset()
 	EndIf
 EndEvent
@@ -712,7 +713,8 @@ Function UpdateSettings()
 
 	_sCharacterNames = CharacterManager.CharacterNames
 	_sHangoutNames = HangoutManager.HangoutNames
-
+	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
+	
 	_sClassNames = CharacterManager.sClassNames
 EndFunction
 
