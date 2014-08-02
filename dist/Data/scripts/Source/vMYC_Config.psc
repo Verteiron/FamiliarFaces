@@ -14,6 +14,14 @@ Function SendConfigEvent(String asPath) Global
 	EndIf
 EndFunction
 
+Function SendLocalConfigEvent(String asPath) Global
+	Int iHandle = ModEvent.Create("vMYC_LocalConfigUpdate")
+	If iHandle
+		ModEvent.PushString(iHandle,asPath)
+		ModEvent.Send(iHandle)
+	EndIf
+EndFunction
+
 Function InitConfig() Global
 	Int jConfigData = CreateConfigDataIfMissing()
 	SyncConfig()
@@ -132,4 +140,70 @@ EndFunction
 
 Int Function GetConfigObj(String asPath) Global
 	Return JDB.solveObj(".vMYC._ConfigData." + asPath)
+EndFunction
+
+Int Function CreateLocalConfigDataIfMissing() Global
+	Int jLocalConfigData = JDB.solveObj(".vMYC._LocalConfigData")
+	If jLocalConfigData
+		Return jLocalConfigData
+	EndIf
+	Debug.Trace("MYC/LocalConfig: First LocalConfigData access, creating JDB key!")
+	Int _jMYC = JDB.solveObj(".vMYC")
+	jLocalConfigData = JMap.Object()
+	JMap.setObj(_jMYC,"_LocalConfigData",jLocalConfigData)
+	Return jLocalConfigData
+EndFunction
+
+Bool Function HasLocalConfigKey(String asPath) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	Return JMap.hasKey(jLocalConfig,asPath)
+EndFunction
+
+Function SetLocalConfigStr(String asPath, String asString) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	JMap.setStr(jLocalConfig,asPath,asString)
+EndFunction
+
+String Function GetLocalConfigStr(String asPath) Global
+	Return JDB.solveStr(".vMYC._LocalConfigData." + asPath)
+EndFunction
+
+Function SetLocalConfigInt(String asPath, Int aiInt) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	JMap.setInt(jLocalConfig,asPath,aiInt)
+	SendLocalConfigEvent(asPath)
+EndFunction
+
+Int Function GetLocalConfigInt(String asPath) Global
+	Return JDB.solveInt(".vMYC._LocalConfigData." + asPath)
+EndFunction
+
+Function SetLocalConfigFlt(String asPath, Float afFloat) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	JMap.setFlt(jLocalConfig,asPath,afFloat)
+	SendLocalConfigEvent(asPath)
+EndFunction
+
+Float Function GetLocalConfigFlt(String asPath) Global
+	Return JDB.solveFlt(".vMYC._LocalConfigData." + asPath)
+EndFunction
+
+Function SetLocalConfigForm(String asPath, Form akForm) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	JMap.setForm(jLocalConfig,asPath,akForm)
+	SendLocalConfigEvent(asPath)
+EndFunction
+
+Form Function GetLocalConfigForm(String asPath) Global
+	Return JDB.solveForm(".vMYC._LocalConfigData." + asPath)
+EndFunction
+
+Function SetLocalConfigObj(String asPath, Int ajObj) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	JMap.setObj(jLocalConfig,asPath,ajObj)
+	SendLocalConfigEvent(asPath)
+EndFunction
+
+Int Function GetLocalConfigObj(String asPath) Global
+	Return JDB.solveObj(".vMYC._LocalConfigData." + asPath)
 EndFunction

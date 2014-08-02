@@ -9,6 +9,8 @@ Import Game
 
 ;--=== Properties ===--
 
+vMYC_HangoutManager Property HangoutManager Auto
+
 Int Property SerializationVersion = 3 Auto Hidden
 
 String[] Property CharacterNames Hidden
@@ -475,29 +477,11 @@ Event OnSetLocationAnchor(string eventName, string strArg, float numArg, Form se
 	;Debug.Trace("MYC/CM: LocationAnchor: " + sender + " added!")
 EndEvent
 
-Event OnSetCustomLocation(Form sender, String sLocationName, Form kLocation, Form kCell, Form kAnchor1, Form kAnchor2, Form kAnchor3, Form kAnchor4, Form kAnchor5, Float fPlayerX, Float fPlayerY, Float fPlayerZ)
-	;Debug.Trace("MYC/CM: Received custom location!")
-	Int jLocationData = JMap.Object()
-	JMap.setObj(_jMYC,"LocationData",jLocationData)
-	JMap.setStr(jLocationData,"LocationName",sLocationName)
-	JMap.setForm(jLocationData,"Location",kLocation as Location)
-	JMap.setForm(jLocationData,"Cell",kCell as Cell)
-	Int jLocationAnchors = JArray.Object()
-	JMap.setObj(jLocationData,"Anchors",jLocationAnchors)
-	JArray.AddForm(jLocationAnchors,kAnchor1)
-	JArray.AddForm(jLocationAnchors,kAnchor2)
-	JArray.AddForm(jLocationAnchors,kAnchor3)
-	JArray.AddForm(jLocationAnchors,kAnchor4)
-	JArray.AddForm(jLocationAnchors,kAnchor5)
-	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
-	JMap.setObj(jLocationData,"Position",jPlayerPos)
-EndEvent
-
 ;--=== Functions ===--
 
 Function RegisterForModEvents()
 	;Debug.Trace("MYC/CharacterManager: Registering for mod events...")
-	RegisterForModEvent("vMYC_SetCustomLocation","OnSetCustomLocation")
+	RegisterForModEvent("vMYC_SetCustomHangout","OnSetCustomHangout")
 EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
@@ -912,80 +896,17 @@ String[] Function GetCharacterSpawnPoints(String asCharacterName)
 	Return sSpawnPoints
 EndFunction
 
+Event OnSetCustomHangout(String sCharacterName, String sLocationName, Form kLocation, Form kCell, Form kAnchor1, Form kAnchor2, Form kAnchor3, Form kAnchor4, Form kAnchor5, Float fPlayerX, Float fPlayerY, Float fPlayerZ)
+	If !sLocationName
+		Return
+	EndIf
+	JMap.setStr(_jMYC,"PlayerHangout",sLocationName)
+EndEvent
+
+
 Int Function AddCustomLocation(Int jLocationData)
-{Return -1 if failure, or Hangout index if success}
-	If !jLocationData
-		Return -1
-	EndIf
-	String sLocationName = JMap.GetStr(jLocationData,"LocationName")
-	Location kLocation = JMap.GetForm(jLocationData,"Location") as Location
-	Cell kCell = JMap.GetForm(jLocationData,"Cell") as Cell
-
-	ObjectReference kSpawnObject
-	ObjectReference[] kAnchorObjects = New ObjectReference[5]
-	Int jAnchorObjects = JMap.GetObj(jLocationData,"Anchors")
-	Int i = kAnchorObjects.Length
-	Int iAnchorCount
-	While i > 0
-		i -= 1
-		ObjectReference kAnchor = JArray.GetForm(jAnchorObjects,i) as ObjectReference
-		If kAnchor
-			kAnchorObjects[i] = kAnchor
-			kSpawnObject = kAnchor ; Counting backward should get us the objects closest to the player
-			iAnchorCount += 1
-		EndIf
-	EndWhile
-	Float TargetX = JValue.SolveFlt(jLocationData,".Position.X")
-	Float TargetY = JValue.SolveFlt(jLocationData,".Position.Y")
-	Float TargetZ = JValue.SolveFlt(jLocationData,".Position.Z")
-
-	;Debug.Trace("MYC/CM: Adding custom location: " + sLocationName)
-	;Debug.Trace("MYC/CM:   Location: " + kLocation)
-	;Debug.Trace("MYC/CM:       Cell: " + kCell)
-	;Debug.Trace("MYC/CM:    Anchors: " + iAnchorCount)
-	;Debug.Trace("MYC/CM:   Position: X: " + TargetX + ", Y: " + TargetY + ", Z:" + TargetZ)
-
-	Int iEmptyIndex = -1
-	i = kCustomLocations.Length
-	While i > 0
-		i -= 1
-		Location kThisLocation = kCustomLocations[i].GetLocation()
-		If kLocation && kThisLocation == kLocation ; Even if !kLocation, we still need to find a empty spot
-			;Debug.Trace("MYC/CM:  Location already on the list!")
-			Return -1 ; This location is already on the list
-		ElseIf !kThisLocation
-			iEmptyIndex = i
-		EndIf
-	EndWhile
-
-	;--- If we got this far, then the new location is not on the list.
-	If kLocation
-		kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
-		;Debug.Trace("MYC/CM:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
-	ElseIf !kLocation
-		;Debug.Trace("MYC/CM:   No location form attached to this cell, assigning a custom one...")
-		kLocation = vMYC_CustomLocationsList.GetAt(iEmptyIndex) as Location
-		kLocation.SetName(sLocationName)
-		kCustomLocations[iEmptyIndex].ForceLocationTo(kLocation)
-		;Debug.Trace("MYC/CM:   " + kLocation + " added at position " + iEmptyIndex + " and is now " + kCustomLocations[iEmptyIndex] + "!")
-	EndIf
-
-	;Debug.Trace("MYC/CM:    Finding space for new location on Hangouts list...")
-	Int iHOidx = sHangoutNames.Find("")
-	kHangoutRefAliases[iHOidx] = alias_CustomCharacters[iEmptyIndex]
-	sHangoutNames[iHOidx] = sLocationName + " (Custom)"
-	;Debug.Trace("MYC/CM:    Added to Hangouts list at position " + iHOidx + "!")
-	If !CustomMapMarkers
-		CustomMapMarkers = New ObjectReference[32]
-	EndIf
-	If iHOidx > -1
-		CustomMapMarkers[iHOidx] = kSpawnObject.PlaceAtMe(vMYC_CustomMapMarker)
-		CustomLocMarkerAlias.ForceRefTo(CustomMapMarkers[iHOidx]) ; Force target cell to load so we can get its data.
-		CustomMapMarkers[iHOidx].SetPosition(TargetX, TargetY, TargetZ)
-		;Debug.Trace("MYC/CM:    CustomMapMarker Placed, parent location is " + CustomMapMarkers[iHOidx].GetCurrentLocation() + ", cell is " + CustomMapMarkers[iHOidx].GetParentCell())
-		CustomLocMarkerAlias.Clear()
-	EndIf
-	Return iHOidx
+{Legacy function: DO NOT USE!}
+	Return -1
 EndFunction
 
 String Function GetCharacterNameFromActorBase(ActorBase akActorBase)
@@ -999,6 +920,12 @@ EndFunction
 
 Float Function GetCharacterAV(String asCharacterName,String asAVName)
 	Return JValue.solveFlt(_jMYC,"." + asCharacterName + ".Data.Stats.AV." + asAVName)
+EndFunction
+
+Function ResetCharacterPosition(String asCharacterName)
+	;If GetLocalString(asCharacterName,"HangoutName")
+	HangoutManager.MoveActorToHangout(GetCharacterActorByName(asCharacterName),GetLocalString(asCharacterName,"HangoutName"))
+	;EndIf
 EndFunction
 
 Function SetCharacterEnabled(String asCharacterName, Bool abEnabled)
@@ -1042,32 +969,8 @@ Function SetCharacterClass(String asCharacterName, Class akClass)
 EndFunction
 
 Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHangoutRefAlias)
-
-	SetCharacterTracking(asCharacterName, False)
-
-	Int i = 0
-	ActorBase kTargetDummy = GetCharacterDummy(asCharacterName)
-	Actor kTargetActor
-	While i < _kLoadedCharacters.Length
-		If _kLoadedCharacters[i]
-			If _kLoadedCharacters[i].GetActorBase() == kTargetDummy
-				kTargetActor = _kLoadedCharacters[i]
-			EndIf
-		EndIf
-		i += 1
-	EndWhile
-
-	If !akHangoutRefAlias.GetReference()
-		Int iHangoutIndex = GetLocalInt(asCharacterName,"HangoutIndex") ;JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData.HangoutIndex")
-		kHangoutRefAliases[iHangoutIndex].Clear()
-		akHangoutRefAlias.ForceRefTo(kTargetActor)
-		iHangoutIndex = kHangoutRefAliases.Find(akHangoutRefAlias)
-		SetLocalInt(asCharacterName, "HangoutIndex", iHangoutIndex)
-		;Debug.Trace("MYC/CM: Set " + kTargetActor + " to HangoutIndex " + iHangoutIndex + " - " + akHangoutRefAlias)
-	Else
-		Return False
-	EndIf
-	SetCharacterTracking(asCharacterName, GetLocalInt(asCharacterName,"TrackingEnabled") as Bool)
+{Legacy function, do not use!}
+	
 	Return True
 EndFunction
 
@@ -1499,8 +1402,12 @@ Bool Function LoadCharacter(String sCharacterName)
 			Return False
 		EndIf
 	EndIf
-
-	Int iHOidx = AddCustomLocation(JMap.getObj(jCharacterData,"LocationData"))
+	
+	If JMap.hasKey(jCharacterData,"LocationData")
+		;Compatibility with older saves
+		HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"LocationData"),sCharacterName)
+	EndIf
+	HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"Hangout"),sCharacterName)
 
 	;----Load or create ActorBaseMap--------------
 
@@ -2446,9 +2353,12 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.SetForm(jPlayerData,"Race",PlayerREF.GetActorBase().GetRace())
 
 	;-----==== Save custom location data
-
-	JMap.setObj(jPlayerData,"LocationData",JMap.GetObj(_jMYC,"LocationData"))
-
+	
+	String sHangoutName = JMap.GetStr(_jMYC,"PlayerHangout")
+	If sHangoutName
+		JMap.SetObj(jPlayerData,"Hangout",HangoutManager.GetFullHangoutObj("sHangoutName"))
+	EndIf
+	
 	;-----==== Save some metainfo. Some is duplicated for reasons that made sense at the time. I swear I wasn't drunk
 
 	Int jPlayerModList = JArray.Object()

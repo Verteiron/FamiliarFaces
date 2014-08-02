@@ -404,7 +404,7 @@ EndFunction
 
 Bool Function DeportUnknownActors()
 {Check for an unknown actor in the Alcove and send them to limbo. Return true if one was found.}
-	If _bPlayerisSaving
+	If _bPlayerisSaving || !_StatueMarker.GetParentCell() || !_StatueMarker.GetParentCell().IsAttached()
 		Return False
 	EndIf
 	Actor kUnknownActor
@@ -412,15 +412,20 @@ Bool Function DeportUnknownActors()
 	While i > 0 && !kUnknownActor
 		i -= 1
 		kUnknownActor = FindRandomActorFromRef(_StatueMarker,250)
-		If kUnknownActor == AlcoveActor || kUnknownActor == PlayerREF
+		If kUnknownActor == AlcoveActor || kUnknownActor == PlayerREF 
 			kUnknownActor = None
 		EndIf
 	EndWhile
 	
 	If kUnknownActor
 		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
-		kUnknownActor.MoveTo(kNowhere)
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Found unknown Actor " + kUnknownActor + " aka " + kUnknownActor.GetActorBase().GetName() + " in shrine and banished them into limbo.",1)
+		If kUnknownActor as vMYC_CharacterDummyActorScript
+			kUnknownActor.MoveTo(kNowhere)
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Found Actor " + kUnknownActor + " aka " + kUnknownActor.GetActorBase().GetName() + " in shrine and banished them into limbo.",1)
+		Else
+			kUnknownActor.MoveToMyEditorLocation()
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Found unknown Actor " + kUnknownActor + " aka " + kUnknownActor.GetActorBase().GetName() + " in shrine and reset them to their editor location. What just happened?",1)
+		EndIf
 		Return True
 	EndIf
 	Return False
@@ -451,8 +456,14 @@ Bool Function ValidateAlcove()
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove!")
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterName is " + CharacterName + ", WantCharacterName is " + WantCharacterName + ", AlcoveActor is " + AlcoveActor)
 
+	If AlcoveStatueState == ALCOVE_STATUE_SUMMONED
+		_Book.IsOpen = True
+	Else
+		_Book.IsOpen = False
+	EndIf
+	
 	If ValidationState == VALIDATION_FAILURE_STATE_BUSY 
-		; = not & ... This was the only error, so we need to exit the busy state
+		; ==, not & ... This was the only error, so we need to exit the busy state
 		If AlcoveActor
 			AlcoveState = ALCOVE_STATE_READY
 		Else
@@ -1167,7 +1178,6 @@ Function SummonCharacter()
 	AlcoveActor.SetGhost(False)
 	AlcoveActor.MoveToMyEditorLocation()
 	AlcoveActor.EnableNoWait()
-	CharacterManager.SetCharacterTracking(CharacterName,True)
 	AlcoveActor.EnableAI(True)
 	AlcoveActor.EvaluatePackage()
 	Wait(0.5)
@@ -1180,8 +1190,7 @@ Function SummonCharacter()
 	Wait(1.0)
 	If sCellName == "vMYC_Staging" || sCellName == "vMYC_ShrineOfHeroes"  || sCellName == "Shrine of Heroes"
 		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
-		ObjectReference kMarkerObject = CharacterManager.CustomMapMarkers[CharacterManager.GetLocalInt(CharacterName, "HangoutIndex")]
-		AlcoveActor.MoveTo(kMarkerObject)
+		CharacterManager.ResetCharacterPosition(CharacterName)
 	EndIf
 	AlcoveActor.SetAlpha(1.0)
 	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)

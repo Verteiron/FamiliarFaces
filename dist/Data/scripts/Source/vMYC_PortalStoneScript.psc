@@ -56,10 +56,9 @@ Event OnEquipped(Actor akActor)
 		Debug.Notification("You can't use that. You're already here.")
 		Return
 	EndIf
-	Int iEventHandle = ModEvent.Create("vMYC_SetCustomLocation")
+	Int iEventHandle = ModEvent.Create("vMYC_SetCustomHangout")
 	If iEventHandle
-		ModEvent.PushForm(iEventHandle,Self)
-
+		ModEvent.PushString(iEventHandle,akActor.GetActorBase().GetName())
 		String sLocationName
 		If PlayerREF.GetCurrentLocation()
 			sLocationName = PlayerREF.GetCurrentLocation().GetName()

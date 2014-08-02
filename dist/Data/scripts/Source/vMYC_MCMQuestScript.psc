@@ -5,12 +5,13 @@ Import vMYC_Config
 vMYC_MetaQuestScript Property MetaQuestScript Auto
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+vMYC_HangoutManager	Property HangoutManager Auto
 
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
 
-Int Property	VOICETYPE_NOFILTER = 0	AutoReadOnly Hidden
-Int Property	VOICETYPE_FOLLOWER = 1	AutoReadOnly Hidden
+Int Property	VOICETYPE_NOFILTER  = 0	AutoReadOnly Hidden
+Int Property	VOICETYPE_FOLLOWER  = 1	AutoReadOnly Hidden
 Int Property	VOICETYPE_SPOUSE 	= 2	AutoReadOnly Hidden
 Int Property	VOICETYPE_ADOPT 	= 4	AutoReadOnly Hidden
 Int Property	VOICETYPE_GENDER	= 8 AutoReadOnly Hidden
@@ -26,6 +27,12 @@ Int Property	OPTION_TOGGLE_MAGICALLOW_RESTORATION	Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_OTHER			Auto Hidden
 
 Int Property	OPTION_TOGGLE_SHOUTSALLOW_MASTER			Auto Hidden
+
+Int Property	OPTION_MENU_HANGOUT_SELECT					Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_ENABLE				Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_CLEAR					Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_CLEARALL				Auto Hidden
+Int Property	OPTION_TOGGLE_HANGOUT_PARTY					Auto Hidden
 
 Bool _Changed
 Bool _Shutdown
@@ -63,6 +70,9 @@ Int		_iAliasOption
 Int[]	_iAliasSelections
 ReferenceAlias[]	_kHangoutRefAliases
 String[]	_sHangoutNames
+String[]	_sHangoutNamesDisabled
+Int		_iCurrentHangout
+String	_sHangoutName
 
 Int 	_iClassOption
 Int 	_iClassSelection
@@ -82,8 +92,10 @@ Int[]		_iAlcoveResetOption
 
 Int		_iShowDebugOption
 
+Int 	_iCurrentHangoutOption
+
 Int Function GetVersion()
-    return 4 ; Default version
+    return 5 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -96,16 +108,24 @@ Event OnVersionUpdate(int a_version)
 	ElseIf (a_version >= 4 && CurrentVersion < 4)
 		Debug.Trace("MYC/MCM: Updating script to version 4...")
 		OnConfigInit()
+	ElseIf (a_version >= 5 && CurrentVersion < 5)
+		Debug.Trace("MYC/MCM: Updating script to version 5...")
+		Pages = New String[3]
+		Pages[0] = "$Character Setup"
+		Pages[1] = "$Shrine of Heroes"
+		Pages[2] = "$Hangout Manager"
+		Pages[3] = "$Global Options"
 	EndIf
 
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[2]
+	Pages = New String[3]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Shrine of Heroes"
-	;Pages[2] = "$Global Options"
+	Pages[2] = "$Hangout Manager"
+	Pages[3] = "$Global Options"
 
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
@@ -238,8 +258,11 @@ event OnPageReset(string a_page)
 
 
 		;===== Character hangout option =====----
-		_iAliasSelections[_iCurrentCharacter] = CharacterManager.GetLocalInt(_sCharacterName,"HangoutIndex")
-		_iAliasOption = AddMenuOption("$Hangout",_sHangoutNames[_iAliasSelections[_iCurrentCharacter]],OptionFlags)
+		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
+		If !sHangoutName
+			sHangoutName = "Unassigned"
+		EndIf
+		_iAliasOption = AddMenuOption("$Hangout",sHangoutName,OptionFlags)
 		;====================================----
 
 		;===== Character class option =======----
@@ -354,6 +377,90 @@ event OnPageReset(string a_page)
 
 	;===== END Shrine of Heroes page =====----
 
+	ElseIf a_page == "$Hangout Manager"
+
+	;===== Hangout Manager page =====----
+
+		SetCursorFillMode(TOP_TO_BOTTOM)
+
+		_sHangoutName = _sHangoutNames[_iCurrentHangout]
+
+
+		Int OptionFlags = 0
+		;====================================----
+
+		
+		;===== Global Hangout options =====----
+		AddHeaderOption("$Global Hangout options")
+		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("$Clear all Hangouts",False)
+		
+		SetCursorPosition(1)
+		AddHeaderOption("$Stats")
+		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
+		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
+		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
+		
+		;====================================----
+		SetCursorPosition(8)
+		;===== Hangout header =============----
+		AddHeaderOption(_sHangoutName)
+		;====================================----
+
+
+		;===== Hangout enable option ======----
+		OPTION_TOGGLE_HANGOUT_ENABLE = AddToggleOption("$Enable this Hangout",HangoutManager.IsHangoutEnabled(_sHangoutName))
+		;====================================----
+		OPTION_TOGGLE_HANGOUT_PARTY = AddToggleOption("$Assign all characters here",False)
+		;===== Begin info column ============----
+
+		SetCursorPosition(9)
+
+		;===== Hangout selection menu =====----
+		OPTION_MENU_HANGOUT_SELECT = AddMenuOption("{$Settings for} ",_sHangoutName)
+		;====================================----
+
+		AddTextOption("{$Number of characters}: " + HangoutManager.GetNumActorsInHangout(_sHangoutName),"",OPTION_FLAG_DISABLED)
+		AddEmptyOption()
+		Form kLocation = HangoutManager.GetHangoutForm(_sHangoutName,"Location")
+		String sLocationString = "N/A"
+		If kLocation
+			sLocationString = kLocation.GetName() + "(" + GetformIDString(kLocation) + ")"
+		EndIf
+		String sSourceString = HangoutManager.GetHangoutStr(_sHangoutName,"SourceCharacter")
+		If !sSourceString
+			sSourceString = "Preset"
+		EndIf
+		Form kCell = HangoutManager.GetHangoutForm(_sHangoutName,"Cell")
+		String sCellString = "Not loaded"
+		If sSourceString == "Preset"
+			sCellString = "N/A"
+		EndIf
+		If kCell
+			sCellString = kCell.GetName() + "(" + GetformIDString(kCell) + ")"
+		EndIf
+		ObjectReference kMarkerRef = HangoutManager.GetHangoutMarker(_sHangoutName)
+		String sMarkerString = "N/A"
+		If kMarkerRef
+			sMarkerString = GetFormIDString(kMarkerRef)
+		EndIf
+		AddTextOption("{$Source}: " + sSourceString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Parent location}: " + sLocationString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Cell}: " + sCellString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Marker}: " + sMarkerString,"",OPTION_FLAG_DISABLED)
+
+
+	
+;	Int i = 0
+;	While i < _sHangoutNames.Length
+;		AddHeaderOption(_sHangoutNames[i])
+;		AddTextOption("Actor count",HangoutManager.GetNumActorsInHangout(_sHangoutNames[i]))
+;		
+;		i += 1
+;	EndWhile
+	
+	;===== END Hangout Manager page =====----
+
 	ElseIf a_page == "$Global Options"
 
 	;===== Global Options page =====----
@@ -418,6 +525,47 @@ Event OnOptionSelect(Int Option)
 		EndWhile
 		SetToggleOptionValue(Option,bAutoMagic)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf Option == OPTION_TOGGLE_SHOUTSALLOW_MASTER 
+		Bool bAllowShouts = CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool
+		bAllowShouts = !bAllowShouts
+		CharacterManager.SetLocalInt(_sCharacterName,"ShoutsAllowMaster",bAllowShouts as Int)
+		SetToggleOptionValue(OPTION_TOGGLE_SHOUTSALLOW_MASTER,bAllowShouts)
+		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf Option == _iWarpOption
+		Bool bResult = ShowMessage("$Really warp?",True)
+		If bResult
+			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
+		EndIf
+	ElseIf Option == _iShowDebugOption
+		_bShowDebugOptions = !_bShowDebugOptions
+		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
+	ElseIf Option == OPTION_TOGGLE_HANGOUT_ENABLE
+		Bool bHangoutEnabled = HangoutManager.IsHangoutEnabled(_sHangoutName)
+		bHangoutEnabled = !bHangoutEnabled
+		HangoutManager.SetHangoutEnabled(_sHangoutName, bHangoutEnabled)
+		SetToggleOptionValue(OPTION_TOGGLE_HANGOUT_ENABLE,bHangoutEnabled)
+	ElseIf Option == OPTION_TOGGLE_HANGOUT_PARTY
+		Int i = _sCharacterNames.Length
+		While i > 0
+			i -= 1
+			If _sCharacterNames[i]
+				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
+				If kActor
+					HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
+				EndIf
+			EndIf
+		EndWhile
+	ElseIf Option == OPTION_TOGGLE_HANGOUT_CLEARALL
+		Int i = _sCharacterNames.Length
+		While i > 0
+			i -= 1
+			If _sCharacterNames[i]
+				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
+				If kActor
+					HangoutManager.AssignActorToHangout(kActor,"")
+				EndIf
+			EndIf
+		EndWhile
 	ElseIf _iMagicSchoolOptions.Find(Option) > -1
 		String sSchool
 		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
@@ -438,20 +586,6 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
 		SetToggleOptionValue(Option,bAllowed)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
-	ElseIf Option == OPTION_TOGGLE_SHOUTSALLOW_MASTER 
-		Bool bAllowShouts = CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool
-		bAllowShouts = !bAllowShouts
-		CharacterManager.SetLocalInt(_sCharacterName,"ShoutsAllowMaster",bAllowShouts as Int)
-		SetToggleOptionValue(OPTION_TOGGLE_SHOUTSALLOW_MASTER,bAllowShouts)
-		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
-	ElseIf Option == _iWarpOption
-		Bool bResult = ShowMessage("$Really warp?",True)
-		If bResult
-			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
-		EndIf
-	ElseIf Option == _iShowDebugOption
-		_bShowDebugOptions = !_bShowDebugOptions
-		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
 	EndIf
 
 EndEvent
@@ -464,8 +598,10 @@ Event OnOptionMenuOpen(Int Option)
 		SetMenuDialogDefaultIndex(0)
 	ElseIf Option == _iAliasOption
 		SetMenuDialogOptions(_sHangoutNames)
-		SetMenuDialogStartIndex(_iAliasSelections[_iCurrentCharacter])
-		SetMenuDialogDefaultIndex(_iAliasSelections[_iCurrentCharacter])
+		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
+		Int index = _sHangoutNames.Find(sHangoutName)
+		SetMenuDialogStartIndex(index)
+		SetMenuDialogDefaultIndex(index)
 	ElseIf Option == _iCurrentCharacterOption
 		SetMenuDialogOptions(_sCharacterNames)
 		SetMenuDialogStartIndex(_iCurrentCharacter)
@@ -492,6 +628,12 @@ Event OnOptionMenuOpen(Int Option)
 			SetMenuDialogStartIndex(0)
 			SetMenuDialogDefaultIndex(0)
 		EndIf
+	ElseIf Option == OPTION_MENU_HANGOUT_SELECT
+		SetMenuDialogOptions(_sHangoutNamesDisabled)
+		String sHangoutName = _sHangoutName
+		Int index = _sHangoutNamesDisabled.Find(sHangoutName)
+		SetMenuDialogStartIndex(index)
+		SetMenuDialogDefaultIndex(index)
 	EndIf
 EndEvent
 
@@ -503,12 +645,8 @@ Event OnOptionMenuAccept(int option, int index)
 		SetMenuOptionValue(_iVoiceTypeOption,sShortVoiceType)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == _iAliasOption
-		_iAliasSelections[_iCurrentCharacter] = index
-		If CharacterManager.SetCharacterHangout(_sCharacterNames[_iCurrentCharacter],_kHangoutRefAliases[index])
-			SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
-		Else
-			Debug.MessageBox("Sorry, but " + StringUtil.SubString(_sHangoutNames[index],1) + " is already in use by " + (_kHangoutRefAliases[index].GetReference() as Actor).GetActorBase().GetName() + "!")
-		EndIf
+		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
+		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
 	ElseIf Option == _iCurrentCharacterOption
 		_iCurrentCharacter = index
 		ForcePageReset()
@@ -532,6 +670,11 @@ Event OnOptionMenuAccept(int option, int index)
 			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName",_sCharacterNames[index])
 		EndIf
 		SendModEvent("vMYC_ShrineNeedsUpdate")
+	ElseIf Option == OPTION_MENU_HANGOUT_SELECT
+		_iCurrentHangout = index 
+		_sHangoutName = _sHangoutNamesDisabled[_iCurrentHangout]
+		SetMenuOptionValue(OPTION_MENU_HANGOUT_SELECT,_sHangoutNamesDisabled[_iCurrentHangout])
+		ForcePageReset()
 	EndIf
 EndEvent
 
@@ -569,9 +712,9 @@ Function UpdateSettings()
 	_Shutdown = (vMYC_CFG_Shutdown.GetValue() as Int) As Bool
 
 	_sCharacterNames = CharacterManager.CharacterNames
-	_kHangoutRefAliases = CharacterManager.kHangoutRefAliases
-	_sHangoutNames = CharacterManager.sHangoutNames
-
+	_sHangoutNames = HangoutManager.HangoutNames
+	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
+	
 	_sClassNames = CharacterManager.sClassNames
 EndFunction
 
