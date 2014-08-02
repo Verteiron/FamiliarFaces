@@ -225,7 +225,7 @@ Event OnActivate(ObjectReference akActionRef)
 EndEvent
 
 Event OnPackageChange(Package akOldPackage)
-	Debug.Trace("MYC: Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
+	Debug.Trace("MYC/Actor/" + CharacterName + ": Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
 	If IsInCombat() && GetCombatTarget() == PlayerREF && DecapitationChance.GetValue()
 		_fDecapitationChance = DecapitationChance.GetValue()
 		DecapitationChance.SetValue(0)
