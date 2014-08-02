@@ -404,7 +404,7 @@ EndFunction
 
 Bool Function DeportUnknownActors()
 {Check for an unknown actor in the Alcove and send them to limbo. Return true if one was found.}
-	If _bPlayerisSaving || !_StatueMarker.GetParentCell() || !_StatueMarker.GetParentCell().IsAttached()
+	If _bPlayerisSaving || !_StatueMarker.GetParentCell().IsAttached()
 		Return False
 	EndIf
 	Actor kUnknownActor
@@ -415,6 +415,7 @@ Bool Function DeportUnknownActors()
 		If kUnknownActor == AlcoveActor || kUnknownActor == PlayerREF 
 			kUnknownActor = None
 		EndIf
+		WaitMenuMode(0.1)
 	EndWhile
 	
 	If kUnknownActor
