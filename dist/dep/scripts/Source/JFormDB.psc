@@ -19,19 +19,20 @@ int function findEntry(string storageName, form fKey) global native
 
 ;/  attempts to get value associated with path.
 /;
-float function solveFlt(form fKey, string path) global native
-int function solveInt(form fKey, string path) global native
-string function solveStr(form fKey, string path) global native
-int function solveObj(form fKey, string path) global native
-form function solveForm(form fKey, string path) global native
+float function solveFlt(form fKey, string path, float default=0.0) global native
+int function solveInt(form fKey, string path, int default=0) global native
+string function solveStr(form fKey, string path, string default="") global native
+int function solveObj(form fKey, string path, int default=0) global native
+form function solveForm(form fKey, string path, form default=None) global native
 
-;/  attempts to assign value. returns false if no such path
+;/  Attempts to assign value. Returns false if no such path
+    With 'createMissingKeys=true' it creates any missing path elements: JFormDB.solveIntSetter(formKey, ".frostfall.keyB", 10, true) creates {frostfall: {keyB: 10}} structure
 /;
-bool function solveFltSetter(form fKey, string path, float value) global native
-bool function solveIntSetter(form fKey, string path, int value) global native
-bool function solveStrSetter(form fKey, string path, string value) global native
-bool function solveObjSetter(form fKey, string path, int value) global native
-bool function solveFormSetter(form fKey, string path, form value) global native
+bool function solveFltSetter(form fKey, string path, float value, bool createMissingKeys=false) global native
+bool function solveIntSetter(form fKey, string path, int value, bool createMissingKeys=false) global native
+bool function solveStrSetter(form fKey, string path, string value, bool createMissingKeys=false) global native
+bool function solveObjSetter(form fKey, string path, int value, bool createMissingKeys=false) global native
+bool function solveFormSetter(form fKey, string path, form value, bool createMissingKeys=false) global native
 
 ;/  returns true, if capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully
 /;

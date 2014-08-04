@@ -5,8 +5,8 @@
 Scriptname JArray Hidden
 
 
-;/  creates new container object. returns container identifier (integral number).
-    identifier is the thing you will have to pass to the most of container's functions as first argument
+;/  creates new container object. returns container identifier (integer number).
+    identifier is the thing you will have to pass to the most of container's functions as a first argument
 /;
 int function object() global native
 
@@ -34,11 +34,11 @@ function addFromArray(int object, int sourceArray, int insertAtIndex=-1) global 
 ;/  returns item at index. getObj function returns container.
     negative index accesses items from the end of array counting backwards.
 /;
-int function getInt(int object, int index) global native
-float function getFlt(int object, int index) global native
-string function getStr(int object, int index) global native
-int function getObj(int object, int index) global native
-form function getForm(int object, int index) global native
+int function getInt(int object, int index, int default=0) global native
+float function getFlt(int object, int index, float default=0.0) global native
+string function getStr(int object, int index, string default="") global native
+int function getObj(int object, int index, int default=0) global native
+form function getForm(int object, int index, form default=None) global native
 
 ;/  returns index of the first found value/container that equals to given value/container (default behaviour if searchStartIndex is 0).
     if found nothing returns -1.
@@ -80,3 +80,12 @@ function clear(int object) global native
 ;/  erases item at index. negative index accesses items from the end of array counting backwards.
 /;
 function eraseIndex(int object, int index) global native
+
+;/  returns type of the value at index. negative index accesses items from the end of array counting backwards.
+    0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string
+/;
+int function valueType(int object, int index) global native
+
+;/  Exchanges the items at index1 and index2. negative index accesses items from the end of array counting backwards.
+/;
+function swapItems(int object, int index1, int index2) global native

@@ -5,18 +5,18 @@
 Scriptname JMap Hidden
 
 
-;/  creates new container object. returns container identifier (integral number).
-    identifier is the thing you will have to pass to the most of container's functions as first argument
+;/  creates new container object. returns container identifier (integer number).
+    identifier is the thing you will have to pass to the most of container's functions as a first argument
 /;
 int function object() global native
 
 ;/  returns value associated with key
 /;
-int function getInt(int object, string key) global native
-float function getFlt(int object, string key) global native
-string function getStr(int object, string key) global native
-int function getObj(int object, string key) global native
-form function getForm(int object, string key) global native
+int function getInt(int object, string key, int default=0) global native
+float function getFlt(int object, string key, float default=0.0) global native
+string function getStr(int object, string key, string default="") global native
+int function getObj(int object, string key, int default=0) global native
+form function getForm(int object, string key, form default=None) global native
 
 ;/  creates key-value association. replaces existing value if any
 /;
@@ -29,6 +29,11 @@ function setForm(int object, string key, form value) global native
 ;/  returns true, if something associated with key
 /;
 bool function hasKey(int object, string key) global native
+
+;/  returns type of the value associated with key.
+    0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string
+/;
+int function valueType(int object, string key) global native
 
 ;/  returns new array containing all keys
 /;
@@ -49,3 +54,7 @@ int function count(int object) global native
 ;/  removes all items from container
 /;
 function clear(int object) global native
+
+;/  inserts key-value pairs from the source map
+/;
+function addPairs(int object, int source, bool overrideDuplicates) global native
