@@ -13,7 +13,7 @@ String[] Property HangoutNames Hidden
 {List of Hangout names}
 	String[] Function Get()
 		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
-		JValue.Retain(jHangoutNames)
+		JValue.Retain(jHangoutNames,"vMYC_HOM")
 		String[] sHangoutNames = New String[128]
 		Int i = 0 
 		Int iCount = JArray.Count(jHangoutNames)
@@ -199,6 +199,7 @@ Function DoInit()
 EndFunction
 
 Function DoUpkeep()
+	CleanupTempJContainers()
 	RegisterForModEvents()
 	Int jCustomLocationsMap = JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP)
 	Int i = CustomLocations.Length
@@ -233,7 +234,7 @@ Function RegisterForModEvents()
 EndFunction
 
 Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, String asHangoutName = "")
-	JValue.Retain(ajLocationData)
+	JValue.Retain(ajLocationData,"vMYC_HOM")
 	String sHangoutName = asHangoutName
 	If !sHangoutName
 		sHangoutName = jMap.getStr(ajLocationData,"LocationName")
@@ -902,4 +903,8 @@ EndFunction
 
 Int Function GetLocalHangoutObj(String asLocalHangoutName, String asPath)
 	Return JValue.solveObj(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
+EndFunction
+
+Function CleanupTempJContainers()
+	JValue.ReleaseObjectsWithTag("vMYC_HOM")
 EndFunction

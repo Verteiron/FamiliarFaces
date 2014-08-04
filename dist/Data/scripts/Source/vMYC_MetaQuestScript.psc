@@ -307,8 +307,8 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	If JContainers.APIVersion() != 2
-		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.67.x, but the current version reports a different API version.\nThe mod will now shut down.")
+	If JContainers.APIVersion() != 3
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers with API 3 (0.68.x), but the current version reports a different API version.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed

@@ -246,7 +246,6 @@ String[] _sCharacterNames
 
 Int _jMYC
 
-Int _jTempRetainer
 Float _fFlushTime
 
 Location	_kLastPlayerLocation
@@ -432,12 +431,6 @@ Event OnUpdate()
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	If _fFlushTime && _fFlushTime < GetCurrentRealTime()
-		;Debug.Trace("MYC/CM: FlushTime is " + _fFlushTime + ", CurrentTime is " + GetCurrentRealTime())
-		FlushTemp()
-	Else
-		RegisterForSingleUpdate(5)
-	EndIf
 EndEvent
 
 Event OnSetLastPlayerLocation(string eventName, string strArg, float numArg, Form sender)
@@ -490,6 +483,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		RegisterForSingleUpdate(0)
 		Return
 	EndIf
+	CleanupTempJContainers()
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvents()
 	LoadCharacterFiles()
@@ -553,7 +547,7 @@ Function RefreshCharacters()
 	Int jActorBaseList = JFormMap.allKeys(jActorMap)
 	Int i = JArray.Count(jActorBaseList)
 	Int jDeferredActors = JArray.Object()
-	RetainTemp(jDeferredActors)
+	JValue.Retain(jDeferredActors,"vMYC_CM")
 	While i > 0
 		i -= 1
 		ActorBase kActorBase = JArray.getForm(jActorBaseList,i) as ActorBase
@@ -577,6 +571,7 @@ Function RefreshCharacters()
 		;Debug.Trace("MYC/CM: Refreshing Actor " + kTargetActor)
 		(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
 	EndWhile
+	JValue.Release(jDeferredActors)
 EndFunction
 
 Function LoadCharacterFiles()
@@ -600,10 +595,10 @@ Function LoadCharacterFiles()
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
 	
-	RetainTemp(jCharacterNames)
-	RetainTemp(jDirectoryScan)
-	RetainTemp(jCharFiles)
-	RetainTemp(jCharData)
+	JValue.AddToPool(jCharacterNames,"vMYC_CM_Load")
+	JValue.AddToPool(jDirectoryScan,"vMYC_CM_Load")
+	JValue.AddToPool(jCharFiles,"vMYC_CM_Load")
+	JValue.AddToPool(jCharData,"vMYC_CM_Load")
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
@@ -659,7 +654,7 @@ Function LoadCharacterFiles()
 			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
 		EndIf
 	EndWhile
-	
+	JValue.CleanPool("vMYC_CM_Load")
 EndFunction
 
 Int Function ValidateCharacterInfo(Int jCharacterData)
@@ -1003,10 +998,10 @@ Function RepairSaves()
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
 	
-	RetainTemp(jCharacterNames)
-	RetainTemp(jDirectoryScan)
-	RetainTemp(jCharFiles)
-	RetainTemp(jCharData)
+	JValue.AddToPool(jCharacterNames,"vMYC_CM_Repair")
+	JValue.AddToPool(jDirectoryScan,"vMYC_CM_Repair")
+	JValue.AddToPool(jCharFiles,"vMYC_CM_Repair")
+	JValue.AddToPool(jCharData,"vMYC_CM_Repair")
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
@@ -1020,7 +1015,7 @@ Function RepairSaves()
 		EndIf
 	EndWhile
 
-
+	JValue.CleanPool("vMYC_CM_Repair")
 EndFunction
 
 Function ClearCharacterRefs(String asCharacterName)
@@ -2027,8 +2022,8 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	Int jInvMap = JMap.getObj(_jMYC,"PlayerInventory")
 	Int jInvForms = JFormMap.allKeys(jInvMap)
 	Int jInvCounts = JFormMap.allValues(jInvMap)
-	RetainTemp(jInvForms)
-	RetainTemp(jInvCounts)
+	JValue.Retain(jInvForms,"vMYC_CM")
+	JValue.Retain(jInvCounts,"vMYC_CM")
 	Int jPlayerInventory = JFormMap.Object()
 	JMap.SetObj(jPlayerData,"Inventory",jPlayerInventory)
 
@@ -2340,7 +2335,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	Debug.Notification("Saving " + sPlayerName + "'s data, this may take a minute...")
 
 	Int jPlayerData = JMap.Object()
-	JValue.Retain(jPlayerData) ; Not using RetainTemp here because it's sure to be cleared, and the save process may take longer than 30 seconds...
+	JValue.Retain(jPlayerData,"vMYC_CM") 
 
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
@@ -2568,12 +2563,12 @@ EndFunction
 Int Function GetNINodeInfo(Actor akActor)
 
 	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
-	RetainTemp(jNINodeList)
+	JValue.Retain(jNINodeList,"vMYC_CM")
 	Debug.Trace("MYC/CM: NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
 	
 	
 	Int jNINodes = JMap.Object()
-	RetainTemp(jNINodes)
+	JValue.Retain(jNINodes,"vMYC_CM")
 	Int i = 0
 	Int iNodeCount = JArray.Count(jNINodeList)
 	While i < iNodeCount
@@ -2591,7 +2586,8 @@ Int Function GetNINodeInfo(Actor akActor)
 		EndIf
 		i += 1
 	EndWhile
-
+	JValue.Release(jNINodeList)
+	JValue.Release(jNINodes)
 	Return jNINodes
 EndFunction
 
@@ -2725,18 +2721,8 @@ String Function GetFormIDString(Form kForm)
 	Return sResult
 EndFunction
 
-Function RetainTemp(Int jObject)
-	If !_jTempRetainer
-		_jTempRetainer = JArray.Object()
-		JValue.Retain(_jTempRetainer)
-	EndIf
-	JArray.AddObj(_jTempRetainer,jObject)
-	_fFlushTime = GetCurrentRealTime() + 30
-	;Debug.Trace("MYC/CM: Storing " + JArray.Count(_jTempRetainer) + " temporary objects, flush time is " + _fFlushTime)
-	RegisterForSingleUpdate(1)
-EndFunction
-
-Function FlushTemp()
-	Debug.Trace("MYC/CM: Flushing " + JArray.Count(_jTempRetainer) + " temporary objects.")
-	_jTempRetainer = JValue.Release(_jTempRetainer)
+Function CleanupTempJContainers()
+	JValue.ReleaseObjectsWithTag("vMYC_CM")
+	JValue.CleanPool("vMYC_CM_Load")
+	JValue.CleanPool("vMYC_CM_Repair")
 EndFunction
