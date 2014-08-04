@@ -23,6 +23,10 @@ vMYC_CharacterBookActiScript	_BookScript
 
 ;--=== Events ===--
 
+Event OnInit()
+	RegisterForModEvent("vMYC_ForceBookUpdate","OnForceBookUpdate")
+EndEvent
+
 Event OnLoad()
 	RegisterForModEvent("vMYC_ForceBookUpdate","OnForceBookUpdate")
 EndEvent

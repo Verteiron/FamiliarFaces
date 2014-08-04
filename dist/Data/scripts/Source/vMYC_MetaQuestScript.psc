@@ -5,6 +5,7 @@ Scriptname vMYC_MetaQuestScript extends Quest
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -22,6 +23,7 @@ Message Property vMYC_ModShutdownMSG Auto
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+vMYC_HangoutManager Property HangoutManager Auto
 
 ;--=== Config variables ===--
 
@@ -72,7 +74,7 @@ Event OnUpkeepState(string eventName, string strArg, float numArg, Form sender)
 		_iUpkeepsExpected += 1
 	ElseIf eventName == "vMYC_UpkeepEnd"
 		_iUpkeepsCompleted += 1
-		Debug.Trace("MYC: Metaquest Upkeep finished for " + sender + ". (" + _iUpkeepsCompleted + "/" + _iUpkeepsExpected + ")")
+		;Debug.Trace("MYC: Metaquest Upkeep finished for " + sender + ". (" + _iUpkeepsCompleted + "/" + _iUpkeepsExpected + ")")
 	EndIf
 EndEvent
 
@@ -86,7 +88,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 105
+	_CurrentVersion = 110
 	_sCurrentVersion = GetVersionString(_CurrentVersion)
 
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
@@ -123,6 +125,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		;FIXME: Do init stuff in other quests
 		CharacterManager.DoUpkeep()
 		ShrineOfHeroes.DoUpkeep()
+		HangoutManager.DoUpkeep()
 		Debug.Trace("MYC: Loaded, no updates.")
 		;CheckForOrphans()
 	EndIf
@@ -131,6 +134,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	UpdateConfig()
 	Debug.Trace("MYC: Upkeep complete!")
 	Ready = True
+	;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
 
@@ -142,13 +146,18 @@ Function DoInit()
 		WaitMenuMode(0.5)
 		CharacterManager.DoInit()
 	EndIf
-
+	InitConfig()
+	SetConfigDefaults()
 	If !(ShrineOfHeroes as Quest).IsRunning()
 		WaitMenuMode(0.5)
 		(ShrineOfHeroes as Quest).Start()
 		;CharacterManager.DoInit()
 	EndIf
-
+	If !(HangoutManager as Quest).IsRunning()
+		(HangoutManager as Quest).Start()
+		WaitMenuMode(0.5)
+		HangoutManager.DoInit()
+	EndIf
 
 	;Wait(3)
 	;CharacterManager.SaveCurrentPlayer()
@@ -181,6 +190,41 @@ Function DoUpgrade()
 		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
 	EndIf
 
+	If ModVersion < 106
+		Debug.Trace("MYC: Upgrading to 1.0.6...")
+		Debug.Trace("MYC: Initialize new config storage...")
+		InitConfig()
+		SetConfigDefaults()
+		CharacterManager.RepairSaves()
+		CharacterManager.DoUpkeep()
+		Debug.Trace("MYC: Shutting down Shrine of Heroes...")
+		ShrineOfHeroes.Stop()
+		While ShrineOfHeroes.IsRunning()
+			Wait(0.5)
+			ShrineOfHeroes.Stop()
+			Debug.Trace("MYC: Waiting for Shrine to shut down...")
+		EndWhile
+		Debug.Trace("MYC: Restarting Shrine of Heroes...")
+		ShrineOfHeroes.Start()
+		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
+		ModVersion = 106
+	EndIf
+	
+	If ModVersion < 110
+		Debug.Trace("MYC: Upgrading to 1.1.0...")
+		CharacterManager.RepairSaves()
+		CharacterManager.DoUpkeep(False)
+		ShrineOfHeroes.DoUpkeep(False)
+		HangoutManager.Stop()
+		HangoutManager.Start()
+		HangoutManager.DoInit()
+		HangoutManager.ImportOldHangouts()
+		Wait(2)
+		;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
+		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
+		ModVersion = 110
+	EndIf
+	
 	;Generic upgrade code
 	If ModVersion < _CurrentVersion
 		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
@@ -274,6 +318,18 @@ Bool Function CheckDependencies()
 		Return False
 	Else
 		;Proceed
+	EndIf
+	
+	Int iRandom = RandomInt(0,999999)
+	Int jTestMap = JMap.Object()
+	JMap.setInt(jTestMap,"RandomInt",iRandom)
+	JValue.WriteToFile(jTestMap,"Data/vMYC/vMYC_testfile.json")
+	WaitMenuMode(0.1)
+	jTestMap = JValue.Release(jTestMap)
+	jTestMap = JValue.ReadFromFile("Data/vMYC/vMYC_testfile.json")
+	If JMap.getInt(jTestMap,"RandomInt") != iRandom
+		Debug.MessageBox("Familiar Faces\nCould not write to Data/vMYC! This may be because your Skyrim directory's permissions are wrong, or the vMYC is missing.\nThe mod will shut down until this is fixed!")
+		Return False
 	EndIf
 	Return True
 EndFunction
