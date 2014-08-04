@@ -34,6 +34,9 @@ Int Property	OPTION_TOGGLE_HANGOUT_CLEAR					Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_CLEARALL				Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_PARTY					Auto Hidden
 
+Int[] Property	OPTION_MENU_ALCOVE_CHARACTER				Auto Hidden
+Int[] Property	OPTION_TOGGLE_ALCOVE_SUMMONED					Auto Hidden
+
 Bool _Changed
 Bool _Shutdown
 
@@ -87,7 +90,6 @@ Int[]		_iAlcoveIndices
 Int[]		_iAlcoveStates
 String[]	_sAlcoveStateEnum
 String[] 	_sAlcoveCharacterNames
-Int[] 		_iAlcoveCharacterOption
 Int[]		_iAlcoveResetOption
 
 Int		_iShowDebugOption
@@ -95,7 +97,7 @@ Int		_iShowDebugOption
 Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
-    return 5 ; Default version
+    return 6 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -115,6 +117,16 @@ Event OnVersionUpdate(int a_version)
 		Pages[1] = "$Shrine of Heroes"
 		Pages[2] = "$Hangout Manager"
 		Pages[3] = "$Global Options"
+	ElseIf (a_version >= 6 && CurrentVersion < 6)
+		Debug.Trace("MYC/MCM: Updating script to version 6...")
+		OPTION_MENU_ALCOVE_CHARACTER	= New Int[12]
+		OPTION_TOGGLE_ALCOVE_SUMMONED	= New Int[12]
+		Pages = New String[5]
+		Pages[0] = "$Character Setup"
+		Pages[1] = "$Shrine of Heroes"
+		Pages[2] = "$Hangout Manager"
+		Pages[3] = "$Global Options"
+		Pages[4] = "$Debugging"
 	EndIf
 
 EndEvent
@@ -145,7 +157,8 @@ Event OnConfigInit()
 	_sAlcoveStateEnum[3] 	= "$Summoned"
 	_sAlcoveStateEnum[4] 	= "$Error"
 
-	_iAlcoveCharacterOption	= New Int[12]
+	OPTION_MENU_ALCOVE_CHARACTER	= New Int[12]
+	OPTION_TOGGLE_ALCOVE_SUMMONED	= New Int[12]
 	_iAlcoveResetOption		= New Int[12]
 
 	FilterVoiceTypes(VOICETYPE_NOFILTER)
@@ -343,37 +356,30 @@ event OnPageReset(string a_page)
 	ElseIf a_page == "$Shrine of Heroes"
 
 	;===== Shrine of Heroes page =====----
+	
 		RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")
-		SetCursorFillMode(TOP_TO_BOTTOM)
 
 		Int i = 0
 		Int iAlcoveCount = ShrineOfHeroes.Alcoves.Length
 		Int iAddedCount = 0
 
 		SetCursorFillMode(LEFT_TO_RIGHT)
-		AddHeaderOption("$Active Alcoves")
-		AddHeaderOption("$Inactive Alcoves")
-		Int iActivePos = 0
-		Int iInactivePos = 1
-		SetCursorFillMode(TOP_TO_BOTTOM)
 		While i < iAlcoveCount
 			vMYC_ShrineAlcoveController kThisAlcove = ShrineOfHeroes.AlcoveControllers[i]
 			Int iAlcoveIndex = kThisAlcove.AlcoveIndex
 			_iAlcoveIndices[iAlcoveIndex] = iAlcoveIndex
 			_iAlcoveStates[iAlcoveIndex] = kThisAlcove.AlcoveState
 			_sAlcoveCharacterNames[iAlcoveIndex] = ShrineOfHeroes.GetAlcoveStr(i,"CharacterName")
-
-			If _iAlcoveStates[iAlcoveIndex] == 0
-				iInactivePos += 2
-				SetCursorPosition(iInactivePos)
-			Else
-				iActivePos += 2
-				SetCursorPosition(iActivePos)
+			OPTION_MENU_ALCOVE_CHARACTER[iAlcoveIndex] = AddMenuOption("Alcove {" + (iAlcoveIndex + 1) + "}: {" + _sAlcoveStateEnum[_iAlcoveStates[iAlcoveIndex]] + "}",_sAlcoveCharacterNames[iAlcoveIndex])
+			Int iSummonedOptionFlags = 0
+			If !_sAlcoveCharacterNames[iAlcoveIndex] || _sAlcoveCharacterNames[iAlcoveIndex] == "Empty"
+				iSummonedOptionFlags = OPTION_FLAG_DISABLED
 			EndIf
-			_iAlcoveCharacterOption[iAlcoveIndex] = AddMenuOption("Alcove {" + (iAlcoveIndex + 1) + "}: {" + _sAlcoveStateEnum[_iAlcoveStates[iAlcoveIndex]] + "}",_sAlcoveCharacterNames[iAlcoveIndex])
+			OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex] = AddToggleOption("$Summoned",kThisAlcove.CharacterSummoned,iSummonedOptionFlags)
 			i += 1
 		EndWhile
 
+		
 
 	;===== END Shrine of Heroes page =====----
 
@@ -536,6 +542,19 @@ Event OnOptionSelect(Int Option)
 		If bResult
 			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
 		EndIf
+	ElseIf OPTION_TOGGLE_ALCOVE_SUMMONED.Find(Option) > -1
+		Int iAlcoveIndex = OPTION_TOGGLE_ALCOVE_SUMMONED.Find(Option)
+		vMYC_ShrineAlcoveController kThisAlcove = ShrineOfHeroes.AlcoveControllers[iAlcoveIndex]
+		Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
+		If iHandle	
+			ModEvent.PushInt(iHandle,iAlcoveIndex)
+			If kThisAlcove.CharacterSummoned
+				ModEvent.PushBool(iHandle,False)
+			Else
+				ModEvent.PushBool(iHandle,True)
+			EndIf
+			ModEvent.Send(iHandle)
+		EndIf
 	ElseIf Option == _iShowDebugOption
 		_bShowDebugOptions = !_bShowDebugOptions
 		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
@@ -610,8 +629,8 @@ Event OnOptionMenuOpen(Int Option)
 		SetMenuDialogOptions(_sClassNames)
 		SetMenuDialogStartIndex(_iClassSelection)
 		SetMenuDialogDefaultIndex(_iClassSelection)
-	ElseIf _iAlcoveCharacterOption.Find(Option) > -1
-		Int iAlcove = _iAlcoveCharacterOption.Find(Option)
+	ElseIf OPTION_MENU_ALCOVE_CHARACTER.Find(Option) > -1
+		Int iAlcove = OPTION_MENU_ALCOVE_CHARACTER.Find(Option)
 		Int iCN = _sCharacterNames.Find("")
 		String[] sCharacterNamesPlusEmpty = New String[128]
 		sCharacterNamesPlusEmpty[0] = "$Empty"
@@ -654,19 +673,19 @@ Event OnOptionMenuAccept(int option, int index)
 		_iClassSelection = index
 		SetMenuOptionValue(_iClassOption,_sClassNames[index])
 		CharacterManager.SetCharacterClass(_sCharacterNames[_iCurrentCharacter],CharacterManager.kClasses[index])
-	ElseIf _iAlcoveCharacterOption.Find(Option) > -1
+	ElseIf OPTION_MENU_ALCOVE_CHARACTER.Find(Option) > -1
 		index -= 1 ; Adjust because we added "Empty" to the beginning of the other list
-		Int iAlcove = _iAlcoveCharacterOption.Find(Option)
+		Int iAlcove = OPTION_MENU_ALCOVE_CHARACTER.Find(Option)
 		If index < 0
-			SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],"")
+			SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],"")
 			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName","")
 		Else
 			Int iOIndex = ShrineOfHeroes.GetAlcoveIndex(_sCharacterNames[index])
 			If iOIndex > -1
 				ShrineOfHeroes.SetAlcoveStr(iOIndex,"CharacterName","")
-				SetMenuOptionValue(_iAlcoveCharacterOption[iOIndex],"")
+				SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iOIndex],"")
 			EndIf
-			SetMenuOptionValue(_iAlcoveCharacterOption[iAlcove],_sCharacterNames[index])
+			SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],_sCharacterNames[index])
 			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName",_sCharacterNames[index])
 		EndIf
 		SendModEvent("vMYC_ShrineNeedsUpdate")

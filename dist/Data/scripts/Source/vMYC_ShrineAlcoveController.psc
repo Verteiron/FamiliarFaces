@@ -126,6 +126,16 @@ Int Property AlcoveLightState Hidden
 	EndFunction
 EndProperty
 
+Bool Property CharacterSummoned Hidden
+	Bool Function Get()
+		If AlcoveStatueState == 2 || CharacterManager.GetLocalInt(CharacterName,"IsSummoned")
+			Return True
+		Else 
+			Return False
+		EndIf
+	EndFunction
+EndProperty
+
 Bool Property DisableLights	= False Auto Hidden
 
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
@@ -140,8 +150,6 @@ Activator		Property	vMYC_PerkGlow				Auto
 
 ActorBase		Property	vMYC_InvisibleMActor		Auto
 ActorBase		Property	vMYC_InvisibleFActor		Auto
-
-Bool			Property	CharacterSummoned			Auto Hidden
 
 EffectShader 	Property 	vMYC_BlindingLight					Auto
 EffectShader 	Property 	vMYC_BlindingLightGold				Auto
@@ -283,7 +291,7 @@ Bool			_bLastValidation = False
 String			_sLastFailureReason = ""
 Int				_iRepeatFailureCount = 0
 
-
+Int				_iAlcoveToggleEventIndex = 0
 ;Legacy variables, do not use
 
 Actor 			_kCharacter
@@ -332,6 +340,7 @@ Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_OrphanedActor","OnOrphanedActor")
 	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
 	RegisterForModEvent("vMYC_AlcoveValidateState","OnAlcoveValidateState")
+	RegisterForModEvent("vMYC_AlcoveToggleSummoned","OnAlcoveToggleSummoned")
 EndFunction
 
 Function DoUpkeep()
@@ -1152,6 +1161,24 @@ Event OnItemSaved(string eventName, string strArg, float numArg, Form sender)
 EndEvent
 
 ;==== Functions/Events for character summoning/banishing ====----
+
+Event OnAlcoveToggleSummoned(Int aiAlcoveIndex, Bool abCharacterSummoned)
+	If aiAlcoveIndex != AlcoveIndex
+		Return
+	EndIf
+	_iAlcoveToggleEventIndex += 1
+	Int iAlcoveToggleEventIndex = _iAlcoveToggleEventIndex
+	Wait(0.1)
+	If _iAlcoveToggleEventIndex != iAlcoveToggleEventIndex
+		Return
+	EndIf
+	_iAlcoveToggleEventIndex = 0
+	If abCharacterSummoned && AlcoveStatueState != ALCOVE_STATUE_SUMMONED && ValidationState == VALIDATION_FAILURE_NONE && AlcoveActor as Actor
+		SummonCharacter()
+	ElseIf !abCharacterSummoned && AlcoveStatueState == ALCOVE_STATUE_SUMMONED && ValidationState == VALIDATION_FAILURE_NONE && AlcoveActor as Actor
+		BanishCharacter()
+	EndIf
+EndEvent
 
 Function SummonCharacter()
 {Summon the character from Alcove into Tamriel}
