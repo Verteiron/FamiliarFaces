@@ -975,15 +975,9 @@ Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHango
 EndFunction
 
 Function SetCharacterTracking(String asCharacterName, Bool abEnable)
-{Enable the quest objective for target character's refalias}
-	Int iRefIndex = JValue.solveInt(_jMYC,"." + asCharacterName + ".!LocalData.HangoutIndex")
-	If iRefIndex == -1 && abEnable
-		PickHangout(asCharacterName)
-	EndIf
+{Tell HangoutManager to enable tracking for this character}
 	SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
-	;Debug.Trace("MYC/CM: SetCharacterTracking for " + asCharacterName + " at HangoutIndex " + iRefIndex + " to " + abEnable)
-	SetObjectiveDisplayed(iRefIndex,False)
-	SetObjectiveDisplayed(iRefIndex,abEnable)
+	HangoutManager.EnableTracking(GetCharacterActorByName(asCharacterName),abEnable)
 EndFunction
 
 Function RepairSaves()
