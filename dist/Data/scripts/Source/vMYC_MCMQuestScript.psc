@@ -348,7 +348,17 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		AddTextOption("ActorBase: " + GetFormIDString(CharacterManager.GetCharacterDummy(_sCharacterName)),"",OPTION_FLAG_DISABLED)
 		AddTextOption("Actor: " + GetFormIDString(CharacterManager.GetCharacterActorByName(_sCharacterName)),"",OPTION_FLAG_DISABLED)
-
+		Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
+		If MissingReqs == 3
+			AddEmptyOption()
+			AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
+		ElseIf MissingReqs == 2
+			AddEmptyOption()
+			AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
+		ElseIf MissingReqs == 1
+			AddEmptyOption()
+			AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
+		EndIf
 		;===== END info column =============----
 
 	;===== END Character Setup page =====----
