@@ -207,6 +207,11 @@ TextureSet Property vMYC_DummyTexture Auto
 Message Property vMYC_CharactersLoadingMSG Auto
 Message Property vMYC_CharactersLoadedMSG Auto
 Message	Property vMYC_CharacterListLoadedMSG Auto
+Message Property vMYC_ReqMissingNagMSG Auto
+Message Property vMYC_ReqMissingCharMinorMSG Auto
+Message Property vMYC_ReqMissingCharWarningMSG Auto
+Message Property vMYC_ReqMissingCharCriticalMSG Auto
+
 
 ;--=== Config variables ===--
 
@@ -618,6 +623,7 @@ Function LoadCharacterFiles()
 				JMap.SetObj(jCharacterInfo,"Data",jCharacterData)
 				JMap.setObj(_jMYC,sCharacterName,jCharacterInfo)
 				SetLocalInt(sCharacterName,"FilePresent",1)
+				Message.ResetHelpMessage("vMYC_Nag")
 				;Debug.Trace("MYC/CM: " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 			Else
 				;We're loading a file for a character we already have a record of.
@@ -654,6 +660,23 @@ Function LoadCharacterFiles()
 			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
 		EndIf
 	EndWhile
+	
+	;--- See if any existing characters have missing requirements
+	Bool bShowNag = False
+	i = JArray.Count(jCharacterNames)
+	While i > 0
+		i -= 1
+		String sCharacterName = jArray.getStr(jCharacterNames,i)
+		If CheckModReqs(sCharacterName)
+			bShowNag = True
+		EndIf
+	EndWhile
+	If bShowNag
+		vMYC_ReqMissingNagMSG.ShowAsHelpMessage("vMYC_Nag",8,1,1)
+	Else
+		Message.ResetHelpMessage("vMYC_Nag")
+	EndIf
+	
 	JValue.CleanPool("vMYC_CM_Load")
 EndFunction
 
@@ -795,6 +818,51 @@ Function AddToReqList(Int jCharacterData, Form akForm, String asType)
 			
 EndFunction
 
+Int Function CheckModReqs(String asCharacterName)
+{Return 0 for no missing reqs, 1 for missing non-appearance reqs, 2 for missing armor/weapons reqs, 3 for missing headparts or race}
+	Debug.Trace("MYC/CM: Checking mod requirements for " + asCharacterName + "...")
+	If !GetCharacterForm(asCharacterName,"Race") as Race
+		Return 3
+	EndIf
+	Int iReturn = 0
+	Int jReqList = GetCharacterMetaObj(asCharacterName,"ReqList")
+	Int jModList = JMap.AllKeys(jReqList)
+	JValue.Retain(jModList,"vMYC_CM")
+	Int jMissingMods = JArray.Object()
+	JValue.Retain(jMissingMods,"vMYC_CM")
+	Int i = 0
+	Int iCount = JArray.Count(jModList)
+	
+	While i < iCount
+		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		If GetModByName(JArray.GetStr(jModList,i)) == 255 ; Mod is missing
+			If JMap.HasKey(jModList,"HeadPart") || JMap.HasKey(jModList,"Race")
+				Return 3
+			ElseIf JMap.HasKey(jModList,"Equipment")
+				Return 2
+			ElseIf JMap.HasKey(jModList,"SPELL") || JMap.HasKey(jModList,"Perk") 
+				Return 1
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	JValue.Release(jMissingMods)
+	JValue.Release(jModList)	
+	
+	;Check older "sources" list
+	
+	Int jHeadPartSources = GetCharacterObj(asCharacterName,"HeadpartSources")
+	i = JArray.Count(jHeadpartSources)
+	While i > 0
+		i -= 1
+		If GetModByName(JArray.GetStr(jHeadpartSources,i)) == 255 ; Mod is missing
+			Return 3
+		EndIf
+	EndWhile
+	
+	Return 0
+EndFunction
+
 ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
 	While _bFreeActorBaseBusy
@@ -841,6 +909,10 @@ EndFunction
 
 String Function GetCharacterMetaString(String asCharacterName, String asMetaName)
 	Return JValue.solveStr(_jMYC,"." + asCharacterName + ".Data._MYC." + asMetaName)
+EndFunction
+
+Int Function GetCharacterMetaObj(String asCharacterName, String asMetaName)
+	Return JValue.solveObj(_jMYC,"." + asCharacterName + ".Data._MYC." + asMetaName)
 EndFunction
 
 Int Function GetCharacterInt(String asCharacterName, String asPath)
