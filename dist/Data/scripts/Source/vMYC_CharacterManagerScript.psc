@@ -835,12 +835,13 @@ Int Function CheckModReqs(String asCharacterName)
 	
 	While i < iCount
 		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		Int jModObjTypes = JMap.AllKeys(JMap.GetObj(jReqList,JArray.GetStr(jModList,i)))
 		If GetModByName(JArray.GetStr(jModList,i)) == 255 ; Mod is missing
-			If JMap.HasKey(jModList,"HeadPart") || JMap.HasKey(jModList,"Race")
+			If JMap.HasKey(jModObjTypes,"HeadPart") || JMap.HasKey(jModObjTypes,"Race")
 				Return 3
-			ElseIf JMap.HasKey(jModList,"Equipment")
+			ElseIf JMap.HasKey(jModObjTypes,"Equipment")
 				Return 2
-			ElseIf JMap.HasKey(jModList,"SPELL") || JMap.HasKey(jModList,"Perk") 
+			ElseIf JMap.HasKey(jModObjTypes,"SPELL") || JMap.HasKey(jModObjTypes,"Perk") 
 				Return 1
 			EndIf
 		EndIf
@@ -861,6 +862,93 @@ Int Function CheckModReqs(String asCharacterName)
 	EndWhile
 	
 	Return 0
+EndFunction
+
+String Function GetModReqReport(String asCharacterName)
+{Return a string containing the missing mod report, formatted for SkyUI's ShowMessage.}
+	Debug.Trace("MYC/CM: Creating ModReq report for " + asCharacterName + "...")
+	String sReturn = ""
+	String sCrit = ""
+	String sWarn = ""
+	String sMiss = ""
+	String sInfo = ""
+	Int jReqList = GetCharacterMetaObj(asCharacterName,"ReqList")
+	Int jModList = JMap.AllKeys(jReqList)
+	JValue.Retain(jModList,"vMYC_CM")
+	Int jMissingMods = JArray.Object()
+	JValue.Retain(jMissingMods,"vMYC_CM")
+	If !GetCharacterStr(asCharacterName,"Appearance.HaircolorSource")
+		sInfo += "\nOlder file, report will be inaccurate!\n"
+	EndIf
+	Int i = 0
+	Int iCount = JArray.Count(jModList)
+	While i < iCount
+		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		String sModName = JArray.GetStr(jModList,i)
+		If GetModByName(sModName) < 255
+			sInfo += "\n" + sModName + ":\n"
+		EndIf
+		Int jModObjTypes = JMap.AllKeys(JMap.GetObj(jReqList,sModName))
+		Debug.Trace("MYC/CM:   Provides " + JArray.Count(jModObjTypes) + " forms")
+		Int j = 0
+		Int jCount = JArray.Count(jModObjTypes)
+		While j < jCount
+			String sModObj = JArray.GetStr(jModObjTypes,j)
+			String sObjList = ""
+			Int jMissingObjs = JMap.GetObj(JMap.GetObj(jReqList,sModName),sModObj)
+			Int k = 0
+			While k < JArray.Count(jMissingObjs)
+				sObjList += jArray.GetStr(jMissingObjs,k) + "\n"
+				k += 1
+			EndWhile
+			If GetModByName(sModName) == 255 ; Mod is missing
+				If sModObj == "HeadPart" || sModObj == "Race"
+					sCrit += sModName + " (" + JArray.Count(jMissingObjs) + " Missing):\n"
+					sCrit += sObjList + "\n"
+				ElseIf sModObj == "Equipment"
+					sWarn += sModName + " (" + JArray.Count(jMissingObjs) + " Missing):\n"
+					sWarn += sObjList + "\n"
+				Else
+					sMiss += sModName + " (" + JArray.Count(jMissingObjs) + " Missing):\n"
+					sMiss += sObjList + "\n"
+				EndIf
+			Else
+				sInfo += JArray.Count(jMissingObjs) + " " + sModObj
+				If JArray.Count(jMissingObjs) == 1
+					sInfo += " form\n"
+				Else
+					sInfo += " forms\n"
+				EndIf
+				;sInfo += "Using " + JArray.Count(jMissingObjs) + " " + sModObj + " forms from " + sModName + ":\n"
+				;sInfo += sObjList
+			EndIf
+			j += 1
+		EndWhile
+		i += 1
+	EndWhile
+	JValue.Release(jMissingMods)
+	JValue.Release(jModList)	
+
+	If !GetCharacterForm(asCharacterName,"Race") as Race && !sCrit
+		sCrit += "Missing Race from unknown source!\n"
+	EndIf
+	
+	sReturn = "Mod requirements for " + asCharacterName + "\n" 
+	If sCrit || sWarn || sMiss
+		If sCrit 
+			sReturn += "\n------=== Critical ===------\n" + sCrit
+		EndIf
+		If sWarn
+			sReturn += "\n------=== Equipment ===-----\n" + sWarn
+		EndIf
+		If sMiss 
+			sReturn += "\n--------==== Minor ===--------\n" + sMiss
+		EndIf
+	Else
+		sReturn += sInfo
+	EndIf
+	
+	Return sReturn
 EndFunction
 
 ActorBase Function GetFreeActorBase(Int iSex)

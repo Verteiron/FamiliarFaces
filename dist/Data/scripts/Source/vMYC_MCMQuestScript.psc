@@ -16,6 +16,8 @@ Int Property	VOICETYPE_SPOUSE 	= 2	AutoReadOnly Hidden
 Int Property	VOICETYPE_ADOPT 	= 4	AutoReadOnly Hidden
 Int Property	VOICETYPE_GENDER	= 8 AutoReadOnly Hidden
 
+Int Property	OPTION_TEXT_MODREQREPORT				Auto Hidden
+
 Int Property	OPTION_TOGGLE_TRACKING					Auto Hidden
 
 Int Property	OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		Auto Hidden
@@ -351,13 +353,16 @@ event OnPageReset(string a_page)
 		Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
 		If MissingReqs == 3
 			AddEmptyOption()
-			AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
 		ElseIf MissingReqs == 2
 			AddEmptyOption()
-			AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
 		ElseIf MissingReqs == 1
 			AddEmptyOption()
-			AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
+		Else
+			AddEmptyOption()
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements}","$Report")
 		EndIf
 		;===== END info column =============----
 
@@ -547,6 +552,8 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"ShoutsAllowMaster",bAllowShouts as Int)
 		SetToggleOptionValue(OPTION_TOGGLE_SHOUTSALLOW_MASTER,bAllowShouts)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf Option == OPTION_TEXT_MODREQREPORT
+		ShowMessage(CharacterManager.GetModReqReport(_sCharacterName),False)
 	ElseIf Option == _iWarpOption
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
