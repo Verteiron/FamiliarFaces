@@ -282,7 +282,11 @@ event OnPageReset(string a_page)
 
 		;===== Character class option =======----
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
-		_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+			_iClassOption = AddMenuOption("$Class","$Using AFT",OPTION_FLAG_DISABLED)
+		Else
+			_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+		EndIf
 		AddEmptyOption()
 		;====================================----
 
@@ -298,22 +302,31 @@ event OnPageReset(string a_page)
 		AddHeaderOption("$Skill settings")
 		OPTION_TOGGLE_SHOUTSALLOW_MASTER = AddToggleOption("{$Allow} {$Shouts}",CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool,OptionFlags)
 		AddEmptyOption()
-		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
-		OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
-		OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+		
+		If !CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+			Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
+			OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
+			OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
 
-		_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION
-		_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
-		_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
-		_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION
-		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
-		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
-
+			_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION
+			_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
+			_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+			_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION
+			_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
+			;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
+		Else
+			AddMenuOption("$Auto select spells by perks","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Alteration}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Conjuration}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Destruction}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Illusion}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Restoration}","$Using AFT",OPTION_FLAG_DISABLED)		
+		EndIf
 		If _bShowDebugOptions
 			AddEmptyOption()
 			AddHeaderOption("Debug")

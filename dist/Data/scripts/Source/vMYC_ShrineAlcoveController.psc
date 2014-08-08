@@ -444,6 +444,7 @@ EndFunction
 State Validating
 
 	Bool Function ValidateAlcove()
+		WaitMenuMode(0.5)
 		;_iValidateStateCount += 1
 		;If _iValidateStateCount > 4
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
@@ -747,6 +748,7 @@ EndEvent
 
 Event OnAlcoveSelfValidate(string eventName, string strArg, float numArg, Form sender)
 	If sender == self
+		WaitMenuMode(1.0)
 		ValidateAlcove()
 	EndIf
 EndEvent
