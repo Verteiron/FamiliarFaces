@@ -243,7 +243,9 @@ Function CheckCompatibilityModules()
 	If !CheckCompatibilityModule_EFF()
 		Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
 	EndIf
-
+	If !CheckCompatibilityModule_AFT()
+		Debug.MessageBox("Familiar Faces\nThere was an error with the AFT compatibility module. Check the Papyrus log for more details.")
+	EndIf
 EndFunction
 
 Bool Function CheckCompatibilityModule_EFF()
@@ -255,6 +257,7 @@ Bool Function CheckCompatibilityModule_EFF()
 	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
 	If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
 		Debug.Trace("MYC:  EFF found!")
+		SetConfigInt("Compat_EFF_Loaded",1)
 		If !vMYC_zCompat_EFFQuest.IsRunning()
 			vMYC_zCompat_EFFQuest.Start()
 			Debug.Trace("MYC:  Started EFF compatibility module!")
@@ -269,6 +272,7 @@ Bool Function CheckCompatibilityModule_EFF()
 		EndIf
 	Else
 		Debug.Trace("MYC:  EFF not found.")
+		SetConfigInt("Compat_EFF_Loaded",0)
 		If vMYC_zCompat_EFFQuest.IsRunning()
 			vMYC_zCompat_EFFQuest.Stop()
 			Debug.Trace("MYC:  Stopped EFF compatibility module!")
@@ -282,6 +286,43 @@ Bool Function CheckCompatibilityModule_EFF()
 	Return True
 EndFunction
 
+Bool Function CheckCompatibilityModule_AFT()
+	Quest vMYC_zCompat_AFTQuest = GetFormFromFile(0x02023c40,"vMYC_MeetYourCharacters.esp") as Quest
+	If !vMYC_zCompat_AFTQuest
+		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_AFTQuest!",1)
+		Return False
+	EndIf
+	Debug.Trace("MYC: Checking whether AFT compatibility is needed...")
+	If GetModByName("AmazingFollowerTweaks.esp") != 255 
+		Debug.Trace("MYC:  AFT found!")
+		SetConfigInt("Compat_AFT_Loaded",1)
+		If !vMYC_zCompat_AFTQuest.IsRunning()
+			vMYC_zCompat_AFTQuest.Start()
+			Debug.Trace("MYC:  Started AFT compatibility module!")
+			If vMYC_zCompat_AFTQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		Else
+			Debug.Trace("MYC:  AFT compatibility module is already running.")
+			Return True
+		EndIf
+	Else
+		Debug.Trace("MYC:  AFT not found.")
+		SetConfigInt("Compat_AFT_Loaded",0)
+		If vMYC_zCompat_AFTQuest.IsRunning()
+			vMYC_zCompat_AFTQuest.Stop()
+			Debug.Trace("MYC:  Stopped AFT compatibility module!")
+			If !vMYC_zCompat_AFTQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		EndIf
+	EndIf
+	Return True
+EndFunction
 
 Function DoShutdown()
 	Ready = False
