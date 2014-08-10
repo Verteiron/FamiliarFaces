@@ -5,7 +5,7 @@ Scriptname vMYC_CharacterManagerScript extends Quest
 
 Import Utility
 Import Game
-;Import StorageUtil
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -1386,6 +1386,23 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 					WornObject.CreateEnchantment(kCharacterActor, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
 				EndIf
 			EndIf
+			
+			;Load NIO dye, if applicable
+			If GetConfigInt("UseNIODye")
+				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+				If JValue.isArray(jNIODyeColors)
+					Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 1, h, True)
+					Int iMaskIndex = 0
+					Int iIndexMax = 15
+					While iMaskIndex < iIndexMax
+						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+						If Math.RightShift(iColor,24) > 0
+							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+						EndIf
+						i += 1
+					EndWhile
+				EndIf
+			EndIf
 		EndIf
 	EndWhile
 
@@ -2038,6 +2055,26 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	Else
 		JMap.SetInt(jEquipmentInfo,"IsCustom",0)
 	EndIf
+	
+	;Save dye color, if applicable
+	If GetConfigInt("UseNIODye")
+		Bool bHasDye = False
+		Int iHandle = NiOverride.GetItemUniqueID(kWornObjectActor, iHand, h, False)
+		Int[] iNIODyeColors = New Int[15]
+		Int iMaskIndex = 0
+		While iMaskIndex < iNIODyeColors.Length
+			Int iColor = NiOverride.GetItemDyeColor(iHandle, iMaskIndex)
+			If Math.RightShift(iColor,24) > 0
+				bHasDye = True
+				iNIODyeColors[iMaskIndex] = iColor
+			EndIf
+			iMaskIndex += 1
+		EndWhile
+		If bHasDye
+			JMap.SetObj(jEquipmentInfo,"NIODyeColors",JArray.objectWithInts(iNIODyeColors))
+		EndIf
+	EndIf
+
 	If !(iHand == 0 && IsTwoHanded) && kItem ; exclude left-hand iteration of two-handed weapons
 		If kWornObjectActor == PlayerREF
 			kItem.SendModEvent("vMYC_EquipmentSaved","",iHand)
