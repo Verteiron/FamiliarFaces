@@ -38,7 +38,7 @@ Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRe
 EndEvent
 
 Event OnUpdate()
-	Debug.Trace("MYC/WQ: OnUpdateGameTime!")
+	;Debug.Trace("MYC/WQ: OnUpdateGameTime!")
 	UpdateObjective()
 	If IsObjectiveDisplayed(2) && GameHour.GetValue() > 6 && GameHour.GetValue() < 9
 		If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = _WanderActor)
