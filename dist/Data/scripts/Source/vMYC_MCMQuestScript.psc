@@ -37,7 +37,9 @@ Int Property	OPTION_TOGGLE_HANGOUT_CLEARALL				Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_PARTY					Auto Hidden
 
 Int[] Property	OPTION_MENU_ALCOVE_CHARACTER				Auto Hidden
-Int[] Property	OPTION_TOGGLE_ALCOVE_SUMMONED					Auto Hidden
+Int[] Property	OPTION_TOGGLE_ALCOVE_SUMMONED				Auto Hidden
+
+Int Property	OPTION_DEBUG_SHUTDOWN						Auto Hidden
 
 Bool _Changed
 Bool _Shutdown
@@ -99,7 +101,7 @@ Int		_iShowDebugOption
 Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
-    return 6 ; Default version
+    return 7 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -129,17 +131,25 @@ Event OnVersionUpdate(int a_version)
 		Pages[2] = "$Hangout Manager"
 		Pages[3] = "$Global Options"
 		Pages[4] = "$Debugging"
+	ElseIf (a_version >= 7 && CurrentVersion < 7)
+		Pages = New String[5]
+		Pages[0] = "$Character Setup"
+		Pages[1] = "$Shrine of Heroes"
+		Pages[2] = "$Hangout Manager"
+		Pages[3] = "$Global Options"
+		Pages[4] = "$Debugging"
 	EndIf
 
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[3]
+	Pages = New String[5]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Shrine of Heroes"
 	Pages[2] = "$Hangout Manager"
 	Pages[3] = "$Global Options"
+	Pages[4] = "$Debugging"
 
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
@@ -503,9 +513,14 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		AddTextOption("More options will go here","")
 	;===== END Global Options page =----
+	
+	ElseIf a_page == "$Debugging"
+
+	;===== Debug Options page =====----
+	OPTION_DEBUG_SHUTDOWN = AddToggleOption("$Shutdown the mod",False)
+	;===== END Debug Options page =----
 	EndIf
-
-
+	
 EndEvent
 
 Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form sender)
@@ -635,6 +650,8 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
 		SetToggleOptionValue(Option,bAllowed)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf OPTION_DEBUG_SHUTDOWN
+		SendModEvent("vMYC_Shutdown")
 	EndIf
 
 EndEvent

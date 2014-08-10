@@ -354,6 +354,9 @@ Function DoUpkeep()
 	RegisterForSingleUpdate(1)
 EndFunction
 
+Function DoShutdown()
+EndFunction
+
 Event OnUpdate()
 	If !ValidateAlcove()
 		RegisterForSingleUpdate(5)

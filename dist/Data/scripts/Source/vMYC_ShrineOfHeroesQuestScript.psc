@@ -261,6 +261,33 @@ Function DoInit(Bool abForce = False)
 	UpdateAlcoveControllers()
 EndFunction
 
+Function DoShutdown()
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_AlcoveStatusUpdate")
+	UnregisterForModEvent("vMYC_ShrineReady")
+	Int i = AlcoveControllers.Length
+	While i > 0
+		i -= 1
+		If AlcoveControllers[i].CharacterSummoned
+			Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
+			If iHandle	
+				ModEvent.PushInt(iHandle,AlcoveControllers[i].AlcoveIndex)
+				ModEvent.PushBool(iHandle,False)
+				ModEvent.Send(iHandle)
+			EndIf
+		EndIf
+	EndWhile
+	WaitMenuMode(2)
+	InitShrineData()
+	i = AlcoveControllers.Length
+	While i > 0
+		i -= 1
+		If AlcoveControllers[i].AlcoveActor
+			AlcoveControllers[i].ReleaseActor()
+		EndIf
+	EndWhile
+EndFunction
+
 Function InitShrineData()
 	_jShrineData = JMap.Object()
 	Int jAlcoveRefs = JArray.Object()

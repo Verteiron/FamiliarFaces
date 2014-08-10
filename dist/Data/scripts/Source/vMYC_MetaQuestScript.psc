@@ -78,6 +78,12 @@ Event OnUpkeepState(string eventName, string strArg, float numArg, Form sender)
 	EndIf
 EndEvent
 
+Event OnShutdown(string eventName, string strArg, float numArg, Form sender)
+	Debug.Trace("MYC: OnShutdown!")
+	Wait(0.1)
+	DoShutdown()
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoUpkeep(Bool DelayedStart = True)
@@ -95,6 +101,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	RegisterForModEvent("vMYC_InitEnd","OnInitState")
 	RegisterForModEvent("vMYC_UpkeepBegin","OnUpkeepState")
 	RegisterForModEvent("vMYC_UpkeepEnd","OnUpkeepState")
+	RegisterForModEvent("vMYC_Shutdown","OnShutdown")
 	Ready = False
 	If DelayedStart
 		Wait(RandomFloat(2,4))
@@ -329,10 +336,32 @@ EndFunction
 Function DoShutdown()
 	Ready = False
 	Debug.Trace("MYC: Shutting down and preparing for removal...")
-	;FIXME: Do shutdown stuff!
 	_CurrentVersion = 0
 	ModVersion = 0
+	Quest vMYC_zCompat_AFTQuest = GetFormFromFile(0x02023c40,"vMYC_MeetYourCharacters.esp") as Quest
+	Quest vMYC_zCompat_EFFQuest = GetFormFromFile(0x0201eaf2,"vMYC_MeetYourCharacters.esp") as Quest
+	(vMYC_zCompat_AFTQuest as vMYC_CompatAFT).DoShutdown()
+	vMYC_zCompat_AFTQuest.Stop()
+	(vMYC_zCompat_EFFQuest as vMYC_CompatEFF).DoShutdown()
+	vMYC_zCompat_EFFQuest.Stop()
+	
+	If HangoutManager.IsRunning()
+		HangoutManager.DoShutdown()
+		HangoutManager.Stop()
+	EndIf
+	If ShrineOfHeroes.IsRunning()
+		ShrineOfHeroes.DoShutdown()
+		ShrineOfHeroes.Stop()
+	EndIf
+	If CharacterManager.IsRunning()
+		CharacterManager.DoShutdown()
+		CharacterMAnager.Stop()
+	EndIf
+	
+	JDB.SetObj("vMYC",0)
 	vMYC_ModShutdownMSG.Show()
+	Debug.Trace("MYC: Data cleared, ready for removal!")
+	Debug.Notification("Familiar Faces\nData has been cleared. You should now save and exit, then uninstall the mod before re-launching the game.")
 	_Running = False
 	Ready = True
 EndFunction

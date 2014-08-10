@@ -227,6 +227,56 @@ Function DoUpkeep()
 	SendHangoutPing()
 EndFunction
 
+Function DoShutdown()
+	Int i = 0
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_HangoutQuestRegister")
+	UnregisterForModEvent("vMYC_ShrineReady")
+	UnregisterForModEvent("vMYC_SetCustomHangout")
+	WaitMenuMode(1)
+	UnregisterForUpdate()
+	CleanupTempJContainers()
+	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+	If !jHangoutQuestMap 
+		jHangoutQuestMap = JFormMap.Object()
+		JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,jHangoutQuestMap)
+	EndIf
+	Int jQuestList = JFormMap.AllKeys(jHangoutQuestMap)
+
+	;Cancel all hangouts
+	String[] sCharacterNames = CharacterManager.CharacterNames
+	i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				CancelActorHangout(kActor)
+			EndIf
+		EndIf
+	EndWhile
+
+	;Shutdown hangout quests
+	i = JArray.Count(jQuestList)
+	While i > 0
+		i -= 1
+		vMYC_HangoutQuestScript kHangout = JArray.GetForm(jQuestList,i) as vMYC_HangoutQuestScript
+		If kHangout
+			kHangout.DoShutdown()
+		EndIf
+	EndWhile
+	
+	;Delete map markers
+	i = CustomMapMarkers.Length
+	While i > 0 
+		i -= 1
+		If CustomMapMarkers[i]
+			CustomMapMarkers[i].Delete()
+		EndIf
+	EndWhile
+
+EndFunction
+
 Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_HangoutQuestRegister","OnHangoutQuestRegister")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")

@@ -547,6 +547,21 @@ Function DoInit()
 	RegisterForSingleUpdate(1)
 EndFunction
 
+Function DoShutdown()
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_SetCustomHangout")
+	
+	String[] sCharacterNames = CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			EraseCharacter(sCharacterNames[i],True)
+		EndIf
+	EndWhile
+	
+EndFunction
+
 Function RefreshCharacters()
 	Int jActorMap = JMap.getObj(_jMYC,"ActorBaseMap")
 	Int jActorBaseList = JFormMap.allKeys(jActorMap)
@@ -1221,6 +1236,7 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 	EndIf
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
+	FFUtils.DeleteFaceGenData(kDeadActor.GetActorBase())
 	CharGen.EraseCharacter(kDeadActor,asCharacterName)
 	DeleteCharacterActor(asCharacterName)
 	SetLocalInt(asCharacterName,"DoNotLoad",1)
