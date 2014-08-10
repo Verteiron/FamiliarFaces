@@ -1399,7 +1399,7 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 						If Math.RightShift(iColor,24) > 0
 							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
 						EndIf
-						i += 1
+						iMaskIndex += 1
 					EndWhile
 				EndIf
 			EndIf
