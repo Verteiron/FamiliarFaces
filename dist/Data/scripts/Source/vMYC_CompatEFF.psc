@@ -60,3 +60,7 @@ Function DoXFLPanelUpdate()
 			EndWhile
 		EndIf
 EndFunction
+
+Function DoShutdown()
+	
+EndFunction

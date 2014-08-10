@@ -20,6 +20,7 @@ Message 		Property	vMYC_zCompat_AFT_EnabledMSG	Auto
 Faction			Property 	TweakPotentialFollowerFaction	Auto
 Faction 		Property 	TweakIgnoreFaction				Auto
 Faction 		Property 	TweakImportFaction				Auto
+Faction			Property	TweakDisableMagic				Auto
 Quest			Property	TweakFollower					Auto
 
 ;--=== Variables ===--
@@ -28,6 +29,7 @@ Quest			Property	TweakFollower					Auto
 
 Event OnGameReloaded()
 	If IsRunning()
+		CheckVars()
 		RegisterForSingleUpdate(5)
 	EndIf
 EndEvent
@@ -52,6 +54,7 @@ Event OnUpdate()
 				If kActor
 					If IsTweakedFollower(kActor)
 						CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_Tweaked",1)
+						CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_MagicDisabled",kActor.IsInFaction(TweakDisableMagic) as Int)
 					Else
 						CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_Tweaked",0)
 					EndIf
@@ -65,6 +68,9 @@ Event OnUpdate()
 EndEvent
 
 Bool Function IsTweakedFollower(Actor akActor)
+	If !IsRunning()
+		Return False
+	EndIf
 	Int i = akActor.GetNumReferenceAliases()
 	While i > 0
 		i -= 1
@@ -79,8 +85,31 @@ Bool Function IsTweakedFollower(Actor akActor)
 EndFunction
 
 Function DoInit()
+	CheckVars()
+EndFunction
+
+Function CheckVars()
 	TweakPotentialFollowerFaction 	= GetFormFromFile(0x02033cf9,"AmazingFollowerTweaks.esp") as Faction
 	TweakIgnoreFaction 				= GetFormFromFile(0x020229c3,"AmazingFollowerTweaks.esp") as Faction
 	TweakImportFaction				= GetFormFromFile(0x020362b8,"AmazingFollowerTweaks.esp") as Faction
+	TweakDisableMagic				= GetFormFromFile(0x0200eb22,"AmazingFollowerTweaks.esp") as Faction
+	
 	TweakFollower					= GetFormFromFile(0x020012ce,"AmazingFollowerTweaks.esp") as Quest
+EndFunction
+
+Function DoShutdown()
+	UnregisterForUpdate()
+	String[] sCharacterNames = CharacterManager.CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_Tweaked",0)
+				CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_MagicDisabled",0)
+			EndIf
+		EndIf
+	EndWhile
+	
 EndFunction

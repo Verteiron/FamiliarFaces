@@ -266,7 +266,12 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 	If iMyCounter != _iMagicUpdateCounter
 		Return
 	EndIf
-	
+
+	If CharacterManager.GetLocalInt(CharacterName,"Compat_AFT_MagicDisabled")
+		;Do not alter spell list if Magic is disabled by AFT
+		Return
+	EndIf
+
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
@@ -839,6 +844,10 @@ EndFunction
 
 Function SetCustomActorValues(Bool bScaleToLevel = False)
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": setting custom actor values...")
+	If CharacterManager.GetLocalInt(CharacterName,"Compat_AFT_Tweaked")
+		;Do not attempt to set stats if AFT is installed, as it will just clobber any changes we make
+		Return
+	EndIf
 	String[] sAVNames = CharacterManager.AVNames
 	Int iBaseLevel = CharacterManager.GetCharacterStat(CharacterName,"Level") As Int
 	Int iMyLevel = GetLevel()
