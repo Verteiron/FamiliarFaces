@@ -623,12 +623,32 @@ Function LoadCharacterFiles()
 	EndIf
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
-	i = JMap.Count(jDirectoryScan)
 	
 	JValue.AddToPool(jCharacterNames,"vMYC_CM_Load")
 	JValue.AddToPool(jDirectoryScan,"vMYC_CM_Load")
 	JValue.AddToPool(jCharFiles,"vMYC_CM_Load")
-	JValue.AddToPool(jCharData,"vMYC_CM_Load")
+	JValue.AddToPool(jCharData,"vMYC_CM_Load")	
+	
+	;scan old location anyway, in case new character files have been copied there.
+	Int jDirectoryScanOld = JValue.readFromDirectory("Data/vMYC/")
+	Int jCharFilesOld = JMap.allKeys(jDirectoryScan)
+	Int jCharDataOld = JMap.allValues(jDirectoryScan)
+	
+	JValue.AddToPool(jDirectoryScanOld,"vMYC_CM_Load")
+	JValue.AddToPool(jCharFilesOld,"vMYC_CM_Load")
+	JValue.AddToPool(jCharDataOld,"vMYC_CM_Load")	
+
+	;If any files are in the old location but not the new one, add them to the list
+	i = JMap.Count(jDirectoryScanOld)
+	While i > 0
+		i -= 1
+		If JArray.FindStr(jCharFiles,JArray.GetStr(jCharFilesOld,i)) < 0
+			JArray.AddStr(jCharFiles,JArray.GetStr(jCharFilesOld,i))
+			JArray.AddObj(jCharData,JArray.GetObj(jCharDataOld,i))
+		EndIf
+	EndWhile
+	
+	i = JMap.Count(jDirectoryScan)
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
