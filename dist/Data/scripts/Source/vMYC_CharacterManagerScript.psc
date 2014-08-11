@@ -5,7 +5,7 @@ Scriptname vMYC_CharacterManagerScript extends Quest
 
 Import Utility
 Import Game
-;Import StorageUtil
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -47,6 +47,8 @@ ObjectReference Property LoadPoint Auto
 Activator Property vMYC_CustomMapMarker	Auto
 
 String[] Property sHangoutNames Auto Hidden
+
+String	Property	DataPath	Auto Hidden
 
 ReferenceAlias[] Property kHangoutRefAliases Auto Hidden
 
@@ -491,6 +493,9 @@ Function DoUpkeep(Bool bInBackground = True)
 	CleanupTempJContainers()
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvents()
+	If !JContainers.fileExistsAtPath("Data/vMYC/vMYC_MovedFiles.txt")
+		RepairSaves()
+	EndIf
 	LoadCharacterFiles()
 	RefreshCharacters()
 	SendModEvent("vMYC_UpkeepEnd")
@@ -529,6 +534,9 @@ Function DoInit()
 		EndIf
 		idx += 1
 	EndWhile
+	If !JContainers.fileExistsAtPath("Data/vMYC/vMYC_MovedFiles.txt")
+		RepairSaves()
+	EndIf
 	LoadCharacterFiles()
 	If GetModByName("Dawnguard.esm") != 255
 		DLC1PlayingVampireLine = GetFormFromFile(0x0200587A,"Dawnguard.esm") as GlobalVariable
@@ -582,7 +590,6 @@ Function RefreshCharacters()
 			EndIf
 		EndIf
 	EndWhile
-	;JValue.Writetofile(jDeferredActors,"Data/vMYC/_jDeferredActors.json")
 	WaitMenuMode(8) ; Give loaded characters priority
 	i = JArray.Count(jDeferredActors)
 	While i > 0
@@ -610,7 +617,10 @@ Function LoadCharacterFiles()
 	EndWhile
 
 	;Debug.Trace("MYC/CM: Reading directory...")
-	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Int jDirectoryScan = JValue.readFromDirectory(JContainers.userDirectory() + "vMYC/")
+	If !jDirectoryScan
+		jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	EndIf
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
@@ -626,7 +636,8 @@ Function LoadCharacterFiles()
 		Int jCharacterData = JArray.getObj(jCharData,i)
 		If ValidateCharacterInfo(jCharacterData) > -1
 			If UpgradeCharacterInfo(jCharacterData)
-				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				;JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				JValue.WriteToFile(jCharacterData,JContainers.userDirectory() + "vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
 				WaitMenuMode(0.25)
 			EndIf
 			String sCharacterName = JValue.solveStr(jCharacterData,".Name")
@@ -784,7 +795,6 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 			EndIf
 			JValue.SolveIntSetter(jCharacterData,"._MYC.SerializationVersion",3)
 			Debug.Trace("MYC/CM: Finished upgrading the file!")
-			;JValue.WritetoFile("Data/vMYC/" + 
 			bUpgraded = True
 		EndIf
 		;Debug.Trace("MYC/CM: Unfortunately no upgrade function is in place, so we'll just have to hope for the best!")
@@ -1168,7 +1178,15 @@ Function RepairSaves()
 	EndWhile
 
 	;Debug.Trace("MYC/CM: Reading directory...")
-	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Bool bNeedFilesMoved = False
+	Int jDirectoryScan
+	If !JContainers.fileExistsAtPath("Data/vMYC/vMYC_MovedFiles.txt")
+		bNeedFilesMoved = True
+		jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Else
+		jDirectoryScan = JValue.readFromDirectory(JContainers.userDirectory() + "vMYC/")
+	EndIf
+	
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
@@ -1183,13 +1201,14 @@ Function RepairSaves()
 		i -= 1
 		Int jCharacterData = JArray.getObj(jCharData,i)
 		If ValidateCharacterInfo(jCharacterData) > -1
-			If UpgradeCharacterInfo(jCharacterData)
-				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
-				WaitMenuMode(0.25)
+			If UpgradeCharacterInfo(jCharacterData) || bNeedFilesMoved
+				;JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				JValue.WriteToFile(jCharacterData,JContainers.userDirectory() + "vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				;WaitMenuMode(0.25)
 			EndIf
 		EndIf
 	EndWhile
-
+	JValue.WriteToFile(JMap.Object(),"Data/vMYC/vMYC_MovedFiles.txt")
 	JValue.CleanPool("vMYC_CM_Repair")
 EndFunction
 
@@ -1554,7 +1573,10 @@ Bool Function LoadCharacter(String sCharacterName)
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 	Else
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No _jMYC data for " + sCharacterName + "! BUT, we'll try loading a file by that name, just in case...")
-		Int jCharacterFileData = JValue.ReadFromFile("Data/vMYC/" + sCharacterName + ".char.json")
+		Int jCharacterFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/" + sCharacterName + ".char.json")
+		If !jCharacterFileData
+			jCharacterFileData = JValue.ReadFromFile("Data/vMYC/" + sCharacterName + ".char.json")
+		EndIf
 		If jCharacterFileData
 			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Okay, weird, we apparently have data for this character after all and the character list is desynced.")
 			Int jCharacterTopLevel = JMap.Object()
@@ -2285,8 +2307,6 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	;Debug.Trace("MYC/CM: Saved " + JArray.Count(jPlayerCustomItems) + " custom items for " + sPlayerName + ".")
 
 	SendModEvent("vMYC_InventorySaveEnd",iAddedCount)
-	;JValue.WriteTofile(jPlayerInventory,"Data/vMYC/_jPlayerInventory.json")
-	;JValue.WriteTofile(jPlayerCustomItems,"Data/vMYC/_jPlayerCustomItems.json")
 	_bSavedInventory = True
 	JValue.Release(jInvForms)
 	JValue.Release(jInvCounts)
@@ -2728,7 +2748,8 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		Wait(0.5)
 	EndWhile
 
-	JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
+	;JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
+	JValue.WriteToFile(jPlayerData,JContainers.userDirectory() + "vMYC/" + sPlayerName + ".char.json")
 	Debug.Notification("Exported character data!")
 	JValue.Release(jPlayerData)
 

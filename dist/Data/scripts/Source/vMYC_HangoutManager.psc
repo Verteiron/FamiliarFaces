@@ -68,6 +68,8 @@ Activator 			Property 	vMYC_CustomMapMarker		Auto
 Keyword				Property	vMYC_Hangout				Auto
 Keyword				Property	vMYC_Wanderer				Auto
 
+String				Property	DataPath					Auto Hidden
+
 ;--=== Constants ===--
 
 Int		Property	MAX_LOCATIONS = 24		AutoReadOnly
@@ -751,16 +753,21 @@ EndFunction
 Bool Function SyncHangoutData() 
 	Bool bUpdated = False
 	
-	Int jHangoutFileData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+	Int jHangoutFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
+	If !jHangoutFileData
+		jHangoutFileData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+		JValue.WriteToFile(_jHangoutData,JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
+	EndIf
 	Int DataSerial = JMap.getInt(_jHangoutData,"DataSerial")
 	Int DataFileSerial = JMap.getInt(jHangoutFileData,"DataSerial")
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/HOM: Our data is newer than the saved file, overwriting it!")
-		JValue.WriteToFile(_jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
+		;JValue.WriteToFile(_jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
+		JValue.WriteToFile(_jHangoutData,JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 	ElseIf DataSerial < DataFileSerial
 		Debug.Trace("MYC/HOM: Our data is older than the saved file, loading it!")
 		_jHangoutData = JValue.Release(_jHangoutData)
-		_jHangoutData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+		_jHangoutData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 		JMap.SetObj(_jMYC,"Hangouts",_jHangoutData)
 		bUpdated = True
 	Else
@@ -771,13 +778,13 @@ EndFunction
 
 Function LoadHangouts() 
 	Int jHangoutData = JDB.solveObj(".vMYC.Hangouts")
-	_jHangoutData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+	_jHangoutData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 EndFunction
 
 Function SaveHangouts() 
 	Int jHangoutData = JDB.solveObj(".vMYC.Hangouts")
 	JMap.setInt(jHangoutData,"DataSerial",JMap.getInt(jHangoutData,"DataSerial") + 1)
-	JValue.WriteToFile(jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
+	JValue.WriteToFile(jHangoutData,JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 EndFunction
 
 Function AssignHangout()

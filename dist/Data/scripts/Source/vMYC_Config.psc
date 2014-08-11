@@ -29,15 +29,15 @@ EndFunction
 
 Function SyncConfig() Global
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
-	Int jConfigFileData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	Int jConfigFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")
 	Int DataSerial = JMap.getInt(jConfigData,"DataSerial")
 	Int DataFileSerial = JMap.getInt(jConfigFileData,"DataSerial")
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Config: Our data is newer than the saved file, overwriting it!")
-		JValue.WriteToFile(jConfigData,"Data/vMYC/vMYC_config.json")
+		JValue.WriteToFile(jConfigData,JContainers.userDirectory() + "vMYC/vMYC_config.json")
 	ElseIf DataSerial < DataFileSerial
 		Debug.Trace("MYC/Config: Our data is older than the saved file, loading it!")
-		JConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+		JConfigData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")
 	Else
 		;Already synced. Sunc?
 	EndIf
@@ -45,13 +45,13 @@ EndFunction
 
 Function LoadConfig() Global
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
-	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	jConfigData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")
 EndFunction
 
 Function SaveConfig() Global
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
 	JMap.setInt(jConfigData,"DataSerial",JMap.getInt(jConfigData,"DataSerial") + 1)
-	JValue.WriteToFile(jConfigData,"Data/vMYC/vMYC_config.json")
+	JValue.WriteToFile(jConfigData,JContainers.userDirectory() + "vMYC/vMYC_config.json")
 EndFunction
 
 Int Function CreateConfigDataIfMissing() Global
@@ -61,7 +61,7 @@ Int Function CreateConfigDataIfMissing() Global
 	EndIf
 	Debug.Trace("MYC/Config: First ConfigData access, creating JDB key!")
 	Int _jMYC = JDB.solveObj(".vMYC")
-	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")	
+	jConfigData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")	
 	If jConfigData
 		Debug.Trace("MYC/Config: Loaded config file!")
 	Else
