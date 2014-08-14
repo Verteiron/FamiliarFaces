@@ -703,6 +703,19 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	Int iDismountSafetyTimer = 10
+	While akActor.IsOnMount() && iDismountSafetyTimer
+		iDismountSafetyTimer -= 1
+		Bool bDismountSent = akActor.Dismount()
+		Wait(1)
+	EndWhile
+	If !iDismountSafetyTimer
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dismount timer expired!",1)
+	EndIf
+	If akActor.IsOnMount()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		Return False
+	EndIf
 	FFUtils.DeleteFaceGenData(Self.GetActorBase())
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
