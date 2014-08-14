@@ -13,6 +13,8 @@ GlobalVariable 		Property 	GameHour 					Auto
 Keyword 			Property 	LocTypeHabitation 			Auto
 Keyword				Property	vMYC_Wanderer				Auto
 
+Bool				Property	TrackingEnabled				Auto Hidden
+
 ;--=== Variables ===--
 
 Actor 	 _WanderActor
@@ -71,23 +73,29 @@ Function UpdateObjective()
 	If !_WanderActor.GetCurrentLocation()
 		Return
 	EndIf
+	If !TrackingEnabled
+		SetObjectiveDisplayed(0,False)
+		SetObjectiveDisplayed(1,False)
+		SetObjectiveDisplayed(2,False)
+		Return
+	EndIf
 	If !_WanderActor.GetCurrentLocation().IsSameLocation(_City,LocTypeHabitation)
 		SetObjectiveDisplayed(1,False)
 		SetObjectiveDisplayed(2,False)
 		If !IsObjectiveDisplayed(0)
-			SetObjectiveDisplayed(0,True)
+			SetObjectiveDisplayed(0,TrackingEnabled)
 		EndIf
 	ElseIf GameHour.GetValue() > 8.0 && GameHour.GetValue() < 19.0 && _WanderActor.GetCurrentLocation().IsSameLocation(_City,LocTypeHabitation)
 		SetObjectiveDisplayed(0,False)
 		SetObjectiveDisplayed(2,False)
 		If !IsObjectiveDisplayed(1)
-			SetObjectiveDisplayed(1,True)
+			SetObjectiveDisplayed(1,TrackingEnabled)
 		EndIf
 	ElseIf _WanderActor.GetCurrentLocation().IsSameLocation(_City,LocTypeHabitation)
 		SetObjectiveDisplayed(0,False)
 		SetObjectiveDisplayed(1,False)
 		If !IsObjectiveDisplayed(2)
-			SetObjectiveDisplayed(2,True)
+			SetObjectiveDisplayed(2,TrackingEnabled)
 		EndIf
 	EndIf
 EndFunction
@@ -99,4 +107,9 @@ Function UpdateVariables()
 	_WanderActor = (GetAliasByName("WanderActor") as ReferenceAlias).GetReference() as Actor
 	_City = (GetAliasByName("City") as LocationAlias).GetLocation()
 	_Inn = (GetAliasByName("Inn") as LocationAlias).GetLocation()
+EndFunction
+
+Function EnableTracking(Bool abTracking = True)
+	TrackingEnabled = abTracking
+	UpdateObjective()
 EndFunction

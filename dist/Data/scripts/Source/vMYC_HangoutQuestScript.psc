@@ -18,7 +18,7 @@ ObjectReference Property MarkerObject = None Auto
 
 Bool Property Registered = False Auto Hidden
 
-
+Bool Property TrackingEnabled	Auto Hidden
 
 ;--=== Events ===--
 
@@ -112,6 +112,7 @@ Function SendRegistrationEvent()
 EndFunction
 
 Function EnableTracking(Bool abTracking = True)
+	TrackingEnabled = abTracking
 	ObjectReference kHangoutMarker = (GetAliasByName("HangoutMarker") as ReferenceAlias).GetReference()
 	;FIXME: Temporary change to avoid log errors
 	Int iObjective = 0
