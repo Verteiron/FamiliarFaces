@@ -338,6 +338,7 @@ EndEvent
 
 Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_OrphanedActor","OnOrphanedActor")
+	RegisterForModEvent("vMYC_CharacterErased","OnCharacterErased")
 	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
 	RegisterForModEvent("vMYC_AlcoveValidateState","OnAlcoveValidateState")
 	RegisterForModEvent("vMYC_AlcoveToggleSummoned","OnAlcoveToggleSummoned")
@@ -381,7 +382,8 @@ Function ClaimActor(String asCharacterName)
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager finished loading " + asCharacterName + "!")
 			AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
 		Else
-			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
+			ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 		EndIf
 	EndIf
 	If AlcoveActor
@@ -753,6 +755,12 @@ Event OnAlcoveSelfValidate(string eventName, string strArg, float numArg, Form s
 	If sender == self
 		WaitMenuMode(1.0)
 		ValidateAlcove()
+	EndIf
+EndEvent
+
+Event OnCharacterErased(string eventName, string strArg, float numArg, Form sender)
+	If strArg == CharacterName || strArg == WantCharacterName
+		EraseAlcove()
 	EndIf
 EndEvent
 

@@ -666,12 +666,12 @@ Function RefreshMeshNewCG()
 	;	Wait(5)
 	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
 	_kActorBase.SetInvulnerable(True)
-	Bool _bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + CharacterName + ".dds")
-	If !_bHasFileTexture
-		Debug.MessageBox("Familiar Faces\nThe texture file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, " + CharacterName + "'s face will lack the proper color.")
-	EndIf
 	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
 	If _bHasFileSlot
+		Bool _bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + CharacterName + ".dds")
+		If !_bHasFileTexture
+			Debug.Notification("Familiar Faces: Missing texture file for " + CharacterName + ".")
+		EndIf
 		Bool bLCSuccess = CharGenLoadCharacter(Self, CharacterRace, CharacterName)
 		Int iSafetyTimer = 30
 		If _bInvalidRace
@@ -687,7 +687,8 @@ Function RefreshMeshNewCG()
 			;Debug.Trace("MYC/Actor/" + CharacterName + ": LoadCharacter succeeded with " + iSafetyTimer + "tries remaining!")
 		EndIf
 	Else
-		Debug.MessageBox("Familiar Faces\nThe slot file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, appearance data cannot be loaded for " + CharacterName)
+		Debug.Notification("Familiar Faces: Missing CharGen slot file for " + CharacterName + ".\nThis character will be disabled.")
+		CharacterManager.EraseCharacter(CharacterName,True)
 	EndIf
 	SetNameIfNeeded()
 	;	Wait(5)

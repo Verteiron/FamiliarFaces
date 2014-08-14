@@ -1284,6 +1284,7 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 	Else
 		JMap.RemoveKey(_jMYC,asCharacterName)
 	EndIf
+	SendModEvent("vMYC_CharacterErased",asCharacterName)
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") erased character!")
 EndFunction
 
