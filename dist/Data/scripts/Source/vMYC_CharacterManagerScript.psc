@@ -647,7 +647,8 @@ Function LoadCharacterFiles()
 			JArray.AddObj(jCharData,JArray.GetObj(jCharDataOld,i))
 		EndIf
 	EndWhile
-	
+	Bool _bHasFileSlot
+	Bool _bHasFileTexture
 	i = JMap.Count(jDirectoryScan)
 	
 	;--- Load and validate all files in the data directory
@@ -661,8 +662,10 @@ Function LoadCharacterFiles()
 				WaitMenuMode(0.25)
 			EndIf
 			String sCharacterName = JValue.solveStr(jCharacterData,".Name")
+			_bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + sCharacterName + ".slot")
+			_bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + sCharacterName + ".dds")
 			;Debug.Trace("MYC/CM: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - " + sCharacterName)
-			If !JMap.hasKey(jCharacterMap,sCharacterName)
+			If !JMap.hasKey(jCharacterMap,sCharacterName) && _bHasFileSlot && _bHasFileTexture
 				JMap.setStr(jCharacterMap,sCharacterName,JArray.getStr(jCharFiles,i))
 				Int jCharacterInfo = JMap.Object()
 				JMap.SetObj(_jMYC,sCharacterName,jCharacterInfo)
@@ -688,7 +691,9 @@ Function LoadCharacterFiles()
 					;Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " hasn't changed.")
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData) ; Set the object anyway in case new forms are available from the importing game
 				EndIf
-				SetLocalInt(sCharacterName,"FilePresent",1)
+				If  _bHasFileSlot && _bHasFileTexture
+					SetLocalInt(sCharacterName,"FilePresent",1)
+				EndIf
 			EndIf
 		Else ; Validation failed
 			;Debug.Trace("MYC/CM: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - No valid character data!")
@@ -702,8 +707,8 @@ Function LoadCharacterFiles()
 		String sCharacterName = jArray.getStr(jCharacterNames,i)
 		If !GetLocalInt(sCharacterName,"FilePresent") && !GetLocalInt(sCharacterName,"ShowedMissingWarning")
 			SetLocalInt(sCharacterName,"ShowedMissingWarning",1)
-			;Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " is missing! :(")
-			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
+			Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " is missing! :(")
+			Debug.Notification("Familiar Faces: The saved data for " + sCharacterName + " is missing!")
 		EndIf
 	EndWhile
 	
@@ -1234,6 +1239,9 @@ EndFunction
 
 Function ClearCharacterRefs(String asCharacterName)
 	Actor kCharacterActor = GetCharacterActorByName(asCharacterName)
+	If !kCharacterActor
+		Return
+	EndIf
 	Int i = kCharacterActor.GetNumReferenceAliases()
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") Clearing the following RefAliases from " + asCharacterName + "...")
 	While i > 0
@@ -1252,19 +1260,18 @@ Function DeleteCharacterActor(String asCharacterName)
 	ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") Deleting actor " + kDeadActor + "!")
-	Int jCharacterList = JMap.getObj(_jMYC,"CharacterList")
-	Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)
 	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
 	ClearCharacterRefs(asCharacterName)
-	CharGen.ClearPreset(kDeadActor,asCharacterName)
+	;CharGen.ClearPreset(kDeadActor,asCharacterName)
 	_kLoadedCharacters[iLCidx] = None
 	SetLocalInt(asCharacterName,"Enabled",0)
 	SetLocalFlt(asCharacterName,"PlayTime",0.0)
 	SetLocalForm(asCharacterName,"ActorBase",None)
 	SetLocalForm(asCharacterName,"Actor",None)
-	JArray.eraseIndex(jCharacterList,iDeadManIndex)
 	JFormMap.removeKey(jActorBaseMap,kDeadActorBase)
-	kDeadActor.Delete()
+	If kDeadActor
+		kDeadActor.Delete()
+	EndIf
 EndFunction
 
 Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPreserveLocal = True)
@@ -1278,12 +1285,17 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 	FFUtils.DeleteFaceGenData(kDeadActor.GetActorBase())
 	CharGen.EraseCharacter(kDeadActor,asCharacterName)
 	DeleteCharacterActor(asCharacterName)
-	SetLocalInt(asCharacterName,"DoNotLoad",1)
 	If bPreserveLocal
-		JMap.RemoveKey(jDeadManWalking,"Data")
-	Else
-		JMap.RemoveKey(_jMYC,asCharacterName)
+		If !JMap.hasKey(_jMYC,"DeletedList")
+			JMap.setObj(_jMYC,"DeletedList",JMap.Object())
+		EndIf
+		Int jDeletedList = JMap.getObj(_jMYC,"DeletedList")
+		JMap.SetObj(jDeletedList,asCharacterName,JValue.SolveObj(_jMYC,"." + asCharacterName + ".!LocalData"))
 	EndIf
+	JDB.WriteToFile("Data/vMYC/JDB-post-delete.json")
+	JMap.RemoveKey(_jMYC,asCharacterName)
+	Int jCharacterList = JMap.GetObj(_jMYC,"CharacterList")
+	JMap.RemoveKey(jCharacterList,asCharacterName)
 	SendModEvent("vMYC_CharacterErased",asCharacterName)
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") erased character!")
 EndFunction

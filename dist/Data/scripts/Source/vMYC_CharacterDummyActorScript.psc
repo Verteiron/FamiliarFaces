@@ -158,6 +158,9 @@ Event OnEnterBleedout()
 EndEvent
 
 Event OnUpdate()
+	If !Self as Actor
+		Return
+	EndIf
 	If _bDoUpkeep
 		_bDoUpkeep = False
 		DoUpkeep(False)
@@ -864,6 +867,10 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 	EndIf
 	String[] sAVNames = CharacterManager.AVNames
 	Int iBaseLevel = CharacterManager.GetCharacterStat(CharacterName,"Level") As Int
+	If !iBaseLevel
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Saved level is 0, not applying custom AVs!",1)
+		Return
+	EndIf
 	Int iMyLevel = GetLevel()
 	Float fScaleMult = 1.0
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
