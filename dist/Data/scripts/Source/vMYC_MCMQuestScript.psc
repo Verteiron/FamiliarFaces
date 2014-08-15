@@ -413,7 +413,10 @@ event OnPageReset(string a_page)
 			If !_sAlcoveCharacterNames[iAlcoveIndex] || _sAlcoveCharacterNames[iAlcoveIndex] == "Empty"
 				iSummonedOptionFlags = OPTION_FLAG_DISABLED
 			EndIf
-			OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex] = AddToggleOption("$Summoned",kThisAlcove.CharacterSummoned,iSummonedOptionFlags)
+			If !HasLocalConfigKey("AlcoveToggleSummoned" + iAlcoveIndex)
+				SetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex,kThisAlcove.CharacterSummoned as Int)
+			EndIf
+			OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex] = AddToggleOption("$Summoned",GetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex),iSummonedOptionFlags)
 			i += 1
 		EndWhile
 
@@ -590,16 +593,10 @@ Event OnOptionSelect(Int Option)
 	ElseIf OPTION_TOGGLE_ALCOVE_SUMMONED.Find(Option) > -1
 		Int iAlcoveIndex = OPTION_TOGGLE_ALCOVE_SUMMONED.Find(Option)
 		vMYC_ShrineAlcoveController kThisAlcove = ShrineOfHeroes.AlcoveControllers[iAlcoveIndex]
-		Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
-		If iHandle	
-			ModEvent.PushInt(iHandle,iAlcoveIndex)
-			If kThisAlcove.CharacterSummoned
-				ModEvent.PushBool(iHandle,False)
-			Else
-				ModEvent.PushBool(iHandle,True)
-			EndIf
-			ModEvent.Send(iHandle)
-		EndIf
+		Bool bAlcoveToggleSummoned = GetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex) as Bool
+		bAlcoveToggleSummoned = !bAlcoveToggleSummoned
+		SetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex,bAlcoveToggleSummoned as Int)
+		SetToggleOptionValue(OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex],bAlcoveToggleSummoned)
 	ElseIf Option == _iShowDebugOption
 		_bShowDebugOptions = !_bShowDebugOptions
 		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
@@ -784,7 +781,20 @@ Function UpdateSettings()
 	_sClassNames = CharacterManager.sClassNames
 EndFunction
 
-function ApplySettings()
+Function ApplySettings()
+	Int iAlcoveIndex = ShrineOfHeroes.AlcoveControllers.Length
+	While iAlcoveIndex > 0
+		iAlcoveIndex -= 1
+		If _sAlcoveCharacterNames[iAlcoveIndex] && _sAlcoveCharacterNames[iAlcoveIndex] != "Empty"
+			Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
+			If iHandle	
+				ModEvent.PushInt(iHandle,iAlcoveIndex)
+				ModEvent.PushBool(iHandle,GetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex) as Bool)
+				ModEvent.Send(iHandle)
+			EndIf
+		EndIf
+	EndWhile
+
 	vMYC_CFG_Shutdown.SetValue(_Shutdown as Int)
 
 	vMYC_CFG_Changed.SetValue(1)
