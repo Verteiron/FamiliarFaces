@@ -27,7 +27,7 @@ Event OnInit()
 	If IsRunning()
 		UpdateVariables()
 		Debug.Trace("MYC/WQ: " + Self + " Starting from OnInit with " + _WanderActor + " and " + _City + "!")
-		RegisterForSingleUpdate(30)
+		RegisterForSingleUpdate(1)
 	EndIf
 EndEvent
 
@@ -35,13 +35,18 @@ Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRe
 	If IsRunning()
 		UpdateVariables()
 		Debug.Trace("MYC/WQ: " + Self + " Starting from OnStoryScript with " + _WanderActor + " and " + _City + "!")
-		RegisterForSingleUpdate(30)
+		RegisterForSingleUpdate(1)
 	EndIf
 EndEvent
 
 Event OnUpdate()
 	;Debug.Trace("MYC/WQ: OnUpdateGameTime!")
+	UpdateVariables()
 	UpdateObjective()
+	If !_WanderActor
+		DoShutdown()
+		Return
+	EndIf
 	If IsObjectiveDisplayed(2) && GameHour.GetValue() > 6 && GameHour.GetValue() < 9
 		If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = _WanderActor)
 			DoShutdown()

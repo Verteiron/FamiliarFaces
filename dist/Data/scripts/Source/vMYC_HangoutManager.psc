@@ -565,14 +565,14 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 			Return
 		EndIf
 		
-		Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
-		Debug.Trace("MYC/HOM/" + asHangoutName + ": Sending story event with Actor: " + akActor.GetActorBase().GetName() + ", Location: " + (GetHangoutForm(asHangoutName,"Location") as Location).GetName() + ", MarkerIndex: " + GetHangoutInt(asHangoutName,"MarkerIndex"))
 		If asHangoutName
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 			PlaceHangoutMarker(asHangoutName)
 			ObjectReference kMarkerObject
 			If HasHangoutKey(asHangoutName,"MarkerIndex")
 				kMarkerObject = CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")]
 			EndIf
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Sending story event with Actor: " + akActor.GetActorBase().GetName() + ", Location: " + (GetHangoutForm(asHangoutName,"Location") as Location).GetName() + ", MarkerIndex: " + GetHangoutInt(asHangoutName,"MarkerIndex"))
 			If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(asHangoutName,"Location") as Location,kMarkerObject,akActor)
 				Debug.Trace("MYC/HOM/" + asHangoutName + ": Started the quest successfully!")
 				SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
@@ -581,6 +581,7 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 				Debug.Trace("MYC/HOM/" + asHangoutName + ": Could not find an available HangoutQuest!")
 			EndIf
 		Else 
+			Debug.Trace("MYC/HOM/None: Assigning " + akActor + " to Wander!")
 		;No HangoutName, set to wander
 			If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = akActor)
 				Debug.Trace("MYC/HOM: Sent story event to begin wandering!")
@@ -652,7 +653,7 @@ Function CancelActorHangout(Actor akActor)
 					EndIf
 				EndIf
 			ElseIf kQuest as vMYC_WanderQuestScript
-				Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on + " + akActor + "...",1)
+				Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on " + akActor + "...",1)
 				(kQuest as vMYC_WanderQuestScript).DoShutdown()
 			EndIf
 		EndIf
