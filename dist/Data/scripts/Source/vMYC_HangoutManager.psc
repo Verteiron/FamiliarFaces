@@ -577,6 +577,7 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 				Debug.Trace("MYC/HOM/" + asHangoutName + ": Started the quest successfully!")
 				SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
 				akActor.EvaluatePackage()
+				EnableTracking(akActor,CharacterManager.GetLocalInt(sCharacterName,"TrackingEnabled") as Bool)
 			Else
 				Debug.Trace("MYC/HOM/" + asHangoutName + ": Could not find an available HangoutQuest!")
 			EndIf
@@ -586,6 +587,7 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 			If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = akActor)
 				Debug.Trace("MYC/HOM: Sent story event to begin wandering!")
 				akActor.EvaluatePackage()
+				EnableTracking(akActor,CharacterManager.GetLocalInt(sCharacterName,"TrackingEnabled") as Bool)
 			Else
 				Debug.Trace("MYC/HOM: Couldn't send story event to resume wandering!")
 			EndIf
