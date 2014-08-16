@@ -91,6 +91,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		DoShutdown()
 		Return
 	EndIf
+	SyncConfig()
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
