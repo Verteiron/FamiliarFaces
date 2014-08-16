@@ -39,7 +39,33 @@ Int Property	OPTION_TOGGLE_HANGOUT_PARTY					Auto Hidden
 Int[] Property	OPTION_MENU_ALCOVE_CHARACTER				Auto Hidden
 Int[] Property	OPTION_TOGGLE_ALCOVE_SUMMONED				Auto Hidden
 
+Int Property	OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT			Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_DELETE_MISSING			Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	Auto Hidden
+
+Int Property	OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING	Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_FILE_LOCATION			Auto Hidden
+
+String[] Property	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING		Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
+String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
+String[] Property	ENUM_GLOBAL_FILE_LOCATION			    Auto Hidden
+					
 Int Property	OPTION_DEBUG_SHUTDOWN						Auto Hidden
+Int Property	OPTION_DEBUG_CHARACTER_FORCEREFRESH			Auto Hidden
+Int Property	OPTION_DEBUG_HANGOUTS_RESETQUESTS			Auto Hidden
+Int Property	OPTION_DEBUG_SHRINE_RESET					Auto Hidden
+Int Property	OPTION_DEBUG_SHRINE_ALCOVE_VALIDATEATLOAD	Auto Hidden
+
 
 Bool _Changed
 Bool _Shutdown
@@ -96,12 +122,12 @@ String[]	_sAlcoveStateEnum
 String[] 	_sAlcoveCharacterNames
 Int[]		_iAlcoveResetOption
 
-Int		_iShowDebugOption
+Int		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 
 Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
-    return 7 ; Default version
+    return 8 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -140,6 +166,9 @@ Event OnVersionUpdate(int a_version)
 		Pages[4] = "$Debugging"
 	EndIf
 
+	If a_version > CurrentVersion
+		FillEnums()
+	EndIf
 EndEvent
 
 Event OnConfigInit()
@@ -174,8 +203,40 @@ Event OnConfigInit()
 	_iAlcoveResetOption		= New Int[12]
 
 	FilterVoiceTypes(VOICETYPE_NOFILTER)
-
+	FillEnums()
 EndEvent
+
+Function FillEnums()
+
+	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING	= New String[5]
+	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[0]	= "$Auto by Perks"
+	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[1]	= "$Auto + Healing"
+	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[2]	= "$Auto + Healing/Defense"
+	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[3]	= "$Enable all"
+	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[4]	= "$Disable all"
+
+	ENUM_GLOBAL_MAGIC_HANDLING			= New String[3]
+	ENUM_GLOBAL_MAGIC_HANDLING[0]			= "$Auto by Perks"
+	ENUM_GLOBAL_MAGIC_HANDLING[1]			= "$Auto + Healing"	
+	ENUM_GLOBAL_MAGIC_HANDLING[2]			= "$Auto + Healing"	
+	
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		= New String[3]
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Select mods"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[1]		= "$All mods"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[2]		= "$Vanilla only"
+	
+	ENUM_GLOBAL_SHOUTS_HANDLING			= New String[5]
+	ENUM_GLOBAL_SHOUTS_HANDLING[0]			= "$Allow all shouts"
+	ENUM_GLOBAL_SHOUTS_HANDLING[1]			= "$Block Call Storm"
+	ENUM_GLOBAL_SHOUTS_HANDLING[2]			= "$Block Dragon Aspect"
+	ENUM_GLOBAL_SHOUTS_HANDLING[3]			= "$Block both"
+	ENUM_GLOBAL_SHOUTS_HANDLING[4]			= "$Block all"
+	
+	ENUM_GLOBAL_FILE_LOCATION			= New String[2]
+	ENUM_GLOBAL_FILE_LOCATION[0]			= "$Data/vMYC"
+	ENUM_GLOBAL_FILE_LOCATION[1]			= "$My Games/Skyrim"
+
+EndFunction
 
 Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 	_sVoiceTypesFiltered = New String[128]
@@ -511,10 +572,56 @@ event OnPageReset(string a_page)
 	ElseIf a_page == "$Global Options"
 
 	;===== Global Options page =====----
-
-		_iShowDebugOption = AddToggleOption("Show debug options",_bShowDebugOptions)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		AddHeaderOption("$Character options")
+		OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT			= AddToggleOption("$Track characters by default",									 GetConfigBool(	"TRACKBYDEFAULT"		))
+		OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	= AddToggleOption("$Stop tracking when recruited",									 GetConfigBool(	"TRACK_STOPONRECRUIT"	))
+		OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	= AddToggleOption("$Always use Follower voicetypes",								 GetConfigBool(	"SWAP_FOLLOWER_VOICE"	))
+		OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS	= AddToggleOption("$Use level scaling",												 GetConfigBool(	"AUTOLEVEL_CHARACTERS"	))
+		OPTION_TOGGLE_GLOBAL_DELETE_MISSING			= AddToggleOption("$Disable characters with missing data",							 GetConfigBool(	"DELETE_MISSING"		))
 		AddEmptyOption()
-		AddTextOption("More options will go here","")
+		AddHeaderOption("$Magic and Shout options")
+		OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING	= AddTextOption("$Default magic handling",	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING		[GetConfigInt("DEFAULT_MAGIC_HANDLING")	])
+		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
+		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Default Shout handling",	ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
+		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNKNOWN"	))
+		
+		SetCursorPosition(1)
+		AddHeaderOption("$Data and other options")
+		OPTION_TEXT_GLOBAL_FILE_LOCATION			= AddTextOption("$Location of JSON files",	ENUM_GLOBAL_FILE_LOCATION				[GetConfigInt("FILE_LOCATION")			])
+		OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		= AddToggleOption("$Warn about missing mod files on startup",						 GetConfigBool(	"WARNING_MISSINGMOD"	))
+		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS 	= AddToggleOption("$Show debug options",											 GetConfigBool(	"SHOW_DEBUG_OPTIONS"	))
+
+		
+;		OPTION_DEBUG_SHUTDOWN						
+;		OPTION_DEBUG_CHARACTER_FORCEREFRESH			
+;		OPTION_DEBUG_HANGOUTS_RESETQUESTS			
+;		OPTION_DEBUG_SHRINE_RESET					
+;		OPTION_DEBUG_SHRINE_RESET					
+		
+
+
+
+
+
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 	;===== END Global Options page =----
 	
 	ElseIf a_page == "$Debugging"
@@ -597,9 +704,9 @@ Event OnOptionSelect(Int Option)
 		bAlcoveToggleSummoned = !bAlcoveToggleSummoned
 		SetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex,bAlcoveToggleSummoned as Int)
 		SetToggleOptionValue(OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex],bAlcoveToggleSummoned)
-	ElseIf Option == _iShowDebugOption
-		_bShowDebugOptions = !_bShowDebugOptions
-		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
+		SetConfigBool("SHOW_DEBUG_OPTIONS",!GetConfigBool("SHOW_DEBUG_OPTIONS"))
+		SetToggleOptionValue(OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS,GetConfigBool("SHOW_DEBUG_OPTIONS"))
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_ENABLE
 		Bool bHangoutEnabled = HangoutManager.IsHangoutEnabled(_sHangoutName)
 		bHangoutEnabled = !bHangoutEnabled
@@ -647,8 +754,67 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
 		SetToggleOptionValue(Option,bAllowed)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
-	ElseIf OPTION_DEBUG_SHUTDOWN
+	ElseIf Option == OPTION_DEBUG_SHUTDOWN
 		SendModEvent("vMYC_Shutdown")
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT
+		SetConfigBool("TRACKBYDEFAULT",!GetConfigBool("TRACKBYDEFAULT"))
+		Bool bSetAll = False
+		If GetConfigBool("TRACKBYDEFAULT")
+			bSetAll = ShowMessage("$TRACKBYDEFAULT_Enable_Message",True)
+		Else
+			bSetAll = ShowMessage("$TRACKBYDEFAULT_Disable_Message",True)
+		EndIf
+		SetToggleOptionValue(Option,GetConfigBool("TRACKBYDEFAULT"))
+		If bSetAll
+			CharacterManager.SetAllCharacterTracking(GetConfigBool("TRACKBYDEFAULT"))
+		EndIf
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	
+		SetConfigBool("TRACK_STOPONRECRUIT",!GetConfigBool("TRACK_STOPONRECRUIT"))
+		SetToggleOptionValue(Option,GetConfigBool("TRACK_STOPONRECRUIT"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	
+		SetConfigBool("SWAP_FOLLOWER_VOICE",!GetConfigBool("SWAP_FOLLOWER_VOICE"))
+		SetToggleOptionValue(Option,GetConfigBool("SWAP_FOLLOWER_VOICE"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD	
+		SetConfigBool("WARNING_MISSINGMOD",!GetConfigBool("WARNING_MISSINGMOD"))
+		SetToggleOptionValue(Option,GetConfigBool("WARNING_MISSINGMOD"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_DELETE_MISSING	
+		SetConfigBool("DELETE_MISSING",!GetConfigBool("DELETE_MISSING"))
+		SetToggleOptionValue(Option,GetConfigBool("DELETE_MISSING"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	
+		SetConfigBool("SHOUTS_BLOCK_UNKNOWN",!GetConfigBool("SHOUTS_BLOCK_UNKNOWN"))
+		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_BLOCK_UNKNOWN"))
+	ElseIf Option == OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING
+		Int iSetting = GetConfigInt("DEFAULT_MAGIC_HANDLING")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("DEFAULT_MAGIC_HANDLING",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[iSetting])
+	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS	
+		Int iSetting = GetConfigInt("MAGIC_ALLOWFROMMODS")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_MAGIC_ALLOWFROMMODS.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("MAGIC_ALLOWFROMMODS",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[iSetting])
+	ElseIf Option == OPTION_TEXT_GLOBAL_SHOUTS_HANDLING	
+		Int iSetting = GetConfigInt("SHOUTS_HANDLING")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_SHOUTS_HANDLING.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("SHOUTS_HANDLING",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_SHOUTS_HANDLING[iSetting])
+	ElseIf Option == OPTION_TEXT_GLOBAL_FILE_LOCATION	
+		Int iSetting = GetConfigInt("FILE_LOCATION")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_FILE_LOCATION.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("FILE_LOCATION",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_FILE_LOCATION[iSetting])
 	EndIf
 
 EndEvent
