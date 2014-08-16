@@ -1185,6 +1185,22 @@ Function SetCharacterTracking(String asCharacterName, Bool abEnable)
 	HangoutManager.EnableTracking(GetCharacterActorByName(asCharacterName),abEnable)
 EndFunction
 
+Function SetAllCharacterTracking(Bool abEnable)
+	String[] sCharacterNames = CharacterNames
+	Int i = 0
+	While i < sCharacterNames.Length
+		String sCharacterName = sCharacterNames[i]
+		If sCharacterName
+			SetLocalInt(sCharacterName,"TrackingEnabled",abEnable as Int)
+			Actor kActor = GetCharacterActorByName(sCharacterName)
+			If kActor && GetLocalInt(sCharacterName,"IsSummoned")
+				HangoutManager.EnableTracking(kActor,abEnable)
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
 Function RepairSaves()
 {Update/Repair saved files, fixing all known bugs and setting them to the latest revision}
 
