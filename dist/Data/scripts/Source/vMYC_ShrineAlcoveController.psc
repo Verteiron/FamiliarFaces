@@ -5,6 +5,7 @@ Scriptname vMYC_ShrineAlcoveController extends ObjectReference
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Constants ===--
 Int Property ALCOVE_STATE_EMPTY 	= 0 AutoReadOnly Hidden
@@ -1238,6 +1239,9 @@ Function SummonCharacter()
 	EndIf
 	AlcoveActor.SetAlpha(1.0)
 	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
+	If GetConfigBool("TRACKBYDEFAULT")
+		CharacterManager.SetCharacterTracking(_sCharacterName,True)
+	EndIf
 EndFunction
 
 Function BanishCharacter()
