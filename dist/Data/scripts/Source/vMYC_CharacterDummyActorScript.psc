@@ -25,6 +25,7 @@ Bool Property IsBusy Auto
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+vMYC_HangoutManager Property HangoutManager Auto
 
 Faction Property CurrentFollowerFaction Auto
 Faction Property PotentialFollowerFaction Auto
@@ -234,6 +235,11 @@ Event OnPackageChange(Package akOldPackage)
 		DecapitationChance.SetValue(0)
 	ElseIf _fDecapitationChance && !DecapitationChance.GetValue()
 		DecapitationChance.SetValue(_fDecapitationChance)
+	EndIf
+	If GetConfigBool("TRACK_STOPONRECRUIT") && (IsPlayerTeammate() || GetFactionRank(CurrentFollowerFaction) >= 0)
+		HangoutManager.EnableTracking(Self,False)
+	ElseIf GetConfigBool("TRACK_STOPONRECRUIT") && (!IsPlayerTeammate() || GetFactionRank(CurrentFollowerFaction) < 0)
+		HangoutManager.EnableTracking(Self,True)
 	EndIf
 EndEvent
 

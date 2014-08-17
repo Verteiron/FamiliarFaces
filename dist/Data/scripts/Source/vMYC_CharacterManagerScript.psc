@@ -1179,9 +1179,11 @@ Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHango
 	Return True
 EndFunction
 
-Function SetCharacterTracking(String asCharacterName, Bool abEnable)
+Function SetCharacterTracking(String asCharacterName, Bool abEnable, Bool abChangeSetting = True)
 {Tell HangoutManager to enable tracking for this character}
-	SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
+	If abChangeSetting
+		SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
+	EndIf
 	HangoutManager.EnableTracking(GetCharacterActorByName(asCharacterName),abEnable)
 EndFunction
 
