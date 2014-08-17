@@ -722,7 +722,7 @@ Function LoadCharacterFiles()
 			bShowNag = True
 		EndIf
 	EndWhile
-	If bShowNag
+	If bShowNag && GetConfigBool("WARNING_MISSINGMOD")
 		vMYC_ReqMissingNagMSG.ShowAsHelpMessage("vMYC_Nag",8,1,1)
 	Else
 		Message.ResetHelpMessage("vMYC_Nag")
