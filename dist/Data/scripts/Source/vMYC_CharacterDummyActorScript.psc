@@ -437,15 +437,15 @@ Function DoUpkeep(Bool bInBackground = True)
 	SyncCharacterData()
 	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
+	If !CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster")
+		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
+	EndIf
+	SetNonpersistent()
 	If _iCharGenVersion == 2
 		_bNeedRefresh = True
 	ElseIf _iCharGenVersion == 3
 		RefreshMeshNewCG()
 	EndIf
-	If !CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster")
-		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
-	EndIf
-	SetNonpersistent()
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
 	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
@@ -577,11 +577,17 @@ Function SetNonpersistent()
 		EndIf
 	EndIf
 	SetFactions()
-	If !CharacterManager.GetCharacterForm(CharacterName,"Class") ; If !GetFormValue(_kActorBase,sKey + "Class")
-		SetCustomActorValues(True)
+	If !CharacterManager.GetCharacterForm(CharacterName,"Class") 
+		If GetConfigBool("AUTOLEVEL_CHARACTERS") && CharacterManager.GetLocalInt(CharacterName,"DisableAutoLevel") == 0
+			SetCustomActorValues(True)
+		Else
+			SetCustomActorValues(False)
+		EndIf
 	Else
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
 	EndIf
+	SetAV("Confidence",3)
+	SetAV("Assistance",2)
 	UpdateCombatStyle()
 EndFunction
 
@@ -886,37 +892,45 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 		If iBaseLevel > 0
 			fScaleMult = (iMyLevel As Float) / (iBaseLevel As Float)
 		EndIf
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": original actor values will be scaled to " + fScaleMult * 100 + "% of their value")
-	EndIf
-	Int i
-	i = sAVNames.Length ;jArray.Count(jActorValueStrings)
-	While i > 0
-		i -= 1
-		String sAVName = sAVNames[i]
-		If sAVNames[i]
-			Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
-			If sAVName == "Health" || sAVName == "Magicka" || sAVName == "Stamina"
-				fAV = 100 + (((fAV - 100) / (iBaseLevel As Float)) * iMyLevel)
-				If fAV < 100
-					fAV = 100
+		Int i
+		i = sAVNames.Length ;jArray.Count(jActorValueStrings)
+		While i > 0
+			i -= 1
+			String sAVName = sAVNames[i]
+			If sAVNames[i]
+				Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
+				If sAVName == "Health" || sAVName == "Magicka" || sAVName == "Stamina"
+					fAV = 100 + (((fAV - 100) / (iBaseLevel As Float)) * iMyLevel)
+					If fAV < 100
+						fAV = 100
+					EndIf
+					CharacterManager.SetLocalFlt(CharacterName,sAVName,fAV)
+					SetActorValue(sAVName,fAV as Int)
+				Else
+					fAV = 15 + (((fAV - 15) / (iBaseLevel As Float)) * iMyLevel)
+					If fAV > 100
+						fAV = 100
+					ElseIf fAV < 15
+						fAV = 15
+					EndIf
 				EndIf
-				CharacterManager.SetLocalFlt(CharacterName,sAVName,fAV)
-			ElseIf fAV < 20
-				; Player hasn't really worked on this one at all, don't change it
-			Else
-				fAV = 15 + (((fAV - 15) / (iBaseLevel As Float)) * iMyLevel)
-				If fAV > 100
-					fAV = 100
-				ElseIf fAV < 15
-					fAV = 15
-				EndIf
+				SetActorValue(sAVName,fAV As Int)
+				;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
 			EndIf
-			SetActorValue(sAVName,fAV As Int)
-			;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
-		EndIf
-	EndWhile
-	SetAV("Confidence",3)
-	SetAV("Assistance",2)
+		EndWhile
+	Else
+		;Don't rescale it, just blindly apply all saved values to the character
+		Int i
+		i = sAVNames.Length ;jArray.Count(jActorValueStrings)
+		While i > 0
+			i -= 1
+			String sAVName = sAVNames[i]
+			If sAVNames[i]
+				Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
+				SetActorValue(sAVName,fAV As Int)
+			EndIf
+		EndWhile
+	EndIf
 EndFunction
 
 Function SetNameIfNeeded(Bool abForce = False)

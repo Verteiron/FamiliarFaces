@@ -18,6 +18,8 @@ Int Property	VOICETYPE_GENDER	= 8 AutoReadOnly Hidden
 
 Int Property	OPTION_TEXT_MODREQREPORT				Auto Hidden
 
+Int Property	OPTION_TOGGLE_DISABLE_AUTOLEVEL			Auto Hidden
+
 Int Property	OPTION_TOGGLE_TRACKING					Auto Hidden
 
 Int Property	OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		Auto Hidden
@@ -361,6 +363,8 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		;====================================----
 
+		OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",CharacterManager.GetLocalInt(_sCharacterName,"DISABLE_AUTOLEVEL"),OptionFlags)
+		
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
@@ -692,6 +696,12 @@ Event OnOptionSelect(Int Option)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf Option == OPTION_TEXT_MODREQREPORT
 		ShowMessage(CharacterManager.GetModReqReport(_sCharacterName),False)
+	ElseIf Option == OPTION_TOGGLE_DISABLE_AUTOLEVEL
+		Bool bDisableAutoLevel = CharacterManager.GetLocalInt(_sCharacterName,"DISABLE_AUTOLEVEL") as Bool
+		bDisableAutoLevel = !bDisableAutoLevel
+		CharacterManager.SetLocalInt(_sCharacterName,"DISABLE_AUTOLEVEL",bDisableAutoLevel as Int)
+		SetToggleOptionValue(Option,bDisableAutoLevel)
+		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).DoUpkeep(True)
 	ElseIf Option == _iWarpOption
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
@@ -774,6 +784,9 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	
 		SetConfigBool("SWAP_FOLLOWER_VOICE",!GetConfigBool("SWAP_FOLLOWER_VOICE"))
 		SetToggleOptionValue(Option,GetConfigBool("SWAP_FOLLOWER_VOICE"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS
+		SetConfigBool("AUTOLEVEL_CHARACTERS",!GetConfigBool("AUTOLEVEL_CHARACTERS"))
+		SetToggleOptionValue(Option,GetConfigBool("AUTOLEVEL_CHARACTERS"))
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD	
 		SetConfigBool("WARNING_MISSINGMOD",!GetConfigBool("WARNING_MISSINGMOD"))
 		SetToggleOptionValue(Option,GetConfigBool("WARNING_MISSINGMOD"))
