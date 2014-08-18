@@ -107,3 +107,11 @@ bool function solveIntSetter(int object, string path, int value, bool createMiss
 bool function solveStrSetter(int object, string path, string value, bool createMissingKeys=false) global native
 bool function solveObjSetter(int object, string path, int value, bool createMissingKeys=false) global native
 bool function solveFormSetter(int object, string path, form value, bool createMissingKeys=false) global native
+
+;/  Evaluates piece of lua code. Lua support is experimental
+/;
+float function evalLuaFlt(int object, string luaCode, float default=0.0) global native
+int function evalLuaInt(int object, string luaCode, int default=0) global native
+string function evalLuaStr(int object, string luaCode, string default="") global native
+int function evalLuaObj(int object, string luaCode, int default=0) global native
+form function evalLuaForm(int object, string luaCode, form default=None) global native

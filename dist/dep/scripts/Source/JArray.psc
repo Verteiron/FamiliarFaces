@@ -1,5 +1,5 @@
 
-;/  Ordered collection of values (value is float, integer, string or another container).
+;/  Ordered collection of values (value is float, integer, string, form or another container).
     Inherits JValue functionality
 /;
 Scriptname JArray Hidden
@@ -27,9 +27,10 @@ int function objectWithBooleans(bool[] values) global native
 int function subArray(int object, int startIndex, int endIndex) global native
 
 ;/  adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.
-    if insertAtIndex >= 0 it appends values starting from insertAtIndex index
+    negative index accesses items from the end of array counting backwards.
 /;
-function addFromArray(int object, int sourceArray, int insertAtIndex=-1) global native
+function addFromArray(int object, int source, int insertAtIndex=-1) global native
+function addFromFormList(int object, FormList source, int insertAtIndex=-1) global native
 
 ;/  returns item at index. getObj function returns container.
     negative index accesses items from the end of array counting backwards.
