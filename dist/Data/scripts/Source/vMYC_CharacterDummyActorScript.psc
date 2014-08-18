@@ -166,13 +166,9 @@ Event OnUpdate()
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	If _bNeedRefresh && _iCharGenVersion == 2
-		If !Is3DLoaded()
-			RegisterForSingleUpdate(1.0)
-			Return
-		EndIf
+	If _bNeedRefresh && _iCharGenVersion == 3
+		RefreshMeshNewCG()
 		_bNeedRefresh = False
-		RefreshMesh()
 	ElseIf Is3DLoaded()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
@@ -441,9 +437,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
 	EndIf
 	SetNonpersistent()
-	If _iCharGenVersion == 2
-		_bNeedRefresh = True
-	ElseIf _iCharGenVersion == 3
+	If _iCharGenVersion == 3
 		RefreshMeshNewCG()
 	EndIf
 	_bWarnedVoiceTypeNoFollower = False
@@ -458,14 +452,15 @@ Function DoUpkeep(Bool bInBackground = True)
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": finished upkeep!")
-	RegisterForSingleLOSGain(PlayerREF,Self)
+	If !PlayerREF.HasLos(Self)
+		RegisterForSingleLOSGain(PlayerREF,Self)
+	EndIf
 	GotoState("")
 EndFunction
 
 Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
-	If _iCharGenVersion == 2
-		_bNeedRefresh = True
-	ElseIf _iCharGenVersion == 3
+	;Extra one because sometimes external heads don't apply correctly the first run
+	If _iCharGenVersion == 3
 		RefreshMeshNewCG()
 	EndIf
 EndEvent
