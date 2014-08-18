@@ -363,7 +363,7 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		;====================================----
 
-		OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",CharacterManager.GetLocalInt(_sCharacterName,"DISABLE_AUTOLEVEL"),OptionFlags)
+		OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel"),OptionFlags)
 		
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
@@ -697,9 +697,9 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == OPTION_TEXT_MODREQREPORT
 		ShowMessage(CharacterManager.GetModReqReport(_sCharacterName),False)
 	ElseIf Option == OPTION_TOGGLE_DISABLE_AUTOLEVEL
-		Bool bDisableAutoLevel = CharacterManager.GetLocalInt(_sCharacterName,"DISABLE_AUTOLEVEL") as Bool
+		Bool bDisableAutoLevel = CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel") as Bool
 		bDisableAutoLevel = !bDisableAutoLevel
-		CharacterManager.SetLocalInt(_sCharacterName,"DISABLE_AUTOLEVEL",bDisableAutoLevel as Int)
+		CharacterManager.SetLocalInt(_sCharacterName,"DisableAutoLevel",bDisableAutoLevel as Int)
 		SetToggleOptionValue(Option,bDisableAutoLevel)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).DoUpkeep(True)
 	ElseIf Option == _iWarpOption

@@ -57,6 +57,8 @@ FormList Property vMYC_CombatStyles Auto
 Message Property vMYC_VoiceTypeNoFollower 	Auto
 Message Property vMYC_VoiceTypeNoSpouse		Auto
 
+Armor Property	vMYC_DummyArmor	Auto
+
 ;--=== Config variables ===--
 
 ;--=== Variables ===--
@@ -442,13 +444,14 @@ Function DoUpkeep(Bool bInBackground = True)
 	EndIf
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
-	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
-		If CharacterManager.GetLocalInt(CharacterName,"InAlcove")
-			CharacterManager.SetCharacterTracking(CharacterName,False)
-		Else
-			CharacterManager.SetCharacterTracking(CharacterName,True)
-		EndIf
-	EndIf
+;	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
+;		If CharacterManager.GetLocalInt(CharacterName,"InAlcove")
+;			CharacterManager.SetCharacterTracking(CharacterName,False)
+;		Else
+;			CharacterManager.SetCharacterTracking(CharacterName,True)
+;		EndIf
+;	EndIf
+
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": finished upkeep!")
@@ -528,7 +531,7 @@ Function SetNonpersistent()
 		Return
 	EndIf
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": Setting name...")
-	SetNameIfNeeded(True)
+	;SetNameIfNeeded(True)
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": Applying perks...")
 	Int iSafetyTimer = 10
 	_bNeedPerks = True
@@ -573,17 +576,20 @@ Function SetNonpersistent()
 	EndIf
 	SetFactions()
 	If !CharacterManager.GetCharacterForm(CharacterName,"Class") 
-		If GetConfigBool("AUTOLEVEL_CHARACTERS") && CharacterManager.GetLocalInt(CharacterName,"DisableAutoLevel") == 0
-			SetCustomActorValues(True)
-		Else
+		If CharacterManager.GetLocalInt(CharacterName,"DisableAutoLevel") == 1
 			SetCustomActorValues(False)
+		ElseIf GetConfigBool("AUTOLEVEL_CHARACTERS")
+			SetCustomActorValues(True)
 		EndIf
 	Else
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
+		Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
+		AddItem(vMYC_DummyArmor, 1, true)
+		RemoveItem(vMYC_DummyArmor, 1)
 	EndIf
 	SetAV("Confidence",3)
 	SetAV("Assistance",2)
-	UpdateCombatStyle()
+
+	;Force stat recalc 
 EndFunction
 
 Function SetFactions()
@@ -880,10 +886,11 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 	EndIf
 	Int iMyLevel = GetLevel()
 	Float fScaleMult = 1.0
-	;Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
+	Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
 	Float fCharacterXP = (12.5 * iMyLevel * iMyLevel) + 62.5 * iMyLevel - 75
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": needs " + fCharacterXP + " to reach this level!")
 	If bScaleToLevel
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Scaling actorValues from level " + iBaseLevel + " to level is " + iMyLevel)
 		If iBaseLevel > 0
 			fScaleMult = (iMyLevel As Float) / (iBaseLevel As Float)
 		EndIf
@@ -915,6 +922,7 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 		EndWhile
 	Else
 		;Don't rescale it, just blindly apply all saved values to the character
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Setting original actorValues from level " + iBaseLevel + " character")
 		Int i
 		i = sAVNames.Length ;jArray.Count(jActorValueStrings)
 		While i > 0
@@ -939,8 +947,8 @@ Function SetNameIfNeeded(Bool abForce = False)
 			ReferenceAlias kThisRefAlias = GetNthReferenceAlias(i)
 			If kThisRefAlias.GetOwningQuest() != CharacterManager && kThisRefAlias.GetOwningQuest() != ShrineOfHeroes
 				;Debug.Trace("MYC/Actor/" + CharacterName + ": Resetting RefAlias " + kThisRefAlias + "!")
-				kThisRefAlias.Clear()
-				kThisRefAlias.ForceRefTo(Self)
+				kThisRefAlias.TryToClear()
+				kThisRefAlias.ForceRefIfEmpty(Self)
 			EndIf
 		EndWhile
 		SendModEvent("vMYC_UpdateXFLPanel")
