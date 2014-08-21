@@ -8,6 +8,8 @@ Import Game
 
 ;--=== Properties ===--
 
+vMYC_HangoutManager Property HangoutManager Auto
+
 Actor Property PlayerRef Auto
 
 Cell Property	vMYC_ShrineOfHeroes	Auto
@@ -26,9 +28,11 @@ ObjectReference Property vMYC_PortalReturnMarker Auto
 
 FormList	Property	vMYC_LocationAnchorsList	Auto
 
-Message Property vRDN_EndCombatMSG Auto
+Message Property vMYC_PortalStoneUseMSG Auto
 
 LocationAlias	Property	kLastPlayerLocation Auto
+
+Bool Property FirstUse = True Auto Hidden
 
 ;--=== Variables ===--
 
@@ -56,38 +60,23 @@ Event OnEquipped(Actor akActor)
 		Debug.Notification("You can't use that. You're already here.")
 		Return
 	EndIf
-	Int iEventHandle = ModEvent.Create("vMYC_SetCustomHangout")
-	If iEventHandle
-		ModEvent.PushString(iEventHandle,akActor.GetActorBase().GetName())
-		String sLocationName
-		If PlayerREF.GetCurrentLocation()
-			sLocationName = PlayerREF.GetCurrentLocation().GetName()
+	If !FirstUse
+		Int iResponse = vMYC_PortalStoneUseMSG.Show()
+		;0 = Warp
+		;1 = Create Hangout
+		;2 = Cancel
+		If iResponse == 1
+			HangoutManager.CreateHangoutHere(akActor)
+			Return
+		ElseIf iResponse == 2
+			Return
 		EndIf
-		If !sLocationName
-			sLocationName = PlayerREF.GetParentCell().GetName()
-		EndIf
-		If !sLocationName || sLocationName == "Wilderness"
-			sLocationName = PlayerREF.GetActorBase().GetName() + "'s last location"
-		EndIf
-		ModEvent.PushString(iEventHandle,sLocationName)
-		ModEvent.PushForm(iEventHandle,PlayerREF.GetCurrentLocation())
-		ModEvent.PushForm(iEventHandle,PlayerREF.GetParentCell())
-		Int i = 1
-		While i < 6 ; Send 5 objects found within increasing range as 'anchors' to ensure that we can find SOMETHING to MoveTo when loading this location later
-			ModEvent.PushForm(iEventHandle,Game.FindRandomReferenceOfAnyTypeInListFromRef(vMYC_LocationAnchorsList, PlayerREF, 2048 * i))
-			i += 1
-		EndWhile
-		ModEvent.PushFloat(iEventHandle,PlayerREF.GetPositionX())
-		ModEvent.PushFloat(iEventHandle,PlayerREF.GetPositionY())
-		ModEvent.PushFloat(iEventHandle,PlayerREF.GetPositionZ())
-		If ModEvent.Send(iEventHandle)
-			;Debug.Trace("MYC/PortalStoneScript: Sent custom location data!")
-		Else
-			Debug.Trace("MYC/PortalStoneScript: WARNING, could not send custom location data!",1)
-		EndIf
+	Else
+		HangoutManager.CreateHangoutHere(akActor)
 	EndIf
 
 	If akActor == PlayerREF
+		FirstUse = False
 		DisablePlayerControls(abMovement = false, abFighting = true, abCamSwitch = true, abLooking = false, abSneaking = true, abMenu = true, abActivate = true, abJournalTabs = false)
 		ForceThirdPerson()
 		Game.SetHudCartMode()

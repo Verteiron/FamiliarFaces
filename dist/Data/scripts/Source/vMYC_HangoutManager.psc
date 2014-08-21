@@ -841,6 +841,39 @@ Bool Function IsHangoutEnabled(String asHangoutName)
 	Return True
 EndFunction
 
+Function CreateHangoutHere(Actor akActor)
+	Int iEventHandle = ModEvent.Create("vMYC_SetCustomHangout")
+	If iEventHandle
+		ModEvent.PushString(iEventHandle,akActor.GetActorBase().GetName())
+		String sLocationName
+		If !sLocationName
+			sLocationName = akActor.GetParentCell().GetName()
+		EndIf
+		If akActor.GetCurrentLocation()
+			sLocationName = akActor.GetCurrentLocation().GetName()
+		EndIf
+		If !sLocationName || sLocationName == "Wilderness"
+			sLocationName = akActor.GetActorBase().GetName() + "'s last location"
+		EndIf
+		ModEvent.PushString(iEventHandle,sLocationName)
+		ModEvent.PushForm(iEventHandle,akActor.GetCurrentLocation())
+		ModEvent.PushForm(iEventHandle,akActor.GetParentCell())
+		Int i = 1
+		While i < 6 ; Send 5 objects found within increasing range as 'anchors' to ensure that we can find SOMETHING to MoveTo when loading this location later
+			ModEvent.PushForm(iEventHandle,Game.FindRandomReferenceOfAnyTypeInListFromRef(vMYC_LocationAnchorsList, akActor, 2048 * i))
+			i += 1
+		EndWhile
+		ModEvent.PushFloat(iEventHandle,akActor.GetPositionX())
+		ModEvent.PushFloat(iEventHandle,akActor.GetPositionY())
+		ModEvent.PushFloat(iEventHandle,akActor.GetPositionZ())
+		If ModEvent.Send(iEventHandle)
+			Debug.Trace("MYC/HOM: Sent custom location data!")
+		Else
+			Debug.Trace("MYC/HOM: WARNING, could not send custom location data!",1)
+		EndIf
+	EndIf
+EndFunction
+
 ;==== Generic functions for get/setting Hangout-specific data
 
 Int Function CreateHangoutDataIfMissing(String asHangoutName)
