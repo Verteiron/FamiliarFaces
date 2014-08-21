@@ -60,10 +60,17 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnSetTrackingOnActor(Form akActor, Bool abEnableTracking)
+	If _WanderActor == akActor
+		EnableTracking(abEnableTracking)
+	EndIf
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoShutdown()
 	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_SetTrackingOnActor")
 	SetObjectiveDisplayed(0,False)
 	SetObjectiveDisplayed(1,False)
 	SetObjectiveDisplayed(2,False)
@@ -112,6 +119,7 @@ Function UpdateVariables()
 	_WanderActor = (GetAliasByName("WanderActor") as ReferenceAlias).GetReference() as Actor
 	_City = (GetAliasByName("City") as LocationAlias).GetLocation()
 	_Inn = (GetAliasByName("Inn") as LocationAlias).GetLocation()
+	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
 EndFunction
 
 Function EnableTracking(Bool abTracking = True)

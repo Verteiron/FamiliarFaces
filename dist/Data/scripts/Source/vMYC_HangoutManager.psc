@@ -686,20 +686,29 @@ EndFunction
 
 Function EnableTracking(Actor akActor, Bool abTracking = True)
 	Debug.Trace("MYC/HOM: Set Tracking for " + akActor.GetActorBase().GetName() + " to " + abTracking)
-	Int i = akActor.GetNumReferenceAliases()
-	While i > 0
-		i -= 1
-		ReferenceAlias kRefAlias = akActor.GetNthReferenceAlias(i)
-		If kRefAlias
-			Quest kQuest = kRefAlias.GetOwningQuest()
-			Debug.Trace("MYC/HOM:   " + akActor.GetActorBase().GetName() + "'s HangoutQuest is " + kQuest)
-			If kQuest as vMYC_HangoutQuestScript
-				(kQuest as vMYC_HangoutQuestScript).EnableTracking(abTracking)
-			ElseIf kQuest as vMYC_WanderQuestScript
-				(kQuest as vMYC_WanderQuestScript).EnableTracking(abTracking)
-			EndIf
-		EndIf
-	EndWhile
+	Int iHandle = ModEvent.Create("vMYC_SetTrackingOnActor")
+	If iHandle
+		ModEvent.PushForm(iHandle,akActor)
+		ModEvent.PushBool(iHandle,abTracking)
+		ModEvent.Send(iHandle)
+	Else
+		Debug.Trace("MYC/HOM: Couldn't create Event!",1)
+	EndIf
+;	Int i = akActor.GetNumReferenceAliases()
+;	While i > 0
+;		i -= 1
+;		ReferenceAlias kRefAlias = akActor.GetNthReferenceAlias(i)
+;		If kRefAlias
+;			Quest kQuest = kRefAlias.GetOwningQuest()
+;			If kQuest as vMYC_HangoutQuestScript
+;				Debug.Trace("MYC/HOM:   " + akActor.GetActorBase().GetName() + "'s HangoutQuest is " + kQuest)
+;				(kQuest as vMYC_HangoutQuestScript).EnableTracking(abTracking)
+;			ElseIf kQuest as vMYC_WanderQuestScript
+;				Debug.Trace("MYC/HOM:   " + akActor.GetActorBase().GetName() + "'s HangoutQuest is " + kQuest)
+;				(kQuest as vMYC_WanderQuestScript).EnableTracking(abTracking)
+;			EndIf
+;		EndIf
+;	EndWhile
 EndFunction
 
 Int[] Function GetHangoutStats()

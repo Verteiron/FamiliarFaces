@@ -24,6 +24,7 @@ Bool Property TrackingEnabled	Auto Hidden
 
 Event OnInit()
 	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
+	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
 EndEvent
 
 Event OnHangoutPing(Form akHangoutManager)
@@ -43,6 +44,7 @@ EndEvent
 
 Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRef1, ObjectReference akRef2, int aiValue1, int aiValue2)
 	FillSleepLocation()
+	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
 	ReferenceAlias kMarkerRef = GetAliasByName("HangoutMarker") as ReferenceAlias
 	ObjectReference kMarkerObj = kMarkerRef.GetReference()
 	If !kMarkerObj
@@ -50,18 +52,26 @@ Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRe
 		kMarkerRef.ForceRefTo((GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference())
 	EndIf
 	SendRegistrationEvent()
-	EnableTracking(True)
+	;EnableTracking(True)
+EndEvent
+
+Event OnSetTrackingOnActor(Form akActor, Bool abEnableTracking)
+	If (GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() == akActor
+		EnableTracking(abEnableTracking)
+	EndIf
 EndEvent
 
 ;--=== Functions ===--
 
 Function DoUpkeep()
 	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
+	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
 EndFunction
 
 Function DoShutdown()
 	UnregisterForUpdate()
 	UnregisterForModEvent("vMYC_HangoutPing")
+	UnregisterForModEvent("vMYC_SetTrackingOnActor")
 	SetObjectiveDisplayed(0,False)
 	SetObjectiveDisplayed(1,False)
 	Stop()
@@ -124,5 +134,7 @@ Function EnableTracking(Bool abTracking = True)
 		iObjective = 0
 	EndIf
 	SetActive(abTracking)
-	SetObjectiveDisplayed(iObjective,abTracking)
+	If IsObjectiveDisplayed(iObjective) != abTracking
+		SetObjectiveDisplayed(iObjective,abTracking)
+	EndIf
 EndFunction
