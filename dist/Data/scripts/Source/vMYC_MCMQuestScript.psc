@@ -22,6 +22,8 @@ Int Property	OPTION_TOGGLE_DISABLE_AUTOLEVEL			Auto Hidden
 
 Int Property	OPTION_TOGGLE_TRACKING					Auto Hidden
 
+Int Property 	OPTION_MENU_CHARACTER_HANGOUT			Auto Hidden
+
 Int Property	OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_ALTERATION		Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_CONJURATION	Auto Hidden
@@ -101,10 +103,10 @@ Int		_iCharacterCanMarryOption
 Int		_iVoiceTypeOption
 Int[]	_iVoiceTypeSelections
 
-Int		_iAliasOption
 Int[]	_iAliasSelections
 ReferenceAlias[]	_kHangoutRefAliases
 String[]	_sHangoutNames
+String[]	_sHangoutNamesPlusWanderer
 String[]	_sHangoutNamesDisabled
 Int		_iCurrentHangout
 String	_sHangoutName
@@ -348,9 +350,9 @@ event OnPageReset(string a_page)
 		;===== Character hangout option =====----
 		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
 		If !sHangoutName
-			sHangoutName = "Unassigned"
+			sHangoutName = "$Wanderer"
 		EndIf
-		_iAliasOption = AddMenuOption("$Hangout",sHangoutName,OptionFlags)
+		OPTION_MENU_CHARACTER_HANGOUT = AddMenuOption("$Hangout",sHangoutName,OptionFlags)
 		;====================================----
 
 		;===== Character class option =======----
@@ -838,9 +840,12 @@ Event OnOptionMenuOpen(Int Option)
 		SetMenuDialogOptions(_sVoiceTypesFiltered)
 		SetMenuDialogStartIndex(_iVoiceTypeSelections[_iCurrentCharacter])
 		SetMenuDialogDefaultIndex(0)
-	ElseIf Option == _iAliasOption
-		SetMenuDialogOptions(_sHangoutNames)
+	ElseIf Option == OPTION_MENU_CHARACTER_HANGOUT
+		SetMenuDialogOptions(_sHangoutNamesPlusWanderer)
 		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
+		If index < 0 || !sHangoutName
+			sHangoutName = "$Wanderer"
+		EndIf
 		Int index = _sHangoutNames.Find(sHangoutName)
 		SetMenuDialogStartIndex(index)
 		SetMenuDialogDefaultIndex(index)
@@ -886,9 +891,14 @@ Event OnOptionMenuAccept(int option, int index)
 		String sShortVoiceType = StringUtil.Substring(_sVoiceTypesFiltered[index],0,StringUtil.Find(_sVoiceTypesFiltered[index]," "))
 		SetMenuOptionValue(_iVoiceTypeOption,sShortVoiceType)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
-	ElseIf Option == _iAliasOption
-		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
-		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
+	ElseIf Option == OPTION_MENU_CHARACTER_HANGOUT
+		SetMenuOptionValue(OPTION_MENU_CHARACTER_HANGOUT,_sHangoutNamesPlusWanderer[index])
+		Index -= 1
+		If Index < 0
+			HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),"")
+		Else
+			HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
+		EndIf
 	ElseIf Option == _iCurrentCharacterOption
 		_iCurrentCharacter = index
 		ForcePageReset()
@@ -955,6 +965,7 @@ Function UpdateSettings()
 
 	_sCharacterNames = CharacterManager.CharacterNames
 	_sHangoutNames = HangoutManager.HangoutNames
+	_sHangoutNamesPlusWanderer = HangoutManager.HangoutNamesPlusWanderer
 	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
 	
 	_sClassNames = CharacterManager.sClassNames
