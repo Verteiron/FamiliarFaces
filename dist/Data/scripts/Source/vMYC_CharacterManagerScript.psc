@@ -1540,7 +1540,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	If iMissingCount
 		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts with " + iMissingCount + " skipped.",1)
 	Else
-		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
 	EndIf
 	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
 	WaitMenuMode(0.1)

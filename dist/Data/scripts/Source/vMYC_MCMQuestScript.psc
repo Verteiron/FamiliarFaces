@@ -50,6 +50,7 @@ Int Property	OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS	Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_DELETE_MISSING			Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	Auto Hidden
 
 Int Property	OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING	Auto Hidden
@@ -592,6 +593,7 @@ event OnPageReset(string a_page)
 		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
 		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Default Shout handling",	ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
 		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNKNOWN"	))
+		OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	= AddToggleOption("$Disable Shouts in cities",										 GetConfigBool("SHOUTS_DISABLE_CITIES"	))
 		
 		SetCursorPosition(1)
 		AddHeaderOption("$Data and other options")
@@ -798,6 +800,9 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	
 		SetConfigBool("SHOUTS_BLOCK_UNKNOWN",!GetConfigBool("SHOUTS_BLOCK_UNKNOWN"))
 		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_BLOCK_UNKNOWN"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
+		SetConfigBool("SHOUTS_DISABLE_CITIES",!GetConfigBool("SHOUTS_DISABLE_CITIES"))
+		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_DISABLE_CITIES"))
 	ElseIf Option == OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING
 		Int iSetting = GetConfigInt("DEFAULT_MAGIC_HANDLING")
 		iSetting += 1

@@ -59,6 +59,8 @@ Message Property vMYC_VoiceTypeNoSpouse		Auto
 
 Armor Property	vMYC_DummyArmor	Auto
 
+Bool Property InCity Auto
+
 ;--=== Config variables ===--
 
 ;--=== Variables ===--
@@ -135,7 +137,29 @@ Event OnCellAttach()
 EndEvent
 
 Event OnAttachedToCell()
+	Bool bWasInCity = InCity
+	Location kLocation = GetCurrentLocation()
+	If kLocation
+		InCity = kLocation.HasKeywordString("LocTypeHabitation")
+	Else
+		InCity = False
+	EndIf
+	If InCity != bWasInCity && GetConfigBool("SHOUTS_DISABLE_CITIES")
+		UpdateShoutList()
+	EndIf
 	;_bNeedRefresh = True
+EndEvent
+
+Event OnLocationChange(Location akOldLoc, Location akNewLoc)
+	Bool bWasInCity = InCity
+	If akNewLoc
+		InCity = akNewLoc.HasKeywordString("LocTypeHabitation")
+	Else
+		InCity = False
+	EndIf
+	If InCity != bWasInCity ;&& GetConfigBool("SHOUTS_DISABLE_CITIES")
+		UpdateShoutList()
+	EndIf
 EndEvent
 
 Event OnEnterBleedout()
@@ -258,10 +282,13 @@ Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
+	Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
 	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive"
 		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
 		SetNonpersistent()
+	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES"
+		UpdateShoutList()
 	EndIf
 EndEvent
 
@@ -348,14 +375,19 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 	If iAdded || iRemoved
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
-	
-	If CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")
-		CharacterManager.RemoveCharacterShouts(CharacterName)
-	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout)
-		CharacterManager.ApplyCharacterShouts(CharacterName)
-	EndIf
+
+	UpdateShoutList()
 	
 EndEvent
+
+Function UpdateShoutList()
+	If (CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")) || (InCity && GetConfigBool("SHOUTS_DISABLE_CITIES"))
+		CharacterManager.RemoveCharacterShouts(CharacterName)
+	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout)
+		_bNeedShouts = True
+		RegisterForSingleUpdate(0.1)
+	EndIf
+EndFunction
 
 Function CheckVars()
 	If !_kActorBase
@@ -408,6 +440,13 @@ Function CheckVars()
 	
 	_iCharGenVersion = SKSE.GetPluginVersion("chargen")
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": CharGen version is " + _iCharGenVersion)
+	Bool bWasInCity = InCity
+	Location kLocation = GetCurrentLocation()
+	If kLocation
+		InCity = kLocation.HasKeywordString("LocTypeHabitation")
+	Else
+		InCity = False
+	EndIf
 EndFunction
 
 Function DoInit(Bool bInBackground = True)
@@ -418,6 +457,9 @@ EndFunction
 Function DoUpkeep(Bool bInBackground = True)
 	{Run whenever the player loads up the Game. Sets the name and such.}
 	SetNameIfNeeded()
+	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
+	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If bInBackground
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": Backgrounding upkeep!")
 		_bDoUpkeep = True
@@ -435,9 +477,6 @@ Function DoUpkeep(Bool bInBackground = True)
 	EndIf
 	CheckVars()
 	SyncCharacterData()
-	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
-	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
-	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If !CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster")
 		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
 	EndIf
@@ -454,7 +493,6 @@ Function DoUpkeep(Bool bInBackground = True)
 ;			CharacterManager.SetCharacterTracking(CharacterName,True)
 ;		EndIf
 ;	EndIf
-
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": finished upkeep!")
@@ -971,10 +1009,6 @@ State Busy
 	
 	Event OnLoad()
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": OnLoad called in Busy state!")
-	EndEvent
-	
-	Event OnAttachedToCell()
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": OnAttachedToCell called in Busy state!")
 	EndEvent
 	
 	Event OnUnload()

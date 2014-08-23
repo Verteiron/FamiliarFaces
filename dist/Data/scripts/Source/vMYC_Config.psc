@@ -11,6 +11,8 @@ Function SendConfigEvent(String asPath) Global
 	If iHandle
 		ModEvent.PushString(iHandle,asPath)
 		ModEvent.Send(iHandle)
+	Else
+		Debug.Trace("MYC/Config: Error sending ConfigUpdate event!",1)
 	EndIf
 EndFunction
 
