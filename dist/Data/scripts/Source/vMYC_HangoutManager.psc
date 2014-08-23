@@ -151,7 +151,7 @@ Event OnShrineReady(string eventName, string strArg, float numArg, Form sender)
 EndEvent
 
 Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
-	Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
+	;Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
 	vMYC_HangoutQuestScript kHangout = akHangout as vMYC_HangoutQuestScript
 	If !kHangout
 		Debug.Trace("MYC/HOM: " + akHangout + " sent us a Pong but isn't the right type of object.")
@@ -172,7 +172,7 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 		EndIf
 	EndIf
 	If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
-		Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
+		;Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
 		(akHangout as vMYC_HangoutQuestScript).DoShutdown()
 	EndIf
 EndEvent

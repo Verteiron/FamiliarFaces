@@ -28,7 +28,7 @@ Event OnInit()
 EndEvent
 
 Event OnHangoutPing(Form akHangoutManager)
-	Debug.Trace("MYC/HQ: Got HangoutPing from " + akHangoutManager + "!")
+	;Debug.Trace("MYC/HQ: Got HangoutPing from " + akHangoutManager + "!")
 	Int iHandle = ModEvent.Create("vMYC_HangoutPong")
 	If iHandle
 		ModEvent.PushForm(iHandle,Self)
