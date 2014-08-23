@@ -260,7 +260,9 @@ EndEvent
 Event OnConfigUpdate(String asConfigPath)
 	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive"
 		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
-	EndIf	
+	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
+		SetNonpersistent()
+	EndIf
 EndEvent
 
 Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, Form sender)
@@ -279,7 +281,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		Return
 	EndIf
 
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
+	Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
 	Int iAdded
@@ -435,6 +437,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	SyncCharacterData()
 	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If !CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster")
 		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
 	EndIf
