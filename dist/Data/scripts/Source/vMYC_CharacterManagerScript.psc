@@ -1301,7 +1301,7 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
 	FFUtils.DeleteFaceGenData(kDeadActor.GetActorBase())
-	CharGen.EraseCharacter(kDeadActor,asCharacterName)
+	CharGen.DeleteCharacter(asCharacterName)
 	DeleteCharacterActor(asCharacterName)
 	If bPreserveLocal
 		If !JMap.hasKey(_jMYC,"DeletedList")
@@ -2215,10 +2215,6 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 			bAddItem = True
 			Int iSpellID = kSpell.GetFormID()
 			;Debug.Trace("MYC/CM: " + sPlayerName + " knows the spell " + kSpell + ", " + kSpell.GetName())
-			If iSpellID > 0x05000000 || iSpellID < 0 ; Spell is NOT part of Skyrim, Dawnguard, Hearthfires, or Dragonborn
-				bAddItem = False
-				;Debug.Trace("MYC/CM: " + kSpell + " is a mod-added item!")
-			EndIf
 			If bAddItem
 				;vMYC_PlayerFormlist.AddForm(kSpell)
 				JArray.AddForm(jPlayerSpells,kSpell)
