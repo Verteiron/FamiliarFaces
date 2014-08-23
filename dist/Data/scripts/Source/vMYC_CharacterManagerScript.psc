@@ -631,8 +631,8 @@ Function LoadCharacterFiles()
 	
 	;scan old location anyway, in case new character files have been copied there.
 	Int jDirectoryScanOld = JValue.readFromDirectory("Data/vMYC/")
-	Int jCharFilesOld = JMap.allKeys(jDirectoryScan)
-	Int jCharDataOld = JMap.allValues(jDirectoryScan)
+	Int jCharFilesOld = JMap.allKeys(jDirectoryScanOld)
+	Int jCharDataOld = JMap.allValues(jDirectoryScanOld)
 	
 	JValue.AddToPool(jDirectoryScanOld,"vMYC_CM_Load")
 	JValue.AddToPool(jCharFilesOld,"vMYC_CM_Load")
@@ -643,13 +643,14 @@ Function LoadCharacterFiles()
 	While i > 0
 		i -= 1
 		If JArray.FindStr(jCharFiles,JArray.GetStr(jCharFilesOld,i)) < 0
+			Debug.Trace("MYC/CM: Adding file from Data/vMYC: " + JArray.getStr(jCharFilesOld,i))
 			JArray.AddStr(jCharFiles,JArray.GetStr(jCharFilesOld,i))
 			JArray.AddObj(jCharData,JArray.GetObj(jCharDataOld,i))
 		EndIf
 	EndWhile
 	Bool _bHasFileSlot
 	Bool _bHasFileTexture
-	i = JMap.Count(jDirectoryScan)
+	i = JArray.Count(jCharData)
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
