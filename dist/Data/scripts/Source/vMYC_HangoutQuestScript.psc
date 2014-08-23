@@ -43,7 +43,10 @@ Event OnHangoutPing(Form akHangoutManager)
 EndEvent
 
 Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRef1, ObjectReference akRef2, int aiValue1, int aiValue2)
-	FillSleepLocation()
+	If !IsPreset
+		;Presets should already have sleeplocations defined
+		FillSleepLocation()
+	EndIf
 	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
 	ReferenceAlias kMarkerRef = GetAliasByName("HangoutMarker") as ReferenceAlias
 	ObjectReference kMarkerObj = kMarkerRef.GetReference()
@@ -82,6 +85,11 @@ Function FillSleepLocation()
 	LocationAlias kInnLocation = GetAliasByName("HangoutInn0") as LocationAlias
 	LocationAlias kGuildLocation = GetAliasByName("HangoutGuildDwelling0") as LocationAlias
 	LocationAlias kDwellingLocation = GetAliasByName("HangoutDwelling0") as LocationAlias
+
+	;Not much point in continuing if this doesn't exist
+	If !kInnLocation
+		Return
+	EndIf
 	
 	;If the hangout is in a Guild, Dwelling, or Castle, use it for eating and sleeping instead of the Inn.
 	If kHangoutLocation.GetLocation().HasKeywordString("LocTypeGuild") || kHangoutLocation.GetLocation().HasKeywordString("LocTypeCastle") || kHangoutLocation.GetLocation().HasKeywordString("LocTypeDwelling")

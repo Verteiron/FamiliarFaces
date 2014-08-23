@@ -133,7 +133,11 @@ Event OnUpdate()
 EndEvent
 
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
-	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + ", Inn: " + ((akSendingQuest as Quest).GetAliasByName("HangoutInn0") as LocationAlias).GetLocation().GetName() + "!")
+	If ((akSendingQuest as Quest).GetAliasByName("HangoutInn0"))
+		Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + ", Inn: " + ((akSendingQuest as Quest).GetAliasByName("HangoutInn0") as LocationAlias).GetLocation().GetName() + "!")
+	Else
+		Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + "!")
+	EndIf
 	;SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
 	TickDataSerial()
 EndEvent
