@@ -289,7 +289,7 @@ Event OnConfigUpdate(String asConfigPath)
 		SetNonpersistent()
 	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES"
 		UpdateShoutList()
-	ElseIf asConfigPath == "SHOUTS_HANDLING"
+	ElseIf asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
 		If !_bNeedShouts
 			UpdateShoutList(True)
 		EndIf

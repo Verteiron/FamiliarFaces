@@ -1533,8 +1533,12 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 				;Don't add it
 			ElseIf kShout == kDragonAspectShout && (iConfigShoutHandling == 2 || iConfigShoutHandling == 3)
 				;Don't add it
+			ElseIf GetConfigBool("SHOUTS_BLOCK_UNLEARNED")
+				If PlayerREF.HasSpell(kShout)
+					vMYC_ShoutList.AddForm(kShout)
+				EndIf
 			Else
-				vMYC_ShoutList.AddForm(kShout)
+				vMYC_ShoutList.AddForm(kShout)		
 			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
