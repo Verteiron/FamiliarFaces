@@ -231,11 +231,11 @@ Function FillEnums()
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[2]		= "$Vanilla only"
 	
 	ENUM_GLOBAL_SHOUTS_HANDLING			= New String[5]
-	ENUM_GLOBAL_SHOUTS_HANDLING[0]			= "$Allow all shouts"
-	ENUM_GLOBAL_SHOUTS_HANDLING[1]			= "$Block Call Storm"
-	ENUM_GLOBAL_SHOUTS_HANDLING[2]			= "$Block Dragon Aspect"
-	ENUM_GLOBAL_SHOUTS_HANDLING[3]			= "$Block both"
-	ENUM_GLOBAL_SHOUTS_HANDLING[4]			= "$Block all"
+	ENUM_GLOBAL_SHOUTS_HANDLING[0]			= "$All"
+	ENUM_GLOBAL_SHOUTS_HANDLING[1]			= "$All but CS"
+	ENUM_GLOBAL_SHOUTS_HANDLING[2]			= "$All but DA"
+	ENUM_GLOBAL_SHOUTS_HANDLING[3]			= "$All but CS/DA"
+	ENUM_GLOBAL_SHOUTS_HANDLING[4]			= "$No Shouts"
 	
 	ENUM_GLOBAL_FILE_LOCATION			= New String[2]
 	ENUM_GLOBAL_FILE_LOCATION[0]			= "$Data/vMYC"
@@ -591,7 +591,7 @@ event OnPageReset(string a_page)
 		AddHeaderOption("$Magic and Shout options")
 		OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING	= AddTextOption("$Default magic handling",	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING		[GetConfigInt("DEFAULT_MAGIC_HANDLING")	])
 		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
-		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Default Shout handling",	ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
+		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Allow shouts",			ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
 		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNKNOWN	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNKNOWN"	))
 		OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	= AddToggleOption("$Disable Shouts in cities",										 GetConfigBool("SHOUTS_DISABLE_CITIES"	))
 		

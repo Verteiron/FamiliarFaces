@@ -1513,6 +1513,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		Return -1
 	EndIf
 	_bApplyShoutsBusy = True
+	Int iConfigShoutHandling = GetConfigInt("SHOUTS_HANDLING")
 	vMYC_Shoutlist.Revert()
 	Int jCharacterShouts = GetCharacterObj(sCharacterName,"Shouts")
 	Int i = JArray.Count(jCharacterShouts)
@@ -1522,17 +1523,24 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
 		If !kShout
 			iMissingCount += 1
-		Else 
-			vMYC_ShoutList.AddForm(kShout)
+		Else
+			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
+			Shout kDragonAspectShout
+			If GetModByName("Dragonborn.esm")
+				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
+			EndIf
+			If kShout == kStormCallShout && (iConfigShoutHandling == 1 || iConfigShoutHandling == 3)
+				;Don't add it
+			ElseIf kShout == kDragonAspectShout && (iConfigShoutHandling == 2 || iConfigShoutHandling == 3)
+				;Don't add it
+			Else
+				vMYC_ShoutList.AddForm(kShout)
+			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 	EndWhile
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
-	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
-		Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
-		_bApplyShoutsBusy = False
-		Return -1
-	ElseIf vMYC_ShoutList.GetSize() == 0
+	If vMYC_ShoutList.GetSize() == 0
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
 		Return 0

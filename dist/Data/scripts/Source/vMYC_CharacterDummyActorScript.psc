@@ -289,6 +289,10 @@ Event OnConfigUpdate(String asConfigPath)
 		SetNonpersistent()
 	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES"
 		UpdateShoutList()
+	ElseIf asConfigPath == "SHOUTS_HANDLING"
+		If !_bNeedShouts
+			UpdateShoutList(True)
+		EndIf
 	EndIf
 EndEvent
 
@@ -380,10 +384,12 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 	
 EndEvent
 
-Function UpdateShoutList()
-	If (CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")) || (InCity && GetConfigBool("SHOUTS_DISABLE_CITIES"))
+Function UpdateShoutList(Bool abForceUpdate = False)
+	If (CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")) \
+	|| (InCity && GetConfigBool("SHOUTS_DISABLE_CITIES")) \
+	|| (GetConfigInt("SHOUTS_HANDLING") == 4)
 		CharacterManager.RemoveCharacterShouts(CharacterName)
-	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout)
+	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout) || abForceUpdate
 		_bNeedShouts = True
 		RegisterForSingleUpdate(0.1)
 	EndIf
@@ -457,7 +463,6 @@ EndFunction
 Function DoUpkeep(Bool bInBackground = True)
 	{Run whenever the player loads up the Game. Sets the name and such.}
 	SetNameIfNeeded()
-	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If bInBackground
