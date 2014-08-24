@@ -91,6 +91,8 @@ Bool _bNeedPerks
 
 Bool _bNeedShouts
 
+Bool _bNeedSpells
+
 String[] _sSkillNames
 
 Float _fDecapitationChance
@@ -209,11 +211,13 @@ Event OnUpdate()
 		EndIf
 	EndIf
 	If _bNeedShouts
-		If CharacterManager.ApplyCharacterShouts(CharacterName) >= 0
-			_bNeedShouts = False
-		EndIf
+		UpdateShoutList() ; will take care of setting _bNeedShouts
 	EndIf
-	If _bNeedPerks || _bNeedShouts
+	If _bNeedSpells
+		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
+		_bNeedSpells = False
+	EndIf
+	If _bNeedPerks || _bNeedShouts || _bNeedSpells
 		RegisterForSingleUpdate(1.0)
 	Else 
 		RegisterForSingleUpdate(5.0)
@@ -283,16 +287,13 @@ EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
 	Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
-	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive"
-		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
+	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive" || asConfigPath == "MAGIC_ALLOWFROMMODS"
+		_bNeedSpells = True
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
 		SetNonpersistent()
-	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES"
-		UpdateShoutList()
-	ElseIf asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
-		If !_bNeedShouts
-			UpdateShoutList(True)
-		EndIf
+	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES" || asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
+		_bNeedShouts = True
+		RegisterForSingleUpdate(0.5)
 	EndIf
 EndEvent
 
@@ -340,6 +341,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 	
 	Bool bMagicAllowHealing = GetConfigInt("MagicAllowHealing")
 	Bool bMagicAllowDefensive = GetConfigInt("MagicAllowDefensive")
+	Int iAllowFromMods = GetConfigInt("MAGIC_ALLOWFROMMODS")
 	
 	Int i = JArray.Count(jSpells)
 	While i > 0
@@ -347,6 +349,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
 		String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
 		Bool bSpellIsAllowed = False
+		
 		If sMagicSchool
 			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllow" + sMagicSchool)
 		Else
@@ -359,10 +362,41 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 				bSpellIsAllowed = True
 			EndIf
 		EndIf
+
+		If bSpellIsAllowed
+			Int[] iAllowedSources = New Int[128]
+			
+			If iAllowFromMods < 2 ; No mods or select mods
+				iAllowedSources[0] = GetModByName("Skyrim.esm")
+				iAllowedSources[1] = GetModByName("Update.esm")
+				iAllowedSources[2] = GetModByName("Dawnguard.esm")
+				iAllowedSources[3] = GetModByName("Dragonborn.esm")
+				iAllowedSources[4] = GetModByName("Hearthfires.esm")
+			EndIf
+			
+			If iAllowFromMods == 1 ; Select mods
+				iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
+				iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
+				iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
+				iAllowedSources[8] = GetModByName("Dwemerverse.esp")
+			EndIf
+			
+			bSpellIsAllowed = False
+			
+			If iAllowFromMods == 2  ; ALL mods
+				bSpellIsAllowed = True
+			Else
+				;See if this spell is from an approved source
+				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
+				If iAllowedSources.Find(iSpellSourceID) > -1
+					bSpellIsAllowed = True
+				EndIf
+			EndIf
+		EndIf
 		
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
-				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
@@ -380,18 +414,20 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
 
-	UpdateShoutList()
+	_bNeedShouts = True
 	
 EndEvent
 
-Function UpdateShoutList(Bool abForceUpdate = False)
+Function UpdateShoutList()
 	If (CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")) \
 	|| (InCity && GetConfigBool("SHOUTS_DISABLE_CITIES")) \
 	|| (GetConfigInt("SHOUTS_HANDLING") == 4)
 		CharacterManager.RemoveCharacterShouts(CharacterName)
-	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout) || abForceUpdate
-		_bNeedShouts = True
-		RegisterForSingleUpdate(0.1)
+		_bNeedShouts = False
+	Else ;If HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout) || abForceUpdate
+		If CharacterManager.ApplyCharacterShouts(CharacterName) >= 0
+			_bNeedShouts = False
+		EndIf
 	EndIf
 EndFunction
 

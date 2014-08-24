@@ -226,9 +226,9 @@ Function FillEnums()
 	ENUM_GLOBAL_MAGIC_HANDLING[2]			= "$Auto + Healing"	
 	
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		= New String[3]
-	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Select mods"
-	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[1]		= "$All mods"
-	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[2]		= "$Vanilla only"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Vanilla only"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[1]		= "$Select mods"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[2]		= "$All mods"
 	
 	ENUM_GLOBAL_SHOUTS_HANDLING			= New String[5]
 	ENUM_GLOBAL_SHOUTS_HANDLING[0]			= "$All"
@@ -1104,6 +1104,8 @@ Function UpdateSettings()
 	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
 	
 	_sClassNames = CharacterManager.sClassNames
+	
+	FillEnums()
 EndFunction
 
 Function ApplySettings()
