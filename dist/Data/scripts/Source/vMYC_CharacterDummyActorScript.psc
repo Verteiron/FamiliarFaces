@@ -287,7 +287,7 @@ EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
 	Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
-	If asConfigPath == "DEFAULT_MAGIC_HANDLING" || asConfigPath == "MAGIC_ALLOWFROMMODS"
+	If asConfigPath == "MAGIC_OVERRIDES" || asConfigPath == "MAGIC_ALLOWFROMMODS"
 		_bNeedSpells = True
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
 		SetNonpersistent()
@@ -339,7 +339,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		EndWhile
 	EndIf
 	
-	Int iDefaultMagicHandling = GetConfigInt("DEFAULT_MAGIC_HANDLING")
+	Int iDefaultMagicHandling = GetConfigInt("MAGIC_OVERRIDES")
 	Int iAllowFromMods = GetConfigInt("MAGIC_ALLOWFROMMODS")
 	
 	Bool bMagicAllowHealing = False

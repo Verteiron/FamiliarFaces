@@ -2,7 +2,7 @@ Scriptname vMYC_Config Hidden
 
 Function SetConfigDefaults() Global
 	Debug.Trace("MYC/Config: Setting defaults!")
-	SetConfigInt("DEFAULT_MAGIC_HANDLING",2)
+	SetConfigInt("MAGIC_OVERRIDES",2)
 	
 EndFunction
 

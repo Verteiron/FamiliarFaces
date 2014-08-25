@@ -53,13 +53,13 @@ Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	Auto Hidden
 
-Int Property	OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING	Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_FILE_LOCATION			Auto Hidden
 
-String[] Property	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING		Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES		Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
 String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
@@ -132,7 +132,7 @@ Int		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
-    return 8 ; Default version
+    return 9 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -213,12 +213,10 @@ EndEvent
 
 Function FillEnums()
 
-	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING	= New String[5]
-	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[0]	= "$Auto by Perks"
-	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[1]	= "$Auto + Healing"
-	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[2]	= "$Auto + Healing/Defense"
-	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[3]	= "$Enable all"
-	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[4]	= "$Disable all"
+	ENUM_GLOBAL_MAGIC_OVERRIDES	= New String[3]
+	ENUM_GLOBAL_MAGIC_OVERRIDES[0]	= "$None"
+	ENUM_GLOBAL_MAGIC_OVERRIDES[1]	= "$Healing"
+	ENUM_GLOBAL_MAGIC_OVERRIDES[2]	= "$Healing/Defense"
 
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		= New String[3]
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Vanilla only"
@@ -584,7 +582,7 @@ event OnPageReset(string a_page)
 ;		OPTION_TOGGLE_GLOBAL_DELETE_MISSING			= AddToggleOption("$Disable characters with missing data",							 GetConfigBool(	"DELETE_MISSING"		))
 		AddEmptyOption()
 		AddHeaderOption("$Magic and Shout options")
-		OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING	= AddTextOption("$Default magic handling",	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING		[GetConfigInt("DEFAULT_MAGIC_HANDLING")	])
+		OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	= AddTextOption("$Always allow",	ENUM_GLOBAL_MAGIC_OVERRIDES		[GetConfigInt("MAGIC_OVERRIDES")	])
 		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
 		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Allow shouts",			ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
 		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNLEARNED"	))
@@ -798,14 +796,14 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
 		SetConfigBool("SHOUTS_DISABLE_CITIES",!GetConfigBool("SHOUTS_DISABLE_CITIES"))
 		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_DISABLE_CITIES"))
-	ElseIf Option == OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING
-		Int iSetting = GetConfigInt("DEFAULT_MAGIC_HANDLING")
+	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
+		Int iSetting = GetConfigInt("MAGIC_OVERRIDES")
 		iSetting += 1
-		If iSetting >= ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING.Length
+		If iSetting >= ENUM_GLOBAL_MAGIC_OVERRIDES.Length
 			iSetting = 0
 		EndIf
-		SetConfigInt("DEFAULT_MAGIC_HANDLING",iSetting)
-		SetTextOptionValue(Option,ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[iSetting])
+		SetConfigInt("MAGIC_OVERRIDES",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_MAGIC_OVERRIDES[iSetting])
 	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS	
 		Int iSetting = GetConfigInt("MAGIC_ALLOWFROMMODS")
 		iSetting += 1
@@ -1016,8 +1014,8 @@ Event OnOptionHighlight(Int option)
 	If option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
 		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES_HELP")
 	EndIf
-	If option == OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING
-		SetInfoText("$OPTION_TEXT_GLOBAL_DEFAULT_MAGIC_HANDLING_HELP")
+	If option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
+		SetInfoText("$OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES_HELP")
 	EndIf
 	If option == OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS
 		SetInfoText("$OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS_HELP")
