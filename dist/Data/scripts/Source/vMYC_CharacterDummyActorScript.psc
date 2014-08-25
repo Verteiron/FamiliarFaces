@@ -54,6 +54,11 @@ Sound			Property	NPCDragonDeathSequenceExplosion		Auto
 
 FormList Property vMYC_CombatStyles Auto
 
+FormList Property vMYC_ModCompatibility_SpellList_Safe Auto
+FormList Property vMYC_ModCompatibility_SpellList_Unsafe Auto
+FormList Property vMYC_ModCompatibility_SpellList_Healing Auto
+FormList Property vMYC_ModCompatibility_SpellList_Armor Auto
+
 Message Property vMYC_VoiceTypeNoFollower 	Auto
 Message Property vMYC_VoiceTypeNoSpouse		Auto
 
@@ -370,11 +375,15 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		If bMagicAllowHealing ;sMagicSchool == "Restoration" && 
 			If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 				bSpellIsAllowed = True
+			ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
+				bSpellIsAllowed = True
 			EndIf
 		EndIf
 		
 		If bMagicAllowDefensive
 			If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+				bSpellIsAllowed = True
+			ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
 				bSpellIsAllowed = True
 			EndIf
 		EndIf
@@ -406,9 +415,18 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
 				If iAllowedSources.Find(iSpellSourceID) > -1
 					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
+				;A mod author has gone to the trouble of assuring us the spell is compatible.
+					bSpellIsAllowed = True
 				EndIf
 			EndIf
 		EndIf
+
+		If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
+		;A mod author has added the spell to the unsafe list.
+			bSpellIsAllowed = False
+		EndIf
+			
 		
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
