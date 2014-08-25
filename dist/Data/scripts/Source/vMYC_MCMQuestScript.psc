@@ -53,13 +53,13 @@ Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	Auto Hidden
 
-Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_FILE_LOCATION			Auto Hidden
 
-String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES		Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES				Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
 String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
@@ -69,7 +69,7 @@ Int Property	OPTION_DEBUG_SHUTDOWN						Auto Hidden
 Int Property	OPTION_DEBUG_CHARACTER_FORCEREFRESH			Auto Hidden
 Int Property	OPTION_DEBUG_HANGOUTS_RESETQUESTS			Auto Hidden
 Int Property	OPTION_DEBUG_SHRINE_RESET					Auto Hidden
-Int Property	OPTION_DEBUG_SHRINE_ALCOVE_VALIDATEATLOAD	Auto Hidden
+Int Property	OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION	Auto Hidden
 
 
 Bool _Changed
@@ -132,7 +132,7 @@ Int		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
-    return 9 ; Default version
+    return 10 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -582,7 +582,7 @@ event OnPageReset(string a_page)
 ;		OPTION_TOGGLE_GLOBAL_DELETE_MISSING			= AddToggleOption("$Disable characters with missing data",							 GetConfigBool(	"DELETE_MISSING"		))
 		AddEmptyOption()
 		AddHeaderOption("$Magic and Shout options")
-		OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	= AddTextOption("$Always allow",	ENUM_GLOBAL_MAGIC_OVERRIDES		[GetConfigInt("MAGIC_OVERRIDES")	])
+		OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES			= AddTextOption("$Always allow",	ENUM_GLOBAL_MAGIC_OVERRIDES		[GetConfigInt("MAGIC_OVERRIDES")	])
 		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
 		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Allow shouts",			ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
 		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNLEARNED"	))
@@ -628,7 +628,21 @@ event OnPageReset(string a_page)
 	ElseIf a_page == "$Debugging"
 
 	;===== Debug Options page =====----
-	OPTION_DEBUG_SHUTDOWN = AddToggleOption("$Shutdown the mod",False)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		AddHeaderOption("$Appearance")
+		OPTION_DEBUG_CHARACTER_FORCEREFRESH = AddToggleOption("$Force character refresh",False)
+		AddEmptyOption()
+		AddHeaderOption("$Shrine of Heroes")
+		OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION = AddToggleOption("$Disable background validation",GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
+		OPTION_DEBUG_SHRINE_RESET = AddToggleOption("$Reset all Shrine alcoves",False)
+		AddEmptyOption()
+		AddHeaderOption("$Hangouts")
+		OPTION_DEBUG_HANGOUTS_RESETQUESTS = AddToggleOption("$Reset Hangout quests",GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS"))
+		SetCursorPosition(1)
+		AddHeaderOption("$Uninstall")
+		OPTION_DEBUG_SHUTDOWN = AddToggleOption("$Shutdown the mod",GetConfigBool("DEBUG_SHUTDOWN"))
+		
 	;===== END Debug Options page =----
 	EndIf
 	
@@ -762,7 +776,20 @@ Event OnOptionSelect(Int Option)
 		SetToggleOptionValue(Option,bAllowed)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf Option == OPTION_DEBUG_SHUTDOWN
-		SendModEvent("vMYC_Shutdown")
+		SetConfigBool("DEBUG_SHUTDOWN",!GetConfigBool("DEBUG_SHUTDOWN"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_SHUTDOWN"))
+	ElseIf Option == OPTION_DEBUG_CHARACTER_FORCEREFRESH
+		SetConfigBool("DEBUG_CHARACTER_FORCEREFRESH",!GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH"))
+	ElseIf Option == OPTION_DEBUG_HANGOUTS_RESETQUESTS
+		SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",!GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS"))
+	ElseIf Option == OPTION_DEBUG_SHRINE_RESET
+		SetConfigBool("DEBUG_SHRINE_RESET",!GetConfigBool("DEBUG_SHRINE_RESET"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_SHRINE_RESET"))
+	ElseIf Option == OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION
+		SetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION",!GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT
 		SetConfigBool("TRACKBYDEFAULT",!GetConfigBool("TRACKBYDEFAULT"))
 		Bool bSetAll = False
@@ -986,6 +1013,18 @@ Event OnOptionHighlight(Int option)
 	EndIf
 	If option == OPTION_TOGGLE_MAGICALLOW_OTHER
 		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_OTHER_HELP")
+	EndIf
+	If option == OPTION_DEBUG_CHARACTER_FORCEREFRESH
+		SetInfoText("$OPTION_DEBUG_CHARACTER_FORCEREFRESH_HELP")
+	EndIf
+	If option == OPTION_DEBUG_HANGOUTS_RESETQUESTS
+		SetInfoText("$OPTION_DEBUG_HANGOUTS_RESETQUESTS_HELP")
+	EndIf
+	If option == OPTION_DEBUG_SHRINE_RESET
+		SetInfoText("$OPTION_DEBUG_SHRINE_RESET_HELP")
+	EndIf
+	If option == OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION
+		SetInfoText("$OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION_HELP")
 	EndIf
 	If option == OPTION_DEBUG_SHUTDOWN
 		SetInfoText("$OPTION_DEBUG_SHUTDOWN_HELP")
