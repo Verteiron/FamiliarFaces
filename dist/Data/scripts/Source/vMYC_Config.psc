@@ -2,8 +2,8 @@ Scriptname vMYC_Config Hidden
 
 Function SetConfigDefaults() Global
 	Debug.Trace("MYC/Config: Setting defaults!")
-	SetConfigInt("MagicAllowHealing",True as Int)
-	SetConfigInt("MagicAllowDefensive",True as Int)
+	SetConfigInt("DEFAULT_MAGIC_HANDLING",2)
+	
 EndFunction
 
 Function SendConfigEvent(String asPath) Global

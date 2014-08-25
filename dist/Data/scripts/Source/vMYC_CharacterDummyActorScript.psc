@@ -287,7 +287,7 @@ EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
 	Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
-	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive" || asConfigPath == "MAGIC_ALLOWFROMMODS"
+	If asConfigPath == "DEFAULT_MAGIC_HANDLING" || asConfigPath == "MAGIC_ALLOWFROMMODS"
 		_bNeedSpells = True
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
 		SetNonpersistent()
@@ -339,9 +339,18 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		EndWhile
 	EndIf
 	
-	Bool bMagicAllowHealing = GetConfigInt("MagicAllowHealing")
-	Bool bMagicAllowDefensive = GetConfigInt("MagicAllowDefensive")
+	Int iDefaultMagicHandling = GetConfigInt("DEFAULT_MAGIC_HANDLING")
 	Int iAllowFromMods = GetConfigInt("MAGIC_ALLOWFROMMODS")
+	
+	Bool bMagicAllowHealing = False
+	Bool bMagicAllowDefensive = False
+	
+	If iDefaultMagicHandling == 1 
+		bMagicAllowHealing = True
+	ElseIf iDefaultMagicHandling == 2
+		bMagicAllowHealing = True
+		bMagicAllowDefensive = True
+	EndIf
 	
 	Int i = JArray.Count(jSpells)
 	While i > 0
@@ -356,9 +365,16 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllowOther")
 		EndIf
 		
-		If sMagicSchool == "Restoration" && bMagicAllowHealing
-			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-			If !kSpell.IsHostile() && !kMagicEffect.IsEffectFlagSet(0x00000004) 
+		MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
+		
+		If bMagicAllowHealing ;sMagicSchool == "Restoration" && 
+			If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+				bSpellIsAllowed = True
+			EndIf
+		EndIf
+		
+		If bMagicAllowDefensive
+			If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 				bSpellIsAllowed = True
 			EndIf
 		EndIf
@@ -400,8 +416,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This was we avoid stripping perk, race, and doom stone abilities
+			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
 			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
 				If RemoveSpell(kSpell)
 					;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")

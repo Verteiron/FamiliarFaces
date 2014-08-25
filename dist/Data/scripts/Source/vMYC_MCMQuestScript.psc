@@ -92,16 +92,16 @@ VoiceType[] _kVoiceTypesAll
 Int		_iCurrentCharacter
 String	_sCharacterName
 
-Int		_iCurrentCharacterOption
+Int		OPTION_MENU_CHAR_PICKER
 
 Int		_iCharacterEnabledOption
 Bool[]	_bCharacterEnabled
 
-Int		_iCharacterIsFoeOption
+Int		OPTION_TOGGLE_CHAR_ISFOE
 
-Int		_iCharacterCanMarryOption
+Int		OPTION_TOGGLE_CHAR_CANMARRY
 
-Int		_iVoiceTypeOption
+Int		OPTION_MENU_CHAR_VOICETYPE
 Int[]	_iVoiceTypeSelections
 
 Int[]	_iAliasSelections
@@ -112,14 +112,14 @@ String[]	_sHangoutNamesDisabled
 Int		_iCurrentHangout
 String	_sHangoutName
 
-Int 	_iClassOption
+Int 	OPTION_MENU_CHAR_CLASS
 Int 	_iClassSelection
 String[] _sClassNames
 
 Int		_iMagicAutoSelectOption
 Int[]	_iMagicSchoolOptions
 
-Int		_iWarpOption
+Int		OPTION_WARPTOCHARACTER
 
 Int[]		_iAlcoveIndices
 Int[]		_iAlcoveStates
@@ -220,11 +220,6 @@ Function FillEnums()
 	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[3]	= "$Enable all"
 	ENUM_GLOBAL_DEFAULT_MAGIC_HANDLING[4]	= "$Disable all"
 
-	ENUM_GLOBAL_MAGIC_HANDLING			= New String[3]
-	ENUM_GLOBAL_MAGIC_HANDLING[0]			= "$Auto by Perks"
-	ENUM_GLOBAL_MAGIC_HANDLING[1]			= "$Auto + Healing"	
-	ENUM_GLOBAL_MAGIC_HANDLING[2]			= "$Auto + Healing"	
-	
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		= New String[3]
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Vanilla only"
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[1]		= "$Select mods"
@@ -343,7 +338,7 @@ event OnPageReset(string a_page)
 		EndIf
 		String sShortVoiceType = _sVoiceTypesFiltered[_iVoiceTypeSelections[_iCurrentCharacter]]
 		sShortVoiceType = StringUtil.Substring(sShortVoiceType,0,StringUtil.Find(sShortVoiceType," "))
-		_iVoiceTypeOption = AddMenuOption("$VoiceType",sShortVoiceType,OptionFlags)
+		OPTION_MENU_CHAR_VOICETYPE = AddMenuOption("$VoiceType",sShortVoiceType,OptionFlags)
 
 		;====================================----
 
@@ -359,9 +354,9 @@ event OnPageReset(string a_page)
 		;===== Character class option =======----
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
 		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
-			_iClassOption = AddMenuOption("$Class","$Using AFT",OPTION_FLAG_DISABLED)
+			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class","$Using AFT",OPTION_FLAG_DISABLED)
 		Else
-			_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
 		EndIf
 		AddEmptyOption()
 		;====================================----
@@ -371,8 +366,8 @@ event OnPageReset(string a_page)
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
-		_iCharacterIsFoeOption = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
-		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
+		OPTION_TOGGLE_CHAR_ISFOE = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
+		OPTION_TOGGLE_CHAR_CANMARRY = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
 
 		AddEmptyOption()
@@ -409,7 +404,7 @@ event OnPageReset(string a_page)
 			AddEmptyOption()
 			AddHeaderOption("Debug")
 			;===== Character warp DEBUG option ==----
-			_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
+			OPTION_WARPTOCHARACTER = AddTextOption("$Warp to character","",OptionFlags)
 			;====================================----
 		EndIf
 
@@ -418,7 +413,7 @@ event OnPageReset(string a_page)
 		SetCursorPosition(1)
 
 		;===== Character selection menu =====----
-		_iCurrentCharacterOption = AddMenuOption("$Settings for",_sCharacterName)
+		OPTION_MENU_CHAR_PICKER = AddMenuOption("$Settings for",_sCharacterName)
 		;====================================----
 
 		String[] sSex = New String[2]
@@ -655,29 +650,29 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetCharacterTracking(_sCharacterName, bEnabled)
 		SetToggleOptionValue(Option,bEnabled)
 		;ForcePageReset()
-	ElseIf Option == _iCharacterIsFoeOption
+	ElseIf Option == OPTION_TOGGLE_CHAR_ISFOE
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe") as Bool
 		bIsFoe = !bIsFoe
 		CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",bIsFoe as Int)
 		If bIsFoe
 			CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",0)
-			SetToggleOptionValue(_iCharacterCanMarryOption,False,True)
-			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_DISABLED,True)
+			SetToggleOptionValue(OPTION_TOGGLE_CHAR_CANMARRY,False,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_CANMARRY, OPTION_FLAG_DISABLED,True)
 		Else
-			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_NONE,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_CANMARRY, OPTION_FLAG_NONE,True)
 		EndIf
 		SetToggleOptionValue(Option,bIsFoe)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
-	ElseIf Option == _iCharacterCanMarryOption
+	ElseIf Option == OPTION_TOGGLE_CHAR_CANMARRY
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry") as Bool
 		bCanMarry = !bCanMarry
 		CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",bCanMarry as Int)
 		If bCanMarry
 			CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",0)
-			SetToggleOptionValue(_iCharacterIsFoeOption,False,True)
-			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_DISABLED,True)
+			SetToggleOptionValue(OPTION_TOGGLE_CHAR_ISFOE,False,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_ISFOE, OPTION_FLAG_DISABLED,True)
 		Else
-			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_NONE,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_ISFOE, OPTION_FLAG_NONE,True)
 		EndIf
 		SetToggleOptionValue(Option,bCanMarry)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
@@ -706,7 +701,7 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"DisableAutoLevel",bDisableAutoLevel as Int)
 		SetToggleOptionValue(Option,bDisableAutoLevel)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).DoUpkeep(True)
-	ElseIf Option == _iWarpOption
+	ElseIf Option == OPTION_WARPTOCHARACTER
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
 			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
@@ -841,7 +836,7 @@ EndEvent
 
 Event OnOptionMenuOpen(Int Option)
 	;Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
-	If Option == _iVoiceTypeOption
+	If Option == OPTION_MENU_CHAR_VOICETYPE
 		SetMenuDialogOptions(_sVoiceTypesFiltered)
 		SetMenuDialogStartIndex(_iVoiceTypeSelections[_iCurrentCharacter])
 		SetMenuDialogDefaultIndex(0)
@@ -854,11 +849,11 @@ Event OnOptionMenuOpen(Int Option)
 		Int index = _sHangoutNames.Find(sHangoutName)
 		SetMenuDialogStartIndex(index)
 		SetMenuDialogDefaultIndex(index)
-	ElseIf Option == _iCurrentCharacterOption
+	ElseIf Option == OPTION_MENU_CHAR_PICKER
 		SetMenuDialogOptions(_sCharacterNames)
 		SetMenuDialogStartIndex(_iCurrentCharacter)
 		SetMenuDialogDefaultIndex(_iCurrentCharacter)
-	ElseIf Option == _iClassOption
+	ElseIf Option == OPTION_MENU_CHAR_CLASS
 		SetMenuDialogOptions(_sClassNames)
 		SetMenuDialogStartIndex(_iClassSelection)
 		SetMenuDialogDefaultIndex(_iClassSelection)
@@ -891,10 +886,10 @@ EndEvent
 
 Event OnOptionMenuAccept(int option, int index)
 	;Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
-	If Option == _iVoiceTypeOption
+	If Option == OPTION_MENU_CHAR_VOICETYPE
 		_iVoiceTypeSelections[_iCurrentCharacter] = index
 		String sShortVoiceType = StringUtil.Substring(_sVoiceTypesFiltered[index],0,StringUtil.Find(_sVoiceTypesFiltered[index]," "))
-		SetMenuOptionValue(_iVoiceTypeOption,sShortVoiceType)
+		SetMenuOptionValue(OPTION_MENU_CHAR_VOICETYPE,sShortVoiceType)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
 	ElseIf Option == OPTION_MENU_CHARACTER_HANGOUT
 		SetMenuOptionValue(OPTION_MENU_CHARACTER_HANGOUT,_sHangoutNamesPlusWanderer[index])
@@ -904,12 +899,12 @@ Event OnOptionMenuAccept(int option, int index)
 		Else
 			HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
 		EndIf
-	ElseIf Option == _iCurrentCharacterOption
+	ElseIf Option == OPTION_MENU_CHAR_PICKER
 		_iCurrentCharacter = index
 		ForcePageReset()
-	ElseIf Option == _iClassOption
+	ElseIf Option == OPTION_MENU_CHAR_CLASS
 		_iClassSelection = index
-		SetMenuOptionValue(_iClassOption,_sClassNames[index])
+		SetMenuOptionValue(OPTION_MENU_CHAR_CLASS,_sClassNames[index])
 		CharacterManager.SetCharacterClass(_sCharacterNames[_iCurrentCharacter],CharacterManager.kClasses[index])
 	ElseIf OPTION_MENU_ALCOVE_CHARACTER.Find(Option) > -1
 		index -= 1 ; Adjust because we added "Empty" to the beginning of the other list
@@ -943,11 +938,11 @@ Event OnOptionHighlight(Int option)
 	If option == OPTION_TOGGLE_TRACKING
 		SetInfoText("$OPTION_TOGGLE_TRACKING_HELP")
 	EndIf
-	If option == _iCharacterIsFoeOption
-		SetInfoText("$_iCharacterIsFoeOption_HELP")
+	If option == OPTION_TOGGLE_CHAR_ISFOE
+		SetInfoText("$OPTION_TOGGLE_CHAR_ISFOE_HELP")
 	EndIf
-	If option == _iCharacterCanMarryOption
-		SetInfoText("$_iCharacterCanMarryOption_HELP")
+	If option == OPTION_TOGGLE_CHAR_CANMARRY
+		SetInfoText("$OPTION_TOGGLE_CHAR_CANMARRY_HELP")
 	EndIf
 	If option == OPTION_TOGGLE_MAGICALLOW_AUTOSELECT
 		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_AUTOSELECT_HELP")
@@ -961,8 +956,8 @@ Event OnOptionHighlight(Int option)
 	If option == OPTION_TOGGLE_DISABLE_AUTOLEVEL
 		SetInfoText("$OPTION_TOGGLE_DISABLE_AUTOLEVEL_HELP")
 	EndIf
-	If option == _iWarpOption
-		SetInfoText("$_iWarpOption_HELP")
+	If option == OPTION_WARPTOCHARACTER
+		SetInfoText("$OPTION_WARPTOCHARACTER_HELP")
 	EndIf
 	If option == OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS_HELP")
@@ -1033,32 +1028,32 @@ Event OnOptionHighlight(Int option)
 	If option == OPTION_TEXT_GLOBAL_FILE_LOCATION
 		SetInfoText("$OPTION_TEXT_GLOBAL_FILE_LOCATION_HELP")
 	EndIf
-	If option == _iVoiceTypeOption
-		SetInfoText("$_iVoiceTypeOption_HELP")
+	If option == OPTION_MENU_CHAR_VOICETYPE
+		SetInfoText("$OPTION_MENU_CHAR_VOICETYPE_HELP")
 	EndIf
 	If option == OPTION_MENU_CHARACTER_HANGOUT
 		SetInfoText("$OPTION_MENU_CHARACTER_HANGOUT_HELP")
 	EndIf
-	If option == _iCurrentCharacterOption
-		SetInfoText("$_iCurrentCharacterOption_HELP")
+	If option == OPTION_MENU_CHAR_PICKER
+		SetInfoText("$OPTION_MENU_CHAR_PICKER_HELP")
 	EndIf
-	If option == _iClassOption
-		SetInfoText("$_iClassOption_HELP")
+	If option == OPTION_MENU_CHAR_CLASS
+		SetInfoText("$OPTION_MENU_CHAR_CLASS_HELP")
 	EndIf
 	If option == OPTION_MENU_HANGOUT_SELECT
 		SetInfoText("$OPTION_MENU_HANGOUT_SELECT_HELP")
 	EndIf
-	If option == _iVoiceTypeOption
-		SetInfoText("$_iVoiceTypeOption_HELP")
+	If option == OPTION_MENU_CHAR_VOICETYPE
+		SetInfoText("$OPTION_MENU_CHAR_VOICETYPE_HELP")
 	EndIf
 	If option == OPTION_MENU_CHARACTER_HANGOUT
 		SetInfoText("$OPTION_MENU_CHARACTER_HANGOUT_HELP")
 	EndIf
-	If option == _iCurrentCharacterOption
-		SetInfoText("$_iCurrentCharacterOption_HELP")
+	If option == OPTION_MENU_CHAR_PICKER
+		SetInfoText("$OPTION_MENU_CHAR_PICKER_HELP")
 	EndIf
-	If option == _iClassOption
-		SetInfoText("$_iClassOption_HELP")
+	If option == OPTION_MENU_CHAR_CLASS
+		SetInfoText("$OPTION_MENU_CHAR_CLASS_HELP")
 	EndIf
 	If option == OPTION_MENU_HANGOUT_SELECT
 		SetInfoText("$OPTION_MENU_HANGOUT_SELECT_HELP")
