@@ -5,6 +5,7 @@ Scriptname vMYC_CompatEFF extends Quest
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -13,6 +14,11 @@ Import Game
 ;--=== Events/Functions ===--
 
 Event OnGameReloaded()
+	If IsRunning()
+		SetConfigInt("Compat_EFF_Enabled",1)
+	Else
+		SetConfigInt("Compat_EFF_Enabled",0)
+	EndIf
 	RegisterForModEvent("vMYC_UpdateXFLPanel","OnUpdateXFLPanel")
 	Debug.Trace("MYC/CompatEFF: Registered for vMYC_UpdateXFLPanel!")
 EndEvent
@@ -53,4 +59,8 @@ Function DoXFLPanelUpdate()
 				EndIf
 			EndWhile
 		EndIf
+EndFunction
+
+Function DoShutdown()
+	
 EndFunction

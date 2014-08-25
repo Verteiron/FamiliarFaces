@@ -2,8 +2,8 @@ Scriptname vMYC_Config Hidden
 
 Function SetConfigDefaults() Global
 	Debug.Trace("MYC/Config: Setting defaults!")
-	SetConfigInt("MagicAllowHealing",True as Int)
-	SetConfigInt("MagicAllowDefensive",True as Int)
+	SetConfigInt("MAGIC_OVERRIDES",2)
+	
 EndFunction
 
 Function SendConfigEvent(String asPath) Global
@@ -11,6 +11,8 @@ Function SendConfigEvent(String asPath) Global
 	If iHandle
 		ModEvent.PushString(iHandle,asPath)
 		ModEvent.Send(iHandle)
+	Else
+		Debug.Trace("MYC/Config: Error sending ConfigUpdate event!",1)
 	EndIf
 EndFunction
 
@@ -29,39 +31,45 @@ EndFunction
 
 Function SyncConfig() Global
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
-	Int jConfigFileData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	Int jConfigFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")
 	Int DataSerial = JMap.getInt(jConfigData,"DataSerial")
 	Int DataFileSerial = JMap.getInt(jConfigFileData,"DataSerial")
+	;Debug.Trace("MYC/Config: SyncConfig called! Our DataSerial is " + DataSerial + ", file DataSerial is " + DataFileSerial)
 	If DataSerial > DataFileSerial
-		Debug.Trace("MYC/Config: Our data is newer than the saved file, overwriting it!")
-		JValue.WriteToFile(jConfigData,"Data/vMYC/vMYC_config.json")
+		;Debug.Trace("MYC/Config: Our data is newer than the saved file, overwriting it!")
+		JValue.WriteToFile(jConfigData,JContainers.userDirectory() + "vMYC/vMYC_config.json")
 	ElseIf DataSerial < DataFileSerial
-		Debug.Trace("MYC/Config: Our data is older than the saved file, loading it!")
-		JConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+		;Debug.Trace("MYC/Config: Our data is older than the saved file, loading it!")
+		JValue.Clear(jConfigData)
+		jConfigData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")
+		JDB.solveObjSetter(".vMYC._ConfigData",jConfigData)
 	Else
 		;Already synced. Sunc?
 	EndIf
 EndFunction
 
 Function LoadConfig() Global
+	;Debug.Trace("MYC/Config: LoadConfig called!")
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
-	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")
+	jConfigData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")
 EndFunction
 
 Function SaveConfig() Global
+	;Debug.Trace("MYC/Config: SaveConfig called!")
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
 	JMap.setInt(jConfigData,"DataSerial",JMap.getInt(jConfigData,"DataSerial") + 1)
-	JValue.WriteToFile(jConfigData,"Data/vMYC/vMYC_config.json")
+	JValue.WriteToFile(jConfigData,JContainers.userDirectory() + "vMYC/vMYC_config.json")
 EndFunction
 
 Int Function CreateConfigDataIfMissing() Global
 	Int jConfigData = JDB.solveObj(".vMYC._ConfigData")
 	If jConfigData
+		JMap.setInt(jConfigData,"DataSerial",JMap.getInt(jConfigData,"DataSerial") + 1)
 		Return jConfigData
 	EndIf
 	Debug.Trace("MYC/Config: First ConfigData access, creating JDB key!")
 	Int _jMYC = JDB.solveObj(".vMYC")
-	jConfigData = JValue.ReadFromFile("Data/vMYC/vMYC_config.json")	
+	jConfigData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_config.json")	
 	If jConfigData
 		Debug.Trace("MYC/Config: Loaded config file!")
 	Else
@@ -82,7 +90,7 @@ Function SetConfigStr(String asPath, String asString, Bool abDeferSave = False) 
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setStr(jConfig,asPath,asString)
 	If !abDeferSave
-		SaveConfig()
+		SyncConfig()
 	EndIf
 EndFunction
 
@@ -90,12 +98,25 @@ String Function GetConfigStr(String asPath) Global
 	Return JDB.solveStr(".vMYC._ConfigData." + asPath)
 EndFunction
 
+Function SetConfigBool(String asPath, Bool abBool, Bool abDeferSave = False) Global
+	Int jConfig = CreateConfigDataIfMissing()
+	JMap.setInt(jConfig,asPath,abBool as Int)
+	SendConfigEvent(asPath)
+	If !abDeferSave
+		SyncConfig()
+	EndIf
+EndFunction
+
+Bool Function GetConfigBool(String asPath) Global
+	Return JDB.solveInt(".vMYC._ConfigData." + asPath) as Bool
+EndFunction
+
 Function SetConfigInt(String asPath, Int aiInt, Bool abDeferSave = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setInt(jConfig,asPath,aiInt)
 	SendConfigEvent(asPath)
 	If !abDeferSave
-		SaveConfig()
+		SyncConfig()
 	EndIf
 EndFunction
 
@@ -108,7 +129,7 @@ Function SetConfigFlt(String asPath, Float afFloat, Bool abDeferSave = False) Gl
 	JMap.setFlt(jConfig,asPath,afFloat)
 	SendConfigEvent(asPath)
 	If !abDeferSave
-		SaveConfig()
+		SyncConfig()
 	EndIf
 EndFunction
 
@@ -121,7 +142,7 @@ Function SetConfigForm(String asPath, Form akForm, Bool abDeferSave = False) Glo
 	JMap.setForm(jConfig,asPath,akForm)
 	SendConfigEvent(asPath)
 	If !abDeferSave
-		SaveConfig()
+		SyncConfig()
 	EndIf
 EndFunction
 
@@ -134,7 +155,7 @@ Function SetConfigObj(String asPath, Int ajObj, Bool abDeferSave = False) Global
 	JMap.setObj(jConfig,asPath,ajObj)
 	SendConfigEvent(asPath)
 	If !abDeferSave
-		SaveConfig()
+		SyncConfig()
 	EndIf
 EndFunction
 
@@ -166,6 +187,16 @@ EndFunction
 
 String Function GetLocalConfigStr(String asPath) Global
 	Return JDB.solveStr(".vMYC._LocalConfigData." + asPath)
+EndFunction
+
+Function SetLocalConfigBool(String asPath, Bool abBool) Global
+	Int jLocalConfig = CreateLocalConfigDataIfMissing()
+	JMap.setInt(jLocalConfig,asPath,abBool as Int)
+	SendLocalConfigEvent(asPath)
+EndFunction
+
+Bool Function GetLocalConfigBool(String asPath) Global
+	Return JDB.solveInt(".vMYC._LocalConfigData." + asPath) as Bool
 EndFunction
 
 Function SetLocalConfigInt(String asPath, Int aiInt) Global

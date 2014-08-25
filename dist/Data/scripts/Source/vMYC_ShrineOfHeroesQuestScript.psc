@@ -30,6 +30,8 @@ Int[]			 Property AlcoveState Auto
 Actor Property PlayerRef Auto
 {The Player, duh}
 
+String	Property	DataPath	Auto Hidden
+
 ;--=== Config variables ===--
 
 ;--=== Variables ===--
@@ -194,7 +196,12 @@ EndFunction
 Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = False)
 	Bool bShrineDataUpdated = False
 	
-	Int jShrineFileData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
+	Int jShrineFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
+	If !jShrineFileData
+		jShrineFileData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
+		JValue.WriteToFile(jShrineFileData,JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
+	EndIf
+	
 	Int DataSerial = ShrineDataSerial ;JMap.getInt(_jShrineData,"DataSerial")
 	JMap.SetInt(_jShrineData,"DataSerial",ShrineDataSerial)
 	
@@ -211,10 +218,11 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	EndIf
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
-		JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
+		;JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
+		JValue.WriteToFile(_jShrineData,JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
 	ElseIf DataSerial < DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is older than the saved file, loading it!")
-		_jShrineData = JValue.ReadFromFile("Data/vMYC/_ShrineOfHeroes.json")
+		_jShrineData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
 		JMap.SetObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 		ShrineDataSerial = DataFileSerial
 		bShrineDataUpdated = True
@@ -259,6 +267,33 @@ Function DoInit(Bool abForce = False)
 	JMap.setObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 	TickDataSerial(True)
 	UpdateAlcoveControllers()
+EndFunction
+
+Function DoShutdown()
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_AlcoveStatusUpdate")
+	UnregisterForModEvent("vMYC_ShrineReady")
+	Int i = AlcoveControllers.Length
+	While i > 0
+		i -= 1
+		If AlcoveControllers[i].CharacterSummoned
+			Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
+			If iHandle	
+				ModEvent.PushInt(iHandle,AlcoveControllers[i].AlcoveIndex)
+				ModEvent.PushBool(iHandle,False)
+				ModEvent.Send(iHandle)
+			EndIf
+		EndIf
+	EndWhile
+	WaitMenuMode(2)
+	InitShrineData()
+	i = AlcoveControllers.Length
+	While i > 0
+		i -= 1
+		If AlcoveControllers[i].AlcoveActor
+			AlcoveControllers[i].ReleaseActor()
+		EndIf
+	EndWhile
 EndFunction
 
 Function InitShrineData()

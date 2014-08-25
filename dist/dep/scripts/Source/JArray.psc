@@ -1,12 +1,12 @@
 
-;/  Ordered collection of values (value is float, integer, string or another container).
+;/  Ordered collection of values (value is float, integer, string, form or another container).
     Inherits JValue functionality
 /;
 Scriptname JArray Hidden
 
 
-;/  creates new container object. returns container identifier (integral number).
-    identifier is the thing you will have to pass to the most of container's functions as first argument
+;/  creates new container object. returns container identifier (integer number).
+    identifier is the thing you will have to pass to the most of container's functions as a first argument
 /;
 int function object() global native
 
@@ -27,18 +27,19 @@ int function objectWithBooleans(bool[] values) global native
 int function subArray(int object, int startIndex, int endIndex) global native
 
 ;/  adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.
-    if insertAtIndex >= 0 it appends values starting from insertAtIndex index
+    negative index accesses items from the end of array counting backwards.
 /;
-function addFromArray(int object, int sourceArray, int insertAtIndex=-1) global native
+function addFromArray(int object, int source, int insertAtIndex=-1) global native
+function addFromFormList(int object, FormList source, int insertAtIndex=-1) global native
 
 ;/  returns item at index. getObj function returns container.
     negative index accesses items from the end of array counting backwards.
 /;
-int function getInt(int object, int index) global native
-float function getFlt(int object, int index) global native
-string function getStr(int object, int index) global native
-int function getObj(int object, int index) global native
-form function getForm(int object, int index) global native
+int function getInt(int object, int index, int default=0) global native
+float function getFlt(int object, int index, float default=0.0) global native
+string function getStr(int object, int index, string default="") global native
+int function getObj(int object, int index, int default=0) global native
+form function getForm(int object, int index, form default=None) global native
 
 ;/  returns index of the first found value/container that equals to given value/container (default behaviour if searchStartIndex is 0).
     if found nothing returns -1.
@@ -80,3 +81,12 @@ function clear(int object) global native
 ;/  erases item at index. negative index accesses items from the end of array counting backwards.
 /;
 function eraseIndex(int object, int index) global native
+
+;/  returns type of the value at index. negative index accesses items from the end of array counting backwards.
+    0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string
+/;
+int function valueType(int object, int index) global native
+
+;/  Exchanges the items at index1 and index2. negative index accesses items from the end of array counting backwards.
+/;
+function swapItems(int object, int index1, int index2) global native

@@ -25,6 +25,7 @@ Bool Property IsBusy Auto
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+vMYC_HangoutManager Property HangoutManager Auto
 
 Faction Property CurrentFollowerFaction Auto
 Faction Property PotentialFollowerFaction Auto
@@ -53,8 +54,17 @@ Sound			Property	NPCDragonDeathSequenceExplosion		Auto
 
 FormList Property vMYC_CombatStyles Auto
 
+FormList Property vMYC_ModCompatibility_SpellList_Safe Auto
+FormList Property vMYC_ModCompatibility_SpellList_Unsafe Auto
+FormList Property vMYC_ModCompatibility_SpellList_Healing Auto
+FormList Property vMYC_ModCompatibility_SpellList_Armor Auto
+
 Message Property vMYC_VoiceTypeNoFollower 	Auto
 Message Property vMYC_VoiceTypeNoSpouse		Auto
+
+Armor Property	vMYC_DummyArmor	Auto
+
+Bool Property InCity Auto
 
 ;--=== Config variables ===--
 
@@ -85,6 +95,8 @@ Bool _bInvalidRace = False
 Bool _bNeedPerks
 
 Bool _bNeedShouts
+
+Bool _bNeedSpells
 
 String[] _sSkillNames
 
@@ -132,7 +144,29 @@ Event OnCellAttach()
 EndEvent
 
 Event OnAttachedToCell()
+	Bool bWasInCity = InCity
+	Location kLocation = GetCurrentLocation()
+	If kLocation
+		InCity = kLocation.HasKeywordString("LocTypeHabitation")
+	Else
+		InCity = False
+	EndIf
+	If InCity != bWasInCity && GetConfigBool("SHOUTS_DISABLE_CITIES")
+		UpdateShoutList()
+	EndIf
 	;_bNeedRefresh = True
+EndEvent
+
+Event OnLocationChange(Location akOldLoc, Location akNewLoc)
+	Bool bWasInCity = InCity
+	If akNewLoc
+		InCity = akNewLoc.HasKeywordString("LocTypeHabitation")
+	Else
+		InCity = False
+	EndIf
+	If InCity != bWasInCity ;&& GetConfigBool("SHOUTS_DISABLE_CITIES")
+		UpdateShoutList()
+	EndIf
 EndEvent
 
 Event OnEnterBleedout()
@@ -158,17 +192,16 @@ Event OnEnterBleedout()
 EndEvent
 
 Event OnUpdate()
+	If !Self as Actor
+		Return
+	EndIf
 	If _bDoUpkeep
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	If _bNeedRefresh && _iCharGenVersion == 2
-		If !Is3DLoaded()
-			RegisterForSingleUpdate(1.0)
-			Return
-		EndIf
+	If _bNeedRefresh && _iCharGenVersion == 3
+		RefreshMeshNewCG()
 		_bNeedRefresh = False
-		RefreshMesh()
 	ElseIf Is3DLoaded()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
 	EndIf
@@ -183,11 +216,13 @@ Event OnUpdate()
 		EndIf
 	EndIf
 	If _bNeedShouts
-		If CharacterManager.ApplyCharacterShouts(CharacterName) >= 0
-			_bNeedShouts = False
-		EndIf
+		UpdateShoutList() ; will take care of setting _bNeedShouts
 	EndIf
-	If _bNeedPerks || _bNeedShouts
+	If _bNeedSpells
+		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
+		_bNeedSpells = False
+	EndIf
+	If _bNeedPerks || _bNeedShouts || _bNeedSpells
 		RegisterForSingleUpdate(1.0)
 	Else 
 		RegisterForSingleUpdate(5.0)
@@ -232,6 +267,11 @@ Event OnPackageChange(Package akOldPackage)
 	ElseIf _fDecapitationChance && !DecapitationChance.GetValue()
 		DecapitationChance.SetValue(_fDecapitationChance)
 	EndIf
+	If GetConfigBool("TRACK_STOPONRECRUIT") && (IsPlayerTeammate() || GetFactionRank(CurrentFollowerFaction) >= 0)
+		HangoutManager.EnableTracking(Self,False)
+	ElseIf GetConfigBool("TRACK_STOPONRECRUIT") && (!IsPlayerTeammate() || GetFactionRank(CurrentFollowerFaction) < 0)
+		HangoutManager.EnableTracking(Self,True)
+	EndIf
 EndEvent
 
 Event OnUnload()
@@ -251,9 +291,15 @@ Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
-	If asConfigPath == "MagicAllowHealing" || asConfigPath == "MagicAllowDefensive"
-		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
-	EndIf	
+	Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
+	If asConfigPath == "MAGIC_OVERRIDES" || asConfigPath == "MAGIC_ALLOWFROMMODS"
+		_bNeedSpells = True
+	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
+		SetNonpersistent()
+	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES" || asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
+		_bNeedShouts = True
+		RegisterForSingleUpdate(0.5)
+	EndIf
 EndEvent
 
 Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, Form sender)
@@ -266,8 +312,13 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 	If iMyCounter != _iMagicUpdateCounter
 		Return
 	EndIf
-	
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
+
+	If CharacterManager.GetLocalInt(CharacterName,"Compat_AFT_MagicDisabled")
+		;Do not alter spell list if Magic is disabled by AFT
+		Return
+	EndIf
+
+	Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
 	Int iAdded
@@ -293,8 +344,18 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		EndWhile
 	EndIf
 	
-	Bool bMagicAllowHealing = GetConfigInt("MagicAllowHealing")
-	Bool bMagicAllowDefensive = GetConfigInt("MagicAllowDefensive")
+	Int iDefaultMagicHandling = GetConfigInt("MAGIC_OVERRIDES")
+	Int iAllowFromMods = GetConfigInt("MAGIC_ALLOWFROMMODS")
+	
+	Bool bMagicAllowHealing = False
+	Bool bMagicAllowDefensive = False
+	
+	If iDefaultMagicHandling == 1 
+		bMagicAllowHealing = True
+	ElseIf iDefaultMagicHandling == 2
+		bMagicAllowHealing = True
+		bMagicAllowDefensive = True
+	EndIf
 	
 	Int i = JArray.Count(jSpells)
 	While i > 0
@@ -302,27 +363,78 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
 		String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
 		Bool bSpellIsAllowed = False
+		
 		If sMagicSchool
 			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllow" + sMagicSchool)
 		Else
 			bSpellIsAllowed = CharacterManager.GetLocalInt(CharacterName,"MagicAllowOther")
 		EndIf
 		
-		If sMagicSchool == "Restoration" && bMagicAllowHealing
-			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-			If !kSpell.IsHostile() && !kMagicEffect.IsEffectFlagSet(0x00000004) 
+		MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
+		
+		If bMagicAllowHealing ;sMagicSchool == "Restoration" && 
+			If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+				bSpellIsAllowed = True
+			ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
 				bSpellIsAllowed = True
 			EndIf
 		EndIf
 		
+		If bMagicAllowDefensive
+			If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+				bSpellIsAllowed = True
+			ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
+				bSpellIsAllowed = True
+			EndIf
+		EndIf
+
+		If bSpellIsAllowed
+			Int[] iAllowedSources = New Int[128]
+			
+			If iAllowFromMods < 2 ; No mods or select mods
+				iAllowedSources[0] = GetModByName("Skyrim.esm")
+				iAllowedSources[1] = GetModByName("Update.esm")
+				iAllowedSources[2] = GetModByName("Dawnguard.esm")
+				iAllowedSources[3] = GetModByName("Dragonborn.esm")
+				iAllowedSources[4] = GetModByName("Hearthfires.esm")
+			EndIf
+			
+			If iAllowFromMods == 1 ; Select mods
+				iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
+				iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
+				iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
+				iAllowedSources[8] = GetModByName("Dwemerverse.esp")
+			EndIf
+			
+			bSpellIsAllowed = False
+			
+			If iAllowFromMods == 2  ; ALL mods
+				bSpellIsAllowed = True
+			Else
+				;See if this spell is from an approved source
+				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
+				If iAllowedSources.Find(iSpellSourceID) > -1
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
+				;A mod author has gone to the trouble of assuring us the spell is compatible.
+					bSpellIsAllowed = True
+				EndIf
+			EndIf
+		EndIf
+
+		If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
+		;A mod author has added the spell to the unsafe list.
+			bSpellIsAllowed = False
+		EndIf
+			
+		
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
-				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This was we avoid stripping perk, race, and doom stone abilities
+			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
 			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
 				If RemoveSpell(kSpell)
 					;Debug.Trace("MYC: (" + CharacterName + "/Actor): Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
@@ -334,14 +446,23 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 	If iAdded || iRemoved
 		;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
-	
-	If CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")
-		CharacterManager.RemoveCharacterShouts(CharacterName)
-	ElseIf HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout)
-		CharacterManager.ApplyCharacterShouts(CharacterName)
-	EndIf
+
+	_bNeedShouts = True
 	
 EndEvent
+
+Function UpdateShoutList()
+	If (CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster") && !CharacterManager.GetLocalInt(CharacterName,"ShoutsAllowMaster")) \
+	|| (InCity && GetConfigBool("SHOUTS_DISABLE_CITIES")) \
+	|| (GetConfigInt("SHOUTS_HANDLING") == 4)
+		CharacterManager.RemoveCharacterShouts(CharacterName)
+		_bNeedShouts = False
+	Else ;If HasSpell(GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") As Shout) || abForceUpdate
+		If CharacterManager.ApplyCharacterShouts(CharacterName) >= 0
+			_bNeedShouts = False
+		EndIf
+	EndIf
+EndFunction
 
 Function CheckVars()
 	If !_kActorBase
@@ -394,6 +515,13 @@ Function CheckVars()
 	
 	_iCharGenVersion = SKSE.GetPluginVersion("chargen")
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": CharGen version is " + _iCharGenVersion)
+	Bool bWasInCity = InCity
+	Location kLocation = GetCurrentLocation()
+	If kLocation
+		InCity = kLocation.HasKeywordString("LocTypeHabitation")
+	Else
+		InCity = False
+	EndIf
 EndFunction
 
 Function DoInit(Bool bInBackground = True)
@@ -404,6 +532,8 @@ EndFunction
 Function DoUpkeep(Bool bInBackground = True)
 	{Run whenever the player loads up the Game. Sets the name and such.}
 	SetNameIfNeeded()
+	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If bInBackground
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": Backgrounding upkeep!")
 		_bDoUpkeep = True
@@ -421,37 +551,34 @@ Function DoUpkeep(Bool bInBackground = True)
 	EndIf
 	CheckVars()
 	SyncCharacterData()
-	RegisterForModEvent("vMYC_ConfigUpdate", "OnConfigUpdate")
-	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
-	If _iCharGenVersion == 2
-		_bNeedRefresh = True
-	ElseIf _iCharGenVersion == 3
-		RefreshMeshNewCG()
-	EndIf
 	If !CharacterManager.HasLocalKey(CharacterName,"ShoutsAllowMaster")
 		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
 	EndIf
 	SetNonpersistent()
+	If _iCharGenVersion == 3
+		RefreshMeshNewCG()
+	EndIf
 	_bWarnedVoiceTypeNoFollower = False
 	_bWarnedVoiceTypeNoSpouse = False
-	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
-		If CharacterManager.GetLocalInt(CharacterName,"InAlcove")
-			CharacterManager.SetCharacterTracking(CharacterName,False)
-		Else
-			CharacterManager.SetCharacterTracking(CharacterName,True)
-		EndIf
-	EndIf
+;	If !CharacterManager.HasLocalKey(CharacterName,"TrackingEnabled")
+;		If CharacterManager.GetLocalInt(CharacterName,"InAlcove")
+;			CharacterManager.SetCharacterTracking(CharacterName,False)
+;		Else
+;			CharacterManager.SetCharacterTracking(CharacterName,True)
+;		EndIf
+;	EndIf
 	RegisterForSingleUpdate(0.1)
 	SendModEvent("vMYC_UpkeepEnd")
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": finished upkeep!")
-	RegisterForSingleLOSGain(PlayerREF,Self)
+	If !PlayerREF.HasLos(Self)
+		RegisterForSingleLOSGain(PlayerREF,Self)
+	EndIf
 	GotoState("")
 EndFunction
 
 Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
-	If _iCharGenVersion == 2
-		_bNeedRefresh = True
-	ElseIf _iCharGenVersion == 3
+	;Extra one because sometimes external heads don't apply correctly the first run
+	If _iCharGenVersion == 3
 		RefreshMeshNewCG()
 	EndIf
 EndEvent
@@ -519,7 +646,7 @@ Function SetNonpersistent()
 		Return
 	EndIf
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": Setting name...")
-	SetNameIfNeeded(True)
+	;SetNameIfNeeded(True)
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": Applying perks...")
 	Int iSafetyTimer = 10
 	_bNeedPerks = True
@@ -563,12 +690,21 @@ Function SetNonpersistent()
 		EndIf
 	EndIf
 	SetFactions()
-	If !CharacterManager.GetCharacterForm(CharacterName,"Class") ; If !GetFormValue(_kActorBase,sKey + "Class")
-		SetCustomActorValues(True)
+	If !CharacterManager.GetCharacterForm(CharacterName,"Class") 
+		If CharacterManager.GetLocalInt(CharacterName,"DisableAutoLevel") == 1
+			SetCustomActorValues(False)
+		ElseIf GetConfigBool("AUTOLEVEL_CHARACTERS")
+			SetCustomActorValues(True)
+		EndIf
 	Else
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
+		Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
+		AddItem(vMYC_DummyArmor, 1, true)
+		RemoveItem(vMYC_DummyArmor, 1)
 	EndIf
-	UpdateCombatStyle()
+	SetAV("Confidence",3)
+	SetAV("Assistance",2)
+
+	;Force stat recalc 
 EndFunction
 
 Function SetFactions()
@@ -661,12 +797,12 @@ Function RefreshMeshNewCG()
 	;	Wait(5)
 	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
 	_kActorBase.SetInvulnerable(True)
-	Bool _bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + CharacterName + ".dds")
-	If !_bHasFileTexture
-		Debug.MessageBox("Familiar Faces\nThe texture file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, " + CharacterName + "'s face will lack the proper color.")
-	EndIf
 	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
 	If _bHasFileSlot
+		Bool _bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + CharacterName + ".dds")
+		If !_bHasFileTexture
+			Debug.Notification("Familiar Faces: Missing texture file for " + CharacterName + ".")
+		EndIf
 		Bool bLCSuccess = CharGenLoadCharacter(Self, CharacterRace, CharacterName)
 		Int iSafetyTimer = 30
 		If _bInvalidRace
@@ -682,7 +818,8 @@ Function RefreshMeshNewCG()
 			;Debug.Trace("MYC/Actor/" + CharacterName + ": LoadCharacter succeeded with " + iSafetyTimer + "tries remaining!")
 		EndIf
 	Else
-		Debug.MessageBox("Familiar Faces\nThe slot file for " + CharacterName + " is missing. This means either RaceMenu/CharGen is out of date, or the file has been removed since it was saved. Either way, appearance data cannot be loaded for " + CharacterName)
+		Debug.Notification("Familiar Faces: Missing CharGen slot file for " + CharacterName + ".\nThis character will be disabled.")
+		CharacterManager.EraseCharacter(CharacterName,True)
 	EndIf
 	SetNameIfNeeded()
 	;	Wait(5)
@@ -698,6 +835,19 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	Int iDismountSafetyTimer = 10
+	While akActor.IsOnMount() && iDismountSafetyTimer
+		iDismountSafetyTimer -= 1
+		Bool bDismountSent = akActor.Dismount()
+		Wait(1)
+	EndWhile
+	If !iDismountSafetyTimer
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dismount timer expired!",1)
+	EndIf
+	If akActor.IsOnMount()
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		Return False
+	EndIf
 	FFUtils.DeleteFaceGenData(Self.GetActorBase())
 	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
@@ -839,48 +989,66 @@ EndFunction
 
 Function SetCustomActorValues(Bool bScaleToLevel = False)
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": setting custom actor values...")
+	If CharacterManager.GetLocalInt(CharacterName,"Compat_AFT_Tweaked")
+		;Do not attempt to set stats if AFT is installed, as it will just clobber any changes we make
+		Return
+	EndIf
 	String[] sAVNames = CharacterManager.AVNames
 	Int iBaseLevel = CharacterManager.GetCharacterStat(CharacterName,"Level") As Int
+	If !iBaseLevel
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Saved level is 0, not applying custom AVs!",1)
+		Return
+	EndIf
 	Int iMyLevel = GetLevel()
 	Float fScaleMult = 1.0
-	;Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
+	Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
 	Float fCharacterXP = (12.5 * iMyLevel * iMyLevel) + 62.5 * iMyLevel - 75
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": needs " + fCharacterXP + " to reach this level!")
 	If bScaleToLevel
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Scaling actorValues from level " + iBaseLevel + " to level is " + iMyLevel)
 		If iBaseLevel > 0
 			fScaleMult = (iMyLevel As Float) / (iBaseLevel As Float)
 		EndIf
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": original actor values will be scaled to " + fScaleMult * 100 + "% of their value")
-	EndIf
-	Int i
-	i = sAVNames.Length ;jArray.Count(jActorValueStrings)
-	While i > 0
-		i -= 1
-		String sAVName = sAVNames[i]
-		If sAVNames[i]
-			Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
-			If sAVName == "Health" || sAVName == "Magicka" || sAVName == "Stamina"
-				fAV = 100 + (((fAV - 100) / (iBaseLevel As Float)) * iMyLevel)
-				If fAV < 100
-					fAV = 100
+		Int i
+		i = sAVNames.Length ;jArray.Count(jActorValueStrings)
+		While i > 0
+			i -= 1
+			String sAVName = sAVNames[i]
+			If sAVNames[i]
+				Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
+				If sAVName == "Health" || sAVName == "Magicka" || sAVName == "Stamina"
+					fAV = 100 + (((fAV - 100) / (iBaseLevel As Float)) * iMyLevel)
+					If fAV < 100
+						fAV = 100
+					EndIf
+					CharacterManager.SetLocalFlt(CharacterName,sAVName,fAV)
+					SetActorValue(sAVName,fAV as Int)
+				Else
+					fAV = 15 + (((fAV - 15) / (iBaseLevel As Float)) * iMyLevel)
+					If fAV > 100
+						fAV = 100
+					ElseIf fAV < 15
+						fAV = 15
+					EndIf
 				EndIf
-				CharacterManager.SetLocalFlt(CharacterName,sAVName,fAV)
-			ElseIf fAV < 20
-				; Player hasn't really worked on this one at all, don't change it
-			Else
-				fAV = 15 + (((fAV - 15) / (iBaseLevel As Float)) * iMyLevel)
-				If fAV > 100
-					fAV = 100
-				ElseIf fAV < 15
-					fAV = 15
-				EndIf
+				SetActorValue(sAVName,fAV As Int)
+				;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
 			EndIf
-			SetActorValue(sAVName,fAV As Int)
-			;Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
-		EndIf
-	EndWhile
-	SetAV("Confidence",3)
-	SetAV("Assistance",2)
+		EndWhile
+	Else
+		;Don't rescale it, just blindly apply all saved values to the character
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Setting original actorValues from level " + iBaseLevel + " character")
+		Int i
+		i = sAVNames.Length ;jArray.Count(jActorValueStrings)
+		While i > 0
+			i -= 1
+			String sAVName = sAVNames[i]
+			If sAVNames[i]
+				Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
+				SetActorValue(sAVName,fAV As Int)
+			EndIf
+		EndWhile
+	EndIf
 EndFunction
 
 Function SetNameIfNeeded(Bool abForce = False)
@@ -894,8 +1062,8 @@ Function SetNameIfNeeded(Bool abForce = False)
 			ReferenceAlias kThisRefAlias = GetNthReferenceAlias(i)
 			If kThisRefAlias.GetOwningQuest() != CharacterManager && kThisRefAlias.GetOwningQuest() != ShrineOfHeroes
 				;Debug.Trace("MYC/Actor/" + CharacterName + ": Resetting RefAlias " + kThisRefAlias + "!")
-				kThisRefAlias.Clear()
-				kThisRefAlias.ForceRefTo(Self)
+				kThisRefAlias.TryToClear()
+				kThisRefAlias.ForceRefIfEmpty(Self)
 			EndIf
 		EndWhile
 		SendModEvent("vMYC_UpdateXFLPanel")
@@ -915,10 +1083,6 @@ State Busy
 	
 	Event OnLoad()
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": OnLoad called in Busy state!")
-	EndEvent
-	
-	Event OnAttachedToCell()
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": OnAttachedToCell called in Busy state!")
 	EndEvent
 	
 	Event OnUnload()

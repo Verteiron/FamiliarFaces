@@ -5,7 +5,7 @@ Scriptname vMYC_CharacterManagerScript extends Quest
 
 Import Utility
 Import Game
-;Import StorageUtil
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -47,6 +47,8 @@ ObjectReference Property LoadPoint Auto
 Activator Property vMYC_CustomMapMarker	Auto
 
 String[] Property sHangoutNames Auto Hidden
+
+String	Property	DataPath	Auto Hidden
 
 ReferenceAlias[] Property kHangoutRefAliases Auto Hidden
 
@@ -207,6 +209,11 @@ TextureSet Property vMYC_DummyTexture Auto
 Message Property vMYC_CharactersLoadingMSG Auto
 Message Property vMYC_CharactersLoadedMSG Auto
 Message	Property vMYC_CharacterListLoadedMSG Auto
+Message Property vMYC_ReqMissingNagMSG Auto
+Message Property vMYC_ReqMissingCharMinorMSG Auto
+Message Property vMYC_ReqMissingCharWarningMSG Auto
+Message Property vMYC_ReqMissingCharCriticalMSG Auto
+
 
 ;--=== Config variables ===--
 
@@ -246,7 +253,6 @@ String[] _sCharacterNames
 
 Int _jMYC
 
-Int _jTempRetainer
 Float _fFlushTime
 
 Location	_kLastPlayerLocation
@@ -432,12 +438,6 @@ Event OnUpdate()
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	If _fFlushTime && _fFlushTime < GetCurrentRealTime()
-		;Debug.Trace("MYC/CM: FlushTime is " + _fFlushTime + ", CurrentTime is " + GetCurrentRealTime())
-		FlushTemp()
-	Else
-		RegisterForSingleUpdate(5)
-	EndIf
 EndEvent
 
 Event OnSetLastPlayerLocation(string eventName, string strArg, float numArg, Form sender)
@@ -490,8 +490,12 @@ Function DoUpkeep(Bool bInBackground = True)
 		RegisterForSingleUpdate(0)
 		Return
 	EndIf
+	CleanupTempJContainers()
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvents()
+	If !JContainers.fileExistsAtPath("Data/vMYC/vMYC_MovedFiles.txt")
+		RepairSaves()
+	EndIf
 	LoadCharacterFiles()
 	RefreshCharacters()
 	SendModEvent("vMYC_UpkeepEnd")
@@ -530,6 +534,9 @@ Function DoInit()
 		EndIf
 		idx += 1
 	EndWhile
+	If !JContainers.fileExistsAtPath("Data/vMYC/vMYC_MovedFiles.txt")
+		RepairSaves()
+	EndIf
 	LoadCharacterFiles()
 	If GetModByName("Dawnguard.esm") != 255
 		DLC1PlayingVampireLine = GetFormFromFile(0x0200587A,"Dawnguard.esm") as GlobalVariable
@@ -548,12 +555,27 @@ Function DoInit()
 	RegisterForSingleUpdate(1)
 EndFunction
 
+Function DoShutdown()
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_SetCustomHangout")
+	
+	String[] sCharacterNames = CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			EraseCharacter(sCharacterNames[i],True)
+		EndIf
+	EndWhile
+	
+EndFunction
+
 Function RefreshCharacters()
 	Int jActorMap = JMap.getObj(_jMYC,"ActorBaseMap")
 	Int jActorBaseList = JFormMap.allKeys(jActorMap)
 	Int i = JArray.Count(jActorBaseList)
 	Int jDeferredActors = JArray.Object()
-	RetainTemp(jDeferredActors)
+	JValue.Retain(jDeferredActors,"vMYC_CM")
 	While i > 0
 		i -= 1
 		ActorBase kActorBase = JArray.getForm(jActorBaseList,i) as ActorBase
@@ -568,7 +590,6 @@ Function RefreshCharacters()
 			EndIf
 		EndIf
 	EndWhile
-	;JValue.Writetofile(jDeferredActors,"Data/vMYC/_jDeferredActors.json")
 	WaitMenuMode(8) ; Give loaded characters priority
 	i = JArray.Count(jDeferredActors)
 	While i > 0
@@ -577,6 +598,7 @@ Function RefreshCharacters()
 		;Debug.Trace("MYC/CM: Refreshing Actor " + kTargetActor)
 		(kTargetActor as vMYC_CharacterDummyActorScript).DoUpkeep(True)
 	EndWhile
+	JValue.Release(jDeferredActors)
 EndFunction
 
 Function LoadCharacterFiles()
@@ -595,15 +617,40 @@ Function LoadCharacterFiles()
 	EndWhile
 
 	;Debug.Trace("MYC/CM: Reading directory...")
-	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Int jDirectoryScan = JValue.readFromDirectory(JContainers.userDirectory() + "vMYC/")
+	If !jDirectoryScan
+		jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	EndIf
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
-	i = JMap.Count(jDirectoryScan)
 	
-	RetainTemp(jCharacterNames)
-	RetainTemp(jDirectoryScan)
-	RetainTemp(jCharFiles)
-	RetainTemp(jCharData)
+	JValue.AddToPool(jCharacterNames,"vMYC_CM_Load")
+	JValue.AddToPool(jDirectoryScan,"vMYC_CM_Load")
+	JValue.AddToPool(jCharFiles,"vMYC_CM_Load")
+	JValue.AddToPool(jCharData,"vMYC_CM_Load")	
+	
+	;scan old location anyway, in case new character files have been copied there.
+	Int jDirectoryScanOld = JValue.readFromDirectory("Data/vMYC/")
+	Int jCharFilesOld = JMap.allKeys(jDirectoryScanOld)
+	Int jCharDataOld = JMap.allValues(jDirectoryScanOld)
+	
+	JValue.AddToPool(jDirectoryScanOld,"vMYC_CM_Load")
+	JValue.AddToPool(jCharFilesOld,"vMYC_CM_Load")
+	JValue.AddToPool(jCharDataOld,"vMYC_CM_Load")	
+
+	;If any files are in the old location but not the new one, add them to the list
+	i = JMap.Count(jDirectoryScanOld)
+	While i > 0
+		i -= 1
+		If JArray.FindStr(jCharFiles,JArray.GetStr(jCharFilesOld,i)) < 0
+			Debug.Trace("MYC/CM: Adding file from Data/vMYC: " + JArray.getStr(jCharFilesOld,i))
+			JArray.AddStr(jCharFiles,JArray.GetStr(jCharFilesOld,i))
+			JArray.AddObj(jCharData,JArray.GetObj(jCharDataOld,i))
+		EndIf
+	EndWhile
+	Bool _bHasFileSlot
+	Bool _bHasFileTexture
+	i = JArray.Count(jCharData)
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
@@ -611,18 +658,22 @@ Function LoadCharacterFiles()
 		Int jCharacterData = JArray.getObj(jCharData,i)
 		If ValidateCharacterInfo(jCharacterData) > -1
 			If UpgradeCharacterInfo(jCharacterData)
-				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				;JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				JValue.WriteToFile(jCharacterData,JContainers.userDirectory() + "vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
 				WaitMenuMode(0.25)
 			EndIf
 			String sCharacterName = JValue.solveStr(jCharacterData,".Name")
+			_bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + sCharacterName + ".slot")
+			_bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + sCharacterName + ".dds")
 			;Debug.Trace("MYC/CM: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - " + sCharacterName)
-			If !JMap.hasKey(jCharacterMap,sCharacterName)
+			If !JMap.hasKey(jCharacterMap,sCharacterName) && _bHasFileSlot && _bHasFileTexture
 				JMap.setStr(jCharacterMap,sCharacterName,JArray.getStr(jCharFiles,i))
 				Int jCharacterInfo = JMap.Object()
 				JMap.SetObj(_jMYC,sCharacterName,jCharacterInfo)
 				JMap.SetObj(jCharacterInfo,"Data",jCharacterData)
 				JMap.setObj(_jMYC,sCharacterName,jCharacterInfo)
 				SetLocalInt(sCharacterName,"FilePresent",1)
+				Message.ResetHelpMessage("vMYC_Nag")
 				;Debug.Trace("MYC/CM: " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 			Else
 				;We're loading a file for a character we already have a record of.
@@ -641,7 +692,9 @@ Function LoadCharacterFiles()
 					;Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " hasn't changed.")
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData) ; Set the object anyway in case new forms are available from the importing game
 				EndIf
-				SetLocalInt(sCharacterName,"FilePresent",1)
+				If  _bHasFileSlot && _bHasFileTexture
+					SetLocalInt(sCharacterName,"FilePresent",1)
+				EndIf
 			EndIf
 		Else ; Validation failed
 			;Debug.Trace("MYC/CM: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - No valid character data!")
@@ -655,11 +708,28 @@ Function LoadCharacterFiles()
 		String sCharacterName = jArray.getStr(jCharacterNames,i)
 		If !GetLocalInt(sCharacterName,"FilePresent") && !GetLocalInt(sCharacterName,"ShowedMissingWarning")
 			SetLocalInt(sCharacterName,"ShowedMissingWarning",1)
-			;Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " is missing! :(")
-			Debug.MessageBox("The saved data for " + sCharacterName + " is missing! They will not be updated or loaded this session. If you have them as a follower, their appearance, items, and even their name will probably be incorrect.")
+			Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " is missing! :(")
+			Debug.Notification("Familiar Faces: The saved data for " + sCharacterName + " is missing!")
 		EndIf
 	EndWhile
 	
+	;--- See if any existing characters have missing requirements
+	Bool bShowNag = False
+	i = JArray.Count(jCharacterNames)
+	While i > 0
+		i -= 1
+		String sCharacterName = jArray.getStr(jCharacterNames,i)
+		If CheckModReqs(sCharacterName)
+			bShowNag = True
+		EndIf
+	EndWhile
+	If bShowNag && GetConfigBool("WARNING_MISSINGMOD")
+		vMYC_ReqMissingNagMSG.ShowAsHelpMessage("vMYC_Nag",8,1,1)
+	Else
+		Message.ResetHelpMessage("vMYC_Nag")
+	EndIf
+	
+	JValue.CleanPool("vMYC_CM_Load")
 EndFunction
 
 Int Function ValidateCharacterInfo(Int jCharacterData)
@@ -751,7 +821,6 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 			EndIf
 			JValue.SolveIntSetter(jCharacterData,"._MYC.SerializationVersion",3)
 			Debug.Trace("MYC/CM: Finished upgrading the file!")
-			;JValue.WritetoFile("Data/vMYC/" + 
 			bUpgraded = True
 		EndIf
 		;Debug.Trace("MYC/CM: Unfortunately no upgrade function is in place, so we'll just have to hope for the best!")
@@ -800,6 +869,139 @@ Function AddToReqList(Int jCharacterData, Form akForm, String asType)
 			
 EndFunction
 
+Int Function CheckModReqs(String asCharacterName)
+{Return 0 for no missing reqs, 1 for missing non-appearance reqs, 2 for missing armor/weapons reqs, 3 for missing headparts or race}
+	Debug.Trace("MYC/CM: Checking mod requirements for " + asCharacterName + "...")
+	If !GetCharacterForm(asCharacterName,"Race") as Race
+		Return 3
+	EndIf
+	Int iReturn = 0
+	Int jReqList = GetCharacterMetaObj(asCharacterName,"ReqList")
+	Int jModList = JMap.AllKeys(jReqList)
+	JValue.Retain(jModList,"vMYC_CM")
+	Int jMissingMods = JArray.Object()
+	JValue.Retain(jMissingMods,"vMYC_CM")
+	Int i = 0
+	Int iCount = JArray.Count(jModList)
+	
+	While i < iCount
+		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		Int jModObjTypes = JMap.AllKeys(JMap.GetObj(jReqList,JArray.GetStr(jModList,i)))
+		If GetModByName(JArray.GetStr(jModList,i)) == 255 ; Mod is missing
+			If JMap.HasKey(jModObjTypes,"HeadPart") || JMap.HasKey(jModObjTypes,"Race")
+				Return 3
+			ElseIf JMap.HasKey(jModObjTypes,"Equipment")
+				Return 2
+			ElseIf JMap.HasKey(jModObjTypes,"SPELL") || JMap.HasKey(jModObjTypes,"Perk") 
+				Return 1
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	JValue.Release(jMissingMods)
+	JValue.Release(jModList)	
+	
+	;Check older "sources" list
+	
+	Int jHeadPartSources = GetCharacterObj(asCharacterName,"HeadpartSources")
+	i = JArray.Count(jHeadpartSources)
+	While i > 0
+		i -= 1
+		If GetModByName(JArray.GetStr(jHeadpartSources,i)) == 255 ; Mod is missing
+			Return 3
+		EndIf
+	EndWhile
+	
+	Return 0
+EndFunction
+
+String Function GetModReqReport(String asCharacterName)
+{Return a string containing the missing mod report, formatted for SkyUI's ShowMessage.}
+	Debug.Trace("MYC/CM: Creating ModReq report for " + asCharacterName + "...")
+	String sReturn = ""
+	String sCrit = ""
+	String sWarn = ""
+	String sMiss = ""
+	String sInfo = ""
+	Int jReqList = GetCharacterMetaObj(asCharacterName,"ReqList")
+	Int jModList = JMap.AllKeys(jReqList)
+	JValue.Retain(jModList,"vMYC_CM")
+	Int jMissingMods = JArray.Object()
+	JValue.Retain(jMissingMods,"vMYC_CM")
+	If !GetCharacterStr(asCharacterName,"Appearance.HaircolorSource")
+		sInfo += "\nOlder file, report will be inaccurate!\n"
+	EndIf
+	Int i = 0
+	Int iCount = JArray.Count(jModList)
+	While i < iCount
+		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		String sModName = JArray.GetStr(jModList,i)
+		If GetModByName(sModName) < 255
+			sInfo += "\n" + sModName + ":\n"
+		EndIf
+		Int jModObjTypes = JMap.AllKeys(JMap.GetObj(jReqList,sModName))
+		Debug.Trace("MYC/CM:   Provides " + JArray.Count(jModObjTypes) + " forms")
+		Int j = 0
+		Int jCount = JArray.Count(jModObjTypes)
+		While j < jCount
+			String sModObj = JArray.GetStr(jModObjTypes,j)
+			String sObjList = ""
+			Int jMissingObjs = JMap.GetObj(JMap.GetObj(jReqList,sModName),sModObj)
+			Int k = 0
+			While k < JArray.Count(jMissingObjs)
+				sObjList += jArray.GetStr(jMissingObjs,k) + "\n"
+				k += 1
+			EndWhile
+			If GetModByName(sModName) == 255 ; Mod is missing
+				If sModObj == "HeadPart" || sModObj == "Race"
+					sCrit += sModName + " (" + JArray.Count(jMissingObjs) + " Missing):\n"
+					sCrit += sObjList + "\n"
+				ElseIf sModObj == "Equipment"
+					sWarn += sModName + " (" + JArray.Count(jMissingObjs) + " Missing):\n"
+					sWarn += sObjList + "\n"
+				Else
+					sMiss += sModName + " (" + JArray.Count(jMissingObjs) + " Missing):\n"
+					sMiss += sObjList + "\n"
+				EndIf
+			Else
+				sInfo += JArray.Count(jMissingObjs) + " " + sModObj
+				If JArray.Count(jMissingObjs) == 1
+					sInfo += " form\n"
+				Else
+					sInfo += " forms\n"
+				EndIf
+				;sInfo += "Using " + JArray.Count(jMissingObjs) + " " + sModObj + " forms from " + sModName + ":\n"
+				;sInfo += sObjList
+			EndIf
+			j += 1
+		EndWhile
+		i += 1
+	EndWhile
+	JValue.Release(jMissingMods)
+	JValue.Release(jModList)	
+
+	If !GetCharacterForm(asCharacterName,"Race") as Race && !sCrit
+		sCrit += "Missing Race from unknown source!\n"
+	EndIf
+	
+	sReturn = "Mod requirements for " + asCharacterName + "\n" 
+	If sCrit || sWarn || sMiss
+		If sCrit 
+			sReturn += "\n------=== Critical ===------\n" + sCrit
+		EndIf
+		If sWarn
+			sReturn += "\n------=== Equipment ===-----\n" + sWarn
+		EndIf
+		If sMiss 
+			sReturn += "\n--------==== Minor ===--------\n" + sMiss
+		EndIf
+	Else
+		sReturn += sInfo
+	EndIf
+	
+	Return sReturn
+EndFunction
+
 ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
 	While _bFreeActorBaseBusy
@@ -846,6 +1048,10 @@ EndFunction
 
 String Function GetCharacterMetaString(String asCharacterName, String asMetaName)
 	Return JValue.solveStr(_jMYC,"." + asCharacterName + ".Data._MYC." + asMetaName)
+EndFunction
+
+Int Function GetCharacterMetaObj(String asCharacterName, String asMetaName)
+	Return JValue.solveObj(_jMYC,"." + asCharacterName + ".Data._MYC." + asMetaName)
 EndFunction
 
 Int Function GetCharacterInt(String asCharacterName, String asPath)
@@ -974,10 +1180,28 @@ Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHango
 	Return True
 EndFunction
 
-Function SetCharacterTracking(String asCharacterName, Bool abEnable)
+Function SetCharacterTracking(String asCharacterName, Bool abEnable, Bool abChangeSetting = True)
 {Tell HangoutManager to enable tracking for this character}
-	SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
+	If abChangeSetting
+		SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
+	EndIf
 	HangoutManager.EnableTracking(GetCharacterActorByName(asCharacterName),abEnable)
+EndFunction
+
+Function SetAllCharacterTracking(Bool abEnable)
+	String[] sCharacterNames = CharacterNames
+	Int i = 0
+	While i < sCharacterNames.Length
+		String sCharacterName = sCharacterNames[i]
+		If sCharacterName
+			SetLocalInt(sCharacterName,"TrackingEnabled",abEnable as Int)
+			Actor kActor = GetCharacterActorByName(sCharacterName)
+			If kActor && GetLocalInt(sCharacterName,"IsSummoned")
+				HangoutManager.EnableTracking(kActor,abEnable)
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
 EndFunction
 
 Function RepairSaves()
@@ -998,33 +1222,45 @@ Function RepairSaves()
 	EndWhile
 
 	;Debug.Trace("MYC/CM: Reading directory...")
-	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Bool bNeedFilesMoved = False
+	Int jDirectoryScan
+	If !JContainers.fileExistsAtPath("Data/vMYC/vMYC_MovedFiles.txt")
+		bNeedFilesMoved = True
+		jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	Else
+		jDirectoryScan = JValue.readFromDirectory(JContainers.userDirectory() + "vMYC/")
+	EndIf
+	
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
 	i = JMap.Count(jDirectoryScan)
 	
-	RetainTemp(jCharacterNames)
-	RetainTemp(jDirectoryScan)
-	RetainTemp(jCharFiles)
-	RetainTemp(jCharData)
+	JValue.AddToPool(jCharacterNames,"vMYC_CM_Repair")
+	JValue.AddToPool(jDirectoryScan,"vMYC_CM_Repair")
+	JValue.AddToPool(jCharFiles,"vMYC_CM_Repair")
+	JValue.AddToPool(jCharData,"vMYC_CM_Repair")
 	
 	;--- Load and validate all files in the data directory
 	While i > 0
 		i -= 1
 		Int jCharacterData = JArray.getObj(jCharData,i)
 		If ValidateCharacterInfo(jCharacterData) > -1
-			If UpgradeCharacterInfo(jCharacterData)
-				JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
-				WaitMenuMode(0.25)
+			If UpgradeCharacterInfo(jCharacterData) || bNeedFilesMoved
+				;JValue.WriteToFile(jCharacterData,"Data/vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				JValue.WriteToFile(jCharacterData,JContainers.userDirectory() + "vMYC/" + JArray.getStr(jCharFiles,i)) ; write the file back if the data version was upgraded
+				;WaitMenuMode(0.25)
 			EndIf
 		EndIf
 	EndWhile
-
-
+	JValue.WriteToFile(JMap.Object(),"Data/vMYC/vMYC_MovedFiles.txt")
+	JValue.CleanPool("vMYC_CM_Repair")
 EndFunction
 
 Function ClearCharacterRefs(String asCharacterName)
 	Actor kCharacterActor = GetCharacterActorByName(asCharacterName)
+	If !kCharacterActor
+		Return
+	EndIf
 	Int i = kCharacterActor.GetNumReferenceAliases()
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") Clearing the following RefAliases from " + asCharacterName + "...")
 	While i > 0
@@ -1043,19 +1279,18 @@ Function DeleteCharacterActor(String asCharacterName)
 	ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") Deleting actor " + kDeadActor + "!")
-	Int jCharacterList = JMap.getObj(_jMYC,"CharacterList")
-	Int iDeadManIndex = JArray.findStr(jCharacterList,asCharacterName)
 	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
 	ClearCharacterRefs(asCharacterName)
-	CharGen.ClearPreset(kDeadActor,asCharacterName)
+	;CharGen.ClearPreset(kDeadActor,asCharacterName)
 	_kLoadedCharacters[iLCidx] = None
 	SetLocalInt(asCharacterName,"Enabled",0)
 	SetLocalFlt(asCharacterName,"PlayTime",0.0)
 	SetLocalForm(asCharacterName,"ActorBase",None)
 	SetLocalForm(asCharacterName,"Actor",None)
-	JArray.eraseIndex(jCharacterList,iDeadManIndex)
 	JFormMap.removeKey(jActorBaseMap,kDeadActorBase)
-	kDeadActor.Delete()
+	If kDeadActor
+		kDeadActor.Delete()
+	EndIf
 EndFunction
 
 Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPreserveLocal = True)
@@ -1066,14 +1301,21 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 	EndIf
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
-	CharGen.EraseCharacter(kDeadActor,asCharacterName)
+	FFUtils.DeleteFaceGenData(kDeadActor.GetActorBase())
+	CharGen.DeleteCharacter(asCharacterName)
 	DeleteCharacterActor(asCharacterName)
-	SetLocalInt(asCharacterName,"DoNotLoad",1)
 	If bPreserveLocal
-		JMap.RemoveKey(jDeadManWalking,"Data")
-	Else
-		JMap.RemoveKey(_jMYC,asCharacterName)
+		If !JMap.hasKey(_jMYC,"DeletedList")
+			JMap.setObj(_jMYC,"DeletedList",JMap.Object())
+		EndIf
+		Int jDeletedList = JMap.getObj(_jMYC,"DeletedList")
+		JMap.SetObj(jDeletedList,asCharacterName,JValue.SolveObj(_jMYC,"." + asCharacterName + ".!LocalData"))
 	EndIf
+	JDB.WriteToFile("Data/vMYC/JDB-post-delete.json")
+	JMap.RemoveKey(_jMYC,asCharacterName)
+	Int jCharacterList = JMap.GetObj(_jMYC,"CharacterList")
+	JMap.RemoveKey(jCharacterList,asCharacterName)
+	SendModEvent("vMYC_CharacterErased",asCharacterName)
 	Debug.Trace("MYC/CM: (" + asCharacterName + ") erased character!")
 EndFunction
 
@@ -1271,6 +1513,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		Return -1
 	EndIf
 	_bApplyShoutsBusy = True
+	Int iConfigShoutHandling = GetConfigInt("SHOUTS_HANDLING")
 	vMYC_Shoutlist.Revert()
 	Int jCharacterShouts = GetCharacterObj(sCharacterName,"Shouts")
 	Int i = JArray.Count(jCharacterShouts)
@@ -1280,17 +1523,28 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
 		If !kShout
 			iMissingCount += 1
-		Else 
-			vMYC_ShoutList.AddForm(kShout)
+		Else
+			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
+			Shout kDragonAspectShout
+			If GetModByName("Dragonborn.esm")
+				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
+			EndIf
+			If kShout == kStormCallShout && (iConfigShoutHandling == 1 || iConfigShoutHandling == 3)
+				;Don't add it
+			ElseIf kShout == kDragonAspectShout && (iConfigShoutHandling == 2 || iConfigShoutHandling == 3)
+				;Don't add it
+			ElseIf GetConfigBool("SHOUTS_BLOCK_UNLEARNED")
+				If PlayerREF.HasSpell(kShout)
+					vMYC_ShoutList.AddForm(kShout)
+				EndIf
+			Else
+				vMYC_ShoutList.AddForm(kShout)		
+			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 	EndWhile
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
-	If vMYC_ShoutList.GetSize() != JArray.Count(jCharacterShouts)
-		Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size mismatch, probably due to simultaneous calls. Aborting!",1)
-		_bApplyShoutsBusy = False
-		Return -1
-	ElseIf vMYC_ShoutList.GetSize() == 0
+	If vMYC_ShoutList.GetSize() == 0
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size is 0. Won't attempt to apply this.")
 		_bApplyShoutsBusy = False
 		Return 0
@@ -1298,7 +1552,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	If iMissingCount
 		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts with " + iMissingCount + " skipped.",1)
 	Else
-		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
 	EndIf
 	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
 	WaitMenuMode(0.1)
@@ -1383,7 +1637,10 @@ Bool Function LoadCharacter(String sCharacterName)
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is a Level " + JValue.solveInt(jCharacterData,".Stats.Level") + " " + (JValue.solveForm(jCharacterData,".Race") as Race).GetName() + "!")
 	Else
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No _jMYC data for " + sCharacterName + "! BUT, we'll try loading a file by that name, just in case...")
-		Int jCharacterFileData = JValue.ReadFromFile("Data/vMYC/" + sCharacterName + ".char.json")
+		Int jCharacterFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/" + sCharacterName + ".char.json")
+		If !jCharacterFileData
+			jCharacterFileData = JValue.ReadFromFile("Data/vMYC/" + sCharacterName + ".char.json")
+		EndIf
 		If jCharacterFileData
 			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Okay, weird, we apparently have data for this character after all and the character list is desynced.")
 			Int jCharacterTopLevel = JMap.Object()
@@ -1971,10 +2228,6 @@ Event OnSaveCurrentPlayerSpells(string eventName, string strArg, float numArg, F
 			bAddItem = True
 			Int iSpellID = kSpell.GetFormID()
 			;Debug.Trace("MYC/CM: " + sPlayerName + " knows the spell " + kSpell + ", " + kSpell.GetName())
-			If iSpellID > 0x05000000 || iSpellID < 0 ; Spell is NOT part of Skyrim, Dawnguard, Hearthfires, or Dragonborn
-				bAddItem = False
-				;Debug.Trace("MYC/CM: " + kSpell + " is a mod-added item!")
-			EndIf
 			If bAddItem
 				;vMYC_PlayerFormlist.AddForm(kSpell)
 				JArray.AddForm(jPlayerSpells,kSpell)
@@ -2027,8 +2280,8 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	Int jInvMap = JMap.getObj(_jMYC,"PlayerInventory")
 	Int jInvForms = JFormMap.allKeys(jInvMap)
 	Int jInvCounts = JFormMap.allValues(jInvMap)
-	RetainTemp(jInvForms)
-	RetainTemp(jInvCounts)
+	JValue.Retain(jInvForms,"vMYC_CM")
+	JValue.Retain(jInvCounts,"vMYC_CM")
 	Int jPlayerInventory = JFormMap.Object()
 	JMap.SetObj(jPlayerData,"Inventory",jPlayerInventory)
 
@@ -2114,8 +2367,6 @@ Event OnSaveCurrentPlayerInventory(string eventName, string strArg, float numArg
 	;Debug.Trace("MYC/CM: Saved " + JArray.Count(jPlayerCustomItems) + " custom items for " + sPlayerName + ".")
 
 	SendModEvent("vMYC_InventorySaveEnd",iAddedCount)
-	;JValue.WriteTofile(jPlayerInventory,"Data/vMYC/_jPlayerInventory.json")
-	;JValue.WriteTofile(jPlayerCustomItems,"Data/vMYC/_jPlayerCustomItems.json")
 	_bSavedInventory = True
 	JValue.Release(jInvForms)
 	JValue.Release(jInvCounts)
@@ -2340,7 +2591,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	Debug.Notification("Saving " + sPlayerName + "'s data, this may take a minute...")
 
 	Int jPlayerData = JMap.Object()
-	JValue.Retain(jPlayerData) ; Not using RetainTemp here because it's sure to be cleared, and the save process may take longer than 30 seconds...
+	JValue.Retain(jPlayerData,"vMYC_CM") 
 
 	JMap.SetStr(jPlayerData,"Name",sPlayerName)
 	JMap.SetInt(jPlayerData,"Sex",PlayerREF.GetActorBase().GetSex())
@@ -2557,7 +2808,8 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 		Wait(0.5)
 	EndWhile
 
-	JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
+	;JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
+	JValue.WriteToFile(jPlayerData,JContainers.userDirectory() + "vMYC/" + sPlayerName + ".char.json")
 	Debug.Notification("Exported character data!")
 	JValue.Release(jPlayerData)
 
@@ -2568,12 +2820,12 @@ EndFunction
 Int Function GetNINodeInfo(Actor akActor)
 
 	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
-	RetainTemp(jNINodeList)
+	JValue.Retain(jNINodeList,"vMYC_CM")
 	Debug.Trace("MYC/CM: NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
 	
 	
 	Int jNINodes = JMap.Object()
-	RetainTemp(jNINodes)
+	JValue.Retain(jNINodes,"vMYC_CM")
 	Int i = 0
 	Int iNodeCount = JArray.Count(jNINodeList)
 	While i < iNodeCount
@@ -2591,7 +2843,8 @@ Int Function GetNINodeInfo(Actor akActor)
 		EndIf
 		i += 1
 	EndWhile
-
+	JValue.Release(jNINodeList)
+	JValue.Release(jNINodes)
 	Return jNINodes
 EndFunction
 
@@ -2725,18 +2978,8 @@ String Function GetFormIDString(Form kForm)
 	Return sResult
 EndFunction
 
-Function RetainTemp(Int jObject)
-	If !_jTempRetainer
-		_jTempRetainer = JArray.Object()
-		JValue.Retain(_jTempRetainer)
-	EndIf
-	JArray.AddObj(_jTempRetainer,jObject)
-	_fFlushTime = GetCurrentRealTime() + 30
-	;Debug.Trace("MYC/CM: Storing " + JArray.Count(_jTempRetainer) + " temporary objects, flush time is " + _fFlushTime)
-	RegisterForSingleUpdate(1)
-EndFunction
-
-Function FlushTemp()
-	Debug.Trace("MYC/CM: Flushing " + JArray.Count(_jTempRetainer) + " temporary objects.")
-	_jTempRetainer = JValue.Release(_jTempRetainer)
+Function CleanupTempJContainers()
+	JValue.ReleaseObjectsWithTag("vMYC_CM")
+	JValue.CleanPool("vMYC_CM_Load")
+	JValue.CleanPool("vMYC_CM_Repair")
 EndFunction

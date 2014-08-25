@@ -16,7 +16,13 @@ Int Property	VOICETYPE_SPOUSE 	= 2	AutoReadOnly Hidden
 Int Property	VOICETYPE_ADOPT 	= 4	AutoReadOnly Hidden
 Int Property	VOICETYPE_GENDER	= 8 AutoReadOnly Hidden
 
+Int Property	OPTION_TEXT_MODREQREPORT				Auto Hidden
+
+Int Property	OPTION_TOGGLE_DISABLE_AUTOLEVEL			Auto Hidden
+
 Int Property	OPTION_TOGGLE_TRACKING					Auto Hidden
+
+Int Property 	OPTION_MENU_CHARACTER_HANGOUT			Auto Hidden
 
 Int Property	OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_ALTERATION		Auto Hidden
@@ -35,7 +41,36 @@ Int Property	OPTION_TOGGLE_HANGOUT_CLEARALL				Auto Hidden
 Int Property	OPTION_TOGGLE_HANGOUT_PARTY					Auto Hidden
 
 Int[] Property	OPTION_MENU_ALCOVE_CHARACTER				Auto Hidden
-Int[] Property	OPTION_TOGGLE_ALCOVE_SUMMONED					Auto Hidden
+Int[] Property	OPTION_TOGGLE_ALCOVE_SUMMONED				Auto Hidden
+
+Int Property	OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT			Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_DELETE_MISSING			Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	Auto Hidden
+
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_FILE_LOCATION			Auto Hidden
+
+String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES		Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
+String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
+String[] Property	ENUM_GLOBAL_FILE_LOCATION			    Auto Hidden
+					
+Int Property	OPTION_DEBUG_SHUTDOWN						Auto Hidden
+Int Property	OPTION_DEBUG_CHARACTER_FORCEREFRESH			Auto Hidden
+Int Property	OPTION_DEBUG_HANGOUTS_RESETQUESTS			Auto Hidden
+Int Property	OPTION_DEBUG_SHRINE_RESET					Auto Hidden
+Int Property	OPTION_DEBUG_SHRINE_ALCOVE_VALIDATEATLOAD	Auto Hidden
+
 
 Bool _Changed
 Bool _Shutdown
@@ -57,34 +92,34 @@ VoiceType[] _kVoiceTypesAll
 Int		_iCurrentCharacter
 String	_sCharacterName
 
-Int		_iCurrentCharacterOption
+Int		OPTION_MENU_CHAR_PICKER
 
 Int		_iCharacterEnabledOption
 Bool[]	_bCharacterEnabled
 
-Int		_iCharacterIsFoeOption
+Int		OPTION_TOGGLE_CHAR_ISFOE
 
-Int		_iCharacterCanMarryOption
+Int		OPTION_TOGGLE_CHAR_CANMARRY
 
-Int		_iVoiceTypeOption
+Int		OPTION_MENU_CHAR_VOICETYPE
 Int[]	_iVoiceTypeSelections
 
-Int		_iAliasOption
 Int[]	_iAliasSelections
 ReferenceAlias[]	_kHangoutRefAliases
 String[]	_sHangoutNames
+String[]	_sHangoutNamesPlusWanderer
 String[]	_sHangoutNamesDisabled
 Int		_iCurrentHangout
 String	_sHangoutName
 
-Int 	_iClassOption
+Int 	OPTION_MENU_CHAR_CLASS
 Int 	_iClassSelection
 String[] _sClassNames
 
 Int		_iMagicAutoSelectOption
 Int[]	_iMagicSchoolOptions
 
-Int		_iWarpOption
+Int		OPTION_WARPTOCHARACTER
 
 Int[]		_iAlcoveIndices
 Int[]		_iAlcoveStates
@@ -92,12 +127,12 @@ String[]	_sAlcoveStateEnum
 String[] 	_sAlcoveCharacterNames
 Int[]		_iAlcoveResetOption
 
-Int		_iShowDebugOption
+Int		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 
 Int 	_iCurrentHangoutOption
 
 Int Function GetVersion()
-    return 6 ; Default version
+    return 9 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -127,17 +162,28 @@ Event OnVersionUpdate(int a_version)
 		Pages[2] = "$Hangout Manager"
 		Pages[3] = "$Global Options"
 		Pages[4] = "$Debugging"
+	ElseIf (a_version >= 7 && CurrentVersion < 7)
+		Pages = New String[5]
+		Pages[0] = "$Character Setup"
+		Pages[1] = "$Shrine of Heroes"
+		Pages[2] = "$Hangout Manager"
+		Pages[3] = "$Global Options"
+		Pages[4] = "$Debugging"
 	EndIf
 
+	If a_version > CurrentVersion
+		FillEnums()
+	EndIf
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[3]
+	Pages = New String[5]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Shrine of Heroes"
 	Pages[2] = "$Hangout Manager"
 	Pages[3] = "$Global Options"
+	Pages[4] = "$Debugging"
 
 	_bCharacterEnabled	= New Bool[128]
 	_sCharacterNames = New String[128]
@@ -162,8 +208,33 @@ Event OnConfigInit()
 	_iAlcoveResetOption		= New Int[12]
 
 	FilterVoiceTypes(VOICETYPE_NOFILTER)
-
+	FillEnums()
 EndEvent
+
+Function FillEnums()
+
+	ENUM_GLOBAL_MAGIC_OVERRIDES	= New String[3]
+	ENUM_GLOBAL_MAGIC_OVERRIDES[0]	= "$None"
+	ENUM_GLOBAL_MAGIC_OVERRIDES[1]	= "$Healing"
+	ENUM_GLOBAL_MAGIC_OVERRIDES[2]	= "$Healing/Defense"
+
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		= New String[3]
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Vanilla only"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[1]		= "$Select mods"
+	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[2]		= "$All mods"
+	
+	ENUM_GLOBAL_SHOUTS_HANDLING			= New String[5]
+	ENUM_GLOBAL_SHOUTS_HANDLING[0]			= "$All"
+	ENUM_GLOBAL_SHOUTS_HANDLING[1]			= "$All but CS"
+	ENUM_GLOBAL_SHOUTS_HANDLING[2]			= "$All but DA"
+	ENUM_GLOBAL_SHOUTS_HANDLING[3]			= "$All but CS/DA"
+	ENUM_GLOBAL_SHOUTS_HANDLING[4]			= "$No Shouts"
+	
+	ENUM_GLOBAL_FILE_LOCATION			= New String[2]
+	ENUM_GLOBAL_FILE_LOCATION[0]			= "$Data/vMYC"
+	ENUM_GLOBAL_FILE_LOCATION[1]			= "$My Games/Skyrim"
+
+EndFunction
 
 Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
 	_sVoiceTypesFiltered = New String[128]
@@ -265,7 +336,7 @@ event OnPageReset(string a_page)
 		EndIf
 		String sShortVoiceType = _sVoiceTypesFiltered[_iVoiceTypeSelections[_iCurrentCharacter]]
 		sShortVoiceType = StringUtil.Substring(sShortVoiceType,0,StringUtil.Find(sShortVoiceType," "))
-		_iVoiceTypeOption = AddMenuOption("$VoiceType",sShortVoiceType,OptionFlags)
+		OPTION_MENU_CHAR_VOICETYPE = AddMenuOption("$VoiceType",sShortVoiceType,OptionFlags)
 
 		;====================================----
 
@@ -273,22 +344,28 @@ event OnPageReset(string a_page)
 		;===== Character hangout option =====----
 		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
 		If !sHangoutName
-			sHangoutName = "Unassigned"
+			sHangoutName = "$Wanderer"
 		EndIf
-		_iAliasOption = AddMenuOption("$Hangout",sHangoutName,OptionFlags)
+		OPTION_MENU_CHARACTER_HANGOUT = AddMenuOption("$Hangout",sHangoutName,OptionFlags)
 		;====================================----
 
 		;===== Character class option =======----
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
-		_iClassOption = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class","$Using AFT",OPTION_FLAG_DISABLED)
+		Else
+			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+		EndIf
 		AddEmptyOption()
 		;====================================----
 
+		OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel"),OptionFlags)
+		
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
-		_iCharacterIsFoeOption = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
-		_iCharacterCanMarryOption = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
+		OPTION_TOGGLE_CHAR_ISFOE = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
+		OPTION_TOGGLE_CHAR_CANMARRY = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
 		;====================================----
 
 		AddEmptyOption()
@@ -296,27 +373,36 @@ event OnPageReset(string a_page)
 		AddHeaderOption("$Skill settings")
 		OPTION_TOGGLE_SHOUTSALLOW_MASTER = AddToggleOption("{$Allow} {$Shouts}",CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool,OptionFlags)
 		AddEmptyOption()
-		Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
-		OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
-		OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-		;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+		
+		If !CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+			Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
+			OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
+			OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
 
-		_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION
-		_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
-		_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
-		_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION
-		_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
-		;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
-
+			_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION
+			_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
+			_iMagicSchoolOptions[2] = OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+			_iMagicSchoolOptions[3] = OPTION_TOGGLE_MAGICALLOW_ILLUSION
+			_iMagicSchoolOptions[4] = OPTION_TOGGLE_MAGICALLOW_RESTORATION
+			;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
+		Else
+			AddMenuOption("$Auto select spells by perks","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Alteration}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Conjuration}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Destruction}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Illusion}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow} {$Restoration}","$Using AFT",OPTION_FLAG_DISABLED)		
+		EndIf
 		If _bShowDebugOptions
 			AddEmptyOption()
 			AddHeaderOption("Debug")
 			;===== Character warp DEBUG option ==----
-			_iWarpOption = AddTextOption("$Warp to character","",OptionFlags)
+			OPTION_WARPTOCHARACTER = AddTextOption("$Warp to character","",OptionFlags)
 			;====================================----
 		EndIf
 
@@ -325,7 +411,7 @@ event OnPageReset(string a_page)
 		SetCursorPosition(1)
 
 		;===== Character selection menu =====----
-		_iCurrentCharacterOption = AddMenuOption("$Settings for",_sCharacterName)
+		OPTION_MENU_CHAR_PICKER = AddMenuOption("$Settings for",_sCharacterName)
 		;====================================----
 
 		String[] sSex = New String[2]
@@ -348,7 +434,20 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		AddTextOption("ActorBase: " + GetFormIDString(CharacterManager.GetCharacterDummy(_sCharacterName)),"",OPTION_FLAG_DISABLED)
 		AddTextOption("Actor: " + GetFormIDString(CharacterManager.GetCharacterActorByName(_sCharacterName)),"",OPTION_FLAG_DISABLED)
-
+		Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
+		If MissingReqs == 3
+			AddEmptyOption()
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
+		ElseIf MissingReqs == 2
+			AddEmptyOption()
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
+		ElseIf MissingReqs == 1
+			AddEmptyOption()
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
+		Else
+			AddEmptyOption()
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements}","$Report")
+		EndIf
 		;===== END info column =============----
 
 	;===== END Character Setup page =====----
@@ -375,7 +474,10 @@ event OnPageReset(string a_page)
 			If !_sAlcoveCharacterNames[iAlcoveIndex] || _sAlcoveCharacterNames[iAlcoveIndex] == "Empty"
 				iSummonedOptionFlags = OPTION_FLAG_DISABLED
 			EndIf
-			OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex] = AddToggleOption("$Summoned",kThisAlcove.CharacterSummoned,iSummonedOptionFlags)
+			If !HasLocalConfigKey("AlcoveToggleSummoned" + iAlcoveIndex)
+				SetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex,kThisAlcove.CharacterSummoned as Int)
+			EndIf
+			OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex] = AddToggleOption("$Summoned",GetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex),iSummonedOptionFlags)
 			i += 1
 		EndWhile
 
@@ -470,14 +572,66 @@ event OnPageReset(string a_page)
 	ElseIf a_page == "$Global Options"
 
 	;===== Global Options page =====----
-
-		_iShowDebugOption = AddToggleOption("Show debug options",_bShowDebugOptions)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		AddHeaderOption("$Character options")
+		OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT			= AddToggleOption("$Track characters by default",									 GetConfigBool(	"TRACKBYDEFAULT"		))
+		OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	= AddToggleOption("$Stop tracking when recruited",									 GetConfigBool(	"TRACK_STOPONRECRUIT"	))
+		OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	= AddToggleOption("$Always use Follower voicetypes",								 GetConfigBool(	"SWAP_FOLLOWER_VOICE"	))
+		OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS	= AddToggleOption("$Use level scaling",												 GetConfigBool(	"AUTOLEVEL_CHARACTERS"	))
+;		OPTION_TOGGLE_GLOBAL_DELETE_MISSING			= AddToggleOption("$Disable characters with missing data",							 GetConfigBool(	"DELETE_MISSING"		))
 		AddEmptyOption()
-		AddTextOption("More options will go here","")
+		AddHeaderOption("$Magic and Shout options")
+		OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	= AddTextOption("$Always allow",	ENUM_GLOBAL_MAGIC_OVERRIDES		[GetConfigInt("MAGIC_OVERRIDES")	])
+		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
+		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Allow shouts",			ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
+		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNLEARNED"	))
+		OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	= AddToggleOption("$Disable Shouts in cities",										 GetConfigBool("SHOUTS_DISABLE_CITIES"	))
+		
+		SetCursorPosition(1)
+		AddHeaderOption("$Data and other options")
+;		OPTION_TEXT_GLOBAL_FILE_LOCATION			= AddTextOption("$Location of JSON files",	ENUM_GLOBAL_FILE_LOCATION				[GetConfigInt("FILE_LOCATION")			])
+		OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		= AddToggleOption("$Warn about missing mod files on startup",						 GetConfigBool(	"WARNING_MISSINGMOD"	))
+		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS 	= AddToggleOption("$Show debug options",											 GetConfigBool(	"SHOW_DEBUG_OPTIONS"	))
+
+		
+;		OPTION_DEBUG_SHUTDOWN						
+;		OPTION_DEBUG_CHARACTER_FORCEREFRESH			
+;		OPTION_DEBUG_HANGOUTS_RESETQUESTS			
+;		OPTION_DEBUG_SHRINE_RESET					
+;		OPTION_DEBUG_SHRINE_RESET					
+		
+
+
+
+
+
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 	;===== END Global Options page =----
+	
+	ElseIf a_page == "$Debugging"
+
+	;===== Debug Options page =====----
+	OPTION_DEBUG_SHUTDOWN = AddToggleOption("$Shutdown the mod",False)
+	;===== END Debug Options page =----
 	EndIf
-
-
+	
 EndEvent
 
 Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form sender)
@@ -494,29 +648,29 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetCharacterTracking(_sCharacterName, bEnabled)
 		SetToggleOptionValue(Option,bEnabled)
 		;ForcePageReset()
-	ElseIf Option == _iCharacterIsFoeOption
+	ElseIf Option == OPTION_TOGGLE_CHAR_ISFOE
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe") as Bool
 		bIsFoe = !bIsFoe
 		CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",bIsFoe as Int)
 		If bIsFoe
 			CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",0)
-			SetToggleOptionValue(_iCharacterCanMarryOption,False,True)
-			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_DISABLED,True)
+			SetToggleOptionValue(OPTION_TOGGLE_CHAR_CANMARRY,False,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_CANMARRY, OPTION_FLAG_DISABLED,True)
 		Else
-			SetOptionFlags(_iCharacterCanMarryOption, OPTION_FLAG_NONE,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_CANMARRY, OPTION_FLAG_NONE,True)
 		EndIf
 		SetToggleOptionValue(Option,bIsFoe)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
-	ElseIf Option == _iCharacterCanMarryOption
+	ElseIf Option == OPTION_TOGGLE_CHAR_CANMARRY
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry") as Bool
 		bCanMarry = !bCanMarry
 		CharacterManager.SetLocalInt(_sCharacterName,"CanMarry",bCanMarry as Int)
 		If bCanMarry
 			CharacterManager.SetLocalInt(_sCharacterName,"IsFoe",0)
-			SetToggleOptionValue(_iCharacterIsFoeOption,False,True)
-			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_DISABLED,True)
+			SetToggleOptionValue(OPTION_TOGGLE_CHAR_ISFOE,False,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_ISFOE, OPTION_FLAG_DISABLED,True)
 		Else
-			SetOptionFlags(_iCharacterIsFoeOption, OPTION_FLAG_NONE,True)
+			SetOptionFlags(OPTION_TOGGLE_CHAR_ISFOE, OPTION_FLAG_NONE,True)
 		EndIf
 		SetToggleOptionValue(Option,bCanMarry)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).SetFactions()
@@ -537,7 +691,15 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"ShoutsAllowMaster",bAllowShouts as Int)
 		SetToggleOptionValue(OPTION_TOGGLE_SHOUTSALLOW_MASTER,bAllowShouts)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
-	ElseIf Option == _iWarpOption
+	ElseIf Option == OPTION_TEXT_MODREQREPORT
+		ShowMessage(CharacterManager.GetModReqReport(_sCharacterName),False)
+	ElseIf Option == OPTION_TOGGLE_DISABLE_AUTOLEVEL
+		Bool bDisableAutoLevel = CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel") as Bool
+		bDisableAutoLevel = !bDisableAutoLevel
+		CharacterManager.SetLocalInt(_sCharacterName,"DisableAutoLevel",bDisableAutoLevel as Int)
+		SetToggleOptionValue(Option,bDisableAutoLevel)
+		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).DoUpkeep(True)
+	ElseIf Option == OPTION_WARPTOCHARACTER
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
 			Game.GetPlayer().MoveTo(CharacterManager.GetCharacterActor(CharacterManager.GetCharacterDummy(_sCharacterNames[_iCurrentCharacter])))
@@ -545,19 +707,13 @@ Event OnOptionSelect(Int Option)
 	ElseIf OPTION_TOGGLE_ALCOVE_SUMMONED.Find(Option) > -1
 		Int iAlcoveIndex = OPTION_TOGGLE_ALCOVE_SUMMONED.Find(Option)
 		vMYC_ShrineAlcoveController kThisAlcove = ShrineOfHeroes.AlcoveControllers[iAlcoveIndex]
-		Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
-		If iHandle	
-			ModEvent.PushInt(iHandle,iAlcoveIndex)
-			If kThisAlcove.CharacterSummoned
-				ModEvent.PushBool(iHandle,False)
-			Else
-				ModEvent.PushBool(iHandle,True)
-			EndIf
-			ModEvent.Send(iHandle)
-		EndIf
-	ElseIf Option == _iShowDebugOption
-		_bShowDebugOptions = !_bShowDebugOptions
-		SetToggleOptionValue(_iShowDebugOption,_bShowDebugOptions)
+		Bool bAlcoveToggleSummoned = GetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex) as Bool
+		bAlcoveToggleSummoned = !bAlcoveToggleSummoned
+		SetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex,bAlcoveToggleSummoned as Int)
+		SetToggleOptionValue(OPTION_TOGGLE_ALCOVE_SUMMONED[iAlcoveIndex],bAlcoveToggleSummoned)
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
+		SetConfigBool("SHOW_DEBUG_OPTIONS",!GetConfigBool("SHOW_DEBUG_OPTIONS"))
+		SetToggleOptionValue(OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS,GetConfigBool("SHOW_DEBUG_OPTIONS"))
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_ENABLE
 		Bool bHangoutEnabled = HangoutManager.IsHangoutEnabled(_sHangoutName)
 		bHangoutEnabled = !bHangoutEnabled
@@ -605,27 +761,97 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"MagicAllow" + sSchool,bAllowed as Int)
 		SetToggleOptionValue(Option,bAllowed)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
+	ElseIf Option == OPTION_DEBUG_SHUTDOWN
+		SendModEvent("vMYC_Shutdown")
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT
+		SetConfigBool("TRACKBYDEFAULT",!GetConfigBool("TRACKBYDEFAULT"))
+		Bool bSetAll = False
+		If GetConfigBool("TRACKBYDEFAULT")
+			bSetAll = ShowMessage("$TRACKBYDEFAULT_Enable_Message",True)
+		Else
+			bSetAll = ShowMessage("$TRACKBYDEFAULT_Disable_Message",True)
+		EndIf
+		SetToggleOptionValue(Option,GetConfigBool("TRACKBYDEFAULT"))
+		If bSetAll
+			CharacterManager.SetAllCharacterTracking(GetConfigBool("TRACKBYDEFAULT"))
+		EndIf
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	
+		SetConfigBool("TRACK_STOPONRECRUIT",!GetConfigBool("TRACK_STOPONRECRUIT"))
+		SetToggleOptionValue(Option,GetConfigBool("TRACK_STOPONRECRUIT"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	
+		SetConfigBool("SWAP_FOLLOWER_VOICE",!GetConfigBool("SWAP_FOLLOWER_VOICE"))
+		SetToggleOptionValue(Option,GetConfigBool("SWAP_FOLLOWER_VOICE"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS
+		SetConfigBool("AUTOLEVEL_CHARACTERS",!GetConfigBool("AUTOLEVEL_CHARACTERS"))
+		SetToggleOptionValue(Option,GetConfigBool("AUTOLEVEL_CHARACTERS"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD	
+		SetConfigBool("WARNING_MISSINGMOD",!GetConfigBool("WARNING_MISSINGMOD"))
+		SetToggleOptionValue(Option,GetConfigBool("WARNING_MISSINGMOD"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_DELETE_MISSING	
+		SetConfigBool("DELETE_MISSING",!GetConfigBool("DELETE_MISSING"))
+		SetToggleOptionValue(Option,GetConfigBool("DELETE_MISSING"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	
+		SetConfigBool("SHOUTS_BLOCK_UNLEARNED",!GetConfigBool("SHOUTS_BLOCK_UNLEARNED"))
+		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_BLOCK_UNLEARNED"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
+		SetConfigBool("SHOUTS_DISABLE_CITIES",!GetConfigBool("SHOUTS_DISABLE_CITIES"))
+		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_DISABLE_CITIES"))
+	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
+		Int iSetting = GetConfigInt("MAGIC_OVERRIDES")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_MAGIC_OVERRIDES.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("MAGIC_OVERRIDES",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_MAGIC_OVERRIDES[iSetting])
+	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS	
+		Int iSetting = GetConfigInt("MAGIC_ALLOWFROMMODS")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_MAGIC_ALLOWFROMMODS.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("MAGIC_ALLOWFROMMODS",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[iSetting])
+	ElseIf Option == OPTION_TEXT_GLOBAL_SHOUTS_HANDLING	
+		Int iSetting = GetConfigInt("SHOUTS_HANDLING")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_SHOUTS_HANDLING.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("SHOUTS_HANDLING",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_SHOUTS_HANDLING[iSetting])
+	ElseIf Option == OPTION_TEXT_GLOBAL_FILE_LOCATION	
+		Int iSetting = GetConfigInt("FILE_LOCATION")
+		iSetting += 1
+		If iSetting >= ENUM_GLOBAL_FILE_LOCATION.Length
+			iSetting = 0
+		EndIf
+		SetConfigInt("FILE_LOCATION",iSetting)
+		SetTextOptionValue(Option,ENUM_GLOBAL_FILE_LOCATION[iSetting])
 	EndIf
 
 EndEvent
 
 Event OnOptionMenuOpen(Int Option)
 	;Debug.Trace("MYC: MCM: OnOptionMenuOpen(" + Option + ")")
-	If Option == _iVoiceTypeOption
+	If Option == OPTION_MENU_CHAR_VOICETYPE
 		SetMenuDialogOptions(_sVoiceTypesFiltered)
 		SetMenuDialogStartIndex(_iVoiceTypeSelections[_iCurrentCharacter])
 		SetMenuDialogDefaultIndex(0)
-	ElseIf Option == _iAliasOption
-		SetMenuDialogOptions(_sHangoutNames)
+	ElseIf Option == OPTION_MENU_CHARACTER_HANGOUT
+		SetMenuDialogOptions(_sHangoutNamesPlusWanderer)
 		String sHangoutName = CharacterManager.GetLocalString(_sCharacterName,"HangoutName")
+		If index < 0 || !sHangoutName
+			sHangoutName = "$Wanderer"
+		EndIf
 		Int index = _sHangoutNames.Find(sHangoutName)
 		SetMenuDialogStartIndex(index)
 		SetMenuDialogDefaultIndex(index)
-	ElseIf Option == _iCurrentCharacterOption
+	ElseIf Option == OPTION_MENU_CHAR_PICKER
 		SetMenuDialogOptions(_sCharacterNames)
 		SetMenuDialogStartIndex(_iCurrentCharacter)
 		SetMenuDialogDefaultIndex(_iCurrentCharacter)
-	ElseIf Option == _iClassOption
+	ElseIf Option == OPTION_MENU_CHAR_CLASS
 		SetMenuDialogOptions(_sClassNames)
 		SetMenuDialogStartIndex(_iClassSelection)
 		SetMenuDialogDefaultIndex(_iClassSelection)
@@ -658,20 +884,25 @@ EndEvent
 
 Event OnOptionMenuAccept(int option, int index)
 	;Debug.Trace("MYC: MCM: OnOptionMenuOAccept(" + Option + "," + index + ")")
-	If Option == _iVoiceTypeOption
+	If Option == OPTION_MENU_CHAR_VOICETYPE
 		_iVoiceTypeSelections[_iCurrentCharacter] = index
 		String sShortVoiceType = StringUtil.Substring(_sVoiceTypesFiltered[index],0,StringUtil.Find(_sVoiceTypesFiltered[index]," "))
-		SetMenuOptionValue(_iVoiceTypeOption,sShortVoiceType)
+		SetMenuOptionValue(OPTION_MENU_CHAR_VOICETYPE,sShortVoiceType)
 		CharacterManager.SetCharacterVoiceType(_sCharacterNames[_iCurrentCharacter],_kVoiceTypesFiltered[index])
-	ElseIf Option == _iAliasOption
-		HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
-		SetMenuOptionValue(_iAliasOption,_sHangoutNames[index])
-	ElseIf Option == _iCurrentCharacterOption
+	ElseIf Option == OPTION_MENU_CHARACTER_HANGOUT
+		SetMenuOptionValue(OPTION_MENU_CHARACTER_HANGOUT,_sHangoutNamesPlusWanderer[index])
+		Index -= 1
+		If Index < 0
+			HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),"")
+		Else
+			HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName(_sCharacterName),_sHangoutNames[index])
+		EndIf
+	ElseIf Option == OPTION_MENU_CHAR_PICKER
 		_iCurrentCharacter = index
 		ForcePageReset()
-	ElseIf Option == _iClassOption
+	ElseIf Option == OPTION_MENU_CHAR_CLASS
 		_iClassSelection = index
-		SetMenuOptionValue(_iClassOption,_sClassNames[index])
+		SetMenuOptionValue(OPTION_MENU_CHAR_CLASS,_sClassNames[index])
 		CharacterManager.SetCharacterClass(_sCharacterNames[_iCurrentCharacter],CharacterManager.kClasses[index])
 	ElseIf OPTION_MENU_ALCOVE_CHARACTER.Find(Option) > -1
 		index -= 1 ; Adjust because we added "Empty" to the beginning of the other list
@@ -694,6 +925,136 @@ Event OnOptionMenuAccept(int option, int index)
 		_sHangoutName = _sHangoutNamesDisabled[_iCurrentHangout]
 		SetMenuOptionValue(OPTION_MENU_HANGOUT_SELECT,_sHangoutNamesDisabled[_iCurrentHangout])
 		ForcePageReset()
+	EndIf
+EndEvent
+
+Event OnOptionHighlight(Int option)
+
+	If option == OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED
+		SetInfoText("$SHOUTS_BLOCK_UNLEARNED_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_TRACKING
+		SetInfoText("$OPTION_TOGGLE_TRACKING_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_CHAR_ISFOE
+		SetInfoText("$OPTION_TOGGLE_CHAR_ISFOE_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_CHAR_CANMARRY
+		SetInfoText("$OPTION_TOGGLE_CHAR_CANMARRY_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_AUTOSELECT
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_AUTOSELECT_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_SHOUTSALLOW_MASTER
+		SetInfoText("$OPTION_TOGGLE_SHOUTSALLOW_MASTER_HELP")
+	EndIf
+	If option == OPTION_TEXT_MODREQREPORT
+		SetInfoText("$OPTION_TEXT_MODREQREPORT_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_DISABLE_AUTOLEVEL
+		SetInfoText("$OPTION_TOGGLE_DISABLE_AUTOLEVEL_HELP")
+	EndIf
+	If option == OPTION_WARPTOCHARACTER
+		SetInfoText("$OPTION_WARPTOCHARACTER_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_HANGOUT_ENABLE
+		SetInfoText("$OPTION_TOGGLE_HANGOUT_ENABLE_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_HANGOUT_PARTY
+		SetInfoText("$OPTION_TOGGLE_HANGOUT_PARTY_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_HANGOUT_CLEARALL
+		SetInfoText("$OPTION_TOGGLE_HANGOUT_CLEARALL_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_ALTERATION_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_CONJURATION
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_CONJURATION_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_DESTRUCTION_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_ILLUSION
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_ILLUSION_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_RESTORATION
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_RESTORATION_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_MAGICALLOW_OTHER
+		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_OTHER_HELP")
+	EndIf
+	If option == OPTION_DEBUG_SHUTDOWN
+		SetInfoText("$OPTION_DEBUG_SHUTDOWN_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_DELETE_MISSING
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_DELETE_MISSING_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES_HELP")
+	EndIf
+	If option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
+		SetInfoText("$OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES_HELP")
+	EndIf
+	If option == OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS
+		SetInfoText("$OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS_HELP")
+	EndIf
+	If option == OPTION_TEXT_GLOBAL_SHOUTS_HANDLING
+		SetInfoText("$OPTION_TEXT_GLOBAL_SHOUTS_HANDLING_HELP")
+	EndIf
+	If option == OPTION_TEXT_GLOBAL_FILE_LOCATION
+		SetInfoText("$OPTION_TEXT_GLOBAL_FILE_LOCATION_HELP")
+	EndIf
+	If option == OPTION_MENU_CHAR_VOICETYPE
+		SetInfoText("$OPTION_MENU_CHAR_VOICETYPE_HELP")
+	EndIf
+	If option == OPTION_MENU_CHARACTER_HANGOUT
+		SetInfoText("$OPTION_MENU_CHARACTER_HANGOUT_HELP")
+	EndIf
+	If option == OPTION_MENU_CHAR_PICKER
+		SetInfoText("$OPTION_MENU_CHAR_PICKER_HELP")
+	EndIf
+	If option == OPTION_MENU_CHAR_CLASS
+		SetInfoText("$OPTION_MENU_CHAR_CLASS_HELP")
+	EndIf
+	If option == OPTION_MENU_HANGOUT_SELECT
+		SetInfoText("$OPTION_MENU_HANGOUT_SELECT_HELP")
+	EndIf
+	If option == OPTION_MENU_CHAR_VOICETYPE
+		SetInfoText("$OPTION_MENU_CHAR_VOICETYPE_HELP")
+	EndIf
+	If option == OPTION_MENU_CHARACTER_HANGOUT
+		SetInfoText("$OPTION_MENU_CHARACTER_HANGOUT_HELP")
+	EndIf
+	If option == OPTION_MENU_CHAR_PICKER
+		SetInfoText("$OPTION_MENU_CHAR_PICKER_HELP")
+	EndIf
+	If option == OPTION_MENU_CHAR_CLASS
+		SetInfoText("$OPTION_MENU_CHAR_CLASS_HELP")
+	EndIf
+	If option == OPTION_MENU_HANGOUT_SELECT
+		SetInfoText("$OPTION_MENU_HANGOUT_SELECT_HELP")
 	EndIf
 EndEvent
 
@@ -732,12 +1093,28 @@ Function UpdateSettings()
 
 	_sCharacterNames = CharacterManager.CharacterNames
 	_sHangoutNames = HangoutManager.HangoutNames
+	_sHangoutNamesPlusWanderer = HangoutManager.HangoutNamesPlusWanderer
 	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
 	
 	_sClassNames = CharacterManager.sClassNames
+	
+	FillEnums()
 EndFunction
 
-function ApplySettings()
+Function ApplySettings()
+	Int iAlcoveIndex = ShrineOfHeroes.AlcoveControllers.Length
+	While iAlcoveIndex > 0
+		iAlcoveIndex -= 1
+		If _sAlcoveCharacterNames[iAlcoveIndex] && _sAlcoveCharacterNames[iAlcoveIndex] != "Empty"
+			Int iHandle = ModEvent.Create("vMYC_AlcoveToggleSummoned")
+			If iHandle	
+				ModEvent.PushInt(iHandle,iAlcoveIndex)
+				ModEvent.PushBool(iHandle,GetLocalConfigInt("AlcoveToggleSummoned" + iAlcoveIndex) as Bool)
+				ModEvent.Send(iHandle)
+			EndIf
+		EndIf
+	EndWhile
+
 	vMYC_CFG_Shutdown.SetValue(_Shutdown as Int)
 
 	vMYC_CFG_Changed.SetValue(1)

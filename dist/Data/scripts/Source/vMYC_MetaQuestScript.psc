@@ -78,6 +78,12 @@ Event OnUpkeepState(string eventName, string strArg, float numArg, Form sender)
 	EndIf
 EndEvent
 
+Event OnShutdown(string eventName, string strArg, float numArg, Form sender)
+	Debug.Trace("MYC: OnShutdown!")
+	Wait(0.1)
+	DoShutdown()
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoUpkeep(Bool DelayedStart = True)
@@ -85,6 +91,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		DoShutdown()
 		Return
 	EndIf
+	SyncConfig()
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
@@ -95,6 +102,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	RegisterForModEvent("vMYC_InitEnd","OnInitState")
 	RegisterForModEvent("vMYC_UpkeepBegin","OnUpkeepState")
 	RegisterForModEvent("vMYC_UpkeepEnd","OnUpkeepState")
+	RegisterForModEvent("vMYC_Shutdown","OnShutdown")
 	Ready = False
 	If DelayedStart
 		Wait(RandomFloat(2,4))
@@ -243,7 +251,9 @@ Function CheckCompatibilityModules()
 	If !CheckCompatibilityModule_EFF()
 		Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
 	EndIf
-
+	If !CheckCompatibilityModule_AFT()
+		Debug.MessageBox("Familiar Faces\nThere was an error with the AFT compatibility module. Check the Papyrus log for more details.")
+	EndIf
 EndFunction
 
 Bool Function CheckCompatibilityModule_EFF()
@@ -255,6 +265,7 @@ Bool Function CheckCompatibilityModule_EFF()
 	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
 	If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
 		Debug.Trace("MYC:  EFF found!")
+		SetConfigInt("Compat_EFF_Loaded",1)
 		If !vMYC_zCompat_EFFQuest.IsRunning()
 			vMYC_zCompat_EFFQuest.Start()
 			Debug.Trace("MYC:  Started EFF compatibility module!")
@@ -269,7 +280,9 @@ Bool Function CheckCompatibilityModule_EFF()
 		EndIf
 	Else
 		Debug.Trace("MYC:  EFF not found.")
+		SetConfigInt("Compat_EFF_Loaded",0)
 		If vMYC_zCompat_EFFQuest.IsRunning()
+			(vMYC_zCompat_EFFQuest as vMYC_CompatEFF).DoShutdown()
 			vMYC_zCompat_EFFQuest.Stop()
 			Debug.Trace("MYC:  Stopped EFF compatibility module!")
 			If !vMYC_zCompat_EFFQuest.IsRunning()
@@ -282,14 +295,74 @@ Bool Function CheckCompatibilityModule_EFF()
 	Return True
 EndFunction
 
+Bool Function CheckCompatibilityModule_AFT()
+	Quest vMYC_zCompat_AFTQuest = GetFormFromFile(0x02023c40,"vMYC_MeetYourCharacters.esp") as Quest
+	If !vMYC_zCompat_AFTQuest
+		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_AFTQuest!",1)
+		Return False
+	EndIf
+	Debug.Trace("MYC: Checking whether AFT compatibility is needed...")
+	If GetModByName("AmazingFollowerTweaks.esp") != 255 
+		Debug.Trace("MYC:  AFT found!")
+		SetConfigInt("Compat_AFT_Loaded",1)
+		If !vMYC_zCompat_AFTQuest.IsRunning()
+			vMYC_zCompat_AFTQuest.Start()
+			Debug.Trace("MYC:  Started AFT compatibility module!")
+			If vMYC_zCompat_AFTQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		Else
+			Debug.Trace("MYC:  AFT compatibility module is already running.")
+			Return True
+		EndIf
+	Else
+		Debug.Trace("MYC:  AFT not found.")
+		SetConfigInt("Compat_AFT_Loaded",0)
+		If vMYC_zCompat_AFTQuest.IsRunning()
+			(vMYC_zCompat_AFTQuest as vMYC_CompatAFT).DoShutdown()
+			vMYC_zCompat_AFTQuest.Stop()
+			Debug.Trace("MYC:  Stopped AFT compatibility module!")
+			If !vMYC_zCompat_AFTQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		EndIf
+	EndIf
+	Return True
+EndFunction
 
 Function DoShutdown()
 	Ready = False
 	Debug.Trace("MYC: Shutting down and preparing for removal...")
-	;FIXME: Do shutdown stuff!
 	_CurrentVersion = 0
 	ModVersion = 0
+	Quest vMYC_zCompat_AFTQuest = GetFormFromFile(0x02023c40,"vMYC_MeetYourCharacters.esp") as Quest
+	Quest vMYC_zCompat_EFFQuest = GetFormFromFile(0x0201eaf2,"vMYC_MeetYourCharacters.esp") as Quest
+	(vMYC_zCompat_AFTQuest as vMYC_CompatAFT).DoShutdown()
+	vMYC_zCompat_AFTQuest.Stop()
+	(vMYC_zCompat_EFFQuest as vMYC_CompatEFF).DoShutdown()
+	vMYC_zCompat_EFFQuest.Stop()
+	
+	If HangoutManager.IsRunning()
+		HangoutManager.DoShutdown()
+		HangoutManager.Stop()
+	EndIf
+	If ShrineOfHeroes.IsRunning()
+		ShrineOfHeroes.DoShutdown()
+		ShrineOfHeroes.Stop()
+	EndIf
+	If CharacterManager.IsRunning()
+		CharacterManager.DoShutdown()
+		CharacterMAnager.Stop()
+	EndIf
+	
+	JDB.SetObj("vMYC",0)
 	vMYC_ModShutdownMSG.Show()
+	Debug.Trace("MYC: Data cleared, ready for removal!")
+	Debug.Notification("Familiar Faces\nData has been cleared. You should now save and exit, then uninstall the mod before re-launching the game.")
 	_Running = False
 	Ready = True
 EndFunction
@@ -307,14 +380,14 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	If JContainers.APIVersion() != 2
-		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers 0.67.x, but the current version reports a different API version.\nThe mod will now shut down.")
+	If JContainers.APIVersion() != 3
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin JContainers is missing or not installed correctly. This mod requires JContainers with API 3 (0.68.x), but the current version reports a different API version.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed
 	EndIf
-	If SKSE.GetPluginVersion("chargen") < 2
-		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.7.2 or higher, or at least the current version of CharGen.dll distributed with RaceMenu.\nThe mod will now shut down.")
+	If SKSE.GetPluginVersion("chargen") < 3
+		Debug.MessageBox("Familiar Faces\nThe SKSE plugin CharGen is missing or not installed correctly. This mod requires RaceMenu 2.9.1 or higher.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed

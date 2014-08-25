@@ -5,6 +5,7 @@ Scriptname vMYC_ShrineAlcoveController extends ObjectReference
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Constants ===--
 Int Property ALCOVE_STATE_EMPTY 	= 0 AutoReadOnly Hidden
@@ -21,6 +22,8 @@ Int Property ALCOVE_STATUE_NONE	 	= 0 AutoReadOnly Hidden
 Int Property ALCOVE_STATUE_PRESENT	= 1 AutoReadOnly Hidden
 Int Property ALCOVE_STATUE_SUMMONED	= 2 AutoReadOnly Hidden
 
+Int Property ALCOVE_TROPHIES_OFF 	= 0 AutoReadOnly Hidden
+Int Property ALCOVE_TROPHIES_ON		= 1 AutoReadOnly Hidden
 
 Int Property VALIDATION_FAILURE_NONE 			=     0 AutoReadOnly Hidden
 
@@ -125,6 +128,8 @@ Int Property AlcoveLightState Hidden
 		SendModEvent("vMYC_ShrineLightStateChange","",iAlcoveLightState)
 	EndFunction
 EndProperty
+
+Int Property AlcoveTrophyState Auto Hidden
 
 Bool Property CharacterSummoned Hidden
 	Bool Function Get()
@@ -338,27 +343,34 @@ EndEvent
 
 Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_OrphanedActor","OnOrphanedActor")
+	RegisterForModEvent("vMYC_CharacterErased","OnCharacterErased")
 	RegisterForModEvent("vMYC_AlcoveLightingPriority","OnAlcoveLightingPriority")
 	RegisterForModEvent("vMYC_AlcoveValidateState","OnAlcoveValidateState")
 	RegisterForModEvent("vMYC_AlcoveToggleSummoned","OnAlcoveToggleSummoned")
 EndFunction
 
 Function DoUpkeep()
+	CheckVars()
 	RegisterForModEvents()
-	If AlcoveState == 3
+	If AlcoveState == 3 && AlcoveActor
 		CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
 		_bCharacterSummoned = True
+	Else
+		_bCharacterSummoned = False
 	EndIf
 	InitTrophies()
 	_bLastValidation = False
 	RegisterForSingleUpdate(1)
 EndFunction
 
+Function DoShutdown()
+EndFunction
+
 Event OnUpdate()
 	If !ValidateAlcove()
 		RegisterForSingleUpdate(5)
 	Else
-		If Is3DLoaded()
+		If GetParentCell().IsAttached()
 			RegisterForSingleUpdate(RandomFloat(9,12))
 		EndIf
 	EndIf
@@ -378,7 +390,8 @@ Function ClaimActor(String asCharacterName)
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager finished loading " + asCharacterName + "!")
 			AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
 		Else
-			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
+			ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 		EndIf
 	EndIf
 	If AlcoveActor
@@ -444,6 +457,7 @@ EndFunction
 State Validating
 
 	Bool Function ValidateAlcove()
+		WaitMenuMode(0.5)
 		;_iValidateStateCount += 1
 		;If _iValidateStateCount > 4
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
@@ -465,7 +479,7 @@ Bool Function ValidateAlcove()
 
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove!")
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterName is " + CharacterName + ", WantCharacterName is " + WantCharacterName + ", AlcoveActor is " + AlcoveActor)
-
+	
 	If AlcoveStatueState == ALCOVE_STATUE_SUMMONED
 		_Book.IsOpen = True
 	Else
@@ -516,18 +530,20 @@ Bool Function ValidateAlcove()
 		kCharacterToUse = CharacterManager.GetCharacterActorByName(sWantCharacterName)
 	EndIf	
 	
-	If AlcoveState == ALCOVE_STATE_READY && AlcoveActor.IsAIEnabled() && AlcoveStatueState != ALCOVE_STATUE_SUMMONED
-		CharacterManager.SetLocalInt(CharacterName,"InAlcove",1)
-		CharacterManager.SetLocalInt(CharacterName,"IsSummoned",0)
-		AlcoveActor.SetGhost(True)
-		AlcoveActor.EnableNoWait()
-		If WaitFor3DLoad(AlcoveActor)
-			vMYC_BlindingLightInwardParticles.Play(AlcoveActor,0.5)
-			Debug.SendAnimationEvent(AlcoveActor,"IdleStaticPoseAStart")
-			Wait(0.25)
+	If AlcoveState == ALCOVE_STATE_READY && AlcoveActor && AlcoveStatueState != ALCOVE_STATUE_SUMMONED
+		If AlcoveActor.IsAIEnabled()
+			CharacterManager.SetLocalInt(CharacterName,"InAlcove",1)
+			CharacterManager.SetLocalInt(CharacterName,"IsSummoned",0)
+			AlcoveActor.SetGhost(True)
+			AlcoveActor.EnableNoWait()
+			If WaitFor3DLoad(AlcoveActor)
+				vMYC_BlindingLightInwardParticles.Play(AlcoveActor,0.5)
+				Debug.SendAnimationEvent(AlcoveActor,"IdleStaticPoseAStart")
+				Wait(0.25)
+			EndIf
+			AlcoveActor.SetScale(1.2)
+			AlcoveActor.EnableAI(False)
 		EndIf
-		AlcoveActor.SetScale(1.2)
-		AlcoveActor.EnableAI(False)
 	EndIf
 	
 	;First things first. Make sure we're always in the right lighting state
@@ -593,6 +609,10 @@ Bool Function ValidateAlcove()
 		ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_LOADING)
 	EndIf
 	
+	If !AlcoveActor && AlcoveStatueState != ALCOVE_STATUE_NONE
+		ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_MISSING)
+	EndIf
+
 	If CharacterName && !sWantCharacterName || CharacterName != sWantCharacterName
 		ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_NAME_UNWANTED)
 	ElseIf !CharacterName && (sWantCharacterName != CharacterName)
@@ -601,12 +621,14 @@ Bool Function ValidateAlcove()
 
 	If AlcoveState == ALCOVE_STATE_BUSY
 		ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_STATE_BUSY)
-	ElseIf AlcoveState == ALCOVE_STATE_READY
+	ElseIf AlcoveState >= ALCOVE_STATE_READY
 		If AlcoveActor != kCharacterToUse
 			ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_UNWANTED)
+		ElseIf !AlcoveActor
+			ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_MISSING)
 		EndIf
 	EndIf
-	
+
 	While DeportUnknownActors()
 		Wait(0.5)
 	EndWhile
@@ -626,7 +648,7 @@ Bool Function ValidateAlcove()
 			EndIf
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)	
 			RegisterForSingleUpdate(5)
-			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
 		_fValidationTime = 0.0
 		LastValidationState = 0
@@ -654,7 +676,7 @@ Bool Function ValidateAlcove()
 		LastValidationState = ValidationState
 		_bLastValidation = False
 		_fValidationTime += fValidationTime
-		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + FailureText(ValidationState) + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
+		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + FailureText(ValidationState) + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForModEvent("vMYC_AlcoveSelfValidate","OnAlcoveSelfValidate")
 		SendModEvent("vMYC_AlcoveSelfValidate")
 		;RegisterForSingleUpdate(1)
@@ -734,6 +756,8 @@ Function SetAlcoveCharacterName(string sCharacterName)
 EndFunction
 
 Event OnCellAttach()
+	CheckVars()
+	RegisterForModEvents()
 	RegisterForSingleUpdate(1)
 EndEvent
 
@@ -747,7 +771,14 @@ EndEvent
 
 Event OnAlcoveSelfValidate(string eventName, string strArg, float numArg, Form sender)
 	If sender == self
+		WaitMenuMode(1.0)
 		ValidateAlcove()
+	EndIf
+EndEvent
+
+Event OnCharacterErased(string eventName, string strArg, float numArg, Form sender)
+	If strArg == CharacterName || strArg == WantCharacterName
+		EraseAlcove()
 	EndIf
 EndEvent
 
@@ -1225,6 +1256,9 @@ Function SummonCharacter()
 	EndIf
 	AlcoveActor.SetAlpha(1.0)
 	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
+	If GetConfigBool("TRACKBYDEFAULT")
+		CharacterManager.SetCharacterTracking(_sCharacterName,True)
+	EndIf
 EndFunction
 
 Function BanishCharacter()
@@ -1339,6 +1373,7 @@ Function HideTrophies()
 			kTrophy.DisableNoWait()
 		EndIf
 	EndWhile
+	AlcoveTrophyState = ALCOVE_TROPHIES_OFF
 EndFunction
 
 Function ShowTrophies()
@@ -1395,4 +1430,5 @@ Function ShowTrophies()
 	If sSpawnPoints.Find("DLC2KilledMiraak") > -1
 		GetLinkedRef(vMYC_ShrineTrophyDLC2Miraak).EnableNoWait()
 	EndIf
+	AlcoveTrophyState = ALCOVE_TROPHIES_ON
 EndFunction

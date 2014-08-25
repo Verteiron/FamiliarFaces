@@ -13,12 +13,36 @@ String[] Property HangoutNames Hidden
 {List of Hangout names}
 	String[] Function Get()
 		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
-		JValue.Retain(jHangoutNames)
+		JValue.Retain(jHangoutNames,"vMYC_HOM")
 		String[] sHangoutNames = New String[128]
 		Int i = 0 
 		Int iCount = JArray.Count(jHangoutNames)
 		;Debug.Trace("MYC/HOM: iCount is " + iCount)
 		Int iNameCount = 0
+		While i < iCount
+			String sHangoutName = JArray.getStr(jHangoutNames,i)
+			If IsHangoutEnabled(sHangoutName)
+				sHangoutNames[iNameCount] = sHangoutName
+				iNameCount += 1
+			EndIf
+			i += 1
+		EndWhile
+		JValue.Release(jHangoutNames)
+		Return sHangoutNames
+	EndFunction
+EndProperty
+
+String[] Property HangoutNamesPlusWanderer Hidden
+{List of Hangout names}
+	String[] Function Get()
+		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
+		JValue.Retain(jHangoutNames,"vMYC_HOM")
+		String[] sHangoutNames = New String[128]
+		Int i = 0 
+		Int iCount = JArray.Count(jHangoutNames)
+		;Debug.Trace("MYC/HOM: iCount is " + iCount)
+		Int iNameCount = 1
+		sHangoutNames[0] = "$Wanderer"
 		While i < iCount
 			String sHangoutName = JArray.getStr(jHangoutNames,i)
 			If IsHangoutEnabled(sHangoutName)
@@ -67,6 +91,8 @@ Activator 			Property 	vMYC_CustomMapMarker		Auto
 
 Keyword				Property	vMYC_Hangout				Auto
 Keyword				Property	vMYC_Wanderer				Auto
+
+String				Property	DataPath					Auto Hidden
 
 ;--=== Constants ===--
 
@@ -131,7 +157,11 @@ Event OnUpdate()
 EndEvent
 
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
-	Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + ", Inn: " + ((akSendingQuest as Quest).GetAliasByName("HangoutInn0") as LocationAlias).GetLocation().GetName() + "!")
+	If ((akSendingQuest as Quest).GetAliasByName("HangoutInn0"))
+		Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + ", Inn: " + ((akSendingQuest as Quest).GetAliasByName("HangoutInn0") as LocationAlias).GetLocation().GetName() + "!")
+	Else
+		Debug.Trace("MYC/HOM: Registering HangoutQuest " + akSendingQuest + " with actor " + (akActor as Actor).GetActorBase().GetName() + ", LocationCenter: " + ((akSendingQuest as Quest).GetAliasByName("HangoutCenter") as ReferenceAlias).GetReference() + "!")
+	EndIf
 	;SetHangoutForm(asHangoutName,"Quest",akSendingQuest)
 	TickDataSerial()
 EndEvent
@@ -145,7 +175,7 @@ Event OnShrineReady(string eventName, string strArg, float numArg, Form sender)
 EndEvent
 
 Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
-	Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
+	;Debug.Trace("MYC/HOM: Got HangoutPong from " + akHangout + "!")
 	vMYC_HangoutQuestScript kHangout = akHangout as vMYC_HangoutQuestScript
 	If !kHangout
 		Debug.Trace("MYC/HOM: " + akHangout + " sent us a Pong but isn't the right type of object.")
@@ -166,7 +196,7 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 		EndIf
 	EndIf
 	If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
-		Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
+		;Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
 		(akHangout as vMYC_HangoutQuestScript).DoShutdown()
 	EndIf
 EndEvent
@@ -199,6 +229,7 @@ Function DoInit()
 EndFunction
 
 Function DoUpkeep()
+	CleanupTempJContainers()
 	RegisterForModEvents()
 	Int jCustomLocationsMap = JMap.GetObj(_jHangoutData,JKEY_LOCATION_NAME_FMAP)
 	Int i = CustomLocations.Length
@@ -226,6 +257,56 @@ Function DoUpkeep()
 	SendHangoutPing()
 EndFunction
 
+Function DoShutdown()
+	Int i = 0
+	UnregisterForUpdate()
+	UnregisterForModEvent("vMYC_HangoutQuestRegister")
+	UnregisterForModEvent("vMYC_ShrineReady")
+	UnregisterForModEvent("vMYC_SetCustomHangout")
+	WaitMenuMode(1)
+	UnregisterForUpdate()
+	CleanupTempJContainers()
+	Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+	If !jHangoutQuestMap 
+		jHangoutQuestMap = JFormMap.Object()
+		JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,jHangoutQuestMap)
+	EndIf
+	Int jQuestList = JFormMap.AllKeys(jHangoutQuestMap)
+
+	;Cancel all hangouts
+	String[] sCharacterNames = CharacterManager.CharacterNames
+	i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				CancelActorHangout(kActor)
+			EndIf
+		EndIf
+	EndWhile
+
+	;Shutdown hangout quests
+	i = JArray.Count(jQuestList)
+	While i > 0
+		i -= 1
+		vMYC_HangoutQuestScript kHangout = JArray.GetForm(jQuestList,i) as vMYC_HangoutQuestScript
+		If kHangout
+			kHangout.DoShutdown()
+		EndIf
+	EndWhile
+	
+	;Delete map markers
+	i = CustomMapMarkers.Length
+	While i > 0 
+		i -= 1
+		If CustomMapMarkers[i]
+			CustomMapMarkers[i].Delete()
+		EndIf
+	EndWhile
+
+EndFunction
+
 Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_HangoutQuestRegister","OnHangoutQuestRegister")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
@@ -233,7 +314,7 @@ Function RegisterForModEvents()
 EndFunction
 
 Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, String asHangoutName = "")
-	JValue.Retain(ajLocationData)
+	JValue.Retain(ajLocationData,"vMYC_HOM")
 	String sHangoutName = asHangoutName
 	If !sHangoutName
 		sHangoutName = jMap.getStr(ajLocationData,"LocationName")
@@ -512,26 +593,29 @@ Function AssignActorToHangout(Actor akActor, String asHangoutName, Bool abDefer 
 			Return
 		EndIf
 		
-		Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
-		Debug.Trace("MYC/HOM/" + asHangoutName + ": Sending story event with Actor: " + akActor.GetActorBase().GetName() + ", Location: " + (GetHangoutForm(asHangoutName,"Location") as Location).GetName() + ", MarkerIndex: " + GetHangoutInt(asHangoutName,"MarkerIndex"))
 		If asHangoutName
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Assigning " + akActor + " to this Hangout!")
 			PlaceHangoutMarker(asHangoutName)
 			ObjectReference kMarkerObject
 			If HasHangoutKey(asHangoutName,"MarkerIndex")
 				kMarkerObject = CustomMapMarkers[GetHangoutInt(asHangoutName,"MarkerIndex")]
 			EndIf
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Sending story event with Actor: " + akActor.GetActorBase().GetName() + ", Location: " + (GetHangoutForm(asHangoutName,"Location") as Location).GetName() + ", MarkerIndex: " + GetHangoutInt(asHangoutName,"MarkerIndex"))
 			If vMYC_Hangout.SendStoryEventAndWait(GetHangoutForm(asHangoutName,"Location") as Location,kMarkerObject,akActor)
 				Debug.Trace("MYC/HOM/" + asHangoutName + ": Started the quest successfully!")
 				SetLocalHangoutInt(asHangoutName,"ActorCount",GetLocalHangoutInt(asHangoutName,"ActorCount") + 1)
 				akActor.EvaluatePackage()
+				EnableTracking(akActor,CharacterManager.GetLocalInt(sCharacterName,"TrackingEnabled") as Bool)
 			Else
 				Debug.Trace("MYC/HOM/" + asHangoutName + ": Could not find an available HangoutQuest!")
 			EndIf
 		Else 
+			Debug.Trace("MYC/HOM/None: Assigning " + akActor + " to Wander!")
 		;No HangoutName, set to wander
 			If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = akActor)
 				Debug.Trace("MYC/HOM: Sent story event to begin wandering!")
 				akActor.EvaluatePackage()
+				EnableTracking(akActor,CharacterManager.GetLocalInt(sCharacterName,"TrackingEnabled") as Bool)
 			Else
 				Debug.Trace("MYC/HOM: Couldn't send story event to resume wandering!")
 			EndIf
@@ -599,7 +683,7 @@ Function CancelActorHangout(Actor akActor)
 					EndIf
 				EndIf
 			ElseIf kQuest as vMYC_WanderQuestScript
-				Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on + " + akActor + "...",1)
+				Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on " + akActor + "...",1)
 				(kQuest as vMYC_WanderQuestScript).DoShutdown()
 			EndIf
 		EndIf
@@ -629,8 +713,30 @@ Actor Function GetHangoutActor(String sHangoutName)
 EndFunction
 
 Function EnableTracking(Actor akActor, Bool abTracking = True)
-	
-
+	Debug.Trace("MYC/HOM: Set Tracking for " + akActor.GetActorBase().GetName() + " to " + abTracking)
+	Int iHandle = ModEvent.Create("vMYC_SetTrackingOnActor")
+	If iHandle
+		ModEvent.PushForm(iHandle,akActor)
+		ModEvent.PushBool(iHandle,abTracking)
+		ModEvent.Send(iHandle)
+	Else
+		Debug.Trace("MYC/HOM: Couldn't create Event!",1)
+	EndIf
+;	Int i = akActor.GetNumReferenceAliases()
+;	While i > 0
+;		i -= 1
+;		ReferenceAlias kRefAlias = akActor.GetNthReferenceAlias(i)
+;		If kRefAlias
+;			Quest kQuest = kRefAlias.GetOwningQuest()
+;			If kQuest as vMYC_HangoutQuestScript
+;				Debug.Trace("MYC/HOM:   " + akActor.GetActorBase().GetName() + "'s HangoutQuest is " + kQuest)
+;				(kQuest as vMYC_HangoutQuestScript).EnableTracking(abTracking)
+;			ElseIf kQuest as vMYC_WanderQuestScript
+;				Debug.Trace("MYC/HOM:   " + akActor.GetActorBase().GetName() + "'s HangoutQuest is " + kQuest)
+;				(kQuest as vMYC_WanderQuestScript).EnableTracking(abTracking)
+;			EndIf
+;		EndIf
+;	EndWhile
 EndFunction
 
 Int[] Function GetHangoutStats()
@@ -700,16 +806,21 @@ EndFunction
 Bool Function SyncHangoutData() 
 	Bool bUpdated = False
 	
-	Int jHangoutFileData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+	Int jHangoutFileData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
+	If !jHangoutFileData
+		jHangoutFileData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+		JValue.WriteToFile(_jHangoutData,JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
+	EndIf
 	Int DataSerial = JMap.getInt(_jHangoutData,"DataSerial")
 	Int DataFileSerial = JMap.getInt(jHangoutFileData,"DataSerial")
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/HOM: Our data is newer than the saved file, overwriting it!")
-		JValue.WriteToFile(_jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
+		;JValue.WriteToFile(_jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
+		JValue.WriteToFile(_jHangoutData,JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 	ElseIf DataSerial < DataFileSerial
 		Debug.Trace("MYC/HOM: Our data is older than the saved file, loading it!")
 		_jHangoutData = JValue.Release(_jHangoutData)
-		_jHangoutData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+		_jHangoutData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 		JMap.SetObj(_jMYC,"Hangouts",_jHangoutData)
 		bUpdated = True
 	Else
@@ -720,13 +831,13 @@ EndFunction
 
 Function LoadHangouts() 
 	Int jHangoutData = JDB.solveObj(".vMYC.Hangouts")
-	_jHangoutData = JValue.ReadFromFile("Data/vMYC/vMYC_Hangouts.json")
+	_jHangoutData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 EndFunction
 
 Function SaveHangouts() 
 	Int jHangoutData = JDB.solveObj(".vMYC.Hangouts")
 	JMap.setInt(jHangoutData,"DataSerial",JMap.getInt(jHangoutData,"DataSerial") + 1)
-	JValue.WriteToFile(jHangoutData,"Data/vMYC/vMYC_Hangouts.json")
+	JValue.WriteToFile(jHangoutData,JContainers.userDirectory() + "vMYC/vMYC_Hangouts.json")
 EndFunction
 
 Function AssignHangout()
@@ -756,6 +867,39 @@ Bool Function IsHangoutEnabled(String asHangoutName)
 		Return GetLocalHangoutInt(asHangoutName,"IsEnabled") as Bool
 	EndIf
 	Return True
+EndFunction
+
+Function CreateHangoutHere(Actor akActor)
+	Int iEventHandle = ModEvent.Create("vMYC_SetCustomHangout")
+	If iEventHandle
+		ModEvent.PushString(iEventHandle,akActor.GetActorBase().GetName())
+		String sLocationName
+		If !sLocationName
+			sLocationName = akActor.GetParentCell().GetName()
+		EndIf
+		If akActor.GetCurrentLocation()
+			sLocationName = akActor.GetCurrentLocation().GetName()
+		EndIf
+		If !sLocationName || sLocationName == "Wilderness"
+			sLocationName = akActor.GetActorBase().GetName() + "'s last location"
+		EndIf
+		ModEvent.PushString(iEventHandle,sLocationName)
+		ModEvent.PushForm(iEventHandle,akActor.GetCurrentLocation())
+		ModEvent.PushForm(iEventHandle,akActor.GetParentCell())
+		Int i = 1
+		While i < 6 ; Send 5 objects found within increasing range as 'anchors' to ensure that we can find SOMETHING to MoveTo when loading this location later
+			ModEvent.PushForm(iEventHandle,Game.FindRandomReferenceOfAnyTypeInListFromRef(vMYC_LocationAnchorsList, akActor, 2048 * i))
+			i += 1
+		EndWhile
+		ModEvent.PushFloat(iEventHandle,akActor.GetPositionX())
+		ModEvent.PushFloat(iEventHandle,akActor.GetPositionY())
+		ModEvent.PushFloat(iEventHandle,akActor.GetPositionZ())
+		If ModEvent.Send(iEventHandle)
+			Debug.Trace("MYC/HOM: Sent custom location data!")
+		Else
+			Debug.Trace("MYC/HOM: WARNING, could not send custom location data!",1)
+		EndIf
+	EndIf
 EndFunction
 
 ;==== Generic functions for get/setting Hangout-specific data
@@ -902,4 +1046,8 @@ EndFunction
 
 Int Function GetLocalHangoutObj(String asLocalHangoutName, String asPath)
 	Return JValue.solveObj(GetLocalConfigObj(JKEY_LOCALCONFIG + asLocalHangoutName),"." + asPath)
+EndFunction
+
+Function CleanupTempJContainers()
+	JValue.ReleaseObjectsWithTag("vMYC_HOM")
 EndFunction
