@@ -667,8 +667,9 @@ Function SetNonpersistent()
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") As ColorForm
 	_kActorBase.SetHairColor(kHairColor)
 	If !NIOverride.HasOverlays(Self)
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": Adding NIO overlays...")
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Adding NIO overlays...")
 		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
+		ApplyNIODye()
 	EndIf
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": Getting VoiceType from CharacterManager...")
 	VoiceType kVoiceType = CharacterManager.GetLocalForm(CharacterName,"VoiceType") As VoiceType
@@ -703,8 +704,32 @@ Function SetNonpersistent()
 	EndIf
 	SetAV("Confidence",3)
 	SetAV("Assistance",2)
-
 	;Force stat recalc 
+EndFunction
+
+Function ApplyNIODye()
+	Int jArmorInfo = CharacterManager.GetCharacterObj(CharacterName,"Equipment.ArmorInfo")
+	Int iArmorIndex = 0
+	While iArmorIndex < JArray.Count(jArmorInfo)
+		Int jArmor = JArray.GetObj(jArmorInfo,iArmorIndex)
+		If IsEquipped(JMap.Getform(jArmor,"Form"))
+			Int h = (JMap.Getform(jArmor,"Form") as Armor).GetSlotMask()
+			Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+			If JValue.isArray(jNIODyeColors)
+				Int iHandle = NIOverride.GetItemUniqueID(Self, 0, h, True)
+				Int iMaskIndex = 0
+				Int iIndexMax = 15
+				While iMaskIndex < iIndexMax
+					Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+					If Math.RightShift(iColor,24) > 0
+						NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+					EndIf
+					iMaskIndex += 1
+				EndWhile
+			EndIf
+		EndIf
+		iArmorIndex += 1
+	EndWhile
 EndFunction
 
 Function SetFactions()

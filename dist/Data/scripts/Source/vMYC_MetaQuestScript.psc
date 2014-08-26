@@ -373,6 +373,7 @@ Bool Function CheckDependencies()
 	Debug.Trace("MYC: JContainers is version " + SKSE.GetPluginVersion("Jcontainers") + ", API is " + JContainers.APIVersion())
 	Debug.Trace("MYC: FFutils is version " + SKSE.GetPluginVersion("ffutils"))
 	Debug.Trace("MYC: CharGen is version " + SKSE.GetPluginVersion("chargen"))
+	Debug.Trace("MYC: NIOverride is version " + SKSE.GetPluginVersion("nioverride"))
 	;Debug.MessageBox("SKSE version is " + fSKSE)
 	If fSKSE < 1.0700
 		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
@@ -392,7 +393,11 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	
+	If SKSE.GetPluginVersion("nioverride") >= 3 && NIOverride.GetScriptVersion() > 1
+		SetConfigBool("NIO_UseDye",True)
+	Else
+		SetConfigBool("NIO_UseDye",False)
+	EndIf
 	Int iRandom = RandomInt(0,999999)
 	Int jTestMap = JMap.Object()
 	JMap.setInt(jTestMap,"RandomInt",iRandom)
