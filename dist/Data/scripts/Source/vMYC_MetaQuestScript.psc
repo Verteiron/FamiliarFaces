@@ -263,7 +263,7 @@ Bool Function CheckCompatibilityModule_EFF()
 		Return False
 	EndIf
 	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
-	If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
+	If GetModByName("EFFCore.esm") != 255 || (GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255)
 		Debug.Trace("MYC:  EFF found!")
 		SetConfigInt("Compat_EFF_Loaded",1)
 		If !vMYC_zCompat_EFFQuest.IsRunning()
