@@ -1002,6 +1002,18 @@ String Function GetModReqReport(String asCharacterName)
 	Return sReturn
 EndFunction
 
+Bool Function IsCharacterFollower(String asCharacterName)
+	Actor kCharacter = GetCharacterActorByName(asCharacterName)
+	If !kCharacter as vMYC_CharacterDummyActorScript
+		Return False
+	EndIf
+	Faction kCurrentFollowerFaction = (kCharacter as vMYC_CharacterDummyActorScript).CurrentFollowerFaction
+	If kCharacter.IsPlayerTeammate() || kCharacter.GetFactionRank(kCurrentFollowerFaction) >= 0
+		Return True
+	EndIf
+	Return False
+EndFunction
+
 ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
 	While _bFreeActorBaseBusy

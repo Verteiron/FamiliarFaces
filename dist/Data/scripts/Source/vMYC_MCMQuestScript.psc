@@ -364,8 +364,18 @@ event OnPageReset(string a_page)
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
-		OPTION_TOGGLE_CHAR_ISFOE = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
-		OPTION_TOGGLE_CHAR_CANMARRY = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
+		Int iIsFoeOptionFlags = 0
+		Int iCanMarryOptionFlags = 0
+		If bCanMarry 
+			iIsFoeOptionFlags = OPTION_FLAG_DISABLED
+		ElseIf CharacterManager.IsCharacterFollower(_sCharacterName)
+			iIsFoeOptionFlags = OPTION_FLAG_DISABLED
+		EndIf
+		If bIsFoe
+			iCanMarryOptionFlags = OPTION_FLAG_DISABLED
+		EndIf
+		OPTION_TOGGLE_CHAR_ISFOE = AddToggleOption("$IsFoe",bIsFoe,iIsFoeOptionFlags)
+		OPTION_TOGGLE_CHAR_CANMARRY = AddToggleOption("$CanMarry",bCanMarry,iCanMarryOptionFlags)
 		;====================================----
 
 		AddEmptyOption()
