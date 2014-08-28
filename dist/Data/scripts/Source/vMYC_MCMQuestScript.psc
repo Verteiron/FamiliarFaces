@@ -631,7 +631,7 @@ event OnPageReset(string a_page)
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		
 		AddHeaderOption("$Appearance")
-		OPTION_DEBUG_CHARACTER_FORCEREFRESH = AddToggleOption("$Force character refresh",False)
+		OPTION_DEBUG_CHARACTER_FORCEREFRESH = AddToggleOption("$Force character refresh",GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH"))
 		AddEmptyOption()
 		AddHeaderOption("$Shrine of Heroes")
 		OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION = AddToggleOption("$Disable background validation",GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
@@ -1136,7 +1136,9 @@ Function UpdateSettings()
 	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
 	
 	_sClassNames = CharacterManager.sClassNames
-	
+	SetConfigBool("DEBUG_CHARACTER_FORCEREFRESH",False)	
+	SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False)	
+	SetConfigBool("DEBUG_SHUTDOWN",False)	
 	FillEnums()
 EndFunction
 

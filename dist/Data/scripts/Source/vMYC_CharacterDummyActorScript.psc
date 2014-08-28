@@ -299,6 +299,9 @@ Event OnConfigUpdate(String asConfigPath)
 	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES" || asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
 		_bNeedShouts = True
 		RegisterForSingleUpdate(0.5)
+	ElseIf asConfigPath == "DEBUG_CHARACTER_FORCEREFRESH"
+		NeedRefresh = GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH")
+		RegisterForSingleUpdate(0.5)
 	EndIf
 EndEvent
 
