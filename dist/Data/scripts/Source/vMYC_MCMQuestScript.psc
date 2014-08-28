@@ -499,16 +499,24 @@ event OnPageReset(string a_page)
 
 		
 		;===== Global Hangout options =====----
+		Int HangoutPartyOptionFlags = 0
+		Int HangoutClearAllOptionFlags = 0
+		If GetConfigBool("HANGOUT_CLEARALL") || !HangoutManager.IsHangoutEnabled(_sHangoutName)
+			HangoutPartyOptionFlags = OPTION_FLAG_DISABLED
+		ElseIf GetConfigBool("HANGOUT_PARTY") 
+			HangoutClearAllOptionFlags = OPTION_FLAG_DISABLED
+		EndIf
+
 		AddHeaderOption("$Global Hangout options")
-		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("$Clear all Hangouts",False)
+		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("$Clear all Hangouts",GetConfigBool("HANGOUT_CLEARALL"),HangoutClearAllOptionFlags)
 		
 		SetCursorPosition(1)
-		AddHeaderOption("$Stats")
-		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
-		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
-		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
-		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
-		
+;		AddHeaderOption("$Stats")
+;		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
+;		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
+;		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
+;		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
+
 		;====================================----
 		SetCursorPosition(8)
 		;===== Hangout header =============----
@@ -519,7 +527,7 @@ event OnPageReset(string a_page)
 		;===== Hangout enable option ======----
 		OPTION_TOGGLE_HANGOUT_ENABLE = AddToggleOption("$Enable this Hangout",HangoutManager.IsHangoutEnabled(_sHangoutName))
 		;====================================----
-		OPTION_TOGGLE_HANGOUT_PARTY = AddToggleOption("$Assign all characters here",False)
+		OPTION_TOGGLE_HANGOUT_PARTY = AddToggleOption("$Assign all characters here",GetConfigBool("HANGOUT_PARTY"),HangoutPartyOptionFlags)
 		;===== Begin info column ============----
 
 		SetCursorPosition(9)
@@ -732,27 +740,23 @@ Event OnOptionSelect(Int Option)
 		HangoutManager.SetHangoutEnabled(_sHangoutName, bHangoutEnabled)
 		SetToggleOptionValue(OPTION_TOGGLE_HANGOUT_ENABLE,bHangoutEnabled)
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_PARTY
-		Int i = _sCharacterNames.Length
-		While i > 0
-			i -= 1
-			If _sCharacterNames[i]
-				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
-				If kActor
-					HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
-				EndIf
-			EndIf
-		EndWhile
+		SetConfigStr("HANGOUT_PARTY_TARGET",_sHangoutName)
+		SetConfigBool("HANGOUT_PARTY",!GetConfigBool("HANGOUT_PARTY"))
+		SetToggleOptionValue(Option,GetConfigBool("HANGOUT_PARTY"))
+		If GetConfigBool("HANGOUT_PARTY")
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_CLEARALL,OPTION_FLAG_DISABLED)
+		Else
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_CLEARALL,0)
+		EndIf
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_CLEARALL
-		Int i = _sCharacterNames.Length
-		While i > 0
-			i -= 1
-			If _sCharacterNames[i]
-				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
-				If kActor
-					HangoutManager.AssignActorToHangout(kActor,"")
-				EndIf
-			EndIf
-		EndWhile
+		SetConfigStr("HANGOUT_PARTY_TARGET","")
+		SetConfigBool("HANGOUT_CLEARALL",!GetConfigBool("HANGOUT_CLEARALL"))
+		SetToggleOptionValue(Option,GetConfigBool("HANGOUT_CLEARALL"))
+		If GetConfigBool("HANGOUT_CLEARALL")
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_PARTY,OPTION_FLAG_DISABLED)
+		Else
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_PARTY,0)
+		EndIf
 	ElseIf _iMagicSchoolOptions.Find(Option) > -1
 		String sSchool
 		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION

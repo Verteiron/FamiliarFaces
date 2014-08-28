@@ -115,6 +115,7 @@ Int _jHangoutData
 Bool _bNeedSync
 Bool _bNeedHangoutUpdate
 Bool _bNeedHangoutReset
+Bool _bNeedHangoutMassAssignment
 
 ;--=== Events ===--
 
@@ -193,6 +194,12 @@ Event OnUpdate()
 		AssignActorHangouts()
 		_bNeedHangoutUpdate = False
 	EndIf
+	If _bNeedHangoutMassAssignment
+		MassAssignActorHangouts(GetConfigStr("HANGOUT_PARTY_TARGET"))
+		SetConfigBool("HANGOUT_CLEARALL",False)
+		SetConfigBool("HANGOUT_PARTY",False)
+		_bNeedHangoutMassAssignment = False
+	EndIf
 EndEvent
 
 Event OnHangoutQuestRegister(Form akSendingQuest, Form akActor, Form akLocation, Form akMapMarker, Form akCenterMarker, String asHangoutName)
@@ -243,6 +250,12 @@ EndEvent
 Event OnConfigUpdate(String asConfigPath)
 	If asConfigPath == "DEBUG_HANGOUTS_RESETQUESTS"
 		_bNeedHangoutReset = GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS")
+		RegisterForSingleUpdate(1)
+	ElseIf asConfigPath == "HANGOUT_CLEARALL"
+		_bNeedHangoutMassAssignment = GetConfigBool("HANGOUT_CLEARALL")
+		RegisterForSingleUpdate(1)
+	ElseIf asConfigPath == "HANGOUT_PARTY"
+		_bNeedHangoutMassAssignment = GetConfigBool("HANGOUT_PARTY")
 		RegisterForSingleUpdate(1)
 	EndIf
 EndEvent
@@ -588,6 +601,20 @@ Event OnAssignActorToHangout(Form akActorForm, String asHangoutName)
 	
 	;SendHangoutPing()
 EndEvent
+
+Function MassAssignActorHangouts(String TargetHangout = "")
+	String[] sCharacterNames = CharacterManager.CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				AssignActorToHangout(kActor,TargetHangout)
+			EndIf
+		EndIf
+	EndWhile
+EndFunction
 
 Function AssignActorHangouts()
 	Int jPendingActors = GetLocalConfigObj(JKEY_LOCALCONFIG + "PendingActors")
