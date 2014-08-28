@@ -52,6 +52,7 @@ Int Property	OPTION_TOGGLE_GLOBAL_DELETE_MISSING			Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE		Auto Hidden
 
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
@@ -130,6 +131,8 @@ Int[]		_iAlcoveResetOption
 Int		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 
 Int 	_iCurrentHangoutOption
+
+Bool 	_bConfigClosed
 
 Int Function GetVersion()
     return 10 ; Default version
@@ -292,6 +295,11 @@ endEvent
 
 event OnPageReset(string a_page)
 	String sKey = "vMYC."
+
+	If _sCurrentPage && !a_page && GetConfigBool("MCM_REMEMBER_PAGE")
+		a_page = _sCurrentPage
+	EndIf	
+	
 	_sCurrentPage = a_page
 	UpdateSettings()
 
@@ -350,16 +358,23 @@ event OnPageReset(string a_page)
 		;====================================----
 
 		;===== Character class option =======----
+		Bool bCharDisableAutoLevel = CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel")
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
 		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
 			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class","$Using AFT",OPTION_FLAG_DISABLED)
+		ElseIf bCharDisableAutoLevel
+			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class",_sClassNames[_iClassSelection],OPTION_FLAG_DISABLED)
 		Else
 			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+		EndIf
+		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+			OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddTextOption("$Disable autolevel","$Using AFT",OPTION_FLAG_DISABLED)
+		Else
+			OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",bCharDisableAutoLevel,OptionFlags)
 		EndIf
 		AddEmptyOption()
 		;====================================----
 
-		OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel"),OptionFlags)
 		
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
@@ -611,7 +626,8 @@ event OnPageReset(string a_page)
 ;		OPTION_TEXT_GLOBAL_FILE_LOCATION			= AddTextOption("$Location of JSON files",	ENUM_GLOBAL_FILE_LOCATION				[GetConfigInt("FILE_LOCATION")			])
 		OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		= AddToggleOption("$Warn about missing mod files on startup",						 GetConfigBool(	"WARNING_MISSINGMOD"	))
 		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS 	= AddToggleOption("$Show debug options",											 GetConfigBool(	"SHOW_DEBUG_OPTIONS"	))
-
+		AddEmptyOption()
+		OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE		= AddToggleOption("$Remember last MCM page",										 GetConfigBool(	"MCM_REMEMBER_PAGE"		))
 		
 ;		OPTION_DEBUG_SHUTDOWN						
 ;		OPTION_DEBUG_CHARACTER_FORCEREFRESH			
@@ -835,6 +851,9 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
 		SetConfigBool("SHOUTS_DISABLE_CITIES",!GetConfigBool("SHOUTS_DISABLE_CITIES"))
 		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_DISABLE_CITIES"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE
+		SetConfigBool("MCM_REMEMBER_PAGE",!GetConfigBool("MCM_REMEMBER_PAGE"))
+		SetToggleOptionValue(Option,GetConfigBool("MCM_REMEMBER_PAGE"))
 	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
 		Int iSetting = GetConfigInt("MAGIC_OVERRIDES")
 		iSetting += 1
@@ -1065,6 +1084,9 @@ Event OnOptionHighlight(Int option)
 	If option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
 		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES_HELP")
 	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE_HELP")
+	EndIf
 	If option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
 		SetInfoText("$OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES_HELP")
 	EndIf
@@ -1136,6 +1158,7 @@ endEvent
 
 event OnConfigClose()
 	ApplySettings()
+	_bConfigClosed = True
 endEvent
 
 Function UpdateSettings()
