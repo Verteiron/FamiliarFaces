@@ -86,7 +86,7 @@ Bool Function HasConfigKey(String asPath) Global
 	Return JMap.hasKey(jConfig,asPath)
 EndFunction
 
-Function SetConfigStr(String asPath, String asString, Bool abDeferSave = False) Global
+Function SetConfigStr(String asPath, String asString, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setStr(jConfig,asPath,asString)
 	If !abDeferSave
@@ -98,10 +98,12 @@ String Function GetConfigStr(String asPath) Global
 	Return JDB.solveStr(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigBool(String asPath, Bool abBool, Bool abDeferSave = False) Global
+Function SetConfigBool(String asPath, Bool abBool, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setInt(jConfig,asPath,abBool as Int)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -111,10 +113,12 @@ Bool Function GetConfigBool(String asPath) Global
 	Return JDB.solveInt(".vMYC._ConfigData." + asPath) as Bool
 EndFunction
 
-Function SetConfigInt(String asPath, Int aiInt, Bool abDeferSave = False) Global
+Function SetConfigInt(String asPath, Int aiInt, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setInt(jConfig,asPath,aiInt)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -124,10 +128,12 @@ Int Function GetConfigInt(String asPath) Global
 	Return JDB.solveInt(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigFlt(String asPath, Float afFloat, Bool abDeferSave = False) Global
+Function SetConfigFlt(String asPath, Float afFloat, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setFlt(jConfig,asPath,afFloat)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -137,10 +143,12 @@ Float Function GetConfigFlt(String asPath) Global
 	Return JDB.solveFlt(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigForm(String asPath, Form akForm, Bool abDeferSave = False) Global
+Function SetConfigForm(String asPath, Form akForm, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setForm(jConfig,asPath,akForm)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -150,10 +158,12 @@ Form Function GetConfigForm(String asPath) Global
 	Return JDB.solveForm(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigObj(String asPath, Int ajObj, Bool abDeferSave = False) Global
+Function SetConfigObj(String asPath, Int ajObj, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setObj(jConfig,asPath,ajObj)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
