@@ -715,20 +715,22 @@ Function ApplyNIODye()
 	Int iArmorIndex = 0
 	While iArmorIndex < JArray.Count(jArmorInfo)
 		Int jArmor = JArray.GetObj(jArmorInfo,iArmorIndex)
-		If IsEquipped(JMap.Getform(jArmor,"Form"))
-			Int h = (JMap.Getform(jArmor,"Form") as Armor).GetSlotMask()
-			Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
-			If JValue.isArray(jNIODyeColors)
-				Int iHandle = NIOverride.GetItemUniqueID(Self, 0, h, True)
-				Int iMaskIndex = 0
-				Int iIndexMax = 15
-				While iMaskIndex < iIndexMax
-					Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
-					If Math.RightShift(iColor,24) > 0
-						NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
-					EndIf
-					iMaskIndex += 1
-				EndWhile
+		If JMap.Getform(jArmor,"Form")
+			If IsEquipped(JMap.Getform(jArmor,"Form"))
+				Int h = (JMap.Getform(jArmor,"Form") as Armor).GetSlotMask()
+				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+				If JValue.isArray(jNIODyeColors)
+					Int iHandle = NIOverride.GetItemUniqueID(Self, 0, h, True)
+					Int iMaskIndex = 0
+					Int iIndexMax = 15
+					While iMaskIndex < iIndexMax
+						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+						If Math.RightShift(iColor,24) > 0
+							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+						EndIf
+						iMaskIndex += 1
+					EndWhile
+				EndIf
 			EndIf
 		EndIf
 		iArmorIndex += 1
