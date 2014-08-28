@@ -1037,6 +1037,44 @@ ActorBase Function GetFreeActorBase(Int iSex)
 	_bFreeActorBaseBusy = False
 EndFunction
 
+Function SanityCheckActors()
+	Int jActorList = JArray.Object()
+	Int jActorInvalidList = JArray.Object()
+	JValue.AddToPool(jActorList,"vMYC_SanityCheckPool")
+	JValue.AddToPool(jActorInvalidList,"vMYC_SanityCheckPool")
+	String[] sCharacterNames = CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				If JArray.FindForm(jActorList,kActor) >= 0
+					JArray.AddForm(jActorInvalidList,GetCharacterActorByName(sCharacterNames[i]))
+				EndIf
+				JArray.AddForm(jActorList,GetCharacterActorByName(sCharacterNames[i]))
+			EndIf
+		EndIf
+	EndWhile
+	i = JArray.Count(jActorInvalidList)
+	While i > 0
+		i -= 1
+		Actor kActor = JArray.GetForm(jActorInvalidList,i) as Actor
+		If kActor as vMYC_CharacterDummyActorScript
+			String sCharacterName = (kActor as vMYC_CharacterDummyActorScript).CharacterName
+			If sCharacterName 
+				DeleteCharacterActor(sCharacterName)
+			Else
+				kActor.Delete()
+			EndIf
+		Else
+			kActor.Delete()
+		EndIf
+	EndWhile
+	
+	JValue.cleanPool("vMYC_SanityCheckPool")
+EndFunction
+
 ActorBase Function GetCharacterDummy(String sCharacterName)
 	Int i = 0
 	Return JValue.solveForm(_jMYC,"." + sCharacterName + ".!LocalData.ActorBase") as ActorBase
