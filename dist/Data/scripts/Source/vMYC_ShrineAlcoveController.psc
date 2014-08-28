@@ -143,6 +143,8 @@ EndProperty
 
 Bool Property DisableLights	= False Auto Hidden
 
+Bool Property FirstTimeValidation = True Auto Hidden
+
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
 vMYC_ShrineOfHeroesQuestScript 	Property ShrineOfHeroes 	Auto
 
@@ -473,6 +475,14 @@ Bool Function ValidateAlcove()
 		AlcoveLightState = ALCOVE_LIGHTS_LOADING
 		Return True
 	EndIf
+	If !Is3DLoaded() && GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION")
+		If FirstTimeValidation
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Background validation is disabled, but will be overridden for first time validation.",1)
+		Else
+			_iValidateStateCount = 0
+			Return True
+		EndIf
+	EndIf
 	GoToState("Validating")
 	_iValidateStateCount = 0
 	Bool bValidate = True
@@ -643,10 +653,11 @@ Bool Function ValidateAlcove()
 		_fValidationTime += fValidationTime
 		If !_bLastValidation
 			_bLastValidation = True
+			FirstTimeValidation = False
 			If AlcoveActor
 				SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 			EndIf
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)	
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)
 			RegisterForSingleUpdate(5)
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf

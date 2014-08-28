@@ -5,6 +5,7 @@ Scriptname vMYC_ShrineOfHeroesQuestScript extends Quest
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -49,12 +50,15 @@ Bool 	_bNeedSync
 
 Bool	_bShrineNeedsUpdate = False
 
+Bool	_bShrineNeedsReset = False
+
 Bool	_bNoTick = False
 ;--=== Events ===--
 
 Event OnInit()
 	RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
+	
 	If IsRunning()
 		_bDoInit = True
 		RegisterForSingleUpdate(0.1)
@@ -62,6 +66,12 @@ Event OnInit()
 EndEvent
 
 Event OnUpdate()
+	If _bShrineNeedsReset
+		_bShrineNeedsReset = False
+		Ready = False
+		DoInit(True)
+		DoUpkeep(False)
+	EndIf
 	If _bDoInit
 		_bDoInit = False
 		DoInit()
@@ -96,6 +106,15 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	EndIf
 	UpdateShrineStatus()
 EndEvent
+
+Event OnConfigUpdate(String asConfigPath)
+	Debug.Trace("MYC/Shrine: OnConfigUpdate(" + asConfigPath + ")")
+	If asConfigPath == "DEBUG_SHRINE_RESET"
+		_bShrineNeedsReset = GetConfigBool("DEBUG_SHRINE_RESET")
+		RegisterForSingleUpdate(0.5)
+	EndIf
+EndEvent
+
 
 ;--=== Functions ===--
 
