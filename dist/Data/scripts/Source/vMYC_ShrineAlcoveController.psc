@@ -484,6 +484,10 @@ Bool Function ValidateAlcove()
 		EndIf
 	EndIf
 	GoToState("Validating")
+	Bool _bStartedInMenuMode = False
+	If IsInMenuMode() 
+		_bStartedInMenuMode = True
+	EndIf
 	_iValidateStateCount = 0
 	Bool bValidate = True
 
@@ -650,7 +654,9 @@ Bool Function ValidateAlcove()
 	EndIf
 	
 	If bValidate 
-		_fValidationTime += fValidationTime
+		If !_bStartedInMenuMode
+			_fValidationTime += fValidationTime
+		EndIf
 		If !_bLastValidation
 			_bLastValidation = True
 			FirstTimeValidation = False
