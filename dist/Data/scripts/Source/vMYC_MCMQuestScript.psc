@@ -1138,9 +1138,9 @@ Function UpdateSettings()
 	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
 	
 	_sClassNames = CharacterManager.sClassNames
-	SetConfigBool("DEBUG_CHARACTER_FORCEREFRESH",False)	
-	SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False)	
-	SetConfigBool("DEBUG_SHUTDOWN",False)	
+	SetConfigBool("DEBUG_CHARACTER_FORCEREFRESH",False,abNoEvent = True)	
+	SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False,abNoEvent = True)	
+	SetConfigBool("DEBUG_SHUTDOWN",False,abNoEvent = True)
 	FillEnums()
 EndFunction
 

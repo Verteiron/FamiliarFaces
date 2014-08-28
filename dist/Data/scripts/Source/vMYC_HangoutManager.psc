@@ -187,7 +187,7 @@ Event OnUpdate()
 				EndIf
 			EndIf
 		EndWhile
-		SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False)
+		SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False,abNoEvent = True)
 		_bNeedHangoutReset = False
 	EndIf
 	If _bNeedHangoutUpdate
@@ -196,8 +196,8 @@ Event OnUpdate()
 	EndIf
 	If _bNeedHangoutMassAssignment
 		MassAssignActorHangouts(GetConfigStr("HANGOUT_PARTY_TARGET"))
-		SetConfigBool("HANGOUT_CLEARALL",False)
-		SetConfigBool("HANGOUT_PARTY",False)
+		SetConfigBool("HANGOUT_CLEARALL",False,abNoEvent = True)
+		SetConfigBool("HANGOUT_PARTY",False,abNoEvent = True)
 		_bNeedHangoutMassAssignment = False
 	EndIf
 EndEvent
