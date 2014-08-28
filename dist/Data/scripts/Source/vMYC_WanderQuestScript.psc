@@ -66,6 +66,10 @@ Event OnSetTrackingOnActor(Form akActor, Bool abEnableTracking)
 	EndIf
 EndEvent
 
+Event OnShutdownHangouts(string eventName, string strArg, float numArg, Form sender)
+	DoShutdown()
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoShutdown()
@@ -120,6 +124,7 @@ Function UpdateVariables()
 	_City = (GetAliasByName("City") as LocationAlias).GetLocation()
 	_Inn = (GetAliasByName("Inn") as LocationAlias).GetLocation()
 	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
+	RegisterForModEvent("vMYC_ShutdownHangouts","OnShutdownHangouts")
 EndFunction
 
 Function EnableTracking(Bool abTracking = True)

@@ -25,6 +25,7 @@ Bool Property TrackingEnabled	Auto Hidden
 Event OnInit()
 	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
 	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
+	RegisterForModEvent("vMYC_ShutdownHangoutQuests","OnShutdownHangoutQuests")
 EndEvent
 
 Event OnHangoutPing(Form akHangoutManager)
@@ -64,11 +65,16 @@ Event OnSetTrackingOnActor(Form akActor, Bool abEnableTracking)
 	EndIf
 EndEvent
 
+Event OnShutdownHangouts(string eventName, string strArg, float numArg, Form sender)
+	DoShutdown()
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoUpkeep()
 	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
 	RegisterForModEvent("vMYC_SetTrackingOnActor","OnSetTrackingOnActor")
+	RegisterForModEvent("vMYC_ShutdownHangouts","OnShutdownHangouts")
 EndFunction
 
 Function DoShutdown()

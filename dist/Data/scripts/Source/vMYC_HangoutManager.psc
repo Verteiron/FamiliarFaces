@@ -114,6 +114,7 @@ Int _jHangoutData
 
 Bool _bNeedSync
 Bool _bNeedHangoutUpdate
+Bool _bNeedHangoutReset
 
 ;--=== Events ===--
 
@@ -149,6 +150,44 @@ Event OnUpdate()
 	If _bNeedSync
 		_bNeedSync = False
 		SyncHangoutData()
+	EndIf
+	If _bNeedHangoutReset
+		SendModEvent("vMYC_ShutdownHangouts")
+		WaitMenuMode(1)
+		Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+		If !jHangoutQuestMap 
+			jHangoutQuestMap = JFormMap.Object()
+			JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,jHangoutQuestMap)
+		EndIf
+		Int jQuestList = JFormMap.AllKeys(jHangoutQuestMap)
+		Int i = JArray.Count(jQuestList)
+		While i > 0
+			i -= 1
+			Quest kHangoutQuest = JArray.GetForm(jQuestList,i) as Quest
+			If kHangoutQuest.IsRunning()
+				If (kHangoutQuest as vMYC_HangoutQuestScript)
+					(kHangoutQuest as vMYC_HangoutQuestScript).DoShutdown()
+				ElseIf (kHangoutQuest as vMYC_WanderQuestScript)
+					(kHangoutQuest as vMYC_WanderQuestScript).DoShutdown()
+				Else
+					kHangoutQuest.Stop()
+				EndIf
+			EndIf
+		EndWhile
+		String[] sCharacterNames = CharacterManager.CharacterNames
+		i = sCharacterNames.Length
+		While i > 0
+			i -= 1
+			If sCharacterNames[i]
+				Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+				String sHangoutName = CharacterManager.GetLocalString(sCharacterNames[i],"HangoutName")
+				If kActor
+					AssignActorToHangout(kActor, sHangoutName)
+				EndIf
+			EndIf
+		EndWhile
+		SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False)
+		_bNeedHangoutReset = False
 	EndIf
 	If _bNeedHangoutUpdate
 		AssignActorHangouts()
@@ -198,6 +237,13 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 	If !((kHangout.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference())
 		;Debug.Trace("MYC/HOM: Stopping HangoutQuest " + kHangout + " because no Actor is assigned to it.")
 		(akHangout as vMYC_HangoutQuestScript).DoShutdown()
+	EndIf
+EndEvent
+
+Event OnConfigUpdate(String asConfigPath)
+	If asConfigPath == "DEBUG_HANGOUTS_RESETQUESTS"
+		_bNeedHangoutReset = GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS")
+		RegisterForSingleUpdate(1)
 	EndIf
 EndEvent
 
@@ -311,6 +357,7 @@ Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_HangoutQuestRegister","OnHangoutQuestRegister")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
 	RegisterForModEvent("vMYC_SetCustomHangout","OnSetCustomHangout")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 EndFunction
 
 Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, String asHangoutName = "")
