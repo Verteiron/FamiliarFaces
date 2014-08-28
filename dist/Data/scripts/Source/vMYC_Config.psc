@@ -1,11 +1,5 @@
 Scriptname vMYC_Config Hidden
 
-Function SetConfigDefaults() Global
-	Debug.Trace("MYC/Config: Setting defaults!")
-	SetConfigInt("MAGIC_OVERRIDES",2)
-	
-EndFunction
-
 Function SendConfigEvent(String asPath) Global
 	Int iHandle = ModEvent.Create("vMYC_ConfigUpdate")
 	If iHandle

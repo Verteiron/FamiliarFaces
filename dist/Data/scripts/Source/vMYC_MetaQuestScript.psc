@@ -155,7 +155,9 @@ Function DoInit()
 		CharacterManager.DoInit()
 	EndIf
 	InitConfig()
-	SetConfigDefaults()
+	If !GetConfigBool("DefaultsSet")
+		SetConfigDefaults()
+	EndIf
 	If !(ShrineOfHeroes as Quest).IsRunning()
 		WaitMenuMode(0.5)
 		(ShrineOfHeroes as Quest).Start()
@@ -365,6 +367,23 @@ Function DoShutdown()
 	Debug.Notification("Familiar Faces\nData has been cleared. You should now save and exit, then uninstall the mod before re-launching the game.")
 	_Running = False
 	Ready = True
+EndFunction
+
+Function SetConfigDefaults(Bool abForce = False)
+	If !GetConfigBool("DefaultsSet") || abForce
+		Debug.Trace("MYC: Setting config defaults!")
+		SetConfigInt("MAGIC_ALLOWFROMMODS",0,False,False)
+		SetConfigInt("MAGIC_OVERRIDES",2,False,False)
+
+		SetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION",False,False,False)
+		SetConfigBool("TRACKBYDEFAULT",True,False,False)
+		SetConfigBool("TRACK_STOPONRECRUIT",True,False,False)
+		SetConfigBool("AUTOLEVEL_CHARACTERS",True,False,False)
+		SetConfigBool("WARNING_MISSINGMOD",True,False,False)
+		SetConfigBool("DELETE_MISSING",True,False,False)
+		SetConfigBool("SHOUTS_DISABLE_CITIES",True,False,False)
+		SetConfigBool("DefaultsSet",True)
+	EndIf
 EndFunction
 
 Bool Function CheckDependencies()
