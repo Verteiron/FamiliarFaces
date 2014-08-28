@@ -863,6 +863,8 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	GotoState("CharGenBusy")
+	Bool bResult
 	Int iDismountSafetyTimer = 10
 	While akActor.IsOnMount() && iDismountSafetyTimer
 		iDismountSafetyTimer -= 1
@@ -874,6 +876,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 	EndIf
 	If akActor.IsOnMount()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		GotoState("")
 		Return False
 	EndIf
 	FFUtils.DeleteFaceGenData(Self.GetActorBase())
@@ -882,22 +885,39 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 	If CharGen.IsExternalEnabled()
 		If !_bExternalHeadExists
 			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
-			Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+			bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+			GotoState("")
+			Return bResult
 		EndIf
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is true, using LoadExternalCharacter...")
-		Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		GotoState("")
+		Return bResult
 	Else
 		If _bExternalHeadExists
 			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
-			Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+			bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+			GotoState("")
+			Return bResult
 		EndIf
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is false, using LoadCharacter...")
-		Bool bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
-		Wait(1)
+		bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		WaitMenuMode(1)
 		RegenerateHead()
+		GotoState("")
 		Return bResult
 	EndIf
+	GotoState("")
 EndFunction
+
+State CharGenBusy
+
+	Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+		Debug.Trace("MYC/Actor/" + CharacterName + ": CharGenLoadCharacter was called more than once!",1)
+		Return False
+	EndFunction
+
+EndState
 
 Function RefreshMesh()
 	GotoState("Busy")
