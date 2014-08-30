@@ -1855,7 +1855,7 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	SetLocalInt(sCharacterName,"HangoutIndexDefault",-1)
 	SetLocalInt(sCharacterName,"HangoutIndex",-1)
-	PickHangout(sCharacterName)
+	;PickHangout(sCharacterName)
 	;CharacterDummy.DoUpkeep()
 	;SetCharacterTracking(sCharacterName,True)
 	_bBusyLoading = False
@@ -1956,25 +1956,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 EndFunction
 
 Function PickHangout(String asCharacterName)
-	String[] sSpawnPoints = New String[32]
-	Int jSpawnPoints = GetCharacterObj(asCharacterName,"SpawnPoints")
-	Int i = 0
-	;Debug.Trace("MYC/CM: (" + asCharacterName + ") Setting Spawnpoint to one of " + JArray.Count(jSpawnPoints))
-	While i < JArray.Count(jSpawnPoints)
-		sSpawnPoints[i] = JArray.getStr(jSpawnPoints,i)
-		;Debug.Trace("MYC/CM: (" + asCharacterName + ") Spawnpoint " + i + " is " + sSpawnPoints[i])
-		i += 1
-	EndWhile
-	ReferenceAlias kDummyRef = GetAvailableReference(sSpawnPoints)
-	Int iHangoutIndex = -1
-	If kDummyRef
-		kDummyRef.ForceRefTo(GetCharacterActorByName(asCharacterName))
-		iHangoutIndex = kHangoutRefAliases.Find(kDummyRef)
-	EndIf
-	SetLocalInt(asCharacterName,"HangoutIndexDefault",iHangoutIndex)
-	SetLocalInt(asCharacterName,"HangoutIndex",iHangoutIndex)
-
-	;Debug.Trace("MYC/CM: (" + asCharacterName + ") Set to " + kDummyRef)
+{Legacy function, do not use!}
 EndFunction
 
 Int Function CreateLocalDataIfMissing(String asCharacterName)
@@ -2040,69 +2022,7 @@ Int Function GetLocalObj(String asCharacterName, String asPath)
 EndFunction
 
 ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
-{Return available ReferenceAlias based on the character's stored spawnpoints}
-	ReferenceAlias kResult
-	String[] sCommonCities = New String[5]
-	sCommonCities[0] = "Dawnstar"
-	sCommonCities[1] = "Markarth"
-	sCommonCities[2] = "Morthal"
-	sCommonCities[3] = "Falkreath"
-	sCommonCities[4] = "Whiterun"
-
-	ReferenceAlias[] kCityAliases = New ReferenceAlias[5]
-	kCityAliases[0] = alias_DawnstarCharacter
-	kCityAliases[1] = alias_MarkarthCharacter
-	kCityAliases[2] = alias_MorthalCharacter
-	kCityAliases[3] = alias_FalkreathCharacter
-	kCityAliases[4] = alias_WhiterunCharacter
-
-	Int iCityPick = RandomInt(0,4)
-
-	;FIXME: There is no spawnpoint/package for the Dark Brotherhood, but there probably should be.
-
-	If sSpawnPoints.Find("Mage") > -1 && !alias_MageCharacter.GetReference()
-		Return alias_MageCharacter
-	ElseIf sSpawnPoints.Find("Blade") > -1 && !alias_BladeCharacter.GetReference()
-		Return alias_BladeCharacter
-	ElseIf sSpawnPoints.Find("Greybeard") > -1 && !alias_GreyBeardCharacter.GetReference()
-		Return alias_GreyBeardCharacter
-	ElseIf sSpawnPoints.Find("Imperial") > -1 && !alias_ImperialCharacter.GetReference()
-		Return alias_ImperialCharacter
-	ElseIf sSpawnPoints.Find("Stormcloak") > -1 && !alias_StormcloakCharacter.GetReference()
-		Return alias_StormcloakCharacter
-	ElseIf sSpawnPoints.Find("Thief") > -1 && !alias_ThiefCharacter.GetReference()
-		Return alias_ThiefCharacter
-	ElseIf sSpawnPoints.Find("Companion") > -1 && !alias_CompanionCharacter.GetReference()
-		Return alias_CompanionCharacter
-	ElseIf sSpawnPoints.Find("Bard") > -1 && !alias_BardCharacter.GetReference()
-		Return alias_BardCharacter
-	ElseIf sSpawnPoints.Find("Orc") > -1 && !alias_OrcCharacter.GetReference()
-		Return alias_OrcCharacter
-	ElseIf sSpawnPoints.Find("Caravan") > -1 && !alias_CaravanCharacter.GetReference()
-		Return alias_CaravanCharacter
-	ElseIf sSpawnPoints.Find(sCommonCities[iCityPick]) > -1 && !kCityAliases[iCityPick].GetReference() ; Try a random city the character is thane of
-		Return kCityAliases[iCityPick]
-	Else ; Try all cities in order
-		Int i = 0
-		While i < kCityAliases.Length
-			If sSpawnPoints.Find(sCommonCities[i]) > -1 && !kCityAliases[i].GetReference()
-				Return kCityAliases[i]
-			EndIf
-			i += 1
-		EndWhile
-		;If we get this far, character isn't thane of anything or all character slots are full
-		iCityPick = RandomInt(0,4)
-		If !kCityAliases[iCityPick].GetReference() ; Try a random city that's unfilled, regardless of thane status
-			Return kCityAliases[iCityPick]
-		EndIf
-		While i > 0 ; Pick a city in reverse order regardless of thane-ness
-			i -= 1
-			If !kCityAliases[i].GetReference()
-				Return kCityAliases[i]
-			EndIf
-		EndWhile
-	EndIf
-	;All slots must be full
+{Legacy function, do not use!}
 	Return None
 EndFunction
 
