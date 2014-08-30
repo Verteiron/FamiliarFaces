@@ -510,6 +510,7 @@ Function DoInit()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
 	RegisterForModEvents()
+	SetUUIDIfMissing()
 	_kDummyActors = New ActorBase[128]
 	_kLoadedCharacters = New Actor[128]
 	Int i = vMYC_DummyActorsFList.GetSize()
@@ -2629,12 +2630,21 @@ Function NIO_ApplyCharacterOverlays(String sCharacterName)
 
 EndFunction
 
+Function SetUUIDIfMissing()
+	If !GetLocalConfigStr("PlayerUUID")
+		SetLocalConfigStr("PlayerUUID",GetUUIDTrue())
+		Debug.Trace("MYC/CM: Set player UUID: " + GetLocalConfigStr("PlayerUUID"))
+	EndIf
+EndFunction
+
 Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment = True, Bool bSaveInventory = True, Bool bSaveFullInventory = True, Bool bSavePluginItems = False, Bool bForceSave = False)
 	_bSavedPerks = False
 	_bSavedSpells = False
 	_bSavedEquipment = False
 	_bSavedInventory = False
 
+	SetUUIDIfMissing()
+	
 	Form[] PlayerEquipment = New Form[64]
 	Enchantment[] PlayerEnchantments = New Enchantment[64]
 
@@ -2707,7 +2717,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.setStr(jMetaInfo,"RaceText",PlayerREF.GetActorBase().GetRace().GetName())
 	JMap.setFlt(jMetaInfo,"Playtime",GetRealHoursPassed())
 	JMap.setInt(jMetaInfo,"SerializationVersion",SerializationVersion)
-
+	JMap.setStr(jMetaInfo,"UUID",GetLocalConfigStr("PlayerUUID"))
 	JMap.setObj(jPlayerData,"_MYC",jMetaInfo)
 	AddToReqList(jPlayerData,PlayerREF.GetActorBase().GetRace(),"Race")
 	;-----==== Save actorvalues
