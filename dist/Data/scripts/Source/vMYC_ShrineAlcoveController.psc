@@ -51,6 +51,9 @@ Int	Property AlcoveIndex Hidden
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
 		;Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
+		GotoState("")
+		_bPlayerIsSaving = False
+		_bCharacterSummoned = False
 		SendModEvent("vMYC_AlcoveStatusUpdate",0)
 		_Book.AlcoveIndex = AlcoveIndex
 		RegisterForSingleUpdate(1)
@@ -330,6 +333,7 @@ Function CheckVars()
 		_LightAmbientTarget	= _Light.GetLinkedRef()
 		_Light.MoveTo(_LightAmbientTarget)
 	EndIf
+	_bPlayerIsSaving = False
 EndFunction
 
 Event OnInit()
@@ -1336,12 +1340,12 @@ Function ResetAlcove()
 		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
 		AlcoveActor.MoveTo(kNowhere)
 	EndIf
-
+	_bPlayerIsSaving = False
 	_bCharacterSummoned = False
 	AlcoveActor = None
 	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 	CharacterName = ""
-
+	AlcoveStatueState = 0
 	HideTrophies()
 	_Book.IsOpen = False
 	_Book.IsGlowing = False
@@ -1350,6 +1354,7 @@ Function ResetAlcove()
 	AlcoveLightState = 0
 	AlcoveStatueState = 0
 	AlcoveState = 0	
+	RegisterForSingleUpdate(1)
 EndFunction
 
 Function UpdateAlcove()
@@ -1394,7 +1399,9 @@ Function HideTrophies()
 	While i > 0
 		i -= 1
 		ObjectReference kTrophy = GetLinkedRef(vMYC_TrophyKeywords.GetAt(i) as Keyword) as ObjectReference
-		If kTrophy
+		If kTrophy as vMYC_ShrineTrophyFXScript
+			(kTrophy as vMYC_ShrineTrophyFXScript).HideTrophies()
+		ElseIf kTrophy
 			kTrophy.DisableNoWait()
 		EndIf
 	EndWhile
