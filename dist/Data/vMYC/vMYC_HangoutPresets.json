@@ -1,5 +1,22 @@
 {
   "Hangouts": {
+	"Sky Haven Temple": {
+      "Cell": "__formData|Skyrim.esm|0x161eb",
+      "Anchors": [
+        "__formData|Skyrim.esm|0x16fd1",
+        "__formData|Skyrim.esm|0x16fac",
+        "__formData|Skyrim.esm|0x176a4",
+        "__formData|Skyrim.esm|0x16fbd",
+        "__formData|Skyrim.esm|0x176a1"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18e42",
+      "SourceCharacter": "Preset",
+      "position": {
+        "Z": 8409.294921875,
+        "X": 4506.3203125,
+        "Y": 3944.821533203125
+      }
+    },
     "Imperial Military Camp": {
       "Anchors": [
         "__formData|Skyrim.esm|0xc4a88",
@@ -10,7 +27,6 @@
       ],
       "Location": "__formData|Skyrim.esm|0x19277",
       "Cell": "__formData|Skyrim.esm|0x928c",
-      "MarkerIndex": 2,
       "position": {
         "X": -2137.95068359375,
         "Y": 101400.2578125,
@@ -37,7 +53,6 @@
       "SourceCharacter": "Preset"
     },
     "Dawnstar": {
-      "currentActor": null,
       "Anchors": [
         "__formData|Skyrim.esm|0x2d339",
         "__formData|Dawnguard.esm|0x19aa6",
@@ -55,7 +70,6 @@
       "SourceCharacter": "Preset"
     },
     "Falkreath": {
-      "currentActor": null,
       "Anchors": [
         "__formData|Skyrim.esm|0x10fd7b",
         "__formData|Skyrim.esm|0x2be5e",
@@ -90,7 +104,6 @@
       "SourceCharacter": "Preset"
     },
     "Markarth": {
-      "currentActor": null,
       "Anchors": [
         "__formData|Skyrim.esm|0x98251",
         "__formData|Skyrim.esm|0x98262",
@@ -142,7 +155,6 @@
       "SourceCharacter": "Preset"
     },
     "Morthal": {
-      "currentActor": null,
       "Anchors": [
         "__formData|Skyrim.esm|0x2d377",
         "__formData|Skyrim.esm|0x44382",
@@ -169,7 +181,6 @@
       ],
       "Location": "__formData|Skyrim.esm|0x209f0",
       "Cell": "__formData|Skyrim.esm|0x1677f",
-      "MarkerIndex": 1,
       "position": {
         "X": 2594.098388671875,
         "Y": -2492.281005859375,
@@ -190,7 +201,6 @@
       ],
       "Location": "__formData|Skyrim.esm|0x13163",
       "Cell": "__formData|Skyrim.esm|0x9712",
-      "MarkerIndex": 3,
       "position": {
         "X": 21297.376953125,
         "Y": -42867.96875,
@@ -207,11 +217,9 @@
         "__formData|Skyrim.esm|0x74f32",
         "__formData|Skyrim.esm|0x267e6"
       ],
-      "currentActor": null,
       "Location": "__formData|Skyrim.esm|0x18a56",
       "Cell": "__formData|Skyrim.esm|0x1a275",
       "IsCustom": 1,
-      "MarkerIndex": 5,
       "position": {
         "X": 25403.365234375,
         "Y": -3138.863037109375,
@@ -228,11 +236,9 @@
         "__formData|Skyrim.esm|0x24b42",
         "__formData|Skyrim.esm|0xb2173"
       ],
-      "currentActor": null,
       "Location": "__formData|Skyrim.esm|0x18a51",
       "Cell": "__formData|Skyrim.esm|0x8ea2",
       "IsCustom": 1,
-      "MarkerIndex": 6,
       "position": {
         "X": 108710.4921875,
         "Y": 102775.46875,
