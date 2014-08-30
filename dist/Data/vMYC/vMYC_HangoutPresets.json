@@ -15,7 +15,8 @@
         "Z": 8409.294921875,
         "X": 4506.3203125,
         "Y": 3944.821533203125
-      }
+      },
+	  "UUID": "79a4645b-6f67-4ad1-ba33-8d3b737789b5"
     },
     "Imperial Military Camp": {
       "Anchors": [
@@ -33,7 +34,8 @@
         "Z": -11145.115234375
       },
       "SpawnObject": "__formData|Skyrim.esm|0xc4a88",
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "b181675a-6af1-412c-a32d-b6ffe5755f58"
     },
     "Riften": {
       "Anchors": [
@@ -50,7 +52,8 @@
         "Y": -98274.078125,
         "Z": 11137.787109375
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "4b7fec8b-9b8b-450e-bf89-3b774f64dc8d"
     },
     "Dawnstar": {
       "Anchors": [
@@ -67,7 +70,8 @@
         "Y": 107850.5078125,
         "Z": -13582.0947265625
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "f227e0dc-9afe-4113-a12c-29225f8b80a5"
     },
     "Falkreath": {
       "Anchors": [
@@ -84,7 +88,8 @@
         "Y": -88190.4140625,
         "Z": -2741.989501953125
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "72f64c4e-3cbe-4ad4-8d54-263c62c12da9"
     },
     "Windhelm": {
       "Anchors": [
@@ -101,7 +106,8 @@
         "Y": 36921.49609375,
         "Z": -12259.759765625
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "58b1534f-9e1a-4640-88cf-e29c59941bcb"
     },
     "Markarth": {
       "Anchors": [
@@ -118,7 +124,8 @@
         "Y": 5762.86474609375,
         "Z": -2796.332275390625
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "f5ed5793-0191-47c9-a519-3b8549379c67"
     },
     "Solitude": {
       "Anchors": [
@@ -135,7 +142,8 @@
         "Y": 104689.5546875,
         "Z": -8333.6611328125
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "40c059b1-e4f5-4655-bcf4-76da8dd1efe1"
     },
     "Ivarstead": {
       "Anchors": [
@@ -152,7 +160,8 @@
         "Y": -58405.921875,
         "Z": 10267.384765625
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "95d1879d-eece-40fc-aa05-601638002831"
     },
     "Morthal": {
       "Anchors": [
@@ -169,7 +178,8 @@
         "Y": 68683.5,
         "Z": -13672.7001953125
       },
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "d55324d7-104a-4c83-9b9b-4b3998415317"
     },
     "New Gnisis Cornerclub": {
       "Anchors": [
@@ -189,7 +199,8 @@
       "Preset": 1,
       "Quest": "__formData|vMYC_MeetYourCharacters.esp|0x251d5",
       "SpawnObject": "__formData|Skyrim.esm|0x9d5ab",
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "ebf7be36-8f31-4c1a-b014-9a922e7eb4b1"
     },
     "Riverwood": {
       "Anchors": [
@@ -207,7 +218,8 @@
         "Z": -92.662239074707031
       },
       "SpawnObject": "__formData|Dawnguard.esm|0xe685",
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "45e1422d-cc11-4a20-bcd0-32c2347e2644"
     },
     "Whiterun": {
       "Anchors": [
@@ -226,7 +238,8 @@
         "Z": -3005.740966796875
       },
       "SpawnObject": "__formData|Skyrim.esm|0x2ffa9",
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "bc27945a-c40a-4e92-a729-b838d347b399"
     },
     "Winterhold": {
       "Anchors": [
@@ -245,7 +258,8 @@
         "Z": -8783.4228515625
       },
       "SpawnObject": "__formData|Skyrim.esm|0x318c7",
-      "SourceCharacter": "Preset"
+      "SourceCharacter": "Preset",
+	  "UUID": "47e8791c-8994-4627-8373-c5720b5b192d"
     }
   }
 }

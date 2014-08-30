@@ -144,6 +144,7 @@ Event OnSetCustomHangout(String sCharacterName, String sLocationName, Form kLoca
 	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
 	JMap.setObj(jHangoutData,"Position",jPlayerPos)
 	JMap.setStr(jHangoutData,"Source",sCharacterName)
+	JMap.setStr(jHangoutData,"UUID",GetUUIDTrue())
 	ImportCharacterHangout(jHangoutData,sCharacterName)
 EndEvent
 
@@ -418,6 +419,9 @@ Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, St
 	JMap.SetFlt(jPosition,"Y",JValue.SolveFlt(ajLocationData,".Position.Y"))
 	JMap.SetFlt(jPosition,"Z",JValue.SolveFlt(ajLocationData,".Position.Z"))
 	SetHangoutObj(sHangoutName,"Position",jPosition)
+	If !GetHangoutstr(sHangoutName,"UUID")
+		SetHangoutStr(sHangoutName,"UUID",GetUUIDFast())
+	EndIf
 	JValue.Release(ajLocationData)
 EndFunction
 
@@ -448,6 +452,9 @@ Function ImportOldHangouts()
 			Debug.Trace("MYC/HOM: Importing " + sHangoutName + "...")
 			If StringUtil.Find(sHangoutName,"$") > -1
 				sHangoutName = StringUtil.SubString(sHangoutName,1)
+			EndIf
+			If sHangoutName == "Bard's College"
+				sHangoutName = "Bards College"
 			EndIf
 			If StringUtil.Find(sHangoutName,"Custom") > -1
 				sHangoutName = StringUtil.SubString(sHangoutName,0,StringUtil.Find(sHangoutName,"(") - 1)
@@ -958,7 +965,7 @@ Function CreateHangoutHere(Actor akActor)
 			sLocationName = akActor.GetCurrentLocation().GetName()
 		EndIf
 		If !sLocationName || sLocationName == "Wilderness"
-			sLocationName = akActor.GetActorBase().GetName() + "'s last location"
+			sLocationName = akActor.GetActorBase().GetName() + "'s savepoint"
 		EndIf
 		ModEvent.PushString(iEventHandle,sLocationName)
 		ModEvent.PushForm(iEventHandle,akActor.GetCurrentLocation())
