@@ -135,7 +135,7 @@ Int 	_iCurrentHangoutOption
 Bool 	_bConfigClosed
 
 Int Function GetVersion()
-    return 10 ; Default version
+    return 11 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
@@ -919,10 +919,15 @@ Event OnOptionMenuOpen(Int Option)
 		String[] sCharacterNamesPlusEmpty = New String[128]
 		sCharacterNamesPlusEmpty[0] = "$Empty"
 		Int i = 0
+		Int iAdded = 1
 		While i < _sCharacterNames.Length
-			sCharacterNamesPlusEmpty[i + 1] = _sCharacterNames[i]
+			If _sCharacterNames[i]
+				sCharacterNamesPlusEmpty[i + 1] = _sCharacterNames[i]
+				iAdded += 1
+			EndIf
 			i += 1
 		EndWhile
+		sCharacterNamesPlusEmpty[iAdded] = "*{$Reset}*"
 		SetMenuDialogOptions(sCharacterNamesPlusEmpty)
 		If _sAlcoveCharacterNames[iAlcove]
 			SetMenuDialogStartIndex(sCharacterNamesPlusEmpty.Find(_sAlcoveCharacterNames[iAlcove]))
@@ -968,6 +973,11 @@ Event OnOptionMenuAccept(int option, int index)
 		If index < 0
 			SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],"")
 			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName","")
+		ElseIf _sCharacterNames[index] == "" 
+			;"Reset" was chosen
+			SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],"$Reset")
+			SetOptionFlags(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],OPTION_FLAG_DISABLED)
+			ShrineOfHeroes.AlcoveControllers[iAlcove].ResetAlcove()
 		Else
 			Int iOIndex = ShrineOfHeroes.GetAlcoveIndex(_sCharacterNames[index])
 			If iOIndex > -1

@@ -69,7 +69,14 @@ Event OnUpdate()
 	If _bShrineNeedsReset
 		_bShrineNeedsReset = False
 		Ready = False
-		DoInit(True)
+		Int i = AlcoveControllers.Length
+		While i > 0
+			i -= 1
+			AlcoveControllers[i].ResetAlcove()
+		EndWhile
+		JValue.WriteToFile(JMap.Object(),JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
+		SyncShrineData()
+		;DoInit(True)
 		DoUpkeep(False)
 	EndIf
 	If _bDoInit
@@ -148,6 +155,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvent("vMYC_AlcovestatusUpdate","OnAlcovestatusUpdate")
 	RegisterForModEvent("vMYC_ShrineNeedsUpdate","OnShrineNeedsUpdate")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	Bool bUpdateNames = SyncShrineData()
 	Int i = AlcoveControllers.Length
 	While i > 0
@@ -292,6 +300,7 @@ Function DoShutdown()
 	UnregisterForUpdate()
 	UnregisterForModEvent("vMYC_AlcoveStatusUpdate")
 	UnregisterForModEvent("vMYC_ShrineReady")
+	UnregisterForModEvent("vMYC_ConfigUpdate")
 	Int i = AlcoveControllers.Length
 	While i > 0
 		i -= 1
