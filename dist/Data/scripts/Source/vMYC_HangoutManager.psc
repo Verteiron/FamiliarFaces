@@ -264,7 +264,10 @@ EndEvent
 
 Function DoInit()
 	If !_jHangoutData
-		_jHangoutData = JMap.Object()
+		_jHangoutData = JValue.ReadFromFile("Data/vMYC/vMYC_HangoutPresets.json")
+		If !_jHangoutData
+			_jHangoutData = JMap.Object()
+		EndIf
 		JMap.SetObj(_jMYC,"Hangouts",_jHangoutData)
 		JMap.SetObj(_jHangoutData,"DataSerial",1)
 	EndIf
