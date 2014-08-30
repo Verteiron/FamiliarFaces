@@ -242,3 +242,78 @@ EndFunction
 Int Function GetLocalConfigObj(String asPath) Global
 	Return JDB.solveObj(".vMYC._LocalConfigData." + asPath)
 EndFunction
+
+String Function GetUUIDTrue() Global
+	Int[] iBytes = New Int[16]
+	Int i = 0
+	While i < 16
+		iBytes[i] = Utility.RandomInt(0,255)
+		i += 1
+	EndWhile
+	Int iVersion = iBytes[6]
+	iVersion = Math.LogicalOr(Math.LogicalAnd(iVersion,0x0f),0x40)
+	iBytes[6] = iVersion
+	Int iVariant = iBytes[8]
+	iVariant = Math.LogicalOr(Math.LogicalAnd(iVariant,0x3f),0x80)
+	iBytes[8] = iVariant
+	String sUUID = ""
+	i = 0
+	While i < 16
+		If iBytes[i] < 16
+			sUUID += "0"
+		EndIf
+		sUUID += GetHexString(iBytes[i])
+		If i == 3 || i == 5 || i == 7 || i == 9
+			sUUID += "-"
+		EndIf
+		i += 1
+	EndWhile
+	Return sUUID
+EndFunction
+
+String Function GetUUIDFast() Global
+	String sUUID = ""
+	sUUID += GetHexString(Utility.RandomInt(0,0xffff),4) + GetHexString(Utility.RandomInt(0,0xffff),4)
+	sUUID += "-"
+	sUUID += GetHexString(Utility.RandomInt(0,0xffff),4)
+	sUUID += "-"
+	sUUID += GetHexString(Math.LogicalOr(Math.LogicalAnd(Utility.RandomInt(0,0xffff),0x0fff),0x4000)) ; version
+	sUUID += "-"
+	sUUID += GetHexString(Math.LogicalOr(Math.LogicalAnd(Utility.RandomInt(0,0xffff),0x3fff),0x8000)) ; variant
+	sUUID += "-"
+	sUUID += GetHexString(Utility.RandomInt(0,0xffffff),6) + GetHexString(Utility.RandomInt(0,0xffffff),6)
+	Return sUUID
+EndFunction
+
+String Function GetHexString(Int iDec, Int iPadLength = 0) Global
+	If iDec < 0
+		Return ""
+	ElseIf iDec == 0
+		Return "0"
+	EndIf
+	String[] sHexT = New String[6]
+	sHexT[0] = "a"
+	sHexT[1] = "b"
+	sHexT[2] = "c"
+	sHexT[3] = "d"
+	sHexT[4] = "e"
+	sHexT[5] = "f"
+	String sHex = ""
+	If iDec > 15
+		sHex += GetHexString(iDec / 16)
+		sHex += GetHexString(iDec % 16)
+	ElseIf iDec > 9
+		sHex = sHexT[iDec - 10]
+	ElseIf iDec 
+		sHex = iDec
+	Else
+		sHex = "0"
+	EndIf
+	If iPadLength
+		Int iHexLen = StringUtil.GetLength(sHex)
+		If iHexLen < iPadLength
+			sHex = StringUtil.Substring("0000000000000000",0,iPadLength - iHexLen) + sHex
+		EndIf
+	EndIf
+	Return sHex
+EndFunction
