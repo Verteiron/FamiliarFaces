@@ -1724,8 +1724,9 @@ Bool Function LoadCharacter(String sCharacterName)
 	If JMap.hasKey(jCharacterData,"LocationData")
 		;Compatibility with older saves
 		HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"LocationData"),sCharacterName)
+	ElseIf JMap.hasKey(jCharacterData,"Hangout")
+		HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"Hangout"),sCharacterName)
 	EndIf
-	HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"Hangout"),sCharacterName)
 
 	;----Load or create ActorBaseMap--------------
 
