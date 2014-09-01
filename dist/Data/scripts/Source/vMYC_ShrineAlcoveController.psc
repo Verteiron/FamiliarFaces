@@ -374,7 +374,7 @@ EndFunction
 
 Event OnUpdate()
 	If !ValidateAlcove()
-		RegisterForSingleUpdate(5)
+		RegisterForSingleUpdate(2)
 	Else
 		If GetParentCell().IsAttached()
 			RegisterForSingleUpdate(RandomFloat(9,12))
@@ -389,15 +389,18 @@ Event OnOrphanedActor(string eventName, string strArg, float numArg, Form sender
 EndEvent
 
 Function ClaimActor(String asCharacterName)
+	While GetLocalConfigBool("CM_Loading_" + asCharacterName)
+		WaitMenuMode(1)
+	EndWhile
 	AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
-	If !AlcoveActor
+	If !AlcoveActor && !GetLocalConfigBool("CM_Loading_" + asCharacterName)
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Asking CharacterManager to load " + asCharacterName + "...")
 		If CharacterManager.LoadCharacter(asCharacterName)
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager finished loading " + asCharacterName + "!")
 			AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
 		Else
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
-			ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "! Will try again shortly.",1)
+			;ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 		EndIf
 	EndIf
 	If AlcoveActor
@@ -463,7 +466,6 @@ EndFunction
 State Validating
 
 	Bool Function ValidateAlcove()
-		WaitMenuMode(0.5)
 		;_iValidateStateCount += 1
 		;If _iValidateStateCount > 4
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
@@ -475,6 +477,7 @@ State Validating
 EndState
 
 Bool Function ValidateAlcove()
+	GoToState("Validating")
 	If _bPlayerIsSaving ;Disable validation if player is saving here!
 		AlcoveLightState = ALCOVE_LIGHTS_LOADING
 		Return True
@@ -487,7 +490,6 @@ Bool Function ValidateAlcove()
 			Return True
 		EndIf
 	EndIf
-	GoToState("Validating")
 	Bool _bStartedInMenuMode = False
 	If IsInMenuMode() 
 		_bStartedInMenuMode = True
@@ -511,9 +513,12 @@ Bool Function ValidateAlcove()
 		Else
 			AlcoveState = ALCOVE_STATE_EMPTY
 		EndIf
-	ElseIf ValidationState == VALIDATION_FAILURE_ACTOR_LOADING && AlcoveState == ALCOVE_STATE_READY
+	ElseIf ValidationState == VALIDATION_FAILURE_ACTOR_LOADING 
 		; Prevent validation failure if this is just the initial load during upkeep
-		ValidationState = 0
+		ValidationState = 0	
+		If AlcoveState != ALCOVE_STATE_READY
+			AlcoveState = ALCOVE_STATE_READY
+		EndIf
 	ElseIf ValidationState ; Other problems, so stay Busy
 		AlcoveState = ALCOVE_STATE_BUSY
 	EndIf
@@ -627,7 +632,7 @@ Bool Function ValidateAlcove()
 	EndIf
 
 	If AlcoveActor && (AlcoveActor as vMYC_CharacterDummyActorScript).IsBusy
-		ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_LOADING)
+		;ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_LOADING)
 	EndIf
 	
 	If !AlcoveActor && AlcoveStatueState != ALCOVE_STATUE_NONE

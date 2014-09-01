@@ -1019,23 +1019,25 @@ ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
 	While _bFreeActorBaseBusy
 		;Debug.Trace("MYC/CM: Waiting for GetFreeActorBase...")
-		Wait(0.5)
+		Return None
 	EndWhile
 	_bFreeActorBaseBusy = True
+	ActorBase kDummyActorBase = None
+	
 	Int jActorBaseMap = JValue.solveObj(_jMYC,".ActorBaseMap")
 	Int i = 0
 	While i < _kDummyActors.Length
 		If _kDummyActors[i]
 			If _kDummyActors[i].GetSex() == iSex
 				If !JFormMap.hasKey(jActorBaseMap,_kDummyActors[i])
-					_bFreeActorBaseBusy = False
-					Return _kDummyActors[i]
+					kDummyActorBase = _kDummyActors[i]
 				EndIf
 			EndIf
 		EndIf
 		i += 1
 	EndWhile
 	_bFreeActorBaseBusy = False
+	Return kDummyActorBase
 EndFunction
 
 Function SanityCheckActors()
@@ -1687,11 +1689,15 @@ EndFunction
 Bool Function LoadCharacter(String sCharacterName)
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called!")
 	Int i = 0
-	;WaitMenuMode(RandomFloat(0.0,2.0)) ; Stagger startup slightly to be a little friendlier to the threading
-	While _bBusyLoading
+	;If _bBusyLoading 
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter is busy, waiting...")
-		WaitMenuMode(1)
-	EndWhile
+	;	Return False
+	;Else
+	If GetLocalConfigBool("CM_Loading_" + sCharacterName)
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called multiple times!")
+		Return False
+	EndIf
+	SetLocalConfigBool("CM_Loading_" + sCharacterName,True)
 	_bBusyLoading = True
 
 	;----Load Character data from _jMYC--------------
@@ -1716,6 +1722,7 @@ Bool Function LoadCharacter(String sCharacterName)
 			jCharacterData = JValue.solveObj(_jMYC,"." + sCharacterName + ".Data")
 		Else
 			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Nope, no data, no file, no ticky, no shirty. ABORT! ABORT!")
+			SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 			_bBusyLoading = False
 			Return False
 		EndIf
@@ -1765,16 +1772,16 @@ Bool Function LoadCharacter(String sCharacterName)
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No saved ActorBase found, getting a new one...")
 		DummyActorBase = GetFreeActorBase(JMap.getInt(jCharacterData,"Sex"))
 		If !DummyActorBase ; Not loaded on this save session
-			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
+			Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
+			SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 			_bBusyLoading = False
 			Return False
 		EndIf
+		SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
+		JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
 	EndIf
-	;Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
-	SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
-
-	JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
-
+	Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
+	
 	;----Load Actor and begin setting up the ActorBase--------------
 
 	DummyActorBase.SetEssential(True)
@@ -1792,7 +1799,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	;-----====                    ====-----
 
 
-	;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
+	Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
 	SetLocalForm(sCharacterName,"Actor",kCharacterActor)
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Made it through SetLocalForm...")
 	vMYC_CharacterDummyActorScript CharacterDummy = kCharacterActor as vMYC_CharacterDummyActorScript
@@ -1859,6 +1866,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	;PickHangout(sCharacterName)
 	;CharacterDummy.DoUpkeep()
 	;SetCharacterTracking(sCharacterName,True)
+	SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 	_bBusyLoading = False
 	Return True
 EndFunction
