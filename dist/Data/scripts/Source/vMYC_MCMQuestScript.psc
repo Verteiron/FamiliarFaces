@@ -135,47 +135,13 @@ Int 	_iCurrentHangoutOption
 Bool 	_bConfigClosed
 
 Int Function GetVersion()
-    return 11 ; Default version
+    return 12 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
-	If (a_version >= 2 && CurrentVersion < 2)
-		Debug.Trace("MYC/MCM: Updating script to version 2...")
-        FilterVoiceTypes(VOICETYPE_NOFILTER)
-	ElseIf (a_version >= 3 && CurrentVersion < 3)
-		Debug.Trace("MYC/MCM: Updating script to version 3...")
-		_iMagicSchoolOptions = New Int[6]
-	ElseIf (a_version >= 4 && CurrentVersion < 4)
-		Debug.Trace("MYC/MCM: Updating script to version 4...")
+	If CurrentVersion < 12
 		OnConfigInit()
-	ElseIf (a_version >= 5 && CurrentVersion < 5)
-		Debug.Trace("MYC/MCM: Updating script to version 5...")
-		Pages = New String[3]
-		Pages[0] = "$Character Setup"
-		Pages[1] = "$Shrine of Heroes"
-		Pages[2] = "$Hangout Manager"
-		Pages[3] = "$Global Options"
-	ElseIf (a_version >= 6 && CurrentVersion < 6)
-		Debug.Trace("MYC/MCM: Updating script to version 6...")
-		OPTION_MENU_ALCOVE_CHARACTER	= New Int[12]
-		OPTION_TOGGLE_ALCOVE_SUMMONED	= New Int[12]
-		Pages = New String[5]
-		Pages[0] = "$Character Setup"
-		Pages[1] = "$Shrine of Heroes"
-		Pages[2] = "$Hangout Manager"
-		Pages[3] = "$Global Options"
-		Pages[4] = "$Debugging"
-	ElseIf (a_version >= 7 && CurrentVersion < 7)
-		Pages = New String[5]
-		Pages[0] = "$Character Setup"
-		Pages[1] = "$Shrine of Heroes"
-		Pages[2] = "$Hangout Manager"
-		Pages[3] = "$Global Options"
-		Pages[4] = "$Debugging"
-	EndIf
-
-	If a_version > CurrentVersion
-		FillEnums()
+		Debug.Trace("MYC/MCM: Updating script to version 12...")
 	EndIf
 EndEvent
 
@@ -297,6 +263,7 @@ event OnPageReset(string a_page)
 	String sKey = "vMYC."
 
 	If _sCurrentPage && !a_page && GetConfigBool("MCM_REMEMBER_PAGE")
+		SetTitleText(_sCurrentPage)
 		a_page = _sCurrentPage
 	EndIf	
 	
