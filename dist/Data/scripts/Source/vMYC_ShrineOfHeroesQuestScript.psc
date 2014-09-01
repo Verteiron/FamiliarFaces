@@ -104,6 +104,24 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	If !AlcoveState
 		Return
 	EndIf
+	If (sender as vMYC_ShrineAlcoveController).AlcoveIndex < 0
+		Debug.Trace("MYC/Shrine: " + sender + " - Invalid index received! Attempting to assign the correct index...",1)
+		Int iControllerIndex = AlcoveControllers.Find(sender as vMYC_ShrineAlcoveController)
+		If iControllerIndex < 0 
+			Debug.Trace("MYC/Shrine: " + sender + " - No index found in Controller array, searching references...",1)
+			Int i = Alcoves.Length
+			While i > 0
+				i -= 1
+				If sender == Alcoves[i].GetReference()
+					iControllerIndex = i
+				EndIf
+			EndWhile
+		EndIf
+		If iControllerIndex > -1
+			Debug.Trace("MYC/Shrine: " + sender + " - Assigned index " + iControllerIndex + "!",1)
+			(sender as vMYC_ShrineAlcoveController).AlcoveIndex = iControllerIndex
+		EndIf
+	EndIf
 	If !AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex]
 		AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = sender as vMYC_ShrineAlcoveController
 	EndIf
@@ -245,6 +263,9 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	EndIf
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
+		If !JMap.HasKey(_jShrineData,"UUID")
+			JMap.SetStr(_jShrineData,"UUID",FFUtils.UUID())
+		EndIf
 		;JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
 		JValue.WriteToFile(_jShrineData,JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
 	ElseIf DataSerial < DataFileSerial
