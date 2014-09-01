@@ -587,16 +587,27 @@ Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
 EndEvent
 
 Function DeleteIfOrphaned()
-	String sCellName
+	String sCellName = ""
 	If GetParentCell()
 		sCellName = GetParentCell().GetName()
 	EndIf
 	If sCellName == "vMYC_Staging"
 		If _bOrphaned && !CharacterManager.GetLocalInt(CharacterName,"IsSummoned") ; Prevent deletion if we got marooned here due to a bad Hangout.
-			If GetCurrentRealTime() - _fOrphanedTime > 30
-				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over 30 seconds, nobody loves me! Might as well delete myself :(")
+			If GetCurrentRealTime() - _fOrphanedTime > 15
+				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over " + (GetCurrentRealTime() - _fOrphanedTime) as Int + " seconds, nobody loves me! :(")
 				UnregisterForUpdate()
-				CharacterManager.DeleteCharacterActor(CharacterName)
+				If CharacterManager.GetCharacterActorByName(CharacterName) == Self
+					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm the right actor, so what's up?")
+					If (GetCurrentRealTime() - _fOrphanedTime) > 60
+						Debug.Trace("MYC/Actor/" + CharacterName + ": 60 seconds is long enough, I'm outta here!")
+						CharacterManager.DeleteCharacterActor(CharacterName)
+					EndIf
+					Return
+				Else
+					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm not even the right actor! I'm " + Self + " but CharacterManager says I should be " + CharacterManager.GetCharacterActorByName(CharacterName) + "! This is terrible! Deleting myself :(")
+					Delete()
+					Return
+				EndIf
 			EndIf
 		Else
 			_bOrphaned = True
