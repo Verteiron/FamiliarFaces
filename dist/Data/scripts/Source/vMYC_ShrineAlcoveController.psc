@@ -632,7 +632,7 @@ Bool Function ValidateAlcove()
 	EndIf
 
 	If AlcoveActor && (AlcoveActor as vMYC_CharacterDummyActorScript).IsBusy
-		;ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_LOADING)
+		ValidationState = Math.LogicalOr(ValidationState,VALIDATION_FAILURE_ACTOR_LOADING)
 	EndIf
 	
 	If !AlcoveActor && AlcoveStatueState != ALCOVE_STATUE_NONE
