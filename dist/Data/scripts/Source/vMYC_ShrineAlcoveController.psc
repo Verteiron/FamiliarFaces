@@ -257,6 +257,7 @@ Bool			_bSavedPerks
 Bool			_bSavedInventory
 Bool			_bSavedSpells
 Bool			_bCharacterSummoned
+Bool			_bDeferValidation
 
 ObjectReference	_FogBlowing
 ObjectReference	_FogEmpty
@@ -478,6 +479,9 @@ EndState
 
 Bool Function ValidateAlcove()
 	GoToState("Validating")
+	If _bDeferValidation
+		Return True
+	EndIf
 	If _bPlayerIsSaving ;Disable validation if player is saving here!
 		AlcoveLightState = ALCOVE_LIGHTS_LOADING
 		Return True
@@ -1248,6 +1252,7 @@ EndEvent
 Function SummonCharacter()
 {Summon the character from Alcove into Tamriel}
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": SummonCharacter!")
+	_bDeferValidation = True
 	AlcoveStatueState = ALCOVE_STATUE_SUMMONED
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	_Book = GetLinkedRef(vMYC_ShrineBook) as vMYC_CharacterBookActiScript
@@ -1288,11 +1293,13 @@ Function SummonCharacter()
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
 		CharacterManager.ResetCharacterPosition(CharacterName)
 	EndIf
+	WaitMenuMode(2)
 	AlcoveActor.SetAlpha(1.0)
 	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
 	If GetConfigBool("TRACKBYDEFAULT")
 		CharacterManager.SetCharacterTracking(_sCharacterName,True)
 	EndIf
+	_bDeferValidation = False
 EndFunction
 
 Function BanishCharacter()

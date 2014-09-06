@@ -487,7 +487,7 @@ Function DeleteHangout(String sHangoutName)
 			iNumRefs -= 1
 			Quest kHangoutQuest = CustomMapMarkers[iMarkerIndex].GetNthReferenceAlias(iNumRefs).GetOwningQuest()
 			If kHangoutQuest
-				Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangoutQuest + "...",1)
+				;Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangoutQuest + "...")
 				Actor kHangoutActor = (kHangoutQuest.GetAliasByName("HangoutActor") as ReferenceAlias).GetReference() as Actor
 				If kHangoutActor
 					Debug.Trace("MYC/HOM/" + sHangoutName + ": * This will orphan " + kHangoutActor.GetName() + " " + kHangoutActor + "!",1)
@@ -711,11 +711,8 @@ Function MoveActorToHangout(Actor akActor, String asHangoutName)
 	If !asHangoutName
 		If vMYC_Wanderer.SendStoryEventAndWait(akRef1 = akActor)
 			;Debug.Trace("MYC/HOM: Sent story event to begin wandering!")
-			akActor.EvaluatePackage()
-			akActor.MoveToPackageLocation()
-			Return
 		Else
-			;Debug.Trace("MYC/HOM: Couldn't send story event to resume wandering!")
+			Debug.Trace("MYC/HOM: Couldn't send story event to resume wandering!",1)
 		EndIf
 	EndIf
 	akActor.EvaluatePackage()
@@ -724,10 +721,11 @@ Function MoveActorToHangout(Actor akActor, String asHangoutName)
 		Debug.Trace("MYC/HOM/" + asHangoutName + ": Actor's AI package didn't send them to the right place!",1)
 		ObjectReference kMarker = GetHangoutMarker(asHangoutName)
 		If kMarker
-			;Debug.Trace("MYC/HOM/" + asHangoutName + ": Moving Actor " + akActor.GetName() + " " + akActor + " to " + kMarker + "!")
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Moving Actor " + akActor.GetName() + " " + akActor + " to " + kMarker + "!")
 			akActor.MoveTo(kMarker)
 		Else
-			Debug.Trace("MYC/HOM/" + asHangoutName + ": Couldn't find anything to moving the Actor to! MoveActorToHangout failed!",1)
+			Debug.Trace("MYC/HOM/" + asHangoutName + ": Couldn't find anything to moving the Actor to! Throwing them into Tamriel near Whiterun as a last resort!",1)
+			akActor.MoveTo(GetFormFromFile(0x000d2ada,"Skyrim.esm") as ObjectReference) ; XMarkerHeading near Whiterun
 		EndIf
 	Else
 		;Debug.Trace("MYC/HOM/" + asHangoutName + ": Actor's AI package appears to have sent them to the right place.")
@@ -745,7 +743,7 @@ Function CancelActorHangout(Actor akActor)
 				vMYC_HangoutQuestScript kHangout = kQuest as vMYC_HangoutQuestScript
 				Int jHangoutQuestMap = JMap.getObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
 				String sHangoutName = JFormMap.GetStr(jHangoutQuestMap,kHangout)
-				Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangout + "...",1)
+				;Debug.Trace("MYC/HOM/" + sHangoutName + ": Stopping " + kHangout + "...")
 				JFormMap.RemoveKey(jHangoutQuestMap,kHangout)
 				kHangout.EnableTracking(False)
 				kHangout.DoShutdown()
@@ -767,7 +765,7 @@ Function CancelActorHangout(Actor akActor)
 					EndIf
 				EndIf
 			ElseIf kQuest as vMYC_WanderQuestScript
-				Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on " + akActor + "...",1)
+				;Debug.Trace("MYC/HOM/WQ: Stopping " + kQuest + " on " + akActor + "...")
 				(kQuest as vMYC_WanderQuestScript).DoShutdown()
 			EndIf
 		EndIf
