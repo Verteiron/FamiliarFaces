@@ -114,6 +114,8 @@ Int _jHangoutData
 
 Bool _bNeedSync
 Bool _bNeedHangoutUpdate
+Bool _bNeedHangoutReset
+Bool _bNeedHangoutMassAssignment
 
 ;--=== Events ===--
 
@@ -142,6 +144,7 @@ Event OnSetCustomHangout(String sCharacterName, String sLocationName, Form kLoca
 	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
 	JMap.setObj(jHangoutData,"Position",jPlayerPos)
 	JMap.setStr(jHangoutData,"Source",sCharacterName)
+	JMap.setStr(jHangoutData,"UUID",GetUUIDTrue())
 	ImportCharacterHangout(jHangoutData,sCharacterName)
 EndEvent
 
@@ -150,9 +153,53 @@ Event OnUpdate()
 		_bNeedSync = False
 		SyncHangoutData()
 	EndIf
+	If _bNeedHangoutReset
+		SendModEvent("vMYC_ShutdownHangouts")
+		WaitMenuMode(1)
+		Int jHangoutQuestMap = JMap.GetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP)
+		If !jHangoutQuestMap 
+			jHangoutQuestMap = JFormMap.Object()
+			JMap.SetObj(_jHangoutData,JKEY_HANGOUTQUEST_FMAP,jHangoutQuestMap)
+		EndIf
+		Int jQuestList = JFormMap.AllKeys(jHangoutQuestMap)
+		Int i = JArray.Count(jQuestList)
+		While i > 0
+			i -= 1
+			Quest kHangoutQuest = JArray.GetForm(jQuestList,i) as Quest
+			If kHangoutQuest.IsRunning()
+				If (kHangoutQuest as vMYC_HangoutQuestScript)
+					(kHangoutQuest as vMYC_HangoutQuestScript).DoShutdown()
+				ElseIf (kHangoutQuest as vMYC_WanderQuestScript)
+					(kHangoutQuest as vMYC_WanderQuestScript).DoShutdown()
+				Else
+					kHangoutQuest.Stop()
+				EndIf
+			EndIf
+		EndWhile
+		String[] sCharacterNames = CharacterManager.CharacterNames
+		i = sCharacterNames.Length
+		While i > 0
+			i -= 1
+			If sCharacterNames[i]
+				Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+				String sHangoutName = CharacterManager.GetLocalString(sCharacterNames[i],"HangoutName")
+				If kActor
+					AssignActorToHangout(kActor, sHangoutName)
+				EndIf
+			EndIf
+		EndWhile
+		SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False,abNoEvent = True)
+		_bNeedHangoutReset = False
+	EndIf
 	If _bNeedHangoutUpdate
 		AssignActorHangouts()
 		_bNeedHangoutUpdate = False
+	EndIf
+	If _bNeedHangoutMassAssignment
+		MassAssignActorHangouts(GetConfigStr("HANGOUT_PARTY_TARGET"))
+		SetConfigBool("HANGOUT_CLEARALL",False,abNoEvent = True)
+		SetConfigBool("HANGOUT_PARTY",False,abNoEvent = True)
+		_bNeedHangoutMassAssignment = False
 	EndIf
 EndEvent
 
@@ -201,11 +248,27 @@ Event OnHangoutPong(Form akHangout, Form akLocation, String asHangoutName)
 	EndIf
 EndEvent
 
+Event OnConfigUpdate(String asConfigPath)
+	If asConfigPath == "DEBUG_HANGOUTS_RESETQUESTS"
+		_bNeedHangoutReset = GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS")
+		RegisterForSingleUpdate(1)
+	ElseIf asConfigPath == "HANGOUT_CLEARALL"
+		_bNeedHangoutMassAssignment = GetConfigBool("HANGOUT_CLEARALL")
+		RegisterForSingleUpdate(1)
+	ElseIf asConfigPath == "HANGOUT_PARTY"
+		_bNeedHangoutMassAssignment = GetConfigBool("HANGOUT_PARTY")
+		RegisterForSingleUpdate(1)
+	EndIf
+EndEvent
+
 ;--=== Functions ===--
 
 Function DoInit()
 	If !_jHangoutData
-		_jHangoutData = JMap.Object()
+		_jHangoutData = JValue.ReadFromFile("Data/vMYC/vMYC_HangoutPresets.json")
+		If !_jHangoutData
+			_jHangoutData = JMap.Object()
+		EndIf
 		JMap.SetObj(_jMYC,"Hangouts",_jHangoutData)
 		JMap.SetObj(_jHangoutData,"DataSerial",1)
 	EndIf
@@ -311,6 +374,7 @@ Function RegisterForModEvents()
 	RegisterForModEvent("vMYC_HangoutQuestRegister","OnHangoutQuestRegister")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
 	RegisterForModEvent("vMYC_SetCustomHangout","OnSetCustomHangout")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 EndFunction
 
 Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, String asHangoutName = "")
@@ -355,6 +419,9 @@ Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, St
 	JMap.SetFlt(jPosition,"Y",JValue.SolveFlt(ajLocationData,".Position.Y"))
 	JMap.SetFlt(jPosition,"Z",JValue.SolveFlt(ajLocationData,".Position.Z"))
 	SetHangoutObj(sHangoutName,"Position",jPosition)
+	If !GetHangoutstr(sHangoutName,"UUID")
+		SetHangoutStr(sHangoutName,"UUID",GetUUIDFast())
+	EndIf
 	JValue.Release(ajLocationData)
 EndFunction
 
@@ -385,6 +452,9 @@ Function ImportOldHangouts()
 			Debug.Trace("MYC/HOM: Importing " + sHangoutName + "...")
 			If StringUtil.Find(sHangoutName,"$") > -1
 				sHangoutName = StringUtil.SubString(sHangoutName,1)
+			EndIf
+			If sHangoutName == "Bard's College"
+				sHangoutName = "Bards College"
 			EndIf
 			If StringUtil.Find(sHangoutName,"Custom") > -1
 				sHangoutName = StringUtil.SubString(sHangoutName,0,StringUtil.Find(sHangoutName,"(") - 1)
@@ -541,6 +611,20 @@ Event OnAssignActorToHangout(Form akActorForm, String asHangoutName)
 	
 	;SendHangoutPing()
 EndEvent
+
+Function MassAssignActorHangouts(String TargetHangout = "")
+	String[] sCharacterNames = CharacterManager.CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				AssignActorToHangout(kActor,TargetHangout)
+			EndIf
+		EndIf
+	EndWhile
+EndFunction
 
 Function AssignActorHangouts()
 	Int jPendingActors = GetLocalConfigObj(JKEY_LOCALCONFIG + "PendingActors")
@@ -881,7 +965,7 @@ Function CreateHangoutHere(Actor akActor)
 			sLocationName = akActor.GetCurrentLocation().GetName()
 		EndIf
 		If !sLocationName || sLocationName == "Wilderness"
-			sLocationName = akActor.GetActorBase().GetName() + "'s last location"
+			sLocationName = akActor.GetActorBase().GetName() + "'s savepoint"
 		EndIf
 		ModEvent.PushString(iEventHandle,sLocationName)
 		ModEvent.PushForm(iEventHandle,akActor.GetCurrentLocation())

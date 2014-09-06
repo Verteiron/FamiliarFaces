@@ -98,6 +98,8 @@ Bool _bNeedShouts
 
 Bool _bNeedSpells
 
+Bool _bNeedInventory
+
 String[] _sSkillNames
 
 Float _fDecapitationChance
@@ -210,20 +212,29 @@ Event OnUpdate()
 		EnableAI(True)
 	EndIf
 	IsBusy = False
-	If _bNeedPerks
+	Bool bIsSummoned = CharacterManager.GetLocalInt(CharacterName,"IsSummoned")
+	If _bNeedPerks && bIsSummoned
 		If CharacterManager.ApplyCharacterPerks(CharacterName) >= 0
 			_bNeedPerks = False
 		EndIf
 	EndIf
-	If _bNeedShouts
+	If _bNeedShouts && bIsSummoned
 		UpdateShoutList() ; will take care of setting _bNeedShouts
 	EndIf
-	If _bNeedSpells
+	If _bNeedSpells && bIsSummoned
 		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
 		_bNeedSpells = False
 	EndIf
-	If _bNeedPerks || _bNeedShouts || _bNeedSpells
-		RegisterForSingleUpdate(1.0)
+	If _bNeedInventory && bIsSummoned
+		CharacterManager.PopulateInventory(CharacterName)
+		_bNeedInventory = False
+	EndIf
+	If _bNeedPerks || _bNeedShouts || _bNeedSpells || _bNeedInventory
+		If bIsSummoned
+			RegisterForSingleUpdate(1.0)
+		Else
+			RegisterForSingleUpdate(15.0)
+		EndIf
 	Else 
 		RegisterForSingleUpdate(5.0)
 	EndIf
@@ -291,13 +302,16 @@ Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
-	Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
+	;Debug.Trace("MYC/Actor/" + CharacterName + ": OnConfigUpdate(" + asConfigPath + ")")
 	If asConfigPath == "MAGIC_OVERRIDES" || asConfigPath == "MAGIC_ALLOWFROMMODS"
 		_bNeedSpells = True
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
 		SetNonpersistent()
 	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES" || asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
 		_bNeedShouts = True
+		RegisterForSingleUpdate(0.5)
+	ElseIf asConfigPath == "DEBUG_CHARACTER_FORCEREFRESH"
+		NeedRefresh = GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH")
 		RegisterForSingleUpdate(0.5)
 	EndIf
 EndEvent
@@ -584,16 +598,27 @@ Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
 EndEvent
 
 Function DeleteIfOrphaned()
-	String sCellName
+	String sCellName = ""
 	If GetParentCell()
 		sCellName = GetParentCell().GetName()
 	EndIf
 	If sCellName == "vMYC_Staging"
 		If _bOrphaned && !CharacterManager.GetLocalInt(CharacterName,"IsSummoned") ; Prevent deletion if we got marooned here due to a bad Hangout.
-			If GetCurrentRealTime() - _fOrphanedTime > 30
-				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over 30 seconds, nobody loves me! Might as well delete myself :(")
+			If GetCurrentRealTime() - _fOrphanedTime > 15
+				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over " + (GetCurrentRealTime() - _fOrphanedTime) as Int + " seconds, nobody loves me! :(")
 				UnregisterForUpdate()
-				CharacterManager.DeleteCharacterActor(CharacterName)
+				If CharacterManager.GetCharacterActorByName(CharacterName) == Self
+					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm the right actor, so what's up?")
+					If (GetCurrentRealTime() - _fOrphanedTime) > 60
+						Debug.Trace("MYC/Actor/" + CharacterName + ": 60 seconds is long enough, I'm outta here!")
+						CharacterManager.DeleteCharacterActor(CharacterName)
+					EndIf
+					Return
+				Else
+					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm not even the right actor! I'm " + Self + " but CharacterManager says I should be " + CharacterManager.GetCharacterActorByName(CharacterName) + "! This is terrible! Deleting myself :(")
+					Delete()
+					Return
+				EndIf
 			EndIf
 		Else
 			_bOrphaned = True
@@ -636,7 +661,10 @@ Function SyncCharacterData()
 		CharacterManager.SetLocalFlt(CharacterName,"PlayTime",CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime"))
 		iResult = CharacterManager.ApplyCharacterArmor(CharacterName)
 		iResult = CharacterManager.ApplyCharacterWeapons(CharacterName)
-		CharacterManager.PopulateInventory(CharacterName)
+		_bNeedInventory = True
+		_bNeedSpells = True
+		_bNeedShouts = True
+		_bNeedPerks = True
 	EndIf
 EndFunction
 
@@ -667,8 +695,9 @@ Function SetNonpersistent()
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") As ColorForm
 	_kActorBase.SetHairColor(kHairColor)
 	If !NIOverride.HasOverlays(Self)
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": Adding NIO overlays...")
+		Debug.Trace("MYC/Actor/" + CharacterName + ": Adding NIO overlays...")
 		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
+		ApplyNIODye()
 	EndIf
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": Getting VoiceType from CharacterManager...")
 	VoiceType kVoiceType = CharacterManager.GetLocalForm(CharacterName,"VoiceType") As VoiceType
@@ -703,8 +732,34 @@ Function SetNonpersistent()
 	EndIf
 	SetAV("Confidence",3)
 	SetAV("Assistance",2)
-
 	;Force stat recalc 
+EndFunction
+
+Function ApplyNIODye()
+	Int jArmorInfo = CharacterManager.GetCharacterObj(CharacterName,"Equipment.ArmorInfo")
+	Int iArmorIndex = 0
+	While iArmorIndex < JArray.Count(jArmorInfo)
+		Int jArmor = JArray.GetObj(jArmorInfo,iArmorIndex)
+		If JMap.Getform(jArmor,"Form")
+			If IsEquipped(JMap.Getform(jArmor,"Form"))
+				Int h = (JMap.Getform(jArmor,"Form") as Armor).GetSlotMask()
+				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+				If JValue.isArray(jNIODyeColors)
+					Int iHandle = NIOverride.GetItemUniqueID(Self, 0, h, True)
+					Int iMaskIndex = 0
+					Int iIndexMax = 15
+					While iMaskIndex < iIndexMax
+						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+						If Math.RightShift(iColor,24) > 0
+							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+						EndIf
+						iMaskIndex += 1
+					EndWhile
+				EndIf
+			EndIf
+		EndIf
+		iArmorIndex += 1
+	EndWhile
 EndFunction
 
 Function SetFactions()
@@ -835,6 +890,8 @@ Function RefreshMeshNewCG()
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	GotoState("CharGenBusy")
+	Bool bResult
 	Int iDismountSafetyTimer = 10
 	While akActor.IsOnMount() && iDismountSafetyTimer
 		iDismountSafetyTimer -= 1
@@ -846,6 +903,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 	EndIf
 	If akActor.IsOnMount()
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		GotoState("")
 		Return False
 	EndIf
 	FFUtils.DeleteFaceGenData(Self.GetActorBase())
@@ -854,22 +912,39 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 	If CharGen.IsExternalEnabled()
 		If !_bExternalHeadExists
 			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
-			Return CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+			bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+			GotoState("")
+			Return bResult
 		EndIf
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is true, using LoadExternalCharacter...")
-		Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		GotoState("")
+		Return bResult
 	Else
 		If _bExternalHeadExists
 			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
-			Return CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+			bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+			GotoState("")
+			Return bResult
 		EndIf
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is false, using LoadCharacter...")
-		Bool bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
-		Wait(1)
+		bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		WaitMenuMode(1)
 		RegenerateHead()
+		GotoState("")
 		Return bResult
 	EndIf
+	GotoState("")
 EndFunction
+
+State CharGenBusy
+
+	Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+		Debug.Trace("MYC/Actor/" + CharacterName + ": CharGenLoadCharacter was called more than once!",1)
+		Return False
+	EndFunction
+
+EndState
 
 Function RefreshMesh()
 	GotoState("Busy")

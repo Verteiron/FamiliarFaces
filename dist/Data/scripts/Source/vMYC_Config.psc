@@ -1,11 +1,5 @@
 Scriptname vMYC_Config Hidden
 
-Function SetConfigDefaults() Global
-	Debug.Trace("MYC/Config: Setting defaults!")
-	SetConfigInt("MAGIC_OVERRIDES",2)
-	
-EndFunction
-
 Function SendConfigEvent(String asPath) Global
 	Int iHandle = ModEvent.Create("vMYC_ConfigUpdate")
 	If iHandle
@@ -86,7 +80,7 @@ Bool Function HasConfigKey(String asPath) Global
 	Return JMap.hasKey(jConfig,asPath)
 EndFunction
 
-Function SetConfigStr(String asPath, String asString, Bool abDeferSave = False) Global
+Function SetConfigStr(String asPath, String asString, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setStr(jConfig,asPath,asString)
 	If !abDeferSave
@@ -98,10 +92,12 @@ String Function GetConfigStr(String asPath) Global
 	Return JDB.solveStr(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigBool(String asPath, Bool abBool, Bool abDeferSave = False) Global
+Function SetConfigBool(String asPath, Bool abBool, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setInt(jConfig,asPath,abBool as Int)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -111,10 +107,12 @@ Bool Function GetConfigBool(String asPath) Global
 	Return JDB.solveInt(".vMYC._ConfigData." + asPath) as Bool
 EndFunction
 
-Function SetConfigInt(String asPath, Int aiInt, Bool abDeferSave = False) Global
+Function SetConfigInt(String asPath, Int aiInt, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setInt(jConfig,asPath,aiInt)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -124,10 +122,12 @@ Int Function GetConfigInt(String asPath) Global
 	Return JDB.solveInt(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigFlt(String asPath, Float afFloat, Bool abDeferSave = False) Global
+Function SetConfigFlt(String asPath, Float afFloat, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setFlt(jConfig,asPath,afFloat)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -137,10 +137,12 @@ Float Function GetConfigFlt(String asPath) Global
 	Return JDB.solveFlt(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigForm(String asPath, Form akForm, Bool abDeferSave = False) Global
+Function SetConfigForm(String asPath, Form akForm, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setForm(jConfig,asPath,akForm)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -150,10 +152,12 @@ Form Function GetConfigForm(String asPath) Global
 	Return JDB.solveForm(".vMYC._ConfigData." + asPath)
 EndFunction
 
-Function SetConfigObj(String asPath, Int ajObj, Bool abDeferSave = False) Global
+Function SetConfigObj(String asPath, Int ajObj, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jConfig = CreateConfigDataIfMissing()
 	JMap.setObj(jConfig,asPath,ajObj)
-	SendConfigEvent(asPath)
+	If !abNoEvent
+		SendConfigEvent(asPath)
+	EndIf
 	If !abDeferSave
 		SyncConfig()
 	EndIf
@@ -237,4 +241,79 @@ EndFunction
 
 Int Function GetLocalConfigObj(String asPath) Global
 	Return JDB.solveObj(".vMYC._LocalConfigData." + asPath)
+EndFunction
+
+String Function GetUUIDTrue() Global
+	Int[] iBytes = New Int[16]
+	Int i = 0
+	While i < 16
+		iBytes[i] = Utility.RandomInt(0,255)
+		i += 1
+	EndWhile
+	Int iVersion = iBytes[6]
+	iVersion = Math.LogicalOr(Math.LogicalAnd(iVersion,0x0f),0x40)
+	iBytes[6] = iVersion
+	Int iVariant = iBytes[8]
+	iVariant = Math.LogicalOr(Math.LogicalAnd(iVariant,0x3f),0x80)
+	iBytes[8] = iVariant
+	String sUUID = ""
+	i = 0
+	While i < 16
+		If iBytes[i] < 16
+			sUUID += "0"
+		EndIf
+		sUUID += GetHexString(iBytes[i])
+		If i == 3 || i == 5 || i == 7 || i == 9
+			sUUID += "-"
+		EndIf
+		i += 1
+	EndWhile
+	Return sUUID
+EndFunction
+
+String Function GetUUIDFast() Global
+	String sUUID = ""
+	sUUID += GetHexString(Utility.RandomInt(0,0xffff),4) + GetHexString(Utility.RandomInt(0,0xffff),4)
+	sUUID += "-"
+	sUUID += GetHexString(Utility.RandomInt(0,0xffff),4)
+	sUUID += "-"
+	sUUID += GetHexString(Math.LogicalOr(Math.LogicalAnd(Utility.RandomInt(0,0xffff),0x0fff),0x4000)) ; version
+	sUUID += "-"
+	sUUID += GetHexString(Math.LogicalOr(Math.LogicalAnd(Utility.RandomInt(0,0xffff),0x3fff),0x8000)) ; variant
+	sUUID += "-"
+	sUUID += GetHexString(Utility.RandomInt(0,0xffffff),6) + GetHexString(Utility.RandomInt(0,0xffffff),6)
+	Return sUUID
+EndFunction
+
+String Function GetHexString(Int iDec, Int iPadLength = 0) Global
+	If iDec < 0
+		Return ""
+	ElseIf iDec == 0
+		Return "0"
+	EndIf
+	String[] sHexT = New String[6]
+	sHexT[0] = "a"
+	sHexT[1] = "b"
+	sHexT[2] = "c"
+	sHexT[3] = "d"
+	sHexT[4] = "e"
+	sHexT[5] = "f"
+	String sHex = ""
+	If iDec > 15
+		sHex += GetHexString(iDec / 16)
+		sHex += GetHexString(iDec % 16)
+	ElseIf iDec > 9
+		sHex = sHexT[iDec - 10]
+	ElseIf iDec 
+		sHex = iDec
+	Else
+		sHex = "0"
+	EndIf
+	If iPadLength
+		Int iHexLen = StringUtil.GetLength(sHex)
+		If iHexLen < iPadLength
+			sHex = StringUtil.Substring("0000000000000000",0,iPadLength - iHexLen) + sHex
+		EndIf
+	EndIf
+	Return sHex
 EndFunction

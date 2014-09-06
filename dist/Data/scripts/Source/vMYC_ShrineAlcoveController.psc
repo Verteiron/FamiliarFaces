@@ -51,6 +51,9 @@ Int	Property AlcoveIndex Hidden
 	Function Set(Int iAlcoveIndex)
 		_iAlcoveIndex = iAlcoveIndex
 		;Debug.Trace("MYC/Shrine/Alcove" + Self + ": I am Alcove #" + _iAlcoveIndex + "!")
+		GotoState("")
+		_bPlayerIsSaving = False
+		_bCharacterSummoned = False
 		SendModEvent("vMYC_AlcoveStatusUpdate",0)
 		_Book.AlcoveIndex = AlcoveIndex
 		RegisterForSingleUpdate(1)
@@ -142,6 +145,8 @@ Bool Property CharacterSummoned Hidden
 EndProperty
 
 Bool Property DisableLights	= False Auto Hidden
+
+Bool Property FirstTimeValidation = True Auto Hidden
 
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
 vMYC_ShrineOfHeroesQuestScript 	Property ShrineOfHeroes 	Auto
@@ -328,6 +333,7 @@ Function CheckVars()
 		_LightAmbientTarget	= _Light.GetLinkedRef()
 		_Light.MoveTo(_LightAmbientTarget)
 	EndIf
+	_bPlayerIsSaving = False
 EndFunction
 
 Event OnInit()
@@ -368,7 +374,7 @@ EndFunction
 
 Event OnUpdate()
 	If !ValidateAlcove()
-		RegisterForSingleUpdate(5)
+		RegisterForSingleUpdate(2)
 	Else
 		If GetParentCell().IsAttached()
 			RegisterForSingleUpdate(RandomFloat(9,12))
@@ -383,15 +389,18 @@ Event OnOrphanedActor(string eventName, string strArg, float numArg, Form sender
 EndEvent
 
 Function ClaimActor(String asCharacterName)
+	While GetLocalConfigBool("CM_Loading_" + asCharacterName)
+		WaitMenuMode(1)
+	EndWhile
 	AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
-	If !AlcoveActor
+	If !AlcoveActor && !GetLocalConfigBool("CM_Loading_" + asCharacterName)
 		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Asking CharacterManager to load " + asCharacterName + "...")
 		If CharacterManager.LoadCharacter(asCharacterName)
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager finished loading " + asCharacterName + "!")
 			AlcoveActor = CharacterManager.GetCharacterActorByName(asCharacterName)
 		Else
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "!",1)
-			ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": CharacterManager couldn't load " + asCharacterName + "! Will try again shortly.",1)
+			;ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 		EndIf
 	EndIf
 	If AlcoveActor
@@ -457,7 +466,6 @@ EndFunction
 State Validating
 
 	Bool Function ValidateAlcove()
-		WaitMenuMode(0.5)
 		;_iValidateStateCount += 1
 		;If _iValidateStateCount > 4
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
@@ -469,11 +477,23 @@ State Validating
 EndState
 
 Bool Function ValidateAlcove()
+	GoToState("Validating")
 	If _bPlayerIsSaving ;Disable validation if player is saving here!
 		AlcoveLightState = ALCOVE_LIGHTS_LOADING
 		Return True
 	EndIf
-	GoToState("Validating")
+	If !Is3DLoaded() && GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION")
+		If FirstTimeValidation
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Background validation is disabled, but will be overridden for first time validation.",1)
+		Else
+			_iValidateStateCount = 0
+			Return True
+		EndIf
+	EndIf
+	Bool _bStartedInMenuMode = False
+	If IsInMenuMode() 
+		_bStartedInMenuMode = True
+	EndIf
 	_iValidateStateCount = 0
 	Bool bValidate = True
 
@@ -493,9 +513,12 @@ Bool Function ValidateAlcove()
 		Else
 			AlcoveState = ALCOVE_STATE_EMPTY
 		EndIf
-	ElseIf ValidationState == VALIDATION_FAILURE_ACTOR_LOADING && AlcoveState == ALCOVE_STATE_READY
+	ElseIf ValidationState == VALIDATION_FAILURE_ACTOR_LOADING 
 		; Prevent validation failure if this is just the initial load during upkeep
-		ValidationState = 0
+		ValidationState = 0	
+		If AlcoveState != ALCOVE_STATE_READY
+			AlcoveState = ALCOVE_STATE_READY
+		EndIf
 	ElseIf ValidationState ; Other problems, so stay Busy
 		AlcoveState = ALCOVE_STATE_BUSY
 	EndIf
@@ -580,6 +603,9 @@ Bool Function ValidateAlcove()
 			AlcoveActor.EnableAI(True)
 			AlcoveActor.MoveTo(_StatueMarker)
 		EndIf
+		;A lost character may mean that an ActorBase got assigned to two different names. 
+		; Not sure how this happens, but this should fix it if it does
+		CharacterManager.SanityCheckActors()
 	EndIf
 	
 	If Math.LogicalAnd(ValidationState,VALIDATION_FAILURE_ACTOR_LOADING)
@@ -640,13 +666,16 @@ Bool Function ValidateAlcove()
 	EndIf
 	
 	If bValidate 
-		_fValidationTime += fValidationTime
+		If !_bStartedInMenuMode
+			_fValidationTime += fValidationTime
+		EndIf
 		If !_bLastValidation
 			_bLastValidation = True
+			FirstTimeValidation = False
 			If AlcoveActor
 				SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 			EndIf
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)	
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)
 			RegisterForSingleUpdate(5)
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
@@ -666,11 +695,16 @@ Bool Function ValidateAlcove()
 		If _iRepeatFailureCount > 60
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed repeatedly with: " + ValidationState + "! Notify the player.")
 			Debug.Notification("Alcove " + _iAlcoveIndex + " appears to be stuck. You can reset it from the MCM panel.")
+			;A stuck alcove may mean duplicate actorbases. 
+			CharacterManager.SanityCheckActors()		
 			_iRepeatFailureCount = 0
 			;ResetAlcove()
 		ElseIf _fValidationTime > 120
 			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation has been stuck for over 2 minutes. Last ValidationState was " + ValidationState + " Notify the player.")
 			Debug.Notification("Alcove " + _iAlcoveIndex + " has been busy for a long time. You can reset it from the MCM panel.")
+			;A stuck alcove may mean duplicate actorbases. 
+			CharacterManager.SanityCheckActors()
+			_fValidationTime -= 60
 			;ResetAlcove()
 		EndIf
 		LastValidationState = ValidationState
@@ -1311,12 +1345,12 @@ Function ResetAlcove()
 		ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") as ObjectReference ; Marker in vMYC_StagingCell
 		AlcoveActor.MoveTo(kNowhere)
 	EndIf
-
+	_bPlayerIsSaving = False
 	_bCharacterSummoned = False
 	AlcoveActor = None
 	ShrineOfHeroes.SetAlcoveStr(AlcoveIndex,"CharacterName","")
 	CharacterName = ""
-
+	AlcoveStatueState = 0
 	HideTrophies()
 	_Book.IsOpen = False
 	_Book.IsGlowing = False
@@ -1325,6 +1359,7 @@ Function ResetAlcove()
 	AlcoveLightState = 0
 	AlcoveStatueState = 0
 	AlcoveState = 0	
+	RegisterForSingleUpdate(1)
 EndFunction
 
 Function UpdateAlcove()
@@ -1369,7 +1404,9 @@ Function HideTrophies()
 	While i > 0
 		i -= 1
 		ObjectReference kTrophy = GetLinkedRef(vMYC_TrophyKeywords.GetAt(i) as Keyword) as ObjectReference
-		If kTrophy
+		If kTrophy as vMYC_ShrineTrophyFXScript
+			(kTrophy as vMYC_ShrineTrophyFXScript).HideTrophies()
+		ElseIf kTrophy
 			kTrophy.DisableNoWait()
 		EndIf
 	EndWhile

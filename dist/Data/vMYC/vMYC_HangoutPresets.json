@@ -1,0 +1,265 @@
+{
+  "Hangouts": {
+	"Sky Haven Temple": {
+      "Cell": "__formData|Skyrim.esm|0x161eb",
+      "Anchors": [
+        "__formData|Skyrim.esm|0x16fd1",
+        "__formData|Skyrim.esm|0x16fac",
+        "__formData|Skyrim.esm|0x176a4",
+        "__formData|Skyrim.esm|0x16fbd",
+        "__formData|Skyrim.esm|0x176a1"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18e42",
+      "SourceCharacter": "Preset",
+      "position": {
+        "Z": 8409.294921875,
+        "X": 4506.3203125,
+        "Y": 3944.821533203125
+      },
+	  "UUID": "79a4645b-6f67-4ad1-ba33-8d3b737789b5"
+    },
+    "Imperial Military Camp": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0xc4a88",
+        "__formData|Skyrim.esm|0xc4a91",
+        "__formData|Skyrim.esm|0xc4a8f",
+        "__formData|Skyrim.esm|0xc4a8d",
+        "__formData|Skyrim.esm|0xc4a93"
+      ],
+      "Location": "__formData|Skyrim.esm|0x19277",
+      "Cell": "__formData|Skyrim.esm|0x928c",
+      "position": {
+        "X": -2137.95068359375,
+        "Y": 101400.2578125,
+        "Z": -11145.115234375
+      },
+      "SpawnObject": "__formData|Skyrim.esm|0xc4a88",
+      "SourceCharacter": "Preset",
+	  "UUID": "b181675a-6af1-412c-a32d-b6ffe5755f58"
+    },
+    "Riften": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x449dc",
+        "__formData|Skyrim.esm|0x45812",
+        "__formData|Skyrim.esm|0x4d0b0",
+        "__formData|Skyrim.esm|0x20be6",
+        "__formData|Skyrim.esm|0xff215"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a58",
+      "Cell": "__formData|Skyrim.esm|0x42242",
+      "position": {
+        "X": 176841.0625,
+        "Y": -98274.078125,
+        "Z": 11137.787109375
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "4b7fec8b-9b8b-450e-bf89-3b774f64dc8d"
+    },
+    "Dawnstar": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x2d339",
+        "__formData|Dawnguard.esm|0x19aa6",
+        "__formData|Skyrim.esm|0x2d339",
+        "__formData|Skyrim.esm|0x2d32b",
+        "__formData|Skyrim.esm|0x2d32b"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a50",
+      "Cell": "__formData|Skyrim.esm|0x8e97",
+      "position": {
+        "X": 27394.25,
+        "Y": 107850.5078125,
+        "Z": -13582.0947265625
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "f227e0dc-9afe-4113-a12c-29225f8b80a5"
+    },
+    "Falkreath": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x10fd7b",
+        "__formData|Skyrim.esm|0x2be5e",
+        "__formData|Skyrim.esm|0x5565f",
+        "__formData|Skyrim.esm|0x99c9d",
+        "__formData|Skyrim.esm|0x75cea"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a49",
+      "Cell": "__formData|Skyrim.esm|0x9c81",
+      "position": {
+        "X": -34015.63671875,
+        "Y": -88190.4140625,
+        "Z": -2741.989501953125
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "72f64c4e-3cbe-4ad4-8d54-263c62c12da9"
+    },
+    "Windhelm": {
+      "Anchors": [
+        "__formData|Dawnguard.esm|0xe68c",
+        "__formData|Skyrim.esm|0x77e0c",
+        "__formData|Skyrim.esm|0x284ed",
+        "__formData|Skyrim.esm|0x471c9",
+        "__formData|Skyrim.esm|0x567fb"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a57",
+      "Cell": "__formData|Skyrim.esm|0x38381",
+      "position": {
+        "X": 134032.75,
+        "Y": 36921.49609375,
+        "Z": -12259.759765625
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "58b1534f-9e1a-4640-88cf-e29c59941bcb"
+    },
+    "Markarth": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x98251",
+        "__formData|Skyrim.esm|0x98262",
+        "__formData|Skyrim.esm|0x55e98",
+        "__formData|HearthFires.esm|0x42ab",
+        "__formData|Skyrim.esm|0x55e94"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a59",
+      "Cell": "__formData|Skyrim.esm|0x20ee7",
+      "position": {
+        "X": -175227.546875,
+        "Y": 5762.86474609375,
+        "Z": -2796.332275390625
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "f5ed5793-0191-47c9-a519-3b8549379c67"
+    },
+    "Solitude": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0xaa0a8",
+        "__formData|Skyrim.esm|0x543fd",
+        "__formData|Skyrim.esm|0xa3bc8",
+        "__formData|Skyrim.esm|0xa3bc1",
+        "__formData|Skyrim.esm|0xa3bc1"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a5a",
+      "Cell": "__formData|Skyrim.esm|0x37ee9",
+      "position": {
+        "X": -61448.83203125,
+        "Y": 104689.5546875,
+        "Z": -8333.6611328125
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "40c059b1-e4f5-4655-bcf4-76da8dd1efe1"
+    },
+    "Ivarstead": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0xdd600",
+        "__formData|Skyrim.esm|0x7b0c0",
+        "__formData|Skyrim.esm|0x6ccd6",
+        "__formData|Skyrim.esm|0xfa49f",
+        "__formData|Skyrim.esm|0x16294"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a4b",
+      "Cell": "__formData|Skyrim.esm|0x9781",
+      "position": {
+        "X": 76493.09375,
+        "Y": -58405.921875,
+        "Z": 10267.384765625
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "95d1879d-eece-40fc-aa05-601638002831"
+    },
+    "Morthal": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x2d377",
+        "__formData|Skyrim.esm|0x44382",
+        "__formData|Skyrim.esm|0xd7b72",
+        "__formData|Skyrim.esm|0x40eee",
+        "__formData|Skyrim.esm|0x604f5"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a53",
+      "Cell": "__formData|Skyrim.esm|0x939d",
+      "position": {
+        "X": -39616.51953125,
+        "Y": 68683.5,
+        "Z": -13672.7001953125
+      },
+      "SourceCharacter": "Preset",
+	  "UUID": "d55324d7-104a-4c83-9b9b-4b3998415317"
+    },
+    "New Gnisis Cornerclub": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x9d5ab",
+        "__formData|Skyrim.esm|0x9d5ab",
+        "__formData|Skyrim.esm|0x209da",
+        "__formData|Skyrim.esm|0x9d5ab",
+        "__formData|Skyrim.esm|0x209da"
+      ],
+      "Location": "__formData|Skyrim.esm|0x209f0",
+      "Cell": "__formData|Skyrim.esm|0x1677f",
+      "position": {
+        "X": 2594.098388671875,
+        "Y": -2492.281005859375,
+        "Z": -508.16268920898437
+      },
+      "Preset": 1,
+      "Quest": "__formData|vMYC_MeetYourCharacters.esp|0x251d5",
+      "SpawnObject": "__formData|Skyrim.esm|0x9d5ab",
+      "SourceCharacter": "Preset",
+	  "UUID": "ebf7be36-8f31-4c1a-b014-9a922e7eb4b1"
+    },
+    "Riverwood": {
+      "Anchors": [
+        "__formData|Dawnguard.esm|0xe685",
+        "__formData|Skyrim.esm|0x13072",
+        "__formData|Skyrim.esm|0x6d229",
+        "__formData|Skyrim.esm|0x105391",
+        "__formData|Skyrim.esm|0x96595"
+      ],
+      "Location": "__formData|Skyrim.esm|0x13163",
+      "Cell": "__formData|Skyrim.esm|0x9712",
+      "position": {
+        "X": 21297.376953125,
+        "Y": -42867.96875,
+        "Z": -92.662239074707031
+      },
+      "SpawnObject": "__formData|Dawnguard.esm|0xe685",
+      "SourceCharacter": "Preset",
+	  "UUID": "45e1422d-cc11-4a20-bcd0-32c2347e2644"
+    },
+    "Whiterun": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x4620b",
+        "__formData|Skyrim.esm|0xc44ae",
+        "__formData|Skyrim.esm|0x10d8cc",
+        "__formData|Skyrim.esm|0x74f32",
+        "__formData|Skyrim.esm|0x267e6"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a56",
+      "Cell": "__formData|Skyrim.esm|0x1a275",
+      "IsCustom": 1,
+      "position": {
+        "X": 25403.365234375,
+        "Y": -3138.863037109375,
+        "Z": -3005.740966796875
+      },
+      "SpawnObject": "__formData|Skyrim.esm|0x2ffa9",
+      "SourceCharacter": "Preset",
+	  "UUID": "bc27945a-c40a-4e92-a729-b838d347b399"
+    },
+    "Winterhold": {
+      "Anchors": [
+        "__formData|Skyrim.esm|0x4d0d0",
+        "__formData|Skyrim.esm|0x2a39a",
+        "__formData|Skyrim.esm|0x379ef",
+        "__formData|Skyrim.esm|0x24b42",
+        "__formData|Skyrim.esm|0xb2173"
+      ],
+      "Location": "__formData|Skyrim.esm|0x18a51",
+      "Cell": "__formData|Skyrim.esm|0x8ea2",
+      "IsCustom": 1,
+      "position": {
+        "X": 108710.4921875,
+        "Y": 102775.46875,
+        "Z": -8783.4228515625
+      },
+      "SpawnObject": "__formData|Skyrim.esm|0x318c7",
+      "SourceCharacter": "Preset",
+	  "UUID": "47e8791c-8994-4627-8373-c5720b5b192d"
+    }
+  }
+}

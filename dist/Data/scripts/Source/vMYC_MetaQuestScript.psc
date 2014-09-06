@@ -155,7 +155,9 @@ Function DoInit()
 		CharacterManager.DoInit()
 	EndIf
 	InitConfig()
-	SetConfigDefaults()
+	If !GetConfigBool("DefaultsSet")
+		SetConfigDefaults()
+	EndIf
 	If !(ShrineOfHeroes as Quest).IsRunning()
 		WaitMenuMode(0.5)
 		(ShrineOfHeroes as Quest).Start()
@@ -263,7 +265,7 @@ Bool Function CheckCompatibilityModule_EFF()
 		Return False
 	EndIf
 	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
-	If GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255
+	If GetModByName("EFFCore.esm") != 255 || (GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255)
 		Debug.Trace("MYC:  EFF found!")
 		SetConfigInt("Compat_EFF_Loaded",1)
 		If !vMYC_zCompat_EFFQuest.IsRunning()
@@ -367,12 +369,30 @@ Function DoShutdown()
 	Ready = True
 EndFunction
 
+Function SetConfigDefaults(Bool abForce = False)
+	If !GetConfigBool("DefaultsSet") || abForce
+		Debug.Trace("MYC: Setting config defaults!")
+		SetConfigInt("MAGIC_ALLOWFROMMODS",0,False,False)
+		SetConfigInt("MAGIC_OVERRIDES",2,False,False)
+
+		SetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION",False,False,False)
+		SetConfigBool("TRACKBYDEFAULT",True,False,False)
+		SetConfigBool("TRACK_STOPONRECRUIT",True,False,False)
+		SetConfigBool("AUTOLEVEL_CHARACTERS",True,False,False)
+		SetConfigBool("WARNING_MISSINGMOD",True,False,False)
+		SetConfigBool("DELETE_MISSING",True,False,False)
+		SetConfigBool("SHOUTS_DISABLE_CITIES",True,False,False)
+		SetConfigBool("DefaultsSet",True)
+	EndIf
+EndFunction
+
 Bool Function CheckDependencies()
 	Float fSKSE = SKSE.GetVersion() + SKSE.GetVersionMinor() * 0.01 + SKSE.GetVersionBeta() * 0.0001
 	Debug.Trace("MYC: SKSE is version " + fSKSE)
 	Debug.Trace("MYC: JContainers is version " + SKSE.GetPluginVersion("Jcontainers") + ", API is " + JContainers.APIVersion())
 	Debug.Trace("MYC: FFutils is version " + SKSE.GetPluginVersion("ffutils"))
 	Debug.Trace("MYC: CharGen is version " + SKSE.GetPluginVersion("chargen"))
+	Debug.Trace("MYC: NIOverride is version " + SKSE.GetPluginVersion("nioverride"))
 	;Debug.MessageBox("SKSE version is " + fSKSE)
 	If fSKSE < 1.0700
 		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
@@ -392,7 +412,11 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	
+	If SKSE.GetPluginVersion("nioverride") >= 3 && NIOverride.GetScriptVersion() > 1
+		SetConfigBool("NIO_UseDye",True)
+	Else
+		SetConfigBool("NIO_UseDye",False)
+	EndIf
 	Int iRandom = RandomInt(0,999999)
 	Int jTestMap = JMap.Object()
 	JMap.setInt(jTestMap,"RandomInt",iRandom)

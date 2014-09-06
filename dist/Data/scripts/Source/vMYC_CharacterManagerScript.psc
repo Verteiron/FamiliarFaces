@@ -510,6 +510,7 @@ Function DoInit()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
 	RegisterForModEvents()
+	SetUUIDIfMissing()
 	_kDummyActors = New ActorBase[128]
 	_kLoadedCharacters = New Actor[128]
 	Int i = vMYC_DummyActorsFList.GetSize()
@@ -1002,27 +1003,79 @@ String Function GetModReqReport(String asCharacterName)
 	Return sReturn
 EndFunction
 
+Bool Function IsCharacterFollower(String asCharacterName)
+	Actor kCharacter = GetCharacterActorByName(asCharacterName)
+	If !kCharacter as vMYC_CharacterDummyActorScript
+		Return False
+	EndIf
+	Faction kCurrentFollowerFaction = (kCharacter as vMYC_CharacterDummyActorScript).CurrentFollowerFaction
+	If kCharacter.IsPlayerTeammate() || kCharacter.GetFactionRank(kCurrentFollowerFaction) >= 0
+		Return True
+	EndIf
+	Return False
+EndFunction
+
 ActorBase Function GetFreeActorBase(Int iSex)
 {Returns the first available dummy actorbase of the right sex}
 	While _bFreeActorBaseBusy
 		;Debug.Trace("MYC/CM: Waiting for GetFreeActorBase...")
-		Wait(0.5)
+		Return None
 	EndWhile
 	_bFreeActorBaseBusy = True
+	ActorBase kDummyActorBase = None
+	
 	Int jActorBaseMap = JValue.solveObj(_jMYC,".ActorBaseMap")
 	Int i = 0
 	While i < _kDummyActors.Length
 		If _kDummyActors[i]
 			If _kDummyActors[i].GetSex() == iSex
 				If !JFormMap.hasKey(jActorBaseMap,_kDummyActors[i])
-					_bFreeActorBaseBusy = False
-					Return _kDummyActors[i]
+					kDummyActorBase = _kDummyActors[i]
 				EndIf
 			EndIf
 		EndIf
 		i += 1
 	EndWhile
 	_bFreeActorBaseBusy = False
+	Return kDummyActorBase
+EndFunction
+
+Function SanityCheckActors()
+	Int jActorList = JArray.Object()
+	Int jActorInvalidList = JArray.Object()
+	JValue.AddToPool(jActorList,"vMYC_SanityCheckPool")
+	JValue.AddToPool(jActorInvalidList,"vMYC_SanityCheckPool")
+	String[] sCharacterNames = CharacterNames
+	Int i = sCharacterNames.Length
+	While i > 0
+		i -= 1
+		If sCharacterNames[i]
+			Actor kActor = GetCharacterActorByName(sCharacterNames[i])
+			If kActor
+				If JArray.FindForm(jActorList,kActor) >= 0
+					JArray.AddForm(jActorInvalidList,GetCharacterActorByName(sCharacterNames[i]))
+				EndIf
+				JArray.AddForm(jActorList,GetCharacterActorByName(sCharacterNames[i]))
+			EndIf
+		EndIf
+	EndWhile
+	i = JArray.Count(jActorInvalidList)
+	While i > 0
+		i -= 1
+		Actor kActor = JArray.GetForm(jActorInvalidList,i) as Actor
+		If kActor as vMYC_CharacterDummyActorScript
+			String sCharacterName = (kActor as vMYC_CharacterDummyActorScript).CharacterName
+			If sCharacterName 
+				DeleteCharacterActor(sCharacterName)
+			Else
+				kActor.Delete()
+			EndIf
+		Else
+			kActor.Delete()
+		EndIf
+	EndWhile
+	
+	JValue.cleanPool("vMYC_SanityCheckPool")
 EndFunction
 
 ActorBase Function GetCharacterDummy(String sCharacterName)
@@ -1457,6 +1510,22 @@ Int Function ApplyCharacterArmor(String sCharacterName)
 					WornObject.CreateEnchantment(kCharacterActor, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
 				EndIf
 			EndIf
+			;Load NIO dye, if applicable
+			If GetConfigInt("NIO_UseDye")
+				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+				If JValue.isArray(jNIODyeColors)
+					Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
+					Int iMaskIndex = 0
+					Int iIndexMax = 15
+					While iMaskIndex < iIndexMax
+						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+						If Math.RightShift(iColor,24) > 0
+							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+						EndIf
+						iMaskIndex += 1
+					EndWhile
+				EndIf
+			EndIf
 		EndIf
 	EndWhile
 
@@ -1620,11 +1689,15 @@ EndFunction
 Bool Function LoadCharacter(String sCharacterName)
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called!")
 	Int i = 0
-	;WaitMenuMode(RandomFloat(0.0,2.0)) ; Stagger startup slightly to be a little friendlier to the threading
-	While _bBusyLoading
+	;If _bBusyLoading 
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter is busy, waiting...")
-		WaitMenuMode(1)
-	EndWhile
+	;	Return False
+	;Else
+	If GetLocalConfigBool("CM_Loading_" + sCharacterName)
+		Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called multiple times!")
+		Return False
+	EndIf
+	SetLocalConfigBool("CM_Loading_" + sCharacterName,True)
 	_bBusyLoading = True
 
 	;----Load Character data from _jMYC--------------
@@ -1649,6 +1722,7 @@ Bool Function LoadCharacter(String sCharacterName)
 			jCharacterData = JValue.solveObj(_jMYC,"." + sCharacterName + ".Data")
 		Else
 			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Nope, no data, no file, no ticky, no shirty. ABORT! ABORT!")
+			SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 			_bBusyLoading = False
 			Return False
 		EndIf
@@ -1657,8 +1731,9 @@ Bool Function LoadCharacter(String sCharacterName)
 	If JMap.hasKey(jCharacterData,"LocationData")
 		;Compatibility with older saves
 		HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"LocationData"),sCharacterName)
+	ElseIf JMap.hasKey(jCharacterData,"Hangout")
+		HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"Hangout"),sCharacterName)
 	EndIf
-	HangoutManager.ImportCharacterHangout(JMap.getObj(jCharacterData,"Hangout"),sCharacterName)
 
 	;----Load or create ActorBaseMap--------------
 
@@ -1697,16 +1772,16 @@ Bool Function LoadCharacter(String sCharacterName)
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No saved ActorBase found, getting a new one...")
 		DummyActorBase = GetFreeActorBase(JMap.getInt(jCharacterData,"Sex"))
 		If !DummyActorBase ; Not loaded on this save session
-			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
+			Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
+			SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 			_bBusyLoading = False
 			Return False
 		EndIf
+		SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
+		JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
 	EndIf
-	;Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
-	SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
-
-	JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
-
+	Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
+	
 	;----Load Actor and begin setting up the ActorBase--------------
 
 	DummyActorBase.SetEssential(True)
@@ -1724,7 +1799,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	;-----====                    ====-----
 
 
-	;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
+	Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
 	SetLocalForm(sCharacterName,"Actor",kCharacterActor)
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Made it through SetLocalForm...")
 	vMYC_CharacterDummyActorScript CharacterDummy = kCharacterActor as vMYC_CharacterDummyActorScript
@@ -1788,9 +1863,10 @@ Bool Function LoadCharacter(String sCharacterName)
 
 	SetLocalInt(sCharacterName,"HangoutIndexDefault",-1)
 	SetLocalInt(sCharacterName,"HangoutIndex",-1)
-	PickHangout(sCharacterName)
+	;PickHangout(sCharacterName)
 	;CharacterDummy.DoUpkeep()
 	;SetCharacterTracking(sCharacterName,True)
+	SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 	_bBusyLoading = False
 	Return True
 EndFunction
@@ -1889,25 +1965,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 EndFunction
 
 Function PickHangout(String asCharacterName)
-	String[] sSpawnPoints = New String[32]
-	Int jSpawnPoints = GetCharacterObj(asCharacterName,"SpawnPoints")
-	Int i = 0
-	;Debug.Trace("MYC/CM: (" + asCharacterName + ") Setting Spawnpoint to one of " + JArray.Count(jSpawnPoints))
-	While i < JArray.Count(jSpawnPoints)
-		sSpawnPoints[i] = JArray.getStr(jSpawnPoints,i)
-		;Debug.Trace("MYC/CM: (" + asCharacterName + ") Spawnpoint " + i + " is " + sSpawnPoints[i])
-		i += 1
-	EndWhile
-	ReferenceAlias kDummyRef = GetAvailableReference(sSpawnPoints)
-	Int iHangoutIndex = -1
-	If kDummyRef
-		kDummyRef.ForceRefTo(GetCharacterActorByName(asCharacterName))
-		iHangoutIndex = kHangoutRefAliases.Find(kDummyRef)
-	EndIf
-	SetLocalInt(asCharacterName,"HangoutIndexDefault",iHangoutIndex)
-	SetLocalInt(asCharacterName,"HangoutIndex",iHangoutIndex)
-
-	;Debug.Trace("MYC/CM: (" + asCharacterName + ") Set to " + kDummyRef)
+{Legacy function, do not use!}
 EndFunction
 
 Int Function CreateLocalDataIfMissing(String asCharacterName)
@@ -1973,69 +2031,7 @@ Int Function GetLocalObj(String asCharacterName, String asPath)
 EndFunction
 
 ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
-{Return available ReferenceAlias based on the character's stored spawnpoints}
-	ReferenceAlias kResult
-	String[] sCommonCities = New String[5]
-	sCommonCities[0] = "Dawnstar"
-	sCommonCities[1] = "Markarth"
-	sCommonCities[2] = "Morthal"
-	sCommonCities[3] = "Falkreath"
-	sCommonCities[4] = "Whiterun"
-
-	ReferenceAlias[] kCityAliases = New ReferenceAlias[5]
-	kCityAliases[0] = alias_DawnstarCharacter
-	kCityAliases[1] = alias_MarkarthCharacter
-	kCityAliases[2] = alias_MorthalCharacter
-	kCityAliases[3] = alias_FalkreathCharacter
-	kCityAliases[4] = alias_WhiterunCharacter
-
-	Int iCityPick = RandomInt(0,4)
-
-	;FIXME: There is no spawnpoint/package for the Dark Brotherhood, but there probably should be.
-
-	If sSpawnPoints.Find("Mage") > -1 && !alias_MageCharacter.GetReference()
-		Return alias_MageCharacter
-	ElseIf sSpawnPoints.Find("Blade") > -1 && !alias_BladeCharacter.GetReference()
-		Return alias_BladeCharacter
-	ElseIf sSpawnPoints.Find("Greybeard") > -1 && !alias_GreyBeardCharacter.GetReference()
-		Return alias_GreyBeardCharacter
-	ElseIf sSpawnPoints.Find("Imperial") > -1 && !alias_ImperialCharacter.GetReference()
-		Return alias_ImperialCharacter
-	ElseIf sSpawnPoints.Find("Stormcloak") > -1 && !alias_StormcloakCharacter.GetReference()
-		Return alias_StormcloakCharacter
-	ElseIf sSpawnPoints.Find("Thief") > -1 && !alias_ThiefCharacter.GetReference()
-		Return alias_ThiefCharacter
-	ElseIf sSpawnPoints.Find("Companion") > -1 && !alias_CompanionCharacter.GetReference()
-		Return alias_CompanionCharacter
-	ElseIf sSpawnPoints.Find("Bard") > -1 && !alias_BardCharacter.GetReference()
-		Return alias_BardCharacter
-	ElseIf sSpawnPoints.Find("Orc") > -1 && !alias_OrcCharacter.GetReference()
-		Return alias_OrcCharacter
-	ElseIf sSpawnPoints.Find("Caravan") > -1 && !alias_CaravanCharacter.GetReference()
-		Return alias_CaravanCharacter
-	ElseIf sSpawnPoints.Find(sCommonCities[iCityPick]) > -1 && !kCityAliases[iCityPick].GetReference() ; Try a random city the character is thane of
-		Return kCityAliases[iCityPick]
-	Else ; Try all cities in order
-		Int i = 0
-		While i < kCityAliases.Length
-			If sSpawnPoints.Find(sCommonCities[i]) > -1 && !kCityAliases[i].GetReference()
-				Return kCityAliases[i]
-			EndIf
-			i += 1
-		EndWhile
-		;If we get this far, character isn't thane of anything or all character slots are full
-		iCityPick = RandomInt(0,4)
-		If !kCityAliases[iCityPick].GetReference() ; Try a random city that's unfilled, regardless of thane status
-			Return kCityAliases[iCityPick]
-		EndIf
-		While i > 0 ; Pick a city in reverse order regardless of thane-ness
-			i -= 1
-			If !kCityAliases[i].GetReference()
-				Return kCityAliases[i]
-			EndIf
-		EndWhile
-	EndIf
-	;All slots must be full
+{Legacy function, do not use!}
 	Return None
 EndFunction
 
@@ -2124,6 +2120,26 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	Else
 		JMap.SetInt(jEquipmentInfo,"IsCustom",0)
 	EndIf
+	
+	;Save dye color, if applicable
+	If GetConfigInt("NIO_UseDye") && kItem as Armor
+		Bool bHasDye = False
+		Int iHandle = NiOverride.GetItemUniqueID(kWornObjectActor, 0, (kItem as Armor).GetSlotMask(), False)
+		Int[] iNIODyeColors = New Int[15]
+		Int iMaskIndex = 0
+		While iMaskIndex < iNIODyeColors.Length
+			Int iColor = NiOverride.GetItemDyeColor(iHandle, iMaskIndex)
+			If Math.RightShift(iColor,24) > 0
+				bHasDye = True
+				iNIODyeColors[iMaskIndex] = iColor
+			EndIf
+			iMaskIndex += 1
+		EndWhile
+		If bHasDye
+			JMap.SetObj(jEquipmentInfo,"NIODyeColors",JArray.objectWithInts(iNIODyeColors))
+		EndIf
+	EndIf
+
 	If !(iHand == 0 && IsTwoHanded) && kItem ; exclude left-hand iteration of two-handed weapons
 		If kWornObjectActor == PlayerREF
 			kItem.SendModEvent("vMYC_EquipmentSaved","",iHand)
@@ -2543,12 +2559,21 @@ Function NIO_ApplyCharacterOverlays(String sCharacterName)
 
 EndFunction
 
+Function SetUUIDIfMissing()
+	If !GetLocalConfigStr("PlayerUUID")
+		SetLocalConfigStr("PlayerUUID",GetUUIDTrue())
+		Debug.Trace("MYC/CM: Set player UUID: " + GetLocalConfigStr("PlayerUUID"))
+	EndIf
+EndFunction
+
 Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment = True, Bool bSaveInventory = True, Bool bSaveFullInventory = True, Bool bSavePluginItems = False, Bool bForceSave = False)
 	_bSavedPerks = False
 	_bSavedSpells = False
 	_bSavedEquipment = False
 	_bSavedInventory = False
 
+	SetUUIDIfMissing()
+	
 	Form[] PlayerEquipment = New Form[64]
 	Enchantment[] PlayerEnchantments = New Enchantment[64]
 
@@ -2621,7 +2646,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.setStr(jMetaInfo,"RaceText",PlayerREF.GetActorBase().GetRace().GetName())
 	JMap.setFlt(jMetaInfo,"Playtime",GetRealHoursPassed())
 	JMap.setInt(jMetaInfo,"SerializationVersion",SerializationVersion)
-
+	JMap.setStr(jMetaInfo,"UUID",GetLocalConfigStr("PlayerUUID"))
 	JMap.setObj(jPlayerData,"_MYC",jMetaInfo)
 	AddToReqList(jPlayerData,PlayerREF.GetActorBase().GetRace(),"Race")
 	;-----==== Save actorvalues

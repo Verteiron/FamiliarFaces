@@ -15,3 +15,7 @@ Function LoadCharacterShouts(ActorBase akActorbase, FormList shoutList) native g
 ;    1:kReturnDeletedNif
 ;    2:kReturnDeletedDDS
 Int Function DeleteFaceGenData(ActorBase akActorbase) native global
+
+Function TraceConsole(String asTrace) native global
+
+String Function UUID() native global

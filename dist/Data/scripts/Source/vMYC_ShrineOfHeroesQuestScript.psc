@@ -5,6 +5,7 @@ Scriptname vMYC_ShrineOfHeroesQuestScript extends Quest
 
 Import Utility
 Import Game
+Import vMYC_Config
 
 ;--=== Properties ===--
 
@@ -49,12 +50,15 @@ Bool 	_bNeedSync
 
 Bool	_bShrineNeedsUpdate = False
 
+Bool	_bShrineNeedsReset = False
+
 Bool	_bNoTick = False
 ;--=== Events ===--
 
 Event OnInit()
 	RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")
 	RegisterForModEvent("vMYC_ShrineReady","OnShrineReady")
+	
 	If IsRunning()
 		_bDoInit = True
 		RegisterForSingleUpdate(0.1)
@@ -62,6 +66,19 @@ Event OnInit()
 EndEvent
 
 Event OnUpdate()
+	If _bShrineNeedsReset
+		_bShrineNeedsReset = False
+		Ready = False
+		Int i = AlcoveControllers.Length
+		While i > 0
+			i -= 1
+			AlcoveControllers[i].ResetAlcove()
+		EndWhile
+		JValue.WriteToFile(JMap.Object(),JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
+		SyncShrineData()
+		;DoInit(True)
+		DoUpkeep(False)
+	EndIf
 	If _bDoInit
 		_bDoInit = False
 		DoInit()
@@ -87,6 +104,24 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	If !AlcoveState
 		Return
 	EndIf
+	If (sender as vMYC_ShrineAlcoveController).AlcoveIndex < 0
+		Debug.Trace("MYC/Shrine: " + sender + " - Invalid index received! Attempting to assign the correct index...",1)
+		Int iControllerIndex = AlcoveControllers.Find(sender as vMYC_ShrineAlcoveController)
+		If iControllerIndex < 0 
+			Debug.Trace("MYC/Shrine: " + sender + " - No index found in Controller array, searching references...",1)
+			Int i = Alcoves.Length
+			While i > 0
+				i -= 1
+				If sender == Alcoves[i].GetReference()
+					iControllerIndex = i
+				EndIf
+			EndWhile
+		EndIf
+		If iControllerIndex > -1
+			Debug.Trace("MYC/Shrine: " + sender + " - Assigned index " + iControllerIndex + "!",1)
+			(sender as vMYC_ShrineAlcoveController).AlcoveIndex = iControllerIndex
+		EndIf
+	EndIf
 	If !AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex]
 		AlcoveControllers[(sender as vMYC_ShrineAlcoveController).AlcoveIndex] = sender as vMYC_ShrineAlcoveController
 	EndIf
@@ -96,6 +131,15 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 	EndIf
 	UpdateShrineStatus()
 EndEvent
+
+Event OnConfigUpdate(String asConfigPath)
+	Debug.Trace("MYC/Shrine: OnConfigUpdate(" + asConfigPath + ")")
+	If asConfigPath == "DEBUG_SHRINE_RESET"
+		_bShrineNeedsReset = GetConfigBool("DEBUG_SHRINE_RESET")
+		RegisterForSingleUpdate(0.5)
+	EndIf
+EndEvent
+
 
 ;--=== Functions ===--
 
@@ -129,6 +173,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	SendModEvent("vMYC_UpkeepBegin")
 	RegisterForModEvent("vMYC_AlcovestatusUpdate","OnAlcovestatusUpdate")
 	RegisterForModEvent("vMYC_ShrineNeedsUpdate","OnShrineNeedsUpdate")
+	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	Bool bUpdateNames = SyncShrineData()
 	Int i = AlcoveControllers.Length
 	While i > 0
@@ -218,6 +263,9 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 	EndIf
 	If DataSerial > DataFileSerial
 		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
+		If !JMap.HasKey(_jShrineData,"UUID")
+			JMap.SetStr(_jShrineData,"UUID",FFUtils.UUID())
+		EndIf
 		;JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
 		JValue.WriteToFile(_jShrineData,JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
 	ElseIf DataSerial < DataFileSerial
@@ -273,6 +321,7 @@ Function DoShutdown()
 	UnregisterForUpdate()
 	UnregisterForModEvent("vMYC_AlcoveStatusUpdate")
 	UnregisterForModEvent("vMYC_ShrineReady")
+	UnregisterForModEvent("vMYC_ConfigUpdate")
 	Int i = AlcoveControllers.Length
 	While i > 0
 		i -= 1

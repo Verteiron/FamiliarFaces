@@ -52,14 +52,15 @@ Int Property	OPTION_TOGGLE_GLOBAL_DELETE_MISSING			Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS		Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES	Auto Hidden
 Int Property	OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	Auto Hidden
+Int Property	OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE		Auto Hidden
 
-Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	Auto Hidden
+Int Property	OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_FILE_LOCATION			Auto Hidden
 
-String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES		Auto Hidden
+String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES				Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
 String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
@@ -69,7 +70,7 @@ Int Property	OPTION_DEBUG_SHUTDOWN						Auto Hidden
 Int Property	OPTION_DEBUG_CHARACTER_FORCEREFRESH			Auto Hidden
 Int Property	OPTION_DEBUG_HANGOUTS_RESETQUESTS			Auto Hidden
 Int Property	OPTION_DEBUG_SHRINE_RESET					Auto Hidden
-Int Property	OPTION_DEBUG_SHRINE_ALCOVE_VALIDATEATLOAD	Auto Hidden
+Int Property	OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION	Auto Hidden
 
 
 Bool _Changed
@@ -131,48 +132,16 @@ Int		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS
 
 Int 	_iCurrentHangoutOption
 
+Bool 	_bConfigClosed
+
 Int Function GetVersion()
-    return 9 ; Default version
+    return 12 ; Default version
 EndFunction
 
 Event OnVersionUpdate(int a_version)
-	If (a_version >= 2 && CurrentVersion < 2)
-		Debug.Trace("MYC/MCM: Updating script to version 2...")
-        FilterVoiceTypes(VOICETYPE_NOFILTER)
-	ElseIf (a_version >= 3 && CurrentVersion < 3)
-		Debug.Trace("MYC/MCM: Updating script to version 3...")
-		_iMagicSchoolOptions = New Int[6]
-	ElseIf (a_version >= 4 && CurrentVersion < 4)
-		Debug.Trace("MYC/MCM: Updating script to version 4...")
+	If CurrentVersion < 12
 		OnConfigInit()
-	ElseIf (a_version >= 5 && CurrentVersion < 5)
-		Debug.Trace("MYC/MCM: Updating script to version 5...")
-		Pages = New String[3]
-		Pages[0] = "$Character Setup"
-		Pages[1] = "$Shrine of Heroes"
-		Pages[2] = "$Hangout Manager"
-		Pages[3] = "$Global Options"
-	ElseIf (a_version >= 6 && CurrentVersion < 6)
-		Debug.Trace("MYC/MCM: Updating script to version 6...")
-		OPTION_MENU_ALCOVE_CHARACTER	= New Int[12]
-		OPTION_TOGGLE_ALCOVE_SUMMONED	= New Int[12]
-		Pages = New String[5]
-		Pages[0] = "$Character Setup"
-		Pages[1] = "$Shrine of Heroes"
-		Pages[2] = "$Hangout Manager"
-		Pages[3] = "$Global Options"
-		Pages[4] = "$Debugging"
-	ElseIf (a_version >= 7 && CurrentVersion < 7)
-		Pages = New String[5]
-		Pages[0] = "$Character Setup"
-		Pages[1] = "$Shrine of Heroes"
-		Pages[2] = "$Hangout Manager"
-		Pages[3] = "$Global Options"
-		Pages[4] = "$Debugging"
-	EndIf
-
-	If a_version > CurrentVersion
-		FillEnums()
+		Debug.Trace("MYC/MCM: Updating script to version 12...")
 	EndIf
 EndEvent
 
@@ -292,6 +261,12 @@ endEvent
 
 event OnPageReset(string a_page)
 	String sKey = "vMYC."
+
+	If _sCurrentPage && !a_page && GetConfigBool("MCM_REMEMBER_PAGE")
+		SetTitleText(_sCurrentPage)
+		a_page = _sCurrentPage
+	EndIf	
+	
 	_sCurrentPage = a_page
 	UpdateSettings()
 
@@ -350,22 +325,39 @@ event OnPageReset(string a_page)
 		;====================================----
 
 		;===== Character class option =======----
+		Bool bCharDisableAutoLevel = CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel")
 		_iClassSelection = CharacterManager.kClasses.Find(CharacterManager.GetLocalForm(_sCharacterName,"Class") as Class)
 		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
 			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class","$Using AFT",OPTION_FLAG_DISABLED)
+		ElseIf bCharDisableAutoLevel
+			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class",_sClassNames[_iClassSelection],OPTION_FLAG_DISABLED)
 		Else
 			OPTION_MENU_CHAR_CLASS = AddMenuOption("$Class",_sClassNames[_iClassSelection],OptionFlags)
+		EndIf
+		If CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+			OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddTextOption("$Disable autolevel","$Using AFT",OPTION_FLAG_DISABLED)
+		Else
+			OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",bCharDisableAutoLevel,OptionFlags)
 		EndIf
 		AddEmptyOption()
 		;====================================----
 
-		OPTION_TOGGLE_DISABLE_AUTOLEVEL = AddToggleOption("$Disable autolevel",CharacterManager.GetLocalInt(_sCharacterName,"DisableAutoLevel"),OptionFlags)
 		
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
 		Bool bCanMarry = CharacterManager.GetLocalInt(_sCharacterName,"CanMarry")
-		OPTION_TOGGLE_CHAR_ISFOE = AddToggleOption("$IsFoe",bIsFoe,Math.LogicalOR(OptionFlags,bCanMarry as Int))
-		OPTION_TOGGLE_CHAR_CANMARRY = AddToggleOption("$CanMarry",bCanMarry,Math.LogicalOR(OptionFlags,bIsFoe as Int))
+		Int iIsFoeOptionFlags = 0
+		Int iCanMarryOptionFlags = 0
+		If bCanMarry 
+			iIsFoeOptionFlags = OPTION_FLAG_DISABLED
+		ElseIf CharacterManager.IsCharacterFollower(_sCharacterName)
+			iIsFoeOptionFlags = OPTION_FLAG_DISABLED
+		EndIf
+		If bIsFoe
+			iCanMarryOptionFlags = OPTION_FLAG_DISABLED
+		EndIf
+		OPTION_TOGGLE_CHAR_ISFOE = AddToggleOption("$IsFoe",bIsFoe,iIsFoeOptionFlags)
+		OPTION_TOGGLE_CHAR_CANMARRY = AddToggleOption("$CanMarry",bCanMarry,iCanMarryOptionFlags)
 		;====================================----
 
 		AddEmptyOption()
@@ -499,16 +491,24 @@ event OnPageReset(string a_page)
 
 		
 		;===== Global Hangout options =====----
+		Int HangoutPartyOptionFlags = 0
+		Int HangoutClearAllOptionFlags = 0
+		If GetConfigBool("HANGOUT_CLEARALL") || !HangoutManager.IsHangoutEnabled(_sHangoutName)
+			HangoutPartyOptionFlags = OPTION_FLAG_DISABLED
+		ElseIf GetConfigBool("HANGOUT_PARTY") 
+			HangoutClearAllOptionFlags = OPTION_FLAG_DISABLED
+		EndIf
+
 		AddHeaderOption("$Global Hangout options")
-		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("$Clear all Hangouts",False)
+		OPTION_TOGGLE_HANGOUT_CLEARALL = AddToggleOption("$Clear all Hangouts",GetConfigBool("HANGOUT_CLEARALL"),HangoutClearAllOptionFlags)
 		
 		SetCursorPosition(1)
-		AddHeaderOption("$Stats")
-		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
-		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
-		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
-		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
-		
+;		AddHeaderOption("$Stats")
+;		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
+;		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
+;		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
+;		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
+
 		;====================================----
 		SetCursorPosition(8)
 		;===== Hangout header =============----
@@ -519,7 +519,7 @@ event OnPageReset(string a_page)
 		;===== Hangout enable option ======----
 		OPTION_TOGGLE_HANGOUT_ENABLE = AddToggleOption("$Enable this Hangout",HangoutManager.IsHangoutEnabled(_sHangoutName))
 		;====================================----
-		OPTION_TOGGLE_HANGOUT_PARTY = AddToggleOption("$Assign all characters here",False)
+		OPTION_TOGGLE_HANGOUT_PARTY = AddToggleOption("$Assign all characters here",GetConfigBool("HANGOUT_PARTY"),HangoutPartyOptionFlags)
 		;===== Begin info column ============----
 
 		SetCursorPosition(9)
@@ -577,12 +577,12 @@ event OnPageReset(string a_page)
 		AddHeaderOption("$Character options")
 		OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT			= AddToggleOption("$Track characters by default",									 GetConfigBool(	"TRACKBYDEFAULT"		))
 		OPTION_TOGGLE_GLOBAL_TRACK_STOPONRECRUIT	= AddToggleOption("$Stop tracking when recruited",									 GetConfigBool(	"TRACK_STOPONRECRUIT"	))
-		OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	= AddToggleOption("$Always use Follower voicetypes",								 GetConfigBool(	"SWAP_FOLLOWER_VOICE"	))
+;		OPTION_TOGGLE_GLOBAL_SWAP_FOLLOWER_VOICE	= AddToggleOption("$Always use Follower voicetypes",								 GetConfigBool(	"SWAP_FOLLOWER_VOICE"	))
 		OPTION_TOGGLE_GLOBAL_AUTOLEVEL_CHARACTERS	= AddToggleOption("$Use level scaling",												 GetConfigBool(	"AUTOLEVEL_CHARACTERS"	))
 ;		OPTION_TOGGLE_GLOBAL_DELETE_MISSING			= AddToggleOption("$Disable characters with missing data",							 GetConfigBool(	"DELETE_MISSING"		))
 		AddEmptyOption()
 		AddHeaderOption("$Magic and Shout options")
-		OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES	= AddTextOption("$Always allow",	ENUM_GLOBAL_MAGIC_OVERRIDES		[GetConfigInt("MAGIC_OVERRIDES")	])
+		OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES			= AddTextOption("$Always allow",			ENUM_GLOBAL_MAGIC_OVERRIDES				[GetConfigInt("MAGIC_OVERRIDES")		])
 		OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		= AddTextOption("$Allow magic from mods",	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS			[GetConfigInt("MAGIC_ALLOWFROMMODS")	])
 		OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			= AddTextOption("$Allow shouts",			ENUM_GLOBAL_SHOUTS_HANDLING				[GetConfigInt("SHOUTS_HANDLING")		])
 		OPTION_TOGGLE_GLOBAL_SHOUTS_BLOCK_UNLEARNED	= AddToggleOption("$Block unlearned Shouts",										 GetConfigBool("SHOUTS_BLOCK_UNLEARNED"	))
@@ -593,7 +593,8 @@ event OnPageReset(string a_page)
 ;		OPTION_TEXT_GLOBAL_FILE_LOCATION			= AddTextOption("$Location of JSON files",	ENUM_GLOBAL_FILE_LOCATION				[GetConfigInt("FILE_LOCATION")			])
 		OPTION_TOGGLE_GLOBAL_WARNING_MISSINGMOD		= AddToggleOption("$Warn about missing mod files on startup",						 GetConfigBool(	"WARNING_MISSINGMOD"	))
 		OPTION_TOGGLE_GLOBAL_SHOW_DEBUG_OPTIONS 	= AddToggleOption("$Show debug options",											 GetConfigBool(	"SHOW_DEBUG_OPTIONS"	))
-
+		AddEmptyOption()
+		OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE		= AddToggleOption("$Remember last MCM page",										 GetConfigBool(	"MCM_REMEMBER_PAGE"		))
 		
 ;		OPTION_DEBUG_SHUTDOWN						
 ;		OPTION_DEBUG_CHARACTER_FORCEREFRESH			
@@ -628,7 +629,19 @@ event OnPageReset(string a_page)
 	ElseIf a_page == "$Debugging"
 
 	;===== Debug Options page =====----
-	OPTION_DEBUG_SHUTDOWN = AddToggleOption("$Shutdown the mod",False)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		AddHeaderOption("$Performance tweaks")
+		OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION = AddToggleOption("$Disable background validation",GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
+		AddEmptyOption()
+		AddHeaderOption("$Repair or reset")
+		OPTION_DEBUG_CHARACTER_FORCEREFRESH = AddToggleOption("$Force character refresh",GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH"))
+		OPTION_DEBUG_SHRINE_RESET = AddToggleOption("$Reset all Shrine alcoves",GetConfigBool("DEBUG_SHRINE_RESET"))
+		OPTION_DEBUG_HANGOUTS_RESETQUESTS = AddToggleOption("$Reset Hangout quests",GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS"))
+		SetCursorPosition(1)
+		AddHeaderOption("$Uninstall")
+		OPTION_DEBUG_SHUTDOWN = AddToggleOption("$Shutdown the mod",GetConfigBool("DEBUG_SHUTDOWN"))
+		
 	;===== END Debug Options page =----
 	EndIf
 	
@@ -720,27 +733,23 @@ Event OnOptionSelect(Int Option)
 		HangoutManager.SetHangoutEnabled(_sHangoutName, bHangoutEnabled)
 		SetToggleOptionValue(OPTION_TOGGLE_HANGOUT_ENABLE,bHangoutEnabled)
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_PARTY
-		Int i = _sCharacterNames.Length
-		While i > 0
-			i -= 1
-			If _sCharacterNames[i]
-				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
-				If kActor
-					HangoutManager.AssignActorToHangout(kActor,_sHangoutName)
-				EndIf
-			EndIf
-		EndWhile
+		SetConfigStr("HANGOUT_PARTY_TARGET",_sHangoutName)
+		SetConfigBool("HANGOUT_PARTY",!GetConfigBool("HANGOUT_PARTY"))
+		SetToggleOptionValue(Option,GetConfigBool("HANGOUT_PARTY"))
+		If GetConfigBool("HANGOUT_PARTY")
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_CLEARALL,OPTION_FLAG_DISABLED)
+		Else
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_CLEARALL,0)
+		EndIf
 	ElseIf Option == OPTION_TOGGLE_HANGOUT_CLEARALL
-		Int i = _sCharacterNames.Length
-		While i > 0
-			i -= 1
-			If _sCharacterNames[i]
-				Actor kActor = CharacterManager.GetCharacterActorByName(_sCharacterNames[i])
-				If kActor
-					HangoutManager.AssignActorToHangout(kActor,"")
-				EndIf
-			EndIf
-		EndWhile
+		SetConfigStr("HANGOUT_PARTY_TARGET","")
+		SetConfigBool("HANGOUT_CLEARALL",!GetConfigBool("HANGOUT_CLEARALL"))
+		SetToggleOptionValue(Option,GetConfigBool("HANGOUT_CLEARALL"))
+		If GetConfigBool("HANGOUT_CLEARALL")
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_PARTY,OPTION_FLAG_DISABLED)
+		Else
+			SetOptionFlags(OPTION_TOGGLE_HANGOUT_PARTY,0)
+		EndIf
 	ElseIf _iMagicSchoolOptions.Find(Option) > -1
 		String sSchool
 		If Option == OPTION_TOGGLE_MAGICALLOW_ALTERATION
@@ -762,7 +771,20 @@ Event OnOptionSelect(Int Option)
 		SetToggleOptionValue(Option,bAllowed)
 		SendModEvent("vMYC_UpdateCharacterSpellList",_sCharacterName,Utility.GetCurrentRealTime())
 	ElseIf Option == OPTION_DEBUG_SHUTDOWN
-		SendModEvent("vMYC_Shutdown")
+		SetConfigBool("DEBUG_SHUTDOWN",!GetConfigBool("DEBUG_SHUTDOWN"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_SHUTDOWN"))
+	ElseIf Option == OPTION_DEBUG_CHARACTER_FORCEREFRESH
+		SetConfigBool("DEBUG_CHARACTER_FORCEREFRESH",!GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_CHARACTER_FORCEREFRESH"))
+	ElseIf Option == OPTION_DEBUG_HANGOUTS_RESETQUESTS
+		SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",!GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_HANGOUTS_RESETQUESTS"))
+	ElseIf Option == OPTION_DEBUG_SHRINE_RESET
+		SetConfigBool("DEBUG_SHRINE_RESET",!GetConfigBool("DEBUG_SHRINE_RESET"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_SHRINE_RESET"))
+	ElseIf Option == OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION
+		SetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION",!GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
+		SetToggleOptionValue(Option,GetConfigBool("DEBUG_SHRINE_DISABLE_BG_VALIDATION"))
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_TRACKBYDEFAULT
 		SetConfigBool("TRACKBYDEFAULT",!GetConfigBool("TRACKBYDEFAULT"))
 		Bool bSetAll = False
@@ -796,6 +818,9 @@ Event OnOptionSelect(Int Option)
 	ElseIf Option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
 		SetConfigBool("SHOUTS_DISABLE_CITIES",!GetConfigBool("SHOUTS_DISABLE_CITIES"))
 		SetToggleOptionValue(Option,GetConfigBool("SHOUTS_DISABLE_CITIES"))
+	ElseIf Option == OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE
+		SetConfigBool("MCM_REMEMBER_PAGE",!GetConfigBool("MCM_REMEMBER_PAGE"))
+		SetToggleOptionValue(Option,GetConfigBool("MCM_REMEMBER_PAGE"))
 	ElseIf Option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
 		Int iSetting = GetConfigInt("MAGIC_OVERRIDES")
 		iSetting += 1
@@ -861,10 +886,15 @@ Event OnOptionMenuOpen(Int Option)
 		String[] sCharacterNamesPlusEmpty = New String[128]
 		sCharacterNamesPlusEmpty[0] = "$Empty"
 		Int i = 0
+		Int iAdded = 1
 		While i < _sCharacterNames.Length
-			sCharacterNamesPlusEmpty[i + 1] = _sCharacterNames[i]
+			If _sCharacterNames[i]
+				sCharacterNamesPlusEmpty[i + 1] = _sCharacterNames[i]
+				iAdded += 1
+			EndIf
 			i += 1
 		EndWhile
+		sCharacterNamesPlusEmpty[iAdded] = "*{$Reset}*"
 		SetMenuDialogOptions(sCharacterNamesPlusEmpty)
 		If _sAlcoveCharacterNames[iAlcove]
 			SetMenuDialogStartIndex(sCharacterNamesPlusEmpty.Find(_sAlcoveCharacterNames[iAlcove]))
@@ -910,6 +940,11 @@ Event OnOptionMenuAccept(int option, int index)
 		If index < 0
 			SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],"")
 			ShrineOfHeroes.SetAlcoveStr(iAlcove,"CharacterName","")
+		ElseIf _sCharacterNames[index] == "" 
+			;"Reset" was chosen
+			SetMenuOptionValue(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],"$Reset")
+			SetOptionFlags(OPTION_MENU_ALCOVE_CHARACTER[iAlcove],OPTION_FLAG_DISABLED)
+			ShrineOfHeroes.AlcoveControllers[iAlcove].ResetAlcove()
 		Else
 			Int iOIndex = ShrineOfHeroes.GetAlcoveIndex(_sCharacterNames[index])
 			If iOIndex > -1
@@ -987,6 +1022,18 @@ Event OnOptionHighlight(Int option)
 	If option == OPTION_TOGGLE_MAGICALLOW_OTHER
 		SetInfoText("$OPTION_TOGGLE_MAGICALLOW_OTHER_HELP")
 	EndIf
+	If option == OPTION_DEBUG_CHARACTER_FORCEREFRESH
+		SetInfoText("$OPTION_DEBUG_CHARACTER_FORCEREFRESH_HELP")
+	EndIf
+	If option == OPTION_DEBUG_HANGOUTS_RESETQUESTS
+		SetInfoText("$OPTION_DEBUG_HANGOUTS_RESETQUESTS_HELP")
+	EndIf
+	If option == OPTION_DEBUG_SHRINE_RESET
+		SetInfoText("$OPTION_DEBUG_SHRINE_RESET_HELP")
+	EndIf
+	If option == OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION
+		SetInfoText("$OPTION_DEBUG_SHRINE_DISABLE_BG_VALIDATION_HELP")
+	EndIf
 	If option == OPTION_DEBUG_SHUTDOWN
 		SetInfoText("$OPTION_DEBUG_SHUTDOWN_HELP")
 	EndIf
@@ -1013,6 +1060,9 @@ Event OnOptionHighlight(Int option)
 	EndIf
 	If option == OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES
 		SetInfoText("$OPTION_TOGGLE_GLOBAL_SHOUTS_DISABLE_CITIES_HELP")
+	EndIf
+	If option == OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE
+		SetInfoText("$OPTION_TOGGLE_GLOBAL_MCM_REMEMBER_PAGE_HELP")
 	EndIf
 	If option == OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES
 		SetInfoText("$OPTION_TEXT_GLOBAL_MAGIC_OVERRIDES_HELP")
@@ -1085,6 +1135,7 @@ endEvent
 
 event OnConfigClose()
 	ApplySettings()
+	_bConfigClosed = True
 endEvent
 
 Function UpdateSettings()
@@ -1097,7 +1148,9 @@ Function UpdateSettings()
 	_sHangoutNamesDisabled = HangoutManager.HangoutNamesDisabled
 	
 	_sClassNames = CharacterManager.sClassNames
-	
+	SetConfigBool("DEBUG_CHARACTER_FORCEREFRESH",False,abNoEvent = True)	
+	SetConfigBool("DEBUG_HANGOUTS_RESETQUESTS",False,abNoEvent = True)	
+	SetConfigBool("DEBUG_SHUTDOWN",False,abNoEvent = True)
 	FillEnums()
 EndFunction
 
