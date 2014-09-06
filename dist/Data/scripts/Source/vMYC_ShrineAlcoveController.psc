@@ -466,11 +466,11 @@ EndFunction
 State Validating
 
 	Bool Function ValidateAlcove()
-		;_iValidateStateCount += 1
-		;If _iValidateStateCount > 4
-			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
-			;GotoState("")
-		;EndIf
+		_iValidateStateCount += 1
+		If _iValidateStateCount > 10
+			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
+			GotoState("")
+		EndIf
 		Return False
 	EndFunction
 
