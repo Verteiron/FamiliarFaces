@@ -202,6 +202,9 @@ Formlist Property vMYC_VoiceTypesAdoptList Auto
 Formlist Property vMYC_VoiceTypesAllList Auto
 {A list of all (except unique/special) voicetypes.}
 
+Formlist Property vMYC_ModCompatibility_PerkList_Unsafe Auto
+{A list of Perks that are known to be unsafe or unnecessary to load on NPCs.}
+
 TextureSet Property vMYC_PlayerFaceTexture Auto
 
 TextureSet Property vMYC_DummyTexture Auto
@@ -1549,8 +1552,12 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 		Perk kPerk = JArray.getForm(jCharacterPerks,i) as Perk
 		If !kPerk
 			iMissingCount += 1
-		Else 
-			vMYC_PerkList.AddForm(kPerk)		
+		Else
+			If vMYC_ModCompatibility_PerkList_Unsafe.HasForm(kPerk)
+				iMissingCount += 1
+			Else
+				vMYC_PerkList.AddForm(kPerk)
+			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Perk is from " + JArray.getStr(jCharacterPerks,i))
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")

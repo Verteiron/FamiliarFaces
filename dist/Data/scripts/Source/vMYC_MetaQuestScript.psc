@@ -256,6 +256,9 @@ Function CheckCompatibilityModules()
 	If !CheckCompatibilityModule_AFT()
 		Debug.MessageBox("Familiar Faces\nThere was an error with the AFT compatibility module. Check the Papyrus log for more details.")
 	EndIf
+	If !CheckCompatibilityModule_SkyRE()
+		Debug.MessageBox("Familiar Faces\nThere was an error with the SkyRE compatibility module. Check the Papyrus log for more details.")
+	EndIf
 EndFunction
 
 Bool Function CheckCompatibilityModule_EFF()
@@ -335,6 +338,46 @@ Bool Function CheckCompatibilityModule_AFT()
 	EndIf
 	Return True
 EndFunction
+
+Bool Function CheckCompatibilityModule_SkyRE()
+	Quest vMYC_zCompat_SkyREQuest = GetFormFromFile(0x02025740,"vMYC_MeetYourCharacters.esp") as Quest
+	If !vMYC_zCompat_SkyREQuest
+		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_SkyREQuest!",1)
+		Return False
+	EndIf
+	Debug.Trace("MYC: Checking whether SkyRE compatibility is needed...")
+	If GetModByName("SkyRe_Main.esp") != 255 
+		Debug.Trace("MYC:  SkyRE found!")
+		SetConfigInt("Compat_SkyRE_Loaded",1)
+		If !vMYC_zCompat_SkyREQuest.IsRunning()
+			vMYC_zCompat_SkyREQuest.Start()
+			Debug.Trace("MYC:  Started SkyRE compatibility module!")
+			If vMYC_zCompat_SkyREQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		Else
+			Debug.Trace("MYC:  SkyRE compatibility module is already running.")
+			Return True
+		EndIf
+	Else
+		Debug.Trace("MYC:  SkyRE not found.")
+		SetConfigInt("Compat_SkyRE_Loaded",0)
+		If vMYC_zCompat_SkyREQuest.IsRunning()
+			(vMYC_zCompat_SkyREQuest as vMYC_CompatSkyRE).DoShutdown()
+			vMYC_zCompat_SkyREQuest.Stop()
+			Debug.Trace("MYC:  Stopped SkyRE compatibility module!")
+			If !vMYC_zCompat_SkyREQuest.IsRunning()
+				Return True
+			Else
+				Return False
+			EndIf
+		EndIf
+	EndIf
+	Return True
+EndFunction
+
 
 Function DoShutdown()
 	Ready = False
