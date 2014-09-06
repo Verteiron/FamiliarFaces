@@ -271,7 +271,7 @@ Event OnActivate(ObjectReference akActionRef)
 EndEvent
 
 Event OnPackageChange(Package akOldPackage)
-	Debug.Trace("MYC/Actor/" + CharacterName + ": Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
+	;Debug.Trace("MYC/Actor/" + CharacterName + ": Old package is " + akOldPackage + ", new package is " + GetCurrentPackage() + "!")
 	If IsInCombat() && GetCombatTarget() == PlayerREF && DecapitationChance.GetValue()
 		_fDecapitationChance = DecapitationChance.GetValue()
 		DecapitationChance.SetValue(0)
@@ -332,7 +332,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		Return
 	EndIf
 
-	Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor): Updating character spell list!")
 	Int jSpells = CharacterManager.GetCharacterObj(CharacterName,"Spells") ;JValue.solveObj(_jMYC,"." + CharacterName + ".Data.Spells")
 	
 	Int iAdded
@@ -444,7 +444,7 @@ Event OnUpdateCharacterSpellList(String eventName, String strArg, Float numArg, 
 		
 		If bSpellIsAllowed && !HasSpell(kSpell)
 			If AddSpell(kSpell,False)
-				Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
+				;Debug.Trace("MYC: (" + CharacterName + "/Actor): Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
 				iAdded += 1
 			EndIf
 		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
@@ -605,17 +605,17 @@ Function DeleteIfOrphaned()
 	If sCellName == "vMYC_Staging"
 		If _bOrphaned && !CharacterManager.GetLocalInt(CharacterName,"IsSummoned") ; Prevent deletion if we got marooned here due to a bad Hangout.
 			If GetCurrentRealTime() - _fOrphanedTime > 15
-				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over " + (GetCurrentRealTime() - _fOrphanedTime) as Int + " seconds, nobody loves me! :(")
+				;Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over " + (GetCurrentRealTime() - _fOrphanedTime) as Int + " seconds, nobody loves me! :(")
 				UnregisterForUpdate()
 				If CharacterManager.GetCharacterActorByName(CharacterName) == Self
-					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm the right actor, so what's up?")
+					;Debug.Trace("MYC/Actor/" + CharacterName + ": I'm the right actor, so what's up?")
 					If (GetCurrentRealTime() - _fOrphanedTime) > 60
-						Debug.Trace("MYC/Actor/" + CharacterName + ": 60 seconds is long enough, I'm outta here!")
+						;Debug.Trace("MYC/Actor/" + CharacterName + ": 60 seconds is long enough, I'm outta here!")
 						CharacterManager.DeleteCharacterActor(CharacterName)
 					EndIf
 					Return
 				Else
-					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm not even the right actor! I'm " + Self + " but CharacterManager says I should be " + CharacterManager.GetCharacterActorByName(CharacterName) + "! This is terrible! Deleting myself :(")
+					;Debug.Trace("MYC/Actor/" + CharacterName + ": I'm not even the right actor! I'm " + Self + " but CharacterManager says I should be " + CharacterManager.GetCharacterActorByName(CharacterName) + "! This is terrible! Deleting myself :(")
 					Delete()
 					Return
 				EndIf
@@ -695,7 +695,7 @@ Function SetNonpersistent()
 	ColorForm kHairColor = CharacterManager.GetCharacterForm(CharacterName,"Appearance.Haircolor") As ColorForm
 	_kActorBase.SetHairColor(kHairColor)
 	If !NIOverride.HasOverlays(Self)
-		Debug.Trace("MYC/Actor/" + CharacterName + ": Adding NIO overlays...")
+		;Debug.Trace("MYC/Actor/" + CharacterName + ": Adding NIO overlays...")
 		CharacterManager.NIO_ApplyCharacterOverlays(CharacterName)
 		ApplyNIODye()
 	EndIf
@@ -726,7 +726,7 @@ Function SetNonpersistent()
 			SetCustomActorValues(True)
 		EndIf
 	Else
-		Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
+		;Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
 		AddItem(vMYC_DummyArmor, 1, true)
 		RemoveItem(vMYC_DummyArmor, 1)
 	EndIf
@@ -902,7 +902,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dismount timer expired!",1)
 	EndIf
 	If akActor.IsOnMount()
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
 		GotoState("")
 		Return False
 	EndIf
@@ -1076,11 +1076,11 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 	EndIf
 	Int iMyLevel = GetLevel()
 	Float fScaleMult = 1.0
-	Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
+	;Debug.Trace("MYC/Actor/" + CharacterName + ": original actor level is " + iBaseLevel + ", current level is " + iMyLevel)
 	Float fCharacterXP = (12.5 * iMyLevel * iMyLevel) + 62.5 * iMyLevel - 75
 	;Debug.Trace("MYC/Actor/" + CharacterName + ": needs " + fCharacterXP + " to reach this level!")
 	If bScaleToLevel
-		Debug.Trace("MYC/Actor/" + CharacterName + ": Scaling actorValues from level " + iBaseLevel + " to level is " + iMyLevel)
+		;Debug.Trace("MYC/Actor/" + CharacterName + ": Scaling actorValues from level " + iBaseLevel + " to level is " + iMyLevel)
 		If iBaseLevel > 0
 			fScaleMult = (iMyLevel As Float) / (iBaseLevel As Float)
 		EndIf
@@ -1112,7 +1112,7 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 		EndWhile
 	Else
 		;Don't rescale it, just blindly apply all saved values to the character
-		Debug.Trace("MYC/Actor/" + CharacterName + ": Setting original actorValues from level " + iBaseLevel + " character")
+		;Debug.Trace("MYC/Actor/" + CharacterName + ": Setting original actorValues from level " + iBaseLevel + " character")
 		Int i
 		i = sAVNames.Length ;jArray.Count(jActorValueStrings)
 		While i > 0

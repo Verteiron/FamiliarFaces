@@ -108,7 +108,7 @@ Function RefreshInventory()
 		JFormMap.setInt(_jInventory,kItem,PlayerREF.GetItemCount(kItem))
 		i += 1
 	EndWhile
-	Debug.Trace("MYC: " + Self + " Refreshed player inventory! Got " + iItemcount + " items, took " + (GetCurrentRealTime() - fStartTime) + "s!")
+	;Debug.Trace("MYC: " + Self + " Refreshed player inventory! Got " + iItemcount + " items, took " + (GetCurrentRealTime() - fStartTime) + "s!")
 	_bRefreshed = True
 	_iThreadCount -= 1
 	Busy = False

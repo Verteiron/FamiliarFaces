@@ -26,7 +26,7 @@ Location _Inn
 Event OnInit()
 	If IsRunning()
 		UpdateVariables()
-		Debug.Trace("MYC/WQ: " + Self + " Starting from OnInit with " + _WanderActor + " and " + _City + "!")
+		;Debug.Trace("MYC/WQ: " + Self + " Starting from OnInit with " + _WanderActor + " and " + _City + "!")
 		RegisterForSingleUpdate(1)
 	EndIf
 EndEvent
@@ -34,7 +34,7 @@ EndEvent
 Event OnStoryScript(Keyword akKeyword, Location akLocation, ObjectReference akRef1, ObjectReference akRef2, Int aiValue1, Int aiValue2)
 	If IsRunning()
 		UpdateVariables()
-		Debug.Trace("MYC/WQ: " + Self + " Starting from OnStoryScript with " + _WanderActor + " and " + _City + "!")
+		;Debug.Trace("MYC/WQ: " + Self + " Starting from OnStoryScript with " + _WanderActor + " and " + _City + "!")
 		RegisterForSingleUpdate(1)
 	EndIf
 EndEvent
@@ -52,7 +52,7 @@ Event OnUpdate()
 			DoShutdown()
 			Return
 		Else
-			Debug.Trace("MYC/WQ: Couldn't send story event to resume wandering, staying in " + _City + " for now!")
+			;Debug.Trace("MYC/WQ: Couldn't send story event to resume wandering, staying in " + _City + " for now!")
 		EndIf
 	EndIf
 	If IsRunning()

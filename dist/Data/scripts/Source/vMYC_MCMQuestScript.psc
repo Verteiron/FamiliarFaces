@@ -141,7 +141,7 @@ EndFunction
 Event OnVersionUpdate(int a_version)
 	If CurrentVersion < 12
 		OnConfigInit()
-		Debug.Trace("MYC/MCM: Updating script to version 12...")
+		;Debug.Trace("MYC/MCM: Updating script to version 12...")
 	EndIf
 EndEvent
 

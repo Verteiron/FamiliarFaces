@@ -508,7 +508,7 @@ Function DoInit()
 	_bDoInit = True
 	_jMYC = JDB.solveObj(".vMYC")
 	If !_jMYC
-		Debug.Trace("MYC/CM: JDB has no MYC data, creating it!")
+		;Debug.Trace("MYC/CM: JDB has no MYC data, creating it!")
 		_jMYC = JMap.object()
 		JDB.setObj("vMYC",_jMYC)
 	EndIf
@@ -647,7 +647,7 @@ Function LoadCharacterFiles()
 	While i > 0
 		i -= 1
 		If JArray.FindStr(jCharFiles,JArray.GetStr(jCharFilesOld,i)) < 0
-			Debug.Trace("MYC/CM: Adding file from Data/vMYC: " + JArray.getStr(jCharFilesOld,i))
+			;Debug.Trace("MYC/CM: Adding file from Data/vMYC: " + JArray.getStr(jCharFilesOld,i))
 			JArray.AddStr(jCharFiles,JArray.GetStr(jCharFilesOld,i))
 			JArray.AddObj(jCharData,JArray.GetObj(jCharDataOld,i))
 		EndIf
@@ -688,8 +688,8 @@ Function LoadCharacterFiles()
 					SetLocalFlt(sCharacterName,"PlayTime",fLocalPlayTime)
 				EndIf
 				If fLocalPlayTime != fFilePlayTime
-					Debug.Trace("MYC/CM: " + sCharacterName + "'s Local PlayTime is " + fLocalPlayTime + ", saved PlayTime is " + fFilePlayTime)
-					Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " HAS changed!")
+					;Debug.Trace("MYC/CM: " + sCharacterName + "'s Local PlayTime is " + fLocalPlayTime + ", saved PlayTime is " + fFilePlayTime)
+					;Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " HAS changed!")
 					;SetLocalFlt(sCharacterName,"PlayTime",fFilePlayTime)
 					JMap.setObj(jCharacterInfo,"Data",jCharacterData)
 				Else
@@ -712,7 +712,7 @@ Function LoadCharacterFiles()
 		String sCharacterName = jArray.getStr(jCharacterNames,i)
 		If !GetLocalInt(sCharacterName,"FilePresent") && !GetLocalInt(sCharacterName,"ShowedMissingWarning")
 			SetLocalInt(sCharacterName,"ShowedMissingWarning",1)
-			Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " is missing! :(")
+			;Debug.Trace("MYC/CM: The saved data for " + sCharacterName + " is missing! :(")
 			Debug.Notification("Familiar Faces: The saved data for " + sCharacterName + " is missing!")
 		EndIf
 	EndWhile
@@ -781,9 +781,9 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 	EndIf
 	iDataVer = JValue.solveInt(jCharacterData,"._MYC.SerializationVersion")
 	If iDataVer < SerializationVersion
-		Debug.Trace("MYC/CM: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
+		;Debug.Trace("MYC/CM: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
 		If iDataVer == 2 
-			Debug.Trace("MYC/CM: Upgrading this file to serialization version 3...")
+			;Debug.Trace("MYC/CM: Upgrading this file to serialization version 3...")
 ;	Trying to generate this for old files was a terrible idea, don't do it!
 ;			If !JValue.HasPath(jCharacterData,"._MYC.ReqList")
 ;				Debug.Trace("MYC/CM: Attempting to generate character requirements, if this copy of the game is missing any they will not be added...")
@@ -825,14 +825,14 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 ;				EndWhile
 ;			EndIf
 			JValue.SolveIntSetter(jCharacterData,"._MYC.SerializationVersion",3)
-			Debug.Trace("MYC/CM: Finished upgrading the file!")
+			;Debug.Trace("MYC/CM: Finished upgrading the file!")
 			bUpgraded = True
 		EndIf
 		;Debug.Trace("MYC/CM: Unfortunately no upgrade function is in place, so we'll just have to hope for the best!")
 	ElseIf iDataVer == SerializationVersion
 		;Debug.Trace("MYC/CM: Data serialization is up to date!")
 	Else
-		Debug.Trace("MYC/CM: Data serialization is from a future version? Odd. We'll just have to hope it works.")
+		;Debug.Trace("MYC/CM: Data serialization is from a future version? Odd. We'll just have to hope it works.")
 	EndIf
 	Return bUpgraded
 EndFunction
@@ -876,7 +876,7 @@ EndFunction
 
 Int Function CheckModReqs(String asCharacterName)
 {Return 0 for no missing reqs, 1 for missing non-appearance reqs, 2 for missing armor/weapons reqs, 3 for missing headparts or race}
-	Debug.Trace("MYC/CM: Checking mod requirements for " + asCharacterName + "...")
+	;Debug.Trace("MYC/CM: Checking mod requirements for " + asCharacterName + "...")
 	If !GetCharacterForm(asCharacterName,"Race") as Race
 		Return 3
 	EndIf
@@ -890,7 +890,7 @@ Int Function CheckModReqs(String asCharacterName)
 	Int iCount = JArray.Count(jModList)
 	
 	While i < iCount
-		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		;Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
 		Int jModObjTypes = JMap.AllKeys(JMap.GetObj(jReqList,JArray.GetStr(jModList,i)))
 		If GetModByName(JArray.GetStr(jModList,i)) == 255 ; Mod is missing
 			If JMap.HasKey(jModObjTypes,"HeadPart") || JMap.HasKey(jModObjTypes,"Race")
@@ -922,7 +922,7 @@ EndFunction
 
 String Function GetModReqReport(String asCharacterName)
 {Return a string containing the missing mod report, formatted for SkyUI's ShowMessage.}
-	Debug.Trace("MYC/CM: Creating ModReq report for " + asCharacterName + "...")
+	;Debug.Trace("MYC/CM: Creating ModReq report for " + asCharacterName + "...")
 	String sReturn = ""
 	String sCrit = ""
 	String sWarn = ""
@@ -939,13 +939,13 @@ String Function GetModReqReport(String asCharacterName)
 	Int i = 0
 	Int iCount = JArray.Count(jModList)
 	While i < iCount
-		Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
+		;Debug.Trace("MYC/CM:   Checking forms from " + JArray.GetStr(jModList,i) + "...")
 		String sModName = JArray.GetStr(jModList,i)
 		If GetModByName(sModName) < 255
 			sInfo += "\n" + sModName + ":\n"
 		EndIf
 		Int jModObjTypes = JMap.AllKeys(JMap.GetObj(jReqList,sModName))
-		Debug.Trace("MYC/CM:   Provides " + JArray.Count(jModObjTypes) + " forms")
+		;Debug.Trace("MYC/CM:   Provides " + JArray.Count(jModObjTypes) + " forms")
 		Int j = 0
 		Int jCount = JArray.Count(jModObjTypes)
 		While j < jCount
@@ -1319,12 +1319,12 @@ Function ClearCharacterRefs(String asCharacterName)
 		Return
 	EndIf
 	Int i = kCharacterActor.GetNumReferenceAliases()
-	Debug.Trace("MYC/CM: (" + asCharacterName + ") Clearing the following RefAliases from " + asCharacterName + "...")
+	;Debug.Trace("MYC/CM: (" + asCharacterName + ") Clearing the following RefAliases from " + asCharacterName + "...")
 	While i > 0
 		i -= 1
 		ReferenceAlias kThisRefAlias = kCharacterActor.GetNthReferenceAlias(i)
 		If kThisRefAlias
-			Debug.Trace("MYC/CM: (" + asCharacterName + ")   " + kThisRefAlias)
+			;Debug.Trace("MYC/CM: (" + asCharacterName + ")   " + kThisRefAlias)
 			kThisRefAlias.Clear()
 		EndIf
 	EndWhile
@@ -1335,7 +1335,7 @@ Function DeleteCharacterActor(String asCharacterName)
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
 	ActorBase kDeadActorBase = GetCharacterDummy(asCharacterName)
 	Actor kDeadActor = GetCharacterActorByName(asCharacterName)
-	Debug.Trace("MYC/CM: (" + asCharacterName + ") Deleting actor " + kDeadActor + "!")
+	;Debug.Trace("MYC/CM: (" + asCharacterName + ") Deleting actor " + kDeadActor + "!")
 	Int iLCidx = _kLoadedCharacters.Find(kDeadActor)
 	ClearCharacterRefs(asCharacterName)
 	;CharGen.ClearPreset(kDeadActor,asCharacterName)
@@ -1351,9 +1351,9 @@ Function DeleteCharacterActor(String asCharacterName)
 EndFunction
 
 Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPreserveLocal = True)
-	Debug.Trace("MYC/CM: (" + asCharacterName + ") EraseCharacter called!")
+	;Debug.Trace("MYC/CM: (" + asCharacterName + ") EraseCharacter called!")
 	If !bConfirm
-		Debug.Trace("MYC/CM: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
+		;Debug.Trace("MYC/CM: (" + asCharacterName + ") EraseCharacter not confirmed, returning...")
 		Return
 	EndIf
 	Int jDeadManWalking = JMap.getObj(_jMYC,asCharacterName)
@@ -1373,7 +1373,7 @@ Function EraseCharacter(String asCharacterName, Bool bConfirm = False, Bool bPre
 	Int jCharacterList = JMap.GetObj(_jMYC,"CharacterList")
 	JMap.RemoveKey(jCharacterList,asCharacterName)
 	SendModEvent("vMYC_CharacterErased",asCharacterName)
-	Debug.Trace("MYC/CM: (" + asCharacterName + ") erased character!")
+	;Debug.Trace("MYC/CM: (" + asCharacterName + ") erased character!")
 EndFunction
 
 Function SetAllowedSpells(String sCharacterName, Bool abAlteration = True, Bool abConjuration = True, Bool abDestruction = True, Bool abIllusion = True, Bool abRestoration = True, Bool abOther = True)
@@ -1629,7 +1629,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 	If iMissingCount
 		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts with " + iMissingCount + " skipped.",1)
 	Else
-		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
 	EndIf
 	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
 	WaitMenuMode(0.1)
@@ -1643,7 +1643,7 @@ Function RemoveCharacterShouts(String sCharacterName)
 		WaitMenuMode(0.1)
 	EndWhile
 	_bApplyShoutsBusy = True
-	Debug.Trace("MYC/CM/" + sCharacterName + ":  Character is not allowed to use shouts, removing them!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Character is not allowed to use shouts, removing them!")
 	vMYC_Shoutlist.Revert()
 	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
 	vMYC_ShoutList.AddForm(vMYC_NullShout)
@@ -1702,7 +1702,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	;	Return False
 	;Else
 	If GetLocalConfigBool("CM_Loading_" + sCharacterName)
-		Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called multiple times!")
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  LoadCharacter called multiple times!")
 		Return False
 	EndIf
 	SetLocalConfigBool("CM_Loading_" + sCharacterName,True)
@@ -1764,7 +1764,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	EndIf
 
 	If kCharacterActor ; Already been loaded
-		Debug.Trace("MYC/CM/" + sCharacterName + ":  This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + kCharacterActor)
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  This character is already assigned ActorBase " + DummyActorBase + " and is currently Actor " + kCharacterActor)
 		SetLocalInt(sCharacterName,"Enabled", 1)
 		;kCharacterActor.RemoveallItems()
 		kCharacterActor.Enable()
@@ -1780,7 +1780,7 @@ Bool Function LoadCharacter(String sCharacterName)
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  No saved ActorBase found, getting a new one...")
 		DummyActorBase = GetFreeActorBase(JMap.getInt(jCharacterData,"Sex"))
 		If !DummyActorBase ; Not loaded on this save session
-			Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  Could not find available ActorBase for " + sCharacterName + "!")
 			SetLocalConfigBool("CM_Loading_" + sCharacterName,False)
 			_bBusyLoading = False
 			Return False
@@ -1788,7 +1788,7 @@ Bool Function LoadCharacter(String sCharacterName)
 		SetLocalForm(sCharacterName,"ActorBase",DummyActorBase)
 		JFormMap.setStr(jActorBaseMap,DummyActorBase,sCharacterName) ; Assign character name to ActorBase as a sort of reverse lookup
 	EndIf
-	Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  ActorBase will use " + DummyActorBase + "!")
 	
 	;----Load Actor and begin setting up the ActorBase--------------
 
@@ -1807,7 +1807,7 @@ Bool Function LoadCharacter(String sCharacterName)
 	;-----====                    ====-----
 
 
-	Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sCharacterName + " is actor " + kCharacterActor)
 	SetLocalForm(sCharacterName,"Actor",kCharacterActor)
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Made it through SetLocalForm...")
 	vMYC_CharacterDummyActorScript CharacterDummy = kCharacterActor as vMYC_CharacterDummyActorScript
@@ -2570,7 +2570,7 @@ EndFunction
 Function SetUUIDIfMissing()
 	If !GetLocalConfigStr("PlayerUUID")
 		SetLocalConfigStr("PlayerUUID",GetUUIDTrue())
-		Debug.Trace("MYC/CM: Set player UUID: " + GetLocalConfigStr("PlayerUUID"))
+		;Debug.Trace("MYC/CM: Set player UUID: " + GetLocalConfigStr("PlayerUUID"))
 	EndIf
 EndFunction
 
@@ -2854,7 +2854,7 @@ Int Function GetNINodeInfo(Actor akActor)
 
 	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
 	JValue.Retain(jNINodeList,"vMYC_CM")
-	Debug.Trace("MYC/CM: NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
+	;Debug.Trace("MYC/CM: NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
 	
 	
 	Int jNINodes = JMap.Object()
@@ -2867,7 +2867,7 @@ Int Function GetNINodeInfo(Actor akActor)
 			If NetImmerse.HasNode(akActor,sNodeName,false)
 				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
 				If fNodeScale != 1.0
-					Debug.Trace("MYC/CM: Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
+					;Debug.Trace("MYC/CM: Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
 					Int jNINodeData = JMap.Object()
 					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
 					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
