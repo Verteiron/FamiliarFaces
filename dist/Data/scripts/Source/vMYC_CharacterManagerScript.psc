@@ -784,45 +784,46 @@ Bool Function UpgradeCharacterInfo(Int jCharacterData)
 		Debug.Trace("MYC/CM: Data serialization is version " + iDataVer + ", current version is " + SerializationVersion)
 		If iDataVer == 2 
 			Debug.Trace("MYC/CM: Upgrading this file to serialization version 3...")
-			If !JValue.HasPath(jCharacterData,"._MYC.ReqList")
-				Debug.Trace("MYC/CM: Attempting to generate character requirements, if this copy of the game is missing any they will not be added...")
-				
-				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Race"),"Race")
-				
-				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Left"),"Equipment")
-				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Right"),"Equipment")
-				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
-				
-				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
-			
-				Int jArmor = JValue.SolveObj(jCharacterData,".Equipment.Armor")
-				Int i = JArray.Count(jArmor)
-				While i > 0
-					i -= 1
-					AddToReqList(jCharacterData,JArray.GetForm(jArmor,i),"Equipment")
-				EndWhile
-				
-				Int jHeadparts = JValue.SolveObj(jCharacterData,".Appearance.Headparts")
-				i = JArray.Count(jHeadparts)
-				While i > 0
-					i -= 1
-					AddToReqList(jCharacterData,JArray.GetForm(jHeadparts,i),"Headpart")
-				EndWhile
-				
-				Int jPerks = JValue.SolveObj(jCharacterData,".Perks")
-				i = JArray.Count(jPerks)
-				While i > 0
-					i -= 1
-					AddToReqList(jCharacterData,JArray.GetForm(jPerks,i),"Perk")
-				EndWhile
-				
-				Int jSpells = JValue.SolveObj(jCharacterData,".Spells")
-				i = JArray.Count(jSpells)
-				While i > 0
-					i -= 1
-					AddToReqList(jCharacterData,JArray.GetForm(jSpells,i),"Spell")
-				EndWhile
-			EndIf
+;	Trying to generate this for old files was a terrible idea, don't do it!
+;			If !JValue.HasPath(jCharacterData,"._MYC.ReqList")
+;				Debug.Trace("MYC/CM: Attempting to generate character requirements, if this copy of the game is missing any they will not be added...")
+;				
+;				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Race"),"Race")
+;				
+;				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Left"),"Equipment")
+;				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Right"),"Equipment")
+;				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
+;				
+;				AddToReqList(jCharacterData,JValue.SolveForm(jCharacterData,".Equipment.Voice"),"Equipment")
+;			
+;				Int jArmor = JValue.SolveObj(jCharacterData,".Equipment.Armor")
+;				Int i = JArray.Count(jArmor)
+;				While i > 0
+;					i -= 1
+;					AddToReqList(jCharacterData,JArray.GetForm(jArmor,i),"Equipment")
+;				EndWhile
+;				
+;				Int jHeadparts = JValue.SolveObj(jCharacterData,".Appearance.Headparts")
+;				i = JArray.Count(jHeadparts)
+;				While i > 0
+;					i -= 1
+;					AddToReqList(jCharacterData,JArray.GetForm(jHeadparts,i),"Headpart")
+;				EndWhile
+;				
+;				Int jPerks = JValue.SolveObj(jCharacterData,".Perks")
+;				i = JArray.Count(jPerks)
+;				While i > 0
+;					i -= 1
+;					AddToReqList(jCharacterData,JArray.GetForm(jPerks,i),"Perk")
+;				EndWhile
+;				
+;				Int jSpells = JValue.SolveObj(jCharacterData,".Spells")
+;				i = JArray.Count(jSpells)
+;				While i > 0
+;					i -= 1
+;					AddToReqList(jCharacterData,JArray.GetForm(jSpells,i),"Spell")
+;				EndWhile
+;			EndIf
 			JValue.SolveIntSetter(jCharacterData,"._MYC.SerializationVersion",3)
 			Debug.Trace("MYC/CM: Finished upgrading the file!")
 			bUpgraded = True
