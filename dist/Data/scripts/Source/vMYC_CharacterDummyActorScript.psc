@@ -98,6 +98,8 @@ Bool _bNeedShouts
 
 Bool _bNeedSpells
 
+Bool _bNeedInventory
+
 String[] _sSkillNames
 
 Float _fDecapitationChance
@@ -210,20 +212,29 @@ Event OnUpdate()
 		EnableAI(True)
 	EndIf
 	IsBusy = False
-	If _bNeedPerks
+	Bool bIsSummoned = CharacterManager.GetLocalInt(CharacterName,"IsSummoned")
+	If _bNeedPerks && bIsSummoned
 		If CharacterManager.ApplyCharacterPerks(CharacterName) >= 0
 			_bNeedPerks = False
 		EndIf
 	EndIf
-	If _bNeedShouts
+	If _bNeedShouts && bIsSummoned
 		UpdateShoutList() ; will take care of setting _bNeedShouts
 	EndIf
-	If _bNeedSpells
+	If _bNeedSpells && bIsSummoned
 		OnUpdateCharacterSpellList("",CharacterName,0.0,Self)
 		_bNeedSpells = False
 	EndIf
-	If _bNeedPerks || _bNeedShouts || _bNeedSpells
-		RegisterForSingleUpdate(1.0)
+	If _bNeedInventory && bIsSummoned
+		CharacterManager.PopulateInventory(CharacterName)
+		_bNeedInventory = False
+	EndIf
+	If _bNeedPerks || _bNeedShouts || _bNeedSpells || _bNeedInventory
+		If bIsSummoned
+			RegisterForSingleUpdate(1.0)
+		Else
+			RegisterForSingleUpdate(15.0)
+		EndIf
 	Else 
 		RegisterForSingleUpdate(5.0)
 	EndIf
@@ -650,7 +661,10 @@ Function SyncCharacterData()
 		CharacterManager.SetLocalFlt(CharacterName,"PlayTime",CharacterManager.GetCharacterFlt(CharacterName,"_MYC.PlayTime"))
 		iResult = CharacterManager.ApplyCharacterArmor(CharacterName)
 		iResult = CharacterManager.ApplyCharacterWeapons(CharacterName)
-		CharacterManager.PopulateInventory(CharacterName)
+		_bNeedInventory = True
+		_bNeedSpells = True
+		_bNeedShouts = True
+		_bNeedPerks = True
 	EndIf
 EndFunction
 
