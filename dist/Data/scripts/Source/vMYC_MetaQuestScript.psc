@@ -510,7 +510,7 @@ String Function GetVersionString(Int iVersion)
 	;If !iPatch
 		;sPatchZero = "0"
 	;EndIf
-	Debug.Trace("MYC: Got version " + iVersion + ", returning " + sMajorZero + iMajor + "." + sMinorZero + iMinor + "." + sPatchZero + iPatch)
+	;Debug.Trace("MYC: Got version " + iVersion + ", returning " + sMajorZero + iMajor + "." + sMinorZero + iMinor + "." + sPatchZero + iPatch)
 	Return sMajorZero + iMajor + "." + sMinorZero + iMinor + "." + sPatchZero + iPatch
 EndFunction
 
