@@ -24,6 +24,8 @@ Int Property	OPTION_TOGGLE_TRACKING					Auto Hidden
 
 Int Property 	OPTION_MENU_CHARACTER_HANGOUT			Auto Hidden
 
+Int Property 	OPTION_TEXT_CHAR_ARMORCHECK				Auto Hidden
+
 Int Property	OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_ALTERATION		Auto Hidden
 Int Property	OPTION_TOGGLE_MAGICALLOW_CONJURATION	Auto Hidden
@@ -59,6 +61,8 @@ Int Property	OPTION_TEXT_GLOBAL_MAGIC_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_MAGIC_ALLOWFROMMODS		Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_SHOUTS_HANDLING			Auto Hidden
 Int Property	OPTION_TEXT_GLOBAL_FILE_LOCATION			Auto Hidden
+
+String[] Property	ENUM_CHAR_ARMORCHECK					Auto Hidden
 
 String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES				Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
@@ -182,6 +186,11 @@ EndEvent
 
 Function FillEnums()
 
+	ENUM_CHAR_ARMORCHECK = New String[3]
+	ENUM_CHAR_ARMORCHECK[0]	= "$When missing"
+	ENUM_CHAR_ARMORCHECK[1]	= "$Always"
+	ENUM_CHAR_ARMORCHECK[2]	= "$Disable"
+
 	ENUM_GLOBAL_MAGIC_OVERRIDES	= New String[3]
 	ENUM_GLOBAL_MAGIC_OVERRIDES[0]	= "$None"
 	ENUM_GLOBAL_MAGIC_OVERRIDES[1]	= "$Healing"
@@ -202,7 +211,7 @@ Function FillEnums()
 	ENUM_GLOBAL_FILE_LOCATION			= New String[2]
 	ENUM_GLOBAL_FILE_LOCATION[0]			= "$Data/vMYC"
 	ENUM_GLOBAL_FILE_LOCATION[1]			= "$My Games/Skyrim"
-
+	
 EndFunction
 
 Function FilterVoiceTypes(Int iVoiceTypeFilter = 0)
@@ -342,6 +351,7 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		;====================================----
 
+		OPTION_TEXT_CHAR_ARMORCHECK = AddTextOption("$Armor checking",ENUM_CHAR_ARMORCHECK[CharacterManager.GetLocalInt(_sCharacterName,"ArmorCheck")],OptionFlags)
 		
 		;===== Character faction options ====----
 		Bool bIsFoe = CharacterManager.GetLocalInt(_sCharacterName,"IsFoe")
@@ -712,6 +722,14 @@ Event OnOptionSelect(Int Option)
 		CharacterManager.SetLocalInt(_sCharacterName,"DisableAutoLevel",bDisableAutoLevel as Int)
 		SetToggleOptionValue(Option,bDisableAutoLevel)
 		(CharacterManager.GetCharacterActorByName(_sCharacterName) as vMYC_CharacterDummyActorScript).DoUpkeep(True)
+	ElseIf Option == OPTION_TEXT_CHAR_ARMORCHECK
+		Int iSetting = CharacterManager.GetLocalInt(_sCharacterName,"ArmorCheck")
+		iSetting += 1
+		If iSetting >= ENUM_CHAR_ARMORCHECK.Length
+			iSetting = 0
+		EndIf
+		CharacterManager.SetLocalInt(_sCharacterName,"ArmorCheck",iSetting)
+		SetTextOptionValue(Option,ENUM_CHAR_ARMORCHECK[iSetting])
 	ElseIf Option == OPTION_WARPTOCHARACTER
 		Bool bResult = ShowMessage("$Really warp?",True)
 		If bResult
@@ -970,6 +988,9 @@ Event OnOptionHighlight(Int option)
 	EndIf
 	If option == OPTION_TOGGLE_TRACKING
 		SetInfoText("$OPTION_TOGGLE_TRACKING_HELP")
+	EndIf
+	If option == OPTION_TEXT_CHAR_ARMORCHECK
+		SetInfoText("$OPTION_TEXT_CHAR_ARMORCHECK_HELP")
 	EndIf
 	If option == OPTION_TOGGLE_CHAR_ISFOE
 		SetInfoText("$OPTION_TOGGLE_CHAR_ISFOE_HELP")

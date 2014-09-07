@@ -231,6 +231,13 @@ Event OnUpdate()
 		CharacterManager.PopulateInventory(CharacterName)
 		_bNeedInventory = False
 	EndIf
+	If CharacterManager.GetLocalInt(CharacterName,"IsSummoned") == 1
+		If CharacterManager.GetLocalInt(CharacterName,"ArmorCheck") == 1
+			;ArmorCheck is set to "Always", check more frequently!
+			CheckArmor()
+		EndIf
+	EndIf
+
 	If _bNeedPerks || _bNeedShouts || _bNeedSpells || _bNeedInventory
 		If bIsSummoned
 			RegisterForSingleUpdate(1.0)
@@ -738,6 +745,10 @@ Function SetNonpersistent()
 EndFunction
 
 Function CheckArmor(Bool abForce = False)
+	Int iArmorCheckLevel = CharacterManager.GetLocalInt(CharacterName,"ArmorCheck")
+	If iArmorCheckLevel == 2 ; Disabled
+		Return
+	EndIf
 	Bool bMissingArmor = False
 	Int jCharacterArmor = CharacterManager.GetCharacterObj(CharacterName,"Equipment.Armor")
 	Int i = JArray.Count(jCharacterArmor)
@@ -747,7 +758,8 @@ Function CheckArmor(Bool abForce = False)
 		Armor kArmor = JArray.GetForm(jCharacterArmor,i) as Armor
 		;Debug.Trace("MYC/Actor/" + CharacterName + ":    Checking " + kArmor + "...")
 		If kArmor
-			If (!IsEquipped(kArmor) && !GetWornForm(kArmor.GetSlotMask()) || abForce)
+			;If ArmorCheck == 0 (when missing) then requip it if no armor in slow, if ArmorCheck == 1 requip it any time it's not equipped
+			If abForce || (!IsEquipped(kArmor) && ((!GetWornForm(kArmor.GetSlotMask()) && iArmorCheckLevel == 0) || iArmorCheckLevel == 1))
 				If GetItemCount(kArmor)
 					;Debug.Trace("MYC/Actor/" + CharacterName + ":    Equipping " + kArmor + "!")
 					EquipItemEx(kArmor,equipSound = False)
