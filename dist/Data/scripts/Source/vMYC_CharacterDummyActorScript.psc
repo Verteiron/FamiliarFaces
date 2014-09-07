@@ -128,6 +128,7 @@ Event OnLoad()
 	CheckVars()
 	SetNameIfNeeded()
 	SetNINodes()
+	CheckArmor()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
 		If _iCharGenVersion == 3
@@ -203,6 +204,7 @@ Event OnUpdate()
 	EndIf
 	If _bNeedRefresh && _iCharGenVersion == 3
 		RefreshMeshNewCG()
+		;CheckArmor()
 		_bNeedRefresh = False
 	ElseIf Is3DLoaded()
 		SendModEvent("vMYC_CharacterReady",CharacterName)
@@ -733,6 +735,32 @@ Function SetNonpersistent()
 	SetAV("Confidence",3)
 	SetAV("Assistance",2)
 	;Force stat recalc 
+EndFunction
+
+Function CheckArmor(Bool abForce = False)
+	Bool bMissingArmor = False
+	Int jCharacterArmor = CharacterManager.GetCharacterObj(CharacterName,"Equipment.Armor")
+	Int i = JArray.Count(jCharacterArmor)
+	;Debug.Trace("MYC/Actor/" + CharacterName + ": Checking " + i + " armor forms!")
+	While i > 0
+		i -= 1
+		Armor kArmor = JArray.GetForm(jCharacterArmor,i) as Armor
+		;Debug.Trace("MYC/Actor/" + CharacterName + ":    Checking " + kArmor + "...")
+		If kArmor
+			If (!IsEquipped(kArmor) && !GetWornForm(kArmor.GetSlotMask()) || abForce)
+				If GetItemCount(kArmor)
+					;Debug.Trace("MYC/Actor/" + CharacterName + ":    Equipping " + kArmor + "!")
+					EquipItemEx(kArmor,equipSound = False)
+				Else
+					;Debug.Trace("MYC/Actor/" + CharacterName + ":    Missing   " + kArmor + "!")
+					bMissingArmor = True
+				EndIf
+			EndIf
+		EndIf
+	EndWhile
+	If bMissingArmor
+		CharacterManager.ApplyCharacterArmor(CharacterName)
+	EndIf
 EndFunction
 
 Function ApplyNIODye()
