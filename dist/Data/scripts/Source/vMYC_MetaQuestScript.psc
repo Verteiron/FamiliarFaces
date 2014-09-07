@@ -14,8 +14,13 @@ Actor Property PlayerRef Auto
 Bool Property Ready = False Auto
 
 Float Property ModVersion Auto Hidden
+Int Property ModVersionInt Auto Hidden
 
-String Property ModName = "Meet Your Characters" Auto Hidden
+Int Property ModVersionMajor Auto Hidden
+Int Property ModVersionMinor Auto Hidden
+Int Property ModVersionPatch Auto Hidden
+
+String Property ModName = "Familiar Faces" Auto Hidden
 
 Message Property vMYC_ModLoadedMSG Auto
 Message Property vMYC_ModUpdatedMSG Auto
@@ -33,11 +38,13 @@ GlobalVariable Property vMYC_CFG_Shutdown Auto
 ;--=== Variables ===--
 
 Float _CurrentVersion
+Int _iCurrentVersion
 String _sCurrentVersion
 
 Bool _ShowedSKSEWarning = False
 Bool _ShowedJContainersWarning = False
 Bool _Running
+Bool _bVersionSystemUpdated = False
 
 Float _ScriptLatency
 Float _StartTime
@@ -49,7 +56,7 @@ Int _iUpkeepsCompleted
 ;--=== Events ===--
 
 Event OnInit()
-	If ModVersion == 0
+	If ModVersion == 0 && !ModVersionMajor
 		DoUpkeep(True)
 	EndIf
 EndEvent
@@ -95,9 +102,12 @@ Function DoUpkeep(Bool DelayedStart = True)
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
-	_CurrentVersion = 110
-	_sCurrentVersion = GetVersionString(_CurrentVersion)
-
+	ModVersionMajor = 1
+	ModVersionMinor = 1
+	ModVersionPatch = 0
+	_iCurrentVersion = GetVersionInt(ModVersionMajor,ModVersionMinor,ModVersionPatch)
+	_sCurrentVersion = GetVersionString(_iCurrentVersion)
+	String sModVersion = GetVersionString(ModVersion as Int)
 	RegisterForModEvent("vMYC_InitBegin","OnInitState")
 	RegisterForModEvent("vMYC_InitEnd","OnInitState")
 	RegisterForModEvent("vMYC_UpkeepBegin","OnUpkeepState")
@@ -111,24 +121,24 @@ Function DoUpkeep(Bool DelayedStart = True)
 	SendModEvent("vMYC_UpkeepBegin")
 	Debug.Trace("MYC: " + ModName)
 	Debug.Trace("MYC: Performing upkeep...")
-	Debug.Trace("MYC: Loaded version is " + GetVersionString(ModVersion) + ", Current version is " + _sCurrentVersion)
+	Debug.Trace("MYC: Loaded version is " + sModVersion + ", Current version is " + _sCurrentVersion)
 	If ModVersion == 0
 		Debug.Trace("MYC: Newly installed, doing initialization...")
 		DoInit()
-		If ModVersion == _CurrentVersion
+		If ModVersion == _iCurrentVersion
 			Debug.Trace("MYC: Initialization succeeded.")
 		Else
 			Debug.Trace("MYC: WARNING! Initialization had a problem!")
 		EndIf
-	ElseIf ModVersion < _CurrentVersion
+	ElseIf ModVersion < _iCurrentVersion
 		Debug.Trace("MYC: Installed version is older. Starting the upgrade...")
 		DoUpgrade() ; this should also fire DoUpkeep
-		If ModVersion != _CurrentVersion
+		If ModVersion != _iCurrentVersion
 			Debug.Trace("MYC: WARNING! Upgrade failed!")
 			Debug.MessageBox("WARNING! " + ModName + " upgrade failed for some reason. You should report this to the mod author.")
 		EndIf
-		Debug.Trace("MYC: Upgraded to " + _CurrentVersion)
-		vMYC_ModUpdatedMSG.Show((_CurrentVersion as Float) / 100.0)
+		Debug.Trace("MYC: Upgraded to " + GetVersionString(_iCurrentVersion))
+		vMYC_ModUpdatedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	Else
 		;FIXME: Do init stuff in other quests
 		CharacterManager.DoUpkeep()
@@ -179,8 +189,8 @@ Function DoInit()
 		;i += 1
 	;EndWhile
 	_Running = True
-	ModVersion = _CurrentVersion
-	vMYC_ModLoadedMSG.Show((_CurrentVersion as Float) / 100.0)
+	ModVersion = _iCurrentVersion
+	vMYC_ModLoadedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 EndFunction
 
 Function DoUpgrade()
@@ -191,13 +201,13 @@ Function DoUpgrade()
 		Debug.MessageBox("Familiar Faces\nI'm serious, there is so much stuff that's going to be broken if you keep going, and any bug reports you submit will be useless. PLEASE quit the game ASAP, do a clean install of FF, and try it again from scratch!")
 	EndIf
 	If ModVersion < 104
-		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
+		Debug.Trace("MYC: Upgrading to " + ((_iCurrentVersion as Float) / 100.0) + "...")
 		CharacterManager.SerializationVersion = 3
 		CharacterManager.RepairSaves()
 		CharacterManager.DoUpkeep()
 		ShrineOfHeroes.DoUpkeep()
 		ModVersion = 104
-		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
+		Debug.Trace("MYC: Upgrade to " + ((_iCurrentVersion as Float) / 100.0) + " complete!")
 	EndIf
 
 	If ModVersion < 106
@@ -216,11 +226,11 @@ Function DoUpgrade()
 		EndWhile
 		Debug.Trace("MYC: Restarting Shrine of Heroes...")
 		ShrineOfHeroes.Start()
-		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
-		ModVersion = 106
+		Debug.Trace("MYC: Upgrade to " + ((_iCurrentVersion as Float) / 100.0) + " complete!")
+		ModVersion = GetVersionInt(1,0,6)
 	EndIf
 	
-	If ModVersion < 110
+	If ModVersion < GetVersionInt(1,1,0)
 		Debug.Trace("MYC: Upgrading to 1.1.0...")
 		CharacterManager.RepairSaves()
 		CharacterManager.DoUpkeep(False)
@@ -232,18 +242,18 @@ Function DoUpgrade()
 		Wait(2)
 		;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
 		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
-		ModVersion = 110
+		ModVersion = GetVersionInt(1,1,0)
 	EndIf
 	
 	;Generic upgrade code
-	If ModVersion < _CurrentVersion
-		Debug.Trace("MYC: Upgrading to " + ((_CurrentVersion as Float) / 100.0) + "...")
+	If ModVersion < _iCurrentVersion
+		Debug.Trace("MYC: Upgrading to " + GetVersionString(_iCurrentVersion) + "...")
 		;FIXME: Do upgrade stuff!
 		CharacterManager.RepairSaves()
 		CharacterManager.DoUpkeep()
 		ShrineOfHeroes.DoUpkeep()
-		ModVersion = _CurrentVersion
-		Debug.Trace("MYC: Upgrade to " + ((_CurrentVersion as Float) / 100.0) + " complete!")
+		ModVersion = _iCurrentVersion
+		Debug.Trace("MYC: Upgrade to " + GetVersionString(_iCurrentVersion) + " complete!")
 	EndIf
 	_Running = True
 	Debug.Trace("MYC: Upgrade complete!")
@@ -382,7 +392,7 @@ EndFunction
 Function DoShutdown()
 	Ready = False
 	Debug.Trace("MYC: Shutting down and preparing for removal...")
-	_CurrentVersion = 0
+	_iCurrentVersion = 0
 	ModVersion = 0
 	Quest vMYC_zCompat_AFTQuest = GetFormFromFile(0x02023c40,"vMYC_MeetYourCharacters.esp") as Quest
 	Quest vMYC_zCompat_EFFQuest = GetFormFromFile(0x0201eaf2,"vMYC_MeetYourCharacters.esp") as Quest
@@ -480,14 +490,28 @@ Function UpdateConfig()
 	Debug.Trace("MYC: Updated configuration values, some scripts may update in the background!")
 EndFunction
 
-String Function GetVersionString(Float fVersion)
-	Int Major = Math.Floor(fVersion) as Int
-	Int Minor = ((fVersion - (Major as Float)) * 100.0) as Int
-	If Minor < 10
-		Return Major + ".0" + Minor
-	Else
-		Return Major + "." + Minor
+Int Function GetVersionInt(Int iMajor, Int iMinor, Int iPatch)
+	Return Math.LeftShift(iMajor,16) + Math.LeftShift(iMinor,8) + iPatch
+EndFunction
+
+String Function GetVersionString(Int iVersion)
+	Int iMajor = Math.RightShift(iVersion,16)
+	Int iMinor = Math.LogicalAnd(Math.RightShift(iVersion,8),0xff)
+	Int iPatch = Math.LogicalAnd(iVersion,0xff)
+	String sMajorZero
+	String sMinorZero
+	String sPatchZero
+	If !iMajor
+		sMajorZero = "0"
 	EndIf
+	If !iMinor
+		sMinorZero = "0"
+	EndIf
+	;If !iPatch
+		;sPatchZero = "0"
+	;EndIf
+	Debug.Trace("MYC: Got version " + iVersion + ", returning " + sMajorZero + iMajor + "." + sMinorZero + iMinor + "." + sPatchZero + iPatch)
+	Return sMajorZero + iMajor + "." + sMinorZero + iMinor + "." + sPatchZero + iPatch
 EndFunction
 
 Function CheckForExtras()
