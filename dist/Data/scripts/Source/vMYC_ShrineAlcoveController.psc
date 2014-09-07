@@ -698,14 +698,14 @@ Bool Function ValidateAlcove()
 		EndIf
 		If _iRepeatFailureCount > 60
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed repeatedly with: " + ValidationState + "! Notify the player.")
-			Debug.Notification("Alcove " + _iAlcoveIndex + " appears to be stuck. You can reset it from the MCM panel.")
+			Debug.Notification("Alcove " + (_iAlcoveIndex + 1) + " appears to be stuck. You can reset it from the MCM panel.")
 			;A stuck alcove may mean duplicate actorbases. 
 			CharacterManager.SanityCheckActors()		
 			_iRepeatFailureCount = 0
 			;ResetAlcove()
 		ElseIf _fValidationTime > 120
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation has been stuck for over 2 minutes. Last ValidationState was " + ValidationState + " Notify the player.")
-			Debug.Notification("Alcove " + _iAlcoveIndex + " has been busy for a long time. You can reset it from the MCM panel.")
+			Debug.Notification("Alcove " + (_iAlcoveIndex + 1) + " has been busy for a long time. You can reset it from the MCM panel.")
 			;A stuck alcove may mean duplicate actorbases. 
 			CharacterManager.SanityCheckActors()
 			_fValidationTime -= 60
