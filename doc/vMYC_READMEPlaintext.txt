@@ -1,5 +1,7 @@
 Familiar Faces 1.1.1
 
+Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the only way to do it!
+
 1.1 has been released!
 
 
@@ -141,6 +143,17 @@ Miscellaneous
 
     Frozen giant versions of your characters should no longer appear at your wedding, though other imported characters may.
     FF's startup is now deferred until MQ101 (Unbound) is completed. This can be overridden with ```set vMYC_WaitForMQ to 0```
+
+
+
+Fixes in 1.1.1
+
+    Fixed wrong JContainers version in compatibility check error message.
+    Fixed repeated error messages from EFF compatibility module. Thanks to drakan_csn for testing this out before the release!
+
+Fixes in 1.1.2
+
+    Fixed characters sometimes not being recruitable after being summoned.
 
 
 
@@ -463,4 +476,3 @@ Older changelog
     Fixed "Character Tracking" option not working in MCM.
     Fixed VoiceTypes being reset after a save/load.
     Removed a ton of debug messages that were spamming the Papyrus file.[*]Fixed a potential (but unlikely) CTD that could occur while applying perks or shouts.
-

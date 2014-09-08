@@ -118,9 +118,12 @@ Tons. The following list is not exhaustive. Pretty much every part of the mod go
 
 [center][b][size=5]Fixes in 1.1.1[/size][/b][/center]
 [list][*] Fixed wrong JContainers version in compatibility check error message. [/*]
-[*] Fixed repeated error messages from EFF compatibility module. [/*]
+[*] Fixed repeated error messages from EFF compatibility module. Thanks to drakan_csn for testing this out before the release![/*]
 [/list]
 
+[center][b][size=5]Fixes in 1.1.2[/size][/b][/center]
+[list][*] Fixed characters sometimes not being recruitable after being summoned. [/*]
+[/list]
 
 [center][b][size=5]What Familiar Faces does[/size][/b][/center]
  
