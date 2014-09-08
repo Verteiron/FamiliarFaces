@@ -286,30 +286,30 @@ EndFunction
 Function CheckCompatibilityModules(Bool abReset = False)
 	If !CheckCompatibilityModule_EFF(abReset)
 		Debug.Trace("MYC: Compatibility module check for EFF failed!",1)
-		If !_bShowedCompatibilityErrorEFF
-			_bShowedCompatibilityErrorEFF = True
+		If !GetConfigBool("Compat_EFF_ShowedError")
+			SetConfigBool("Compat_EFF_ShowedError",True)
 			Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
 		EndIf
 	Else
-		_bShowedCompatibilityErrorEFF = False
+		SetConfigBool("Compat_EFF_ShowedError",False)
 	EndIf
 	If !CheckCompatibilityModule_AFT(abReset)
-		Debug.Trace("MYC: Compatibility module check for EFF failed!",1)
-		If !_bShowedCompatibilityErrorAFT
-			_bShowedCompatibilityErrorAFT = True
+		Debug.Trace("MYC: Compatibility module check for AFT failed!",1)
+		If !GetConfigBool("Compat_AFT_ShowedError")
+			SetConfigBool("Compat_AFT_ShowedError",True)
 			Debug.MessageBox("Familiar Faces\nThere was an error with the AFT compatibility module. Check the Papyrus log for more details.")
 		EndIf
 	Else
-		_bShowedCompatibilityErrorAFT = False
+		SetConfigBool("Compat_AFT_ShowedError",False)
 	EndIf
 	If !CheckCompatibilityModule_SkyRE(abReset)
 		Debug.Trace("MYC: Compatibility module check for SkyRE failed!",1)
-		If !_bShowedCompatibilityErrorSkyRE
-			_bShowedCompatibilityErrorSkyRE = True
+		If !GetConfigBool("Compat_SkyRE_ShowedError")
+			SetConfigBool("Compat_SkyRE_ShowedError",True)
 			Debug.MessageBox("Familiar Faces\nThere was an error with the SkyRE compatibility module. Check the Papyrus log for more details.")
 		EndIf
 	Else
-		_bShowedCompatibilityErrorSkyRE = False
+		SetConfigBool("Compat_SkyRE_ShowedError",False)
 	EndIf
 EndFunction
 
