@@ -34,6 +34,7 @@ vMYC_HangoutManager Property HangoutManager Auto
 
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
+GlobalVariable Property vMYC_WaitForMQ Auto
 
 ;--=== Variables ===--
 
@@ -56,7 +57,7 @@ Int _iUpkeepsCompleted
 ;--=== Events ===--
 
 Event OnInit()
-	If ModVersion == 0 && !ModVersionMajor
+	If IsRunning() && ModVersion == 0 && !ModVersionMajor
 		DoUpkeep(True)
 	EndIf
 EndEvent
@@ -94,11 +95,6 @@ EndEvent
 ;--=== Functions ===--
 
 Function DoUpkeep(Bool DelayedStart = True)
-	If !CheckDependencies()
-		DoShutdown()
-		Return
-	EndIf
-	SyncConfig()
 	_iUpkeepsExpected = 0
 	_iUpkeepsCompleted = 0
 	;FIXME: CHANGE THIS WHEN UPDATING!
@@ -115,8 +111,19 @@ Function DoUpkeep(Bool DelayedStart = True)
 	RegisterForModEvent("vMYC_Shutdown","OnShutdown")
 	Ready = False
 	If DelayedStart
-		Wait(RandomFloat(2,4))
+		Wait(RandomFloat(3,5))
 	EndIf
+	Quest MQ101 = Quest.GetQuest("MQ101")
+	While vMYC_WaitForMQ.GetValue() > 0 && MQ101.IsRunning() && MQ101.GetCurrentStageID() < 900
+		WaitMenuMode(10)
+	EndWhile
+	
+	If !CheckDependencies()
+		DoShutdown()
+		Return
+	EndIf
+	
+	SyncConfig()
 	String sErrorMessage
 	SendModEvent("vMYC_UpkeepBegin")
 	Debug.Trace("MYC: " + ModName)
