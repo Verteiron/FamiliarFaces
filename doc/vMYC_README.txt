@@ -4,9 +4,9 @@
 
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the [i]only[/i] way to do it!
 
-[center][b][size=6]1.1.0 has been released![/size][/b][/center]
+[center][b][size=6]1.1 has been released![/size][/b][/center]
 
-[size=5][color=red]Version 1.1.0 requires [url=http://www.nexusmods.com/skyrim/mods/49743]JContainers 3.1.0 or higher[/url]! Install it BEFORE upgrading, or you will risk losing character data![/color][/size]
+[size=5][color=red]Version 1.1 requires [url=http://www.nexusmods.com/skyrim/mods/49743]JContainers 3.1.0 or higher[/url]! Install it BEFORE upgrading, or you will risk losing character data![/color][/size]
 
 
 [center][b][size=4]Upgrading from 1.0.x[/size][/b][/center]
@@ -115,6 +115,12 @@ Tons. The following list is not exhaustive. Pretty much every part of the mod go
 [list][*] Frozen giant versions of your characters should no longer appear at your wedding, though other imported characters may. [/*]
 [*] FF's startup is now deferred until MQ101 (Unbound) is completed. This can be overridden with ```set vMYC_WaitForMQ to 0```[/*]
 [/list]
+
+[center][b][size=5]Fixes in 1.1.1[/size][/b][/center]
+[list][*] Fixed wrong JContainers version in compatibility check error message. [/*]
+[*] Fixed repeated error messages from EFF compatibility module. [/*]
+[/list]
+
 
 [center][b][size=5]What Familiar Faces does[/size][/b][/center]
  

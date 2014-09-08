@@ -1,9 +1,9 @@
-Familiar Faces
+Familiar Faces 1.1.1
 
-1.1.0 has been released!
+1.1 has been released!
 
 
-Version 1.1.0 requires JContainers 3.1.0 or higher! Install it BEFORE upgrading, or you will risk losing character data!
+Version 1.1 requires JContainers 3.1.0 or higher! Install it BEFORE upgrading, or you will risk losing character data!
 
 
 Upgrading from 1.0.x
