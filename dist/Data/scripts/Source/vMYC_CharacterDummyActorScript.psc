@@ -237,11 +237,13 @@ Event OnUpdate()
 			CheckArmor()
 		EndIf
 		If GetRelationshipRank(PlayerREF) == 0
+			;Debug.Trace("MYC/Actor/" + CharacterName + ": Setting factions!")
 			SetFactions()
 		EndIf
 	Else
 		;Set relationshiprank to 0 while in the Shrine, so giant disabled NPCs don't show at your wedding
 		If GetRelationshipRank(PlayerREF) > 0
+			;Debug.Trace("MYC/Actor/" + CharacterName + ": Setting relationshiprank to 0")
 			SetRelationshipRank(PlayerREF,0)
 		EndIf
 	EndIf
@@ -821,7 +823,7 @@ Function SetFactions()
 		SetRelationshipRank(PlayerREF,-4)
 	Else
 		;Debug.Trace("MYC/Actor/" + CharacterName + ": Likes the player!")
-		If GetFactionRank(PotentialFollowerFaction) <= -2
+		If GetFactionRank(PotentialFollowerFaction) <= -2 || GetRelationshipRank(PlayerREF) == 0
 			RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
 			SetFactionRank(PotentialFollowerFaction,0)
 			SetFactionRank(CurrentFollowerFaction,-1)
