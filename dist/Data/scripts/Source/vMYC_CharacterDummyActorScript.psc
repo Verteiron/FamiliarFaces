@@ -231,10 +231,18 @@ Event OnUpdate()
 		CharacterManager.PopulateInventory(CharacterName)
 		_bNeedInventory = False
 	EndIf
-	If CharacterManager.GetLocalInt(CharacterName,"IsSummoned") == 1
+	If bIsSummoned
 		If CharacterManager.GetLocalInt(CharacterName,"ArmorCheck") == 1
 			;ArmorCheck is set to "Always", check more frequently!
 			CheckArmor()
+		EndIf
+		If GetRelationshipRank(PlayerREF) == 0
+			SetFactions()
+		EndIf
+	Else
+		;Set relationshiprank to 0 while in the Shrine, so giant disabled NPCs don't show at your wedding
+		If GetRelationshipRank(PlayerREF) > 0
+			SetRelationshipRank(PlayerREF,0)
 		EndIf
 	EndIf
 
