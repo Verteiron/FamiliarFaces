@@ -228,6 +228,7 @@ Idle			Property	CombatIdleStretching		Auto
 ImageSpaceModifier	Property	vMYC_ShrineLightISMD			Auto
 ImageSpaceModifier	Property	vMYC_ShrineLightWhiteoutISMD	Auto
 
+Message 		Property 	vMYC_ShrineInterruptSaveProcessMenu	Auto
 
 SoundCategory	Property	AudioCategorySFX			Auto
 
@@ -1056,9 +1057,6 @@ Function DoSaveAnimation()
 	;Save the player
 	_Book.FlipPages = True
 	CharacterManager.SaveCurrentPlayer(bForceSave = True)
-	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
-		Wait(0.5)
-	EndWhile
 	_bForceSave = False
 	vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
 	Wait(1.0)

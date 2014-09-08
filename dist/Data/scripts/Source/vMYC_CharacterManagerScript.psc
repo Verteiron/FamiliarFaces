@@ -216,7 +216,7 @@ Message Property vMYC_ReqMissingNagMSG Auto
 Message Property vMYC_ReqMissingCharMinorMSG Auto
 Message Property vMYC_ReqMissingCharWarningMSG Auto
 Message Property vMYC_ReqMissingCharCriticalMSG Auto
-
+Message Property vMYC_ShrineInterruptSaveProcessMenu Auto
 
 ;--=== Config variables ===--
 
@@ -2836,11 +2836,19 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	;	Debug.MessageBox("No CharGen, MAN!")
 	;EndIf
 
-
-	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
-		Wait(0.5)
+	Float fStartTime = GetCurrentRealTime()
+	Bool bBreakSaveAnimation = False
+	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) && !bBreakSaveAnimation
+		Float fSaveDuration = GetCurrentRealtime() - fStartTime
+		;Debug.Trace("MYC/CM: Save duration is " + fSaveDuration)
+		If (fSaveDuration as Int) % 30 == 0 && fSaveDuration > 40
+			Int iInterrupt = vMYC_ShrineInterruptSaveProcessMenu.Show()
+			If iInterrupt
+				bBreakSaveAnimation = True
+			EndIf
+		EndIf
+		WaitMenuMode(0.5)
 	EndWhile
-
 	;JValue.WriteToFile(jPlayerData,"Data/vMYC/" + sPlayerName + ".char.json")
 	JValue.WriteToFile(jPlayerData,JContainers.userDirectory() + "vMYC/" + sPlayerName + ".char.json")
 	Debug.Notification("Exported character data!")
