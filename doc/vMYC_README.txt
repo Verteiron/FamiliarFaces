@@ -1,27 +1,134 @@
 [img]http://i.imgur.com/qSeywkt.png[/img]
 
-[center]Special thanks to Brodual for getting this video done on a short deadline!
-
-[youtube]5nE6BEAPG4A[/youtube]
+[center][youtube]5nE6BEAPG4A[/youtube][youtube]sYXx6NM4E5g[/youtube]
 [/center]
 
-[b][size=4]1.0.5[/size][/b]
-[LIST]
-[*]Shouts can now be disabled for a character via MCM.[/*]
-[/LIST]
-
-[b][size=4]1.0.4[/size][/b]
-[LIST]
-[*]Race, Armor, Weapon, Perk, and Spell dependencies are now written to the character save file. Files without dependency info will be automatically upgraded to include it the next time they are loaded. Dependency data is not yet read but this will support future features.[/*]
-[*]Perks will now be loaded even if some are missing due to missing dependencies.[/*]
-[*]A missing Race (for example because of missing plugins/mods) will now no longer hang the character loading process. Characters with an invalid Race will be set up as Nords, but will be updated to the correct Race if the required mods are later installed.[/*]
-[*]If a Hangout is use, you will now receive a message telling you who is using it. Hangouts will receive an overhaul in the first feature release.[/*]
-[*]NINode scale sizes are now saved with the character file. This allows for saving and loading of RaceMenu's extra sliders for things like Biceps. All NINodes provided by the vanilla skeletons and XPMS are checked. You must resave your characters for this to take effect.[/*]
-[*]In combination with RaceMenu 2.8.3, experimental support for ECE. See the section under Compatibility below.[/*]
-[/LIST]
-
-
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the [i]only[/i] way to do it!
+
+[b][size=6]1.1.0 has been released![/size][/b]
+
+[size=5][color=red]Version 1.1.0 requires [url=http://www.nexusmods.com/skyrim/mods/49743]JContainers 3.1.0 or higher[/url]! Install it BEFORE upgrading, or you will risk losing character data![/color][/size]
+
+
+[b][size=4]Upgrading from 1.0.x[/size][/b]
+
+Make [b]absolutely certain[/b] you have installed [url=http://www.nexusmods.com/skyrim/mods/49743]JContainers 3.1.0 or higher[/url]. You'll also want to have [url=http://www.nexusmods.com/skyrim/mods/29624/?]RaceMenu 2.9.1[/url] or higher. Just install the new Familiar Faces on top of the current one (if you're using Mod Organizer, it should be safe to use "Merge" instead of "Replace"). The first time you load a game that was saved with 1.0.x installed, your Shrine will shut down and restart. This may take up to a minute if you have 12 characters loaded. Characters you have with you [i]may[/i] disappear. If this happens, you can bring them back by visiting the Shrine or using the Shrine page of MCM to re-summon them. Their old custom location may be lost, as well, so be sure to assign them a Hangout! Once JContainers has been upgraded you MUST upgrade FF, as the older version will not work with the new version of JContainers. 
+
+
+[b][size=5]New features in 1.1.0[/size][/b]
+
+[b]Hangout Manager[/b]
+This replaces the old, half-finished custom Location with a customizable Hangout system for controlling where your characters live when they're imported. 
+[LIST]
+[*] A character will have the location where they used the Portal Stone saved in their character file, and will appear there by default when imported to another game. [/*]
+[*] All imported Hangouts are viewable via MCM. Any character may be assigned to any Hangout, and in most cases multiple characters may be assigned to a single Hangout. In other words, those of you wanting to build an army of Blades or Companions or Wizards will now be able to do so. [/*]
+[*] Additional custom Hangouts may be created by simply traveling to the location and using the Portal stone a second time. You will have the option to add the current location as a Hangout.[/*]
+[*] Characters may also be set to wander from town to town, rather than living in a single place.[/*]
+[*] Your Hangouts are stored in their own file and are persistent throughout all your saved games. [/*]
+[/LIST]
+
+[b]Better NPC behavior[/b]
+Characters will now use IdleMarkers (wall-leaning, etc) and exhibit more appropriate behavior based on where their Hangout is.
+[LIST]
+[*] [b]Towns or cities[/b] The character will wander from shop to shop, visit people in open houses, visit an Inn or Temple if there is one, and sleep if they can find a free bed.[/*]
+[*] [b]Guild homes[/b] Characters assigned to Hangouts in or near Guild locations will behave for the most part like members of that Guild's faction, eating and sleeping there if there are available places for them. Note that they will attempt to do this even if the Guild is not open or friendly to you in your current playthrough.[/*]
+[*] [b]Dungeons[/b] Characters that are friendly to you will wait just inside the entrance of Dungeon Hangouts. They may also try to enter deeper into the Dungeon if they were originally saved there, but they will not proceed if the way is blocked by doors they can't open or unlock, such as Puzzle or Dragon Claw Doors. [/*]
+[*] [b]Wanderers[/b] Instead of living in a single place, a character can be set to wander from city to city. Characters summoned to the world without a Hangout assigned to them will do this by default.[/*]
+[*] [b]Preset locations[/b] Some preset Hangouts have customized AI packages that will give the imported character extra behaviors suited to that location. For example, a character imported to the Winterhold College will spend some time practicing magic in the Hall of Elements, or reading in the Arcaneum. These custom behaviors will only apply to the first character assigned to a preset Hangout, though; additional characters will use the more general AI packages described above. As these are quite time-consuming to create, there are not many of them.[/*]
+[/LIST]
+
+[b][size=3]Armor dyes[/size][/b]
+[LIST]
+[*] Dyeable armor from the newest versions of RaceMenu/NIOverride is now fully supported. RaceMenu 2.9.1 or higher is required for this![/*]
+[/LIST]
+
+[b][size=3]Character features[/size][/b]
+[LIST]
+[*] Auto-leveling may now be disabled. This allows your character to retain the exact same stats they were saved with, regardless of your level. [/*]
+[*] It is now possible to recruit yourself. To do this, simply check the "Summon" box next to your character's name on the Shrine page of the MCM.[/*]
+[*] You may now enforce the character's original armor, so that they will never equip any other gear than what they were saved with, or have them use their original gear to fill in any missing slots in their current setup.[/*]
+[/LIST]
+
+[b][size=3]Spells[/size][/b]
+[LIST]
+[*] ALL Spells are now saved with the character data. Spell filtering is now done at the time of loading. [/*]
+[*] A global option may be set to always allow characters to use self-healing and armor spells, if they know them, regardless of whether they are allowed to use other magic.[/*]
+[*] There are now MCM options to load Spells provided by mods. "Select mods" will load certain mods with preset compatibility, or use spells explicitly listed as compatible by the mod's author (see Spell Compatibility section below). "All mods" will attempt to load all spells a character had when they were saved. This option is NOT recommended for general use, as many mod-provided spells are utilities or quest-related abilities that are designed for the player alone to use.[/*]
+[/LIST]
+
+[b][size=3]Shouts[/size][/b]
+[LIST]
+[*] Global option has been added to automatically disable Shouts when your characters are in a town. This really helps with keeping the guards out of your hair.[/*]
+[*] You may now restrict your characters to only using Shouts your own character has unlocked.[/*]
+[*] The "Call Storm" and "Dragon Aspect" shouts may now be permanently disabled for all imported characters.[/*]
+[/LIST]
+
+[b][size=3]MCM[/size][/b]
+[LIST]
+[*] A report of what mods are required to properly recreate a character can be viewed from that character's MCM page.[/*]
+[*] Shrine of Heroes page now allows you to summon your character from the Shrine without actually visiting it. This can also be used to summon your own character as a doppelgänger, a much-demanded feature![/*]
+[*] Shrine of Heroes page can now be used to reset individual Alcoves by scrolling to the bottom of the character list. This can be used to clear a locked-up Alcove.[/*]
+[*] Tracking can now be switch on or off for all characters at once.[/*]
+[*] Added Hangouts, Global Options and Debug pages to the MCM. [/*]
+[/LIST]
+
+[b][size=3]Miscellaneous[/size][/b]
+[LIST]
+[*] Config, Shrine and Hangout files are now stored in the My Games/Skyrim folder rather than in Data/vMYC.[/*]
+[*] Faster initial loading of character files.[/*]
+[*] Spells, Perks, Shouts, and non-equipped gear are now deferred until after the character is actually summoned into the world. This greatly reduces the initial load time and reduces appearance problems in the Shrine.[/*]
+[*] Character files now include a list of the mods required for their appearance and armor to be recreated correctly. Any missing mods will be shown in the character's MCM panel. If the required mods are installed later, the character's appearance will be updated.[/*]
+[*] The mod now checks for write access to the Data/vMYC folder before attempting to start up.[/*]
+[*] Notify player if a character's .slot, .dds or .nif (if using external heads) is missing and will optionally auto-delete the character.[/*]
+[*] Character tracking should now be auto-disabled when they are recruited as a follower. [/*]
+[*] Reduced duration of the character glow in the Shrine to bring it more in line with trophies.[/*]
+[/LIST]
+
+[b][size=3]Compatibility[/size][/b]
+[LIST]
+[*] FF should now work better with AFT. [b]Note: This is accomplished by disabling nearly all of the stat, spell, and perk assignments provided by Familiar Faces in lieu of AFT's handling of these options. AFT *must* be used to manage these if it is installed![/b][/*]
+[*] FF now works with the latest beta of EFF and should update the names in the UI panels much more quickly.[/*]
+[*] Mods that add spells to the game may now tell FF whether they're safe to load on imported NPCs. See "Spell Compatibility Lists" below.[/*]
+[/LIST]
+
+[b][size=5]Fixes in 1.1.0[/size][/b]
+
+Tons. The following list is not exhaustive. Pretty much every part of the mod got at least some revisions, and several modules were completely rewritten.
+
+[b][size=3]Character Manager[/size][/b]
+[LIST]
+[*] Fixed various threading-related issues during the initial startup and loading of characters. This should both speed up the initial load and prevent odd problems like multiple characters' data being assigned to a single actor.[/*]
+[*] Characters now dismount before applying their appearance, which should prevent physics bugs.[/*]
+[*] When a Character's actor is deleted or otherwise unloaded, their corresponding FaceGen DDS and NIFs are deleted as well. This is needed when using Racemenu's External Head/ECE support.[/*]
+[*] Fixed actors sometimes showing up naked.[/*]
+[/LIST]
+
+[b][size=3]Shrine of Heroes[/size][/b]
+[LIST]
+[*] Complete rewrite of the Shrine/Alcove code. New system is much faster, more stable, much more difficult to get into an invalid configuration, and attempts to self-correct if it does. [/*]
+[*] Deleting the Shrine file now correctly empties out all Alcoves on the next load and resets the Shrine to its default state.[/*]
+[*] Validation is now done for things like the lighting state, the book's open/closed state, etc.[/*]
+[*] An Alcove that gets stuck in an invalid state for a long time will generate a warning message, so it can be cleared via MCM if necessary. *Note:* Individual Alcoves can be reset without resetting the entire Shrine! To do this, go to the Shrine MCM page, scroll to the bottom of the character list for the Alcove that is malfunctioning, and choose [b]"* RESET *"[/b]. Exit the MCM and wait for the Alcove to clear, then you may assign it as usual.[/*]
+[*] Portal Stone is now given to the character only once the initial character loading process is complete. This may take as long as two minutes for the first load.[/*]
+[*] Alcoves that are emptied via MCM now banish their characters to limbo, where the character's Actor will be deleted after 15 seconds of being unclaimed.[/*]
+[*] Alcoves that are erased using "Destroy the book" now delete their Actors and corresponding FormID-based DDS and NIFs immediately.[/*]
+[*] Characters with an invalid Race (due to missing mods) no longer hang the load process.[/*]
+[*] Fixed book names not always showing up after saving.[/*]
+[*] Added an option to break out of the Save process after 60 seconds, and every 30 seconds thereafter, just in case the Save hangs (which should never happen, of course!)[/*]
+[/LIST]
+
+[b][size=3]MCM[/size][/b]
+[LIST]
+[*] Fixed "Gopher's Bug", where making a Follower into a Foe would break their Follower AI permanently. Current Followers now cannot be made into foes ;)[/*]
+[*] Fixed numerous instances of options not being updated or disabled correctly.[/*]
+[*] Most options now apply only after MCM is closed, rather than immediately. This should fix the problem with MCM locking up from time to time.[/*]
+[/LIST]
+
+[b][size=3]Miscellaneous[/size][/b]
+[LIST]
+[*] Frozen giant versions of your characters should no longer appear at your wedding, though other imported characters may. [/*]
+[*] FF's startup is now deferred until MQ101 (Unbound) is completed. This can be overridden with ```set vMYC_WaitForMQ to 0```[/*]
+[/LIST]
 
 [b][size=5]What Familiar Faces does[/size][/b]
  
@@ -54,9 +161,9 @@ Familiar Faces allows you to create persistent copies of your character that exi
 [LIST]
 [*]Latest version of Skyrim - Dawnguard and Dragonborn are supported but not required.[/*]
 [*][url=http://skse.silverlock.org/]SKSE 1.7.0[/url] - Not included. Download and install if you're not using it already. Earlier versions WILL NOT WORK. The mod will notice if SKSE is missing and will shut down.[/*]
+[*][url=http://www.nexusmods.com/skyrim/mods/49743]JContainers 3.1 or higher[/url] - Required![/*]
 [*][url=http://www.nexusmods.com/skyrim/mods/3863/?]SkyUI 4.1 or higher[/url] - Required for MCM.[/*]
-[*][url=http://www.nexusmods.com/skyrim/mods/49743]JContainers 0.67.3 or higher[/url] - This is an SKSE plugin that is packaged with this testing edition.[/*]
-[*][url=http://www.nexusmods.com/skyrim/mods/29624/?]RaceMenu 2.7.2[/url] - More specifically, the chargen.dll SKSE plugin distributed with that version. RaceMenu itself does not have to be installed, just the chargen.dll SKSE plugin. You should use RaceMenu, though.[/*]
+[*][url=http://www.nexusmods.com/skyrim/mods/29624/?]RaceMenu 2.9.1[/url] - Just install RaceMenu. Don't much around trying to extract chargen.dll.[/*]
 [/LIST]
  
  
@@ -83,12 +190,12 @@ This list is not exhaustive. Generally, if a mod doesn't affect a character's lo
 [/LIST]
 [b]Works with caveats[/b]
 [LIST]
-[*][color=red]NEW[/color]: Enhanced Character Edit now has experimental support, thanks to some wizardry by Expired[/b]. This requires RaceMenu 2.8.3 or higher be installed along with ECE. If ECE is found in the current load order, the character's head mesh will be written to a NIF located in Meshes/CharGen/Exported/. If a NIF is found for a character at load time, LoadExternalCharacter will be used to apply it to the actor's appearance. This will copy the NIF to This file will be copied to Meshes/Actors/Character/FaceGenData/FaceGeom/vMYC_MeetYourCharacters.esp/. It may be necessary to quicksave/quickload before the head appearance will update.[/*]
-[*][color=red]NEW[/color]: Dual Sheath Redux seems to work okay but the sheathed sword object glitches out on saved characters. This looks fixable, though, so hopefully I can take care of it soon.[/*]
-[*][color=red]UPDATED[/color]: Custom races work fine, [b]but the race mod and skeleton mod they require must be installed on the loading game[/b]. That is, Races built on XPMS require XPMS be installed, etc. Ningheim have been tested as working, as have Drakian and several others. If you use or are the author of a popular custom race mod, PM me or create an issue over on the [url=https://github.com/Verteiron/FamiliarFaces/issues]Github[/url] page to let me know if your race is not working properly under these circumstances.[/*]
-[*][color=red]UPDATED[/color]: Perks provided by overhaul mods such as SkyRE should be imported with all attributes intact, but may not function as originally intended. I have mixed compatibility reports regarding SkyRE, with some people saying it causes majors problems when entering the Shrine and others saying it works fine. Use Familiar Faces and SkyRE together at your own risk![/*]
+[*] Enhanced Character Edit now has experimental support, thanks to some wizardry by Expired[/b]. This requires RaceMenu 2.8.3 or higher be installed along with ECE. If ECE is found in the current load order, the character's head mesh will be written to a NIF located in Meshes/CharGen/Exported/. If a NIF is found for a character at load time, LoadExternalCharacter will be used to apply it to the actor's appearance. This will copy the NIF to This file will be copied to Meshes/Actors/Character/FaceGenData/FaceGeom/vMYC_MeetYourCharacters.esp/. It may be necessary to quicksave/quickload before the head appearance will update.[/*]
+[*] Dual Sheath Redux seems to work okay but the sheathed sword object glitches out on saved characters. This looks fixable, though, so hopefully I can take care of it soon.[/*]
+[*] Custom races work fine, [b]but the race mod and skeleton mod they require must be installed on the loading game[/b]. That is, Races built on XPMS require XPMS be installed, etc. Ningheim have been tested as working, as have Drakian and several others. If you use or are the author of a popular custom race mod, PM me or create an issue over on the [url=https://github.com/Verteiron/FamiliarFaces/issues]Github[/url] page to let me know if your race is not working properly under these circumstances.[/*]
+[*] Perks provided by overhaul mods such as SkyRE should be imported with all attributes intact, but may not function as originally intended. SkyRE perks that don't affect combat are now excluded, but compatibility is still likely to be sketchy. Working on this. Use Familiar Faces and SkyRE together at your own risk![/*]
 [*]Face replacer mods should work as long as they are compatible with RaceMenu, but characters will probably not load properly if the face-altering mod is removed. Horrific monstrosities may result.[/*]
-[*]AFT seems to be causing problems for some people when it comes to selecting VoiceTypes for characters, as well as clobbering Perk lists and Spells. This will be addressed at some point, AFT compatibility is a goal for 1.1.0.[/*]
+[*]AFT compatibility has been greatly improved, but most FF character management functions will be disabled if AFT is detected.[/*]
 [*]HDT body mods [i]should[/i] work but have not been tested.[/*]
 [/LIST]
 [b]Known to NOT work[/b]
@@ -109,16 +216,17 @@ Familiar Faces works with Mod Organizer, but files that get created during gamep
 
 [b]Make sure all followers provided by Familiar Faces are dismissed from your service before removing the mod.[/b]
 
-If you plan to reinstall the mod, leave the Data/vMYC directory intact or at least back it up. It contains all the saved character data. Otherwise...
+If you plan to reinstall the mod, leave the My Games/Skyrim/JCUser/vMYC folder intact or at least back it up. It contains all the saved character data. Otherwise...
+
+If you are going to remove the mod for good, use the "Shutdown" option on the Debug page of the MCM, then save your game, quit, and follow the rest of the instructions.
 
 If you used NMM to install, uninstallation will work but may leave files behind in Data/vYMC. If you used MO, files may remain in your overwrite directory in the same location.
 
 Search for and remove ALL files and folders in Skyrim/Data that begin with "vMYC". The only other files remaining after that will be ffutils.*, which can also be searched for and removed.
 
+
 [size=5][b]Getting started[/b][/size]
 
-[color=red]WARNING! Do not use the portal stone while you are inside the shrine! You'll end up stuck there and unable to return to your previous location! If you've already done this, use [i]cow tamriel 2 0[/i] at the console to return to Tamriel. This will be fixed in a patch release in the very near future![/color]
- 
 Shortly after starting or loading a game, you should receive a Portal Stone in your inventory. You can use that stone from your Inventory (under misc items, where you find your dragon bones and other miscellaneous stuff) to warp to the Shrine of Heroes. Activate the "Tome of the Dragonborn" in front of an empty alcove to save your character there. The save process will take some time; exactly how long depends on how many skills, perks, and inventory items your character has. It should never take longer than a minute of real time and should rarely take longer than 30 seconds unless you have a huge number of inventory items.
 
 Once your character has been saved in an alcove, a statue of them will appear, possibly surrounded by various trophies and banners. These reflect your progress and which paths you chose in your adventures through Skyrim. An index of the available trophies can be found [url=http://imgur.com/a/iCqYZ]here[/url].
@@ -158,18 +266,16 @@ The following are not bugs (or are unavoidable) and should not be reported:
 [*]Saved characters will quickly vanish and reappear after you load your game. Prior to disappearing they may be headless or have distorted faces. This is not normal, but on Familiar Faces it is.[/*]
 [*]Some characters in the shrines may be in mannequin poses, others may not. This is due to how Skyrim handles loading models and can't be avoided easily.[/*]
 [*]The Portal Stone may take nearly a minute to appear in your inventory. This is normal and will vary based on how many characters you have saved in the Shrine.[/*]
-[*]If your character is a Vampire/Vampire Lord, they may suffer from the gray-face bug. This is an issue with Dawnguard vampires and probably can't be fixed without making the mod dependent on Dawnguard.esm. If I can find no other way to fix this I will release a Dawnguard-dependent version.[/*]
 [/LIST]
 
 [b][size=5]FAQ[/size][/b]
 [LIST]
-[*][b]Q: I'm getting a warning about SKSE/JContainers/CharGen![/b] [/*]
-[*][b]A: [/b]You're missing some dependencies. See the requirements list up above and make sure you have the newest versions of each one installed. You can also try using the "plus Deps" version on the download page, but this is intended ONLY for people who are not already using RaceMenu. To keep everything running smoothly, install all the required mods separately.[/*]
+[*][b]Q: The mod is not starting up/I'm not getting the Portal Stone![/b] [/*]
+[*][b]A: [/b]FF's startup is now deferred until MQ101 (Unbound) is completed. This can be overridden by typing ```set vMYC_WaitForMQ to 0``` in the console and waiting about 10 seconds. If this doesn't get things moving, try saving and reloading.[/*]
 [/LIST]
 [LIST]
-[*][b]Q: SKSE 1.7 is labeled Alpha, is it safe? Is it compatible with my other mods? Why is it required? [/b][/*]
-[*]A: Yes. This mod was developed entirely using 1.7, and uses a huge amount of SKSE calls. SKSE 1.7 is already very widely adopted and heavily used. It is entirely backward-compatible with 1.6: If you have mods that require 1.6, they will work with 1.7.  As for why, the simplest answer is that it provides the features that make Familiar Faces possible. Without 1.7 this mod would not exist.
- [/*]
+[*][b]Q: I'm getting a warning about SKSE/JContainers/Racemenu![/b] [/*]
+[*][b]A: [/b]You're missing some dependencies. See the requirements list up above and make sure you have the newest versions of each one installed. To keep everything running smoothly, install all the required mods separately.[/*]
 [/LIST]
 [LIST]
 [*][b]Q: Why isn't the stone appearing in my inventory? [/b][/*]
@@ -201,7 +307,7 @@ Note that this basically papering over the problem rather than actually fixing i
 [/LIST]
 [LIST]
 [*][b]Q: Can I get my character files out and send them to people?[/b][/*]
-[*]A: You can! The character file will be named after your character and be located in Skyrim/Data/vMYC. You will also need the RaceMenu slot file, located in Skyrim/Data/SKSE/Plugins/Chargen/Exported, and the texture, located in Skyrim/Data/Textures/CharGen/Exported. Copy these three files to another system in the same location, and your character will become available for selection in the Shrine of Heroes MCM page, as well importable by RaceMenu[/*]
+[*]A: You can! The character file will be named after your character and be located in Skyrim/Data/vMYC (1.0.x) or in My Games/Skyrim/JCUser/vMYC (1.1.0). You will also need the RaceMenu slot file, located in Skyrim/Data/SKSE/Plugins/Chargen/Exported, and the texture, located in Skyrim/Data/Textures/CharGen/Exported. Copy these three files to another system in the same location, and your character will become available for selection in the Shrine of Heroes MCM page, as well importable by RaceMenu[/*]
 [/LIST]
 [LIST]
 [*][b]Q: What is this trophy/banner/symbol in my character's alcove?[/b] [/*]
@@ -210,6 +316,15 @@ Note that this basically papering over the problem rather than actually fixing i
 [LIST]
 [*][b]Q: I'm getting a warning about SKSE/JContainers/CharGen![/b] [/*]
 [*][b]A: [/b]You're missing some dependencies. See the requirements list up above and make sure you have the newest versions of each one installed.[/*]
+[/LIST]
+
+[b][size=5]Spell Compatibility lists[/size][/b]
+If you're a mod author who would like to have FF load (or ignore) your mod's spells on imported characters, you may add your spells to the following Formlists:
+[LIST]
+[*] [b]vMYC_ModCompatibility_SpellList_Unsafe[/b] (0x02024c6c): Spells added to this list will *never* be loaded, even if the character knows them and "Allow all mods" is toggled on. This list overrides all the others.[/*]
+[*] [b]vMYC_ModCompatibility_SpellList_Safe[/b] (0x02024c6b): Spells added to this list will be loaded if the character knows them and "Allow select mods" or "Allow all mods" is toggled on.[/*]
+[*] [b]vMYC_ModCompatibility_SpellList_Healing[/b] (0x02024c6d): Only self-healing spells that can be safely used by NPCs should be added to this list. They will be loaded if the character knows them and "Always allow healing" is toggled on.[/*]
+[*] [b]vMYC_ModCompatibility_SpellList_Armor[/b] (0x02024c6e): Only self-targeted armor-boosting spells that can be safely used by NPCs should be added to this list. They will be loaded if the character knows them and "Always allow armor spells" is toggled on.[/*]
 [/LIST]
 
 
@@ -237,6 +352,21 @@ For making sure the mod actually ran on computers other than my own.
 
 
 [b][size=5]Older changelog[/size][/b]
+[b][size=4]1.0.5[/size][/b]
+[LIST]
+[*]Shouts can now be disabled for a character via MCM.[/*]
+[/LIST]
+
+[b][size=4]1.0.4[/size][/b]
+[LIST]
+[*]Race, Armor, Weapon, Perk, and Spell dependencies are now written to the character save file. Files without dependency info will be automatically upgraded to include it the next time they are loaded. Dependency data is not yet read but this will support future features.[/*]
+[*]Perks will now be loaded even if some are missing due to missing dependencies.[/*]
+[*]A missing Race (for example because of missing plugins/mods) will now no longer hang the character loading process. Characters with an invalid Race will be set up as Nords, but will be updated to the correct Race if the required mods are later installed.[/*]
+[*]If a Hangout is use, you will now receive a message telling you who is using it. Hangouts will receive an overhaul in the first feature release.[/*]
+[*]NINode scale sizes are now saved with the character file. This allows for saving and loading of RaceMenu's extra sliders for things like Biceps. All NINodes provided by the vanilla skeletons and XPMS are checked. You must resave your characters for this to take effect.[/*]
+[*]In combination with RaceMenu 2.8.3, experimental support for ECE. See the section under Compatibility below.[/*]
+[/LIST]
+
 [b][size=4]1.0.3[/size][/b]
 [LIST]
 [*]Character items, armor, and weapons will now be updated properly if their Shrine save is updated. This may cause them to flicker when loaded but should be fine otherwise. Items you have given your imported characters should remain with them unchanged.[/*]
@@ -262,7 +392,7 @@ For making sure the mod actually ran on computers other than my own.
 [b][size=4]1.0.1[/size][/b]
 [LIST]
 [*][color=red]Expired has updated [url=http://www.nexusmods.com/skyrim/mods/29624/?]RaceMenu[/url] to version 2.8.0. It is [b]very strongly recommended[/b] that you upgrade to 2.8.0 ASAP to ensure compatibility with Familiar Faces.[/color][/*]
-[*]Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is [i]very[/i] slow to load or you don't have the right version of RaceMenu/Chargen.dll installed.[/*]
+[*]Fixed issue that caused imported characters to get stuck as ElderRace if they took too long to load. If you are still getting this bug, either your system is [i]very[/i] slow to load or you don't have the right version of RaceMenu installed.[/*]
 [*]Fixed "Character Tracking" option not working in MCM.[/*]
 [*]Fixed VoiceTypes being reset after a save/load.[/*]
 [*]Removed a ton of debug messages that were spamming the Papyrus file.[/*]
