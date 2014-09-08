@@ -104,7 +104,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	;FIXME: CHANGE THIS WHEN UPDATING!
 	ModVersionMajor = 1
 	ModVersionMinor = 1
-	ModVersionPatch = 1
+	ModVersionPatch = 2
 	_iCurrentVersion = GetVersionInt(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	_sCurrentVersion = GetVersionString(_iCurrentVersion)
 	String sModVersion = GetVersionString(ModVersion as Int)
@@ -267,6 +267,14 @@ Function DoUpgrade()
 		CheckCompatibilityModules(abReset = True)
 		Debug.Trace("MYC/Upgrade/1.1.1: Upgrade to 1.1.1 complete!")
 		ModVersion = GetVersionInt(1,1,1)
+	EndIf
+	
+	If ModVersion < GetVersionInt(1,1,2)
+		Debug.Trace("MYC/Upgrade/1.1.2: Upgrading to 1.1.2...")
+		CharacterManager.DoUpkeep()
+		ShrineOfHeroes.DoUpkeep()
+		Debug.Trace("MYC/Upgrade/1.1.2: Upgrade to 1.1.2 complete!")
+		ModVersion = GetVersionInt(1,1,2)
 	EndIf
 	
 	;Generic upgrade code
