@@ -47,6 +47,10 @@ Bool _ShowedJContainersWarning = False
 Bool _Running
 Bool _bVersionSystemUpdated = False
 
+Bool _bShowedCompatibilityErrorSkyRE = False
+Bool _bShowedCompatibilityErrorEFF = False
+Bool _bShowedCompatibilityErrorAFT = False
+
 Float _ScriptLatency
 Float _StartTime
 Float _EndTime
@@ -100,7 +104,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	;FIXME: CHANGE THIS WHEN UPDATING!
 	ModVersionMajor = 1
 	ModVersionMinor = 1
-	ModVersionPatch = 0
+	ModVersionPatch = 1
 	_iCurrentVersion = GetVersionInt(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	_sCurrentVersion = GetVersionString(_iCurrentVersion)
 	String sModVersion = GetVersionString(ModVersion as Int)
@@ -238,18 +242,31 @@ Function DoUpgrade()
 	EndIf
 	
 	If ModVersion < GetVersionInt(1,1,0)
-		Debug.Trace("MYC: Upgrading to 1.1.0...")
+		Debug.Trace("MYC/Upgrade/1.1.0: Upgrading to 1.1.0...")
+		Debug.Notification("Familiar Faces: Upgrading 1.0.x to 1.1.x, this may take a while!")
+		Debug.Trace("MYC/Upgrade/1.1.0: Updating save data...")
 		CharacterManager.RepairSaves()
+		Debug.Trace("MYC/Upgrade/1.1.0: Doing CharacterManager upkeep without deferral, this may take a while...")
 		CharacterManager.DoUpkeep(False)
+		Debug.Trace("MYC/Upgrade/1.1.0: Doing Shrine of Heroes upkeep without deferral, this may take a while...")
 		ShrineOfHeroes.DoUpkeep(False)
+		Debug.Trace("MYC/Upgrade/1.1.0: Starting up HangoutManager...")
 		HangoutManager.Stop()
 		HangoutManager.Start()
 		HangoutManager.DoInit()
 		HangoutManager.ImportOldHangouts()
 		Wait(2)
 		;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
-		Debug.Trace("MYC: Upgrade to 1.1.0 complete!")
+		Debug.Trace("MYC/Upgrade/1.1.0: Upgrade to 1.1.0 complete!")
 		ModVersion = GetVersionInt(1,1,0)
+	EndIf
+	
+	If ModVersion < GetVersionInt(1,1,1)
+		Debug.Trace("MYC/Upgrade/1.1.1: Upgrading to 1.1.1...")
+		Debug.Trace("MYC/Upgrade/1.1.1: Restarting compatibility quests...")
+		CheckCompatibilityModules(abReset = True)
+		Debug.Trace("MYC/Upgrade/1.1.1: Upgrade to 1.1.1 complete!")
+		ModVersion = GetVersionInt(1,1,1)
 	EndIf
 	
 	;Generic upgrade code
@@ -266,23 +283,45 @@ Function DoUpgrade()
 	Debug.Trace("MYC: Upgrade complete!")
 EndFunction
 
-Function CheckCompatibilityModules()
-	If !CheckCompatibilityModule_EFF()
-		Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
+Function CheckCompatibilityModules(Bool abReset = False)
+	If !CheckCompatibilityModule_EFF(abReset)
+		Debug.Trace("MYC: Compatibility module check for EFF failed!",1)
+		If !_bShowedCompatibilityErrorEFF
+			_bShowedCompatibilityErrorEFF = True
+			Debug.MessageBox("Familiar Faces\nThere was an error with the EFF compatibility module. Check the Papyrus log for more details.")
+		EndIf
+	Else
+		_bShowedCompatibilityErrorEFF = False
 	EndIf
-	If !CheckCompatibilityModule_AFT()
-		Debug.MessageBox("Familiar Faces\nThere was an error with the AFT compatibility module. Check the Papyrus log for more details.")
+	If !CheckCompatibilityModule_AFT(abReset)
+		Debug.Trace("MYC: Compatibility module check for EFF failed!",1)
+		If !_bShowedCompatibilityErrorAFT
+			_bShowedCompatibilityErrorAFT = True
+			Debug.MessageBox("Familiar Faces\nThere was an error with the AFT compatibility module. Check the Papyrus log for more details.")
+		EndIf
+	Else
+		_bShowedCompatibilityErrorAFT = False
 	EndIf
-	If !CheckCompatibilityModule_SkyRE()
-		Debug.MessageBox("Familiar Faces\nThere was an error with the SkyRE compatibility module. Check the Papyrus log for more details.")
+	If !CheckCompatibilityModule_SkyRE(abReset)
+		Debug.Trace("MYC: Compatibility module check for SkyRE failed!",1)
+		If !_bShowedCompatibilityErrorSkyRE
+			_bShowedCompatibilityErrorSkyRE = True
+			Debug.MessageBox("Familiar Faces\nThere was an error with the SkyRE compatibility module. Check the Papyrus log for more details.")
+		EndIf
+	Else
+		_bShowedCompatibilityErrorSkyRE = False
 	EndIf
 EndFunction
 
-Bool Function CheckCompatibilityModule_EFF()
+Bool Function CheckCompatibilityModule_EFF(Bool abReset = False)
 	Quest vMYC_zCompat_EFFQuest = GetFormFromFile(0x0201eaf2,"vMYC_MeetYourCharacters.esp") as Quest
 	If !vMYC_zCompat_EFFQuest
 		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_EFFQuest!",1)
 		Return False
+	EndIf
+	If abReset
+		Debug.Trace("MYC: Forcing reset of vMYC_zCompat_EFFQuest!",1)
+		vMYC_zCompat_EFFQuest.Stop()
 	EndIf
 	Debug.Trace("MYC: Checking whether EFF compatibility is needed...")
 	If GetModByName("EFFCore.esm") != 255 || (GetModByName("XFLMain.esm") != 255 && GetModByName("XFLPanel.esp") != 255)
@@ -317,11 +356,15 @@ Bool Function CheckCompatibilityModule_EFF()
 	Return True
 EndFunction
 
-Bool Function CheckCompatibilityModule_AFT()
+Bool Function CheckCompatibilityModule_AFT(Bool abReset = False)
 	Quest vMYC_zCompat_AFTQuest = GetFormFromFile(0x02023c40,"vMYC_MeetYourCharacters.esp") as Quest
 	If !vMYC_zCompat_AFTQuest
 		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_AFTQuest!",1)
 		Return False
+	EndIf
+	If abReset
+		Debug.Trace("MYC: Forcing reset of vMYC_zCompat_AFTQuest!",1)
+		vMYC_zCompat_AFTQuest.Stop()
 	EndIf
 	Debug.Trace("MYC: Checking whether AFT compatibility is needed...")
 	If GetModByName("AmazingFollowerTweaks.esp") != 255 
@@ -356,11 +399,15 @@ Bool Function CheckCompatibilityModule_AFT()
 	Return True
 EndFunction
 
-Bool Function CheckCompatibilityModule_SkyRE()
+Bool Function CheckCompatibilityModule_SkyRE(Bool abReset = False)
 	Quest vMYC_zCompat_SkyREQuest = GetFormFromFile(0x02025740,"vMYC_MeetYourCharacters.esp") as Quest
 	If !vMYC_zCompat_SkyREQuest
 		Debug.Trace("MYC: Couldn't retrieve vMYC_zCompat_SkyREQuest!",1)
 		Return False
+	EndIf
+	If abReset
+		Debug.Trace("MYC: Forcing reset of vMYC_zCompat_SkyREQuest!",1)
+		vMYC_zCompat_SkyREQuest.Stop()
 	EndIf
 	Debug.Trace("MYC: Checking whether SkyRE compatibility is needed...")
 	If GetModByName("SkyRe_Main.esp") != 255 
