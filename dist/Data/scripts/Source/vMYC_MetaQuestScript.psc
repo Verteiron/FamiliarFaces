@@ -509,8 +509,8 @@ Bool Function CheckDependencies()
 	Debug.Trace("MYC: CharGen is version " + SKSE.GetPluginVersion("chargen"))
 	Debug.Trace("MYC: NIOverride is version " + SKSE.GetPluginVersion("nioverride"))
 	;Debug.MessageBox("SKSE version is " + fSKSE)
-	If fSKSE < 1.0700
-		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.0 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
+	If fSKSE < 1.0701
+		Debug.MessageBox("Familiar Faces\nSKSE is missing or not installed correctly. This mod requires SKSE 1.7.1 or higher, but the current version is " + fSKSE + ".\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed
