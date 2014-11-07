@@ -1,4 +1,4 @@
-Familiar Faces 1.1.1
+Familiar Faces 1.1.3
 
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the only way to do it!
 
@@ -155,6 +155,9 @@ Fixes in 1.1.2
 
     Fixed characters sometimes not being recruitable after being summoned.
 
+Fixes in 1.1.3
+
+    Add support for the .jslot files used by future versions of Racemenu.
 
 
 What Familiar Faces does
