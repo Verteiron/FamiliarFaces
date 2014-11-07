@@ -667,7 +667,11 @@ Function LoadCharacterFiles()
 				WaitMenuMode(0.25)
 			EndIf
 			String sCharacterName = JValue.solveStr(jCharacterData,".Name")
-			_bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + sCharacterName + ".slot")
+			_bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + sCharacterName + ".jslot")
+			If !_bHasFileSlot
+				;Check for older RaceMenu save slot
+				_bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + sCharacterName + ".slot")
+			EndIf
 			_bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + sCharacterName + ".dds")
 			;Debug.Trace("MYC/CM: File " + i + " is " + JArray.getStr(jCharFiles,i) + " - " + sCharacterName)
 			If !JMap.hasKey(jCharacterMap,sCharacterName) && _bHasFileSlot && _bHasFileTexture

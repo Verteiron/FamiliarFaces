@@ -902,7 +902,11 @@ Function RefreshMeshNewCG()
 	;	Wait(5)
 	;CharGen.LoadCharacter(Self, kDummyRace, CharacterName)
 	_kActorBase.SetInvulnerable(True)
-	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
+	Bool _bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".jslot")
+	If !_bHasFileSlot
+		;Check for older RaceMenu save slot
+		_bHasFileSlot = JContainers.fileExistsAtPath("Data/SKSE/Plugins/CharGen/Exported/" + CharacterName + ".slot")
+	EndIf
 	If _bHasFileSlot
 		Bool _bHasFileTexture = JContainers.fileExistsAtPath("Data/Textures/CharGen/Exported/" + CharacterName + ".dds")
 		If !_bHasFileTexture
