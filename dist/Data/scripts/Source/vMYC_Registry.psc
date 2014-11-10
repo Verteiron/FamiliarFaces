@@ -20,6 +20,7 @@ EndFunction
 
 Function InitReg() Global
 	Int jRegData = CreateRegDataIfMissing()
+	Int jSessionData = CreateSessionDataIfMissing()
 	SyncReg()
 EndFunction
 
@@ -176,7 +177,7 @@ Int Function CreateSessionDataIfMissing() Global
 	If jSessionData
 		Return jSessionData
 	EndIf
-	;Debug.Trace("MYC/Session: First SessionData access, creating JDB key!")
+	Debug.Trace("MYC/Session: First SessionData access, creating JDB key!")
 	Int _jMYC = JDB.solveObj(".vMYC")
 	jSessionData = JMap.Object()
 	JMap.setObj(_jMYC,"Session",jSessionData)
@@ -190,7 +191,7 @@ EndFunction
 
 Function SetSessionStr(String asPath, String asString) Global
 	Int jSession = CreateSessionDataIfMissing()
-	JValue.solveStrSetter(jSession,asPath,asString,True)
+	JValue.solveStrSetter(jSession,"." + asPath,asString,True)
 EndFunction
 
 String Function GetSessionStr(String asPath) Global
@@ -199,7 +200,7 @@ EndFunction
 
 Function SetSessionBool(String asPath, Bool abBool) Global
 	Int jSession = CreateSessionDataIfMissing()
-	JValue.solveIntSetter(jSession,asPath,abBool as Int,True)
+	JValue.solveIntSetter(jSession,"." + asPath,abBool as Int,True)
 	SendSessionEvent(asPath)
 EndFunction
 
@@ -209,7 +210,7 @@ EndFunction
 
 Function SetSessionInt(String asPath, Int aiInt) Global
 	Int jSession = CreateSessionDataIfMissing()
-	JValue.solveIntSetter(jSession,asPath,aiInt,True)
+	JValue.solveIntSetter(jSession,"." + asPath,aiInt,True)
 	SendSessionEvent(asPath)
 EndFunction
 
@@ -219,7 +220,7 @@ EndFunction
 
 Function SetSessionFlt(String asPath, Float afFloat) Global
 	Int jSession = CreateSessionDataIfMissing()
-	JValue.solveFltSetter(jSession,asPath,afFloat,True)
+	JValue.solveFltSetter(jSession,"." + asPath,afFloat,True)
 	SendSessionEvent(asPath)
 EndFunction
 
@@ -229,7 +230,7 @@ EndFunction
 
 Function SetSessionForm(String asPath, Form akForm) Global
 	Int jSession = CreateSessionDataIfMissing()
-	JValue.solveFormSetter(jSession,asPath,akForm,True)
+	JValue.solveFormSetter(jSession,"." + asPath,akForm,True)
 	SendSessionEvent(asPath)
 EndFunction
 
@@ -239,7 +240,7 @@ EndFunction
 
 Function SetSessionObj(String asPath, Int ajObj) Global
 	Int jSession = CreateSessionDataIfMissing()
-	JValue.solveObjSetter(jSession,asPath,ajObj,True)
+	JValue.solveObjSetter(jSession,"." + asPath,ajObj,True)
 	SendSessionEvent(asPath)
 EndFunction
 
