@@ -80,6 +80,7 @@ Int 		_iCharGenVersion
 
 Event OnInit()
 	_kActorBase = GetActorBase()
+	DoUpkeep()
 EndEvent
 
 Event OnUpdate()
