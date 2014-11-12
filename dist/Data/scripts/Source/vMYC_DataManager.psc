@@ -317,14 +317,14 @@ Function SavePlayerInventory()
 		i -= 1
 		Form kItem = JArray.GetForm(jInventoryList,i)
 		If kItem
-			If IsObjectFavorited(kItem)
+			Int iType = kItem.GetType()
+			If IsObjectFavorited(kItem) || iType == 42 ; Ammo
 				Int iCount = PlayerREF.GetItemCount(kItem)
 				If PlayerREF.IsEquipped(kItem)
 					iCount -= 1
 				EndIf
 				If iCount
 					Int iItemID = kItem.GetFormID()
-					Int iType = kItem.GetType()
 
 					;===== Save custom weapons =====----
 					If iType == 41 ;kWeapon
@@ -415,6 +415,7 @@ Int Function SavePlayerData()
 	DebugTrace(sRegKey + META + ".Name")
 	SetRegFlt(sRegKey + META + ".PlayTime",GetRealHoursPassed())
 	SetRegStr(sRegKey + META + ".Name",sPlayerName)
+	SetRegStr(sRegKey + META + ".UUID",sSessionID)
 	SetRegInt(sRegKey + META + ".Sex",kPlayerBase.GetSex())
 	SetRegForm(sRegKey + META + ".Race",kPlayerBase.GetRace())
 	AddToReqList(kPlayerBase.GetRace(),"Race")
@@ -802,7 +803,7 @@ Function CreateAVNames()
 	JArray.AddStr(jAVNames,"Alteration")
 	JArray.AddStr(jAVNames,"Conjuration")
 	JArray.AddStr(jAVNames,"Destruction")
-	JArray.AddStr(jAVNames,"Illusion")
+	JArray.AddStr(jAVNames,"Illusion") ; Wiki says Mysticism but game expects Illusion
 	JArray.AddStr(jAVNames,"Restoration")
 	JArray.AddStr(jAVNames,"Enchanting")
 	JArray.AddStr(jAVNames,"Health")
