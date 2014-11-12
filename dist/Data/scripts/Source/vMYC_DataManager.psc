@@ -452,6 +452,21 @@ Int Function SavePlayerData()
 
 	RegisterForModEvent("vMYC_SavePlayerInventory","OnSavePlayerInventory")
 	SendModEvent("vMYC_SavePlayerInventory")
+
+	;== Save NIOverride overlays ===--
+
+	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
+		Int jNIOData = JMap.Object()
+		SetRegObj(sRegKey + ".NIOverrideData.BodyOverlays",NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays()))
+		SetRegObj(sRegKey + ".NIOverrideData.HandOverlays",NIO_GetOverlayData("Hand [Ovl",NIOverride.GetNumBodyOverlays()))
+		SetRegObj(sRegKey + ".NIOverrideData.FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumBodyOverlays()))
+		SetRegObj(sRegKey + ".NIOverrideData.FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumBodyOverlays()))
+	EndIf
+
+	;== Save node info from RaceMenuPlugins ===--
+	
+	SetRegObj(sRegKey + ".NINodeData",GetNINodeInfo(PlayerREF))
+
 	
 	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) 
 		WaitMenuMode(0.5)
@@ -514,6 +529,85 @@ Function AddToReqList(Form akForm, String asType, String sSID = "")
 		EndIf
 		SetRegStr("Characters." + sSID + META + ".ReqList." + sModName + "." + asType + ".0x" + GetFormIDString(akForm),sFormName)
 	EndIf
+EndFunction
+
+;=== Functions - NIOverride ===--
+
+Int Function GetNINodeInfo(Actor akActor)
+	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
+	JValue.Retain(jNINodeList,"vMYC_DM")
+	DebugTrace("NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
+		
+	Int jNINodes = JMap.Object()
+	JValue.Retain(jNINodes,"vMYC_DM")
+	Int i = 0
+	Int iNodeCount = JArray.Count(jNINodeList)
+	While i < iNodeCount
+		String sNodeName = JArray.getStr(jNINodeList,i)
+		If sNodeName
+			If NetImmerse.HasNode(akActor,sNodeName,false)
+				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
+				If fNodeScale != 1.0
+					Debug.Trace("Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
+					Int jNINodeData = JMap.Object()
+					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
+					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
+				EndIf
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	JValue.Release(jNINodeList)
+	JValue.Release(jNINodes)
+	Return jNINodes
+EndFunction
+
+Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount, Actor kTargetActor = None)
+	If !kTargetActor
+		kTargetActor = PlayerREF
+	EndIf
+	Int i
+	Int jOverlayData = JArray.Object()
+	While i < iTintCount
+		String nodeName = sTintTemplate + i + "]"
+		Int iRGB = 0
+		Int iGlow = 0
+		Float fMultiple = 0.0
+		Float fAlpha = 0
+		String sTexture = ""
+		If NetImmerse.HasNode(kTargetActor, nodeName, false) ; Actor has the node, get the immediate property
+			iRGB = NiOverride.GetNodePropertyInt(kTargetActor, false, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodePropertyInt(kTargetActor, false, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodePropertyFloat(kTargetActor, false, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodePropertyString(kTargetActor, false, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodePropertyFloat(kTargetActor, false, nodeName, 1, -1)
+		Else ; Doesn't have the node, get it from the override
+			bool isFemale = kTargetActor.GetActorBase().GetSex() as bool
+			iRGB = NiOverride.GetNodeOverrideInt(kTargetActor, isFemale, nodeName, 7, -1)
+			iGlow = NiOverride.GetNodeOverrideInt(kTargetActor, isFemale, nodeName, 0, -1)
+			fAlpha = NiOverride.GetNodeOverrideFloat(kTargetActor, isFemale, nodeName, 8, -1)
+			sTexture = NiOverride.GetNodeOverrideString(kTargetActor, isFemale, nodeName, 9, 0)
+			fMultiple = NiOverride.GetNodeOverrideFloat(kTargetActor, isFemale, nodeName, 1, -1)
+		Endif
+		Int iColor = Math.LogicalOr(Math.LogicalAnd(iRGB, 0xFFFFFF), Math.LeftShift((fAlpha * 255) as Int, 24))
+		Int iGlowData = Math.LogicalOr(Math.LeftShift(((fMultiple * 10.0) as Int), 24), iGlow)
+		If sTexture == ""
+			sTexture = "Actors\\Character\\Overlays\\Default.dds"
+		Endif
+		If !(iRGB + iGlow + fAlpha + fMultiple == 0 && StringUtil.Find(sTexture,"Default.dds") > -1) || (iRGB && iRGB != -1 && iRGB != 16777215) || iGlow || (fAlpha && fAlpha != 1.0) || (fMultiple && fMultiple != 1.0) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
+			Int jLayer = JMap.Object()
+			JMap.setInt(jLayer,"RGB",iRGB)
+			JMap.setInt(jLayer,"Glow",iGlow)
+			JMap.setInt(jLayer,"GlowData",iGlowData)
+			JMap.setFlt(jLayer,"Alpha",fAlpha)
+			JMap.setFlt(jLayer,"Multiple",fMultiple)
+			JMap.setInt(jLayer,"Color",iColor)
+			JMap.setStr(jLayer,"Texture",sTexture)
+			JArray.AddObj(jOverlayData,jLayer)
+		EndIf
+		i += 1
+	EndWhile
+	Return jOverlayData
 EndFunction
 
 ;=== Functions - Utility ===--
