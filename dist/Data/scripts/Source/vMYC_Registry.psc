@@ -186,7 +186,12 @@ EndFunction
 
 Bool Function HasSessionKey(String asPath) Global
 	Int jSession = CreateSessionDataIfMissing()
-	Return JMap.hasKey(jSession,asPath)
+	Return JValue.hasPath(jSession,"." + asPath) || JMap.hasKey(jSession,asPath)
+EndFunction
+
+Function ClearSessionKey(String asPath) Global
+	Int jSession = CreateSessionDataIfMissing()
+	JValue.solveObjSetter(jSession,"." + asPath,0)
 EndFunction
 
 Function SetSessionStr(String asPath, String asString) Global
