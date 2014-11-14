@@ -49,6 +49,9 @@ Bool _bSavedPerks 		= False
 Bool _bSavedSpells 		= False
 Bool _bSavedEquipment 	= False
 Bool _bSavedInventory 	= False
+Bool _bSavedNINodeInfo 	= False
+
+Int		_iThreadCount	= 0
 
 ;=== Events ===--
 
@@ -113,7 +116,6 @@ Function SavePlayerPerks()
 	
 	String sRegKey = "Characters." + SessionID
 	Int i = 0
-
 	Int jPerkList = JArray.Object()
 	SetRegObj(sRegKey + ".Perks",jPerkList)	
 	CreateAVNames()
@@ -135,14 +137,17 @@ Function SavePlayerPerks()
 	StopTimer("SaveAVs")
 
 	StartTimer("SaveSkillsAndPerks")
-	Int jSkillList = GetSessionObj("SkillNames")
+	Int jSkillList = GetRegObj("SkillAVIs")
 	Int iSkillCount = JArray.Count(jSkillList)
 	iAdvSkills = 0
 	While iAdvSkills < iSkillCount
-		String sAVName = JArray.GetStr(jSkillList,iAdvSkills)
-		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByName(sAVName)
+		Int iAVI = JArray.GetInt(jSkillList,iAdvSkills)
+		String sAVName = GetAVName(iAVI)
+		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAVI)
 		Float fAV = 0.0
-		fAV = PlayerREF.GetBaseActorValue(sAVName)
+		If iAVI < 158 || iAVI > 159 ; Skip Werewolf/Vampire Lord
+			fAV = PlayerREF.GetBaseActorValue(sAVName)
+		EndIf
 		If fAV
 			SetRegFlt(sRegKey + ".Stats.AV." + sAVName,fAV)
 			DebugTrace("Saved AV " + sAVName + "!")
@@ -395,6 +400,24 @@ Function SavePlayerInventory()
 	StopTimer("SaveInventory")
 EndFunction
 
+Function SavePlayerNINodeInfo()
+	;== NINodeInfo ===--
+	
+	StartTimer("SaveNINodeInfo")
+	SendModEvent("vMYC_NINodeInfoSaveBegin")
+	
+	String sPlayerName = PlayerREF.GetActorBase().GetName()
+	String sRegKey = "Characters." + SessionID
+	
+	;== Save node info from RaceMenuPlugins ===--
+	SetRegObj(sRegKey + ".NINodeData",GetNINodeInfo(PlayerREF))
+	
+	StopTimer("SaveNINodeInfo")
+	
+	SendModEvent("vMYC_NINodeInfoSaveEnd")
+EndFunction
+	
+	
 Int Function SavePlayerData()
 	GotoState("Busy")
 	DebugTrace("Saving player data...")
@@ -465,24 +488,35 @@ Int Function SavePlayerData()
 	_bSavedSpells 		= False
 	_bSavedEquipment 	= False
 	_bSavedInventory 	= False
+	_bSavedNINodeInfo	= False
+
+	RegisterForModEvent("vMYC_SavePlayerNINodeInfo","OnSavePlayerNINodeInfo")
+	SendModEvent("vMYC_SavePlayerNINodeInfo")
+	
+	RegisterForModEvent("vMYC_SavePlayerPerks","OnSavePlayerPerks")
+	SendModEvent("vMYC_SavePlayerPerks")
 	
 	RegisterForModEvent("vMYC_SavePlayerEquipment","OnSavePlayerEquipment")
 	SendModEvent("vMYC_SavePlayerEquipment")
-
-	RegisterForModEvent("vMYC_SavePlayerPerks","OnSavePlayerPerks")
-	SendModEvent("vMYC_SavePlayerPerks")
 
 	RegisterForModEvent("vMYC_SavePlayerSpells","OnSavePlayerSpells")
 	SendModEvent("vMYC_SavePlayerSpells")
 
 	RegisterForModEvent("vMYC_SavePlayerInventory","OnSavePlayerInventory")
 	SendModEvent("vMYC_SavePlayerInventory")
-
+	
+	WaitMenuMode(0.5)
+	While _iThreadCount > 4
+		WaitMenuMode(1)
+	EndWhile
+	
 	;== Save character appearance ===-
+	StartTimer("SaveCharacter")
 	CharGen.SaveCharacter(sPlayerName) ; So easy :P
+	StopTimer("SaveCharacter")
 	
 	;== Save NIOverride overlays ===--
-
+	StartTimer("NIOverrideData")
 	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
 		Int jNIOData = JMap.Object()
 		SetRegObj(sRegKey + ".NIOverrideData.BodyOverlays",NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays()))
@@ -490,13 +524,9 @@ Int Function SavePlayerData()
 		SetRegObj(sRegKey + ".NIOverrideData.FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumBodyOverlays()))
 		SetRegObj(sRegKey + ".NIOverrideData.FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumBodyOverlays()))
 	EndIf
-
-	;== Save node info from RaceMenuPlugins ===--
-	
-	SetRegObj(sRegKey + ".NINodeData",GetNINodeInfo(PlayerREF))
-
-	
-	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) 
+	StopTimer("NIOverrideData")
+		
+	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells || !_bSavedNINodeInfo) 
 		WaitMenuMode(0.5)
 	EndWhile
 	
@@ -506,23 +536,38 @@ Int Function SavePlayerData()
 EndFunction
 
 Event OnSavePlayerEquipment(string eventName, string strArg, float numArg, Form sender)
+	_iThreadCount += 1
 	SavePlayerEquipment()
 	_bSavedEquipment = True
+	_iThreadCount -= 1
 EndEvent
 
 Event OnSavePlayerPerks(string eventName, string strArg, float numArg, Form sender)
+	_iThreadCount += 1
 	SavePlayerPerks()
 	_bSavedPerks = True
+	_iThreadCount -= 1
 EndEvent
 
 Event OnSavePlayerSpells(string eventName, string strArg, float numArg, Form sender)
+	_iThreadCount += 1
 	SavePlayerSpells()
 	_bSavedSpells = True
+	_iThreadCount -= 1
 EndEvent
 
 Event OnSavePlayerInventory(string eventName, string strArg, float numArg, Form sender)
+	_iThreadCount += 1
 	SavePlayerInventory()
 	_bSavedInventory = True
+	_iThreadCount -= 1
+EndEvent
+
+Event OnSavePlayerNINodeInfo(string eventName, string strArg, float numArg, Form sender)
+	_iThreadCount += 1
+	SavePlayerNINodeInfo()
+	_bSavedNINodeInfo = True
+	_iThreadCount -= 1
 EndEvent
 
 ;=== Functions - Requirement list ===--
@@ -533,7 +578,7 @@ EndFunction
 
 Function AddToReqList(Form akForm, String asType, String sSID = "")
 {Take the form and add its provider/source to the required mods list of the specified ajCharacterData.}
-	Return
+	;Return
 	
 	If !sSID
 		sSID = SessionID
@@ -552,7 +597,7 @@ Function AddToReqList(Form akForm, String asType, String sSID = "")
 		;	Return
 		;EndIf
 		
-		sModName = StringReplace(sModName,".","_dot_")
+		sModName = StringReplace(sModName,".","_dot_") ; Strip . to avoid confusing JContainers
 		String sFormName = akForm.GetName()
 		If !sFormName
 			sFormName = akForm as String
@@ -578,8 +623,8 @@ Int Function GetNINodeInfo(Actor akActor)
 			;Removing this check halved the time this takes.
 			;If NetImmerse.HasNode(akActor,sNodeName,false)
 				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
-				If fNodeScale && fNodeScale != 1.0
-					Debug.Trace("Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
+				If fNodeScale && fNodeScale != 1.0 ;avoid saving defaults
+					DebugTrace("Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
 					Int jNINodeData = JMap.Object()
 					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
 					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
@@ -633,7 +678,7 @@ Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount, Actor kTar
         ;    "texture": "Actors\\Character\\Overlays\\Default.dds",
         ;    "multiple": 0.0
 			;textures\\actors\\character\\overlays\\default.dds
-		If !(iRGB + iGlow + fAlpha + fMultiple == 0) && !(StringUtil.Find(sTexture,"Default.dds") > -1)  ;|| (iRGB && iRGB != -1 && iRGB != 16777215) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
+		If !(StringUtil.Find(sTexture,"Default.dds") > -1)  ;!(iRGB + iGlow + fAlpha + fMultiple == 0) && ;|| (iRGB && iRGB != -1 && iRGB != 16777215) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
 			Int jLayer = JMap.Object()
 			JMap.setInt(jLayer,"RGB",iRGB)
 			JMap.setInt(jLayer,"Glow",iGlow)
@@ -810,10 +855,10 @@ String Function StringReplace(String sString, String sToFind, String sReplacemen
 EndFunction
 
 String Function GetAVName(Int iAVIndex)
-	Int jAVNames = GetSessionObj("AVNames")
+	Int jAVNames = GetRegObj("AVNames")
 	If !jAVNames
 		CreateAVNames()
-		jAVNames = GetSessionObj("AVNames")
+		jAVNames = GetRegObj("AVNames")
 	EndIf
 	Return JArray.GetStr(jAVNames,iAVIndex)
 EndFunction
@@ -978,21 +1023,21 @@ Function CreateAVNames()
 	JArray.AddStr(jAVNames,"CombatHealthRegenMultMod")
 	JArray.AddStr(jAVNames,"CombatHealthRegenMultPowerMod")
 	JArray.AddStr(jAVNames,"StaminaRateMult")
-	JArray.AddStr(jAVNames,"HealRatePowerMod")
-	JArray.AddStr(jAVNames,"MagickaRateMod")
+	JArray.AddStr(jAVNames,"Werewolf") ; "HealRatePowerMod" before Dawnguard
+	JArray.AddStr(jAVNames,"Vampire Lord") ; "MagickaRateMod" before Dawnguard
 	JArray.AddStr(jAVNames,"GrabActorOffset")
 	JArray.AddStr(jAVNames,"Grabbed")
 	JArray.AddStr(jAVNames,"UNKNOWN")
 	JArray.AddStr(jAVNames,"ReflectDamage")
-	SetSessionObj("AVNames",jAVNames)
+	SetRegObj("AVNames",jAVNames)
 	Int i = 0
 	Int iAVCount = JArray.Count(jAVNames)
 	Int jSkills = JArray.Object()
-	SetSessionObj("SkillNames",jSkills)
+	SetRegObj("SkillAVIs",jSkills)
 	While i < iAVCount
 		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(i)
 		If AVInfo.IsSkill()
-			JArray.AddStr(jSkills,JArray.GetStr(jAVNames,i))
+			JArray.AddInt(jSkills,i)
 		EndIf
 		i += 1
 	EndWhile
