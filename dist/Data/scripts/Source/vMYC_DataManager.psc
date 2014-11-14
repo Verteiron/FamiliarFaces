@@ -114,62 +114,80 @@ Function SavePlayerPerks()
 	String sRegKey = "Characters." + SessionID
 	Int i = 0
 
-	vMYC_PerkList.Revert()
+	Int jPerkList = JArray.Object()
+	SetRegObj(sRegKey + ".Perks",jPerkList)	
 	CreateAVNames()
-	Int iAdvSkills = 0
-	While iAdvSkills < 162
-		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAdvSkills)
+
+	StartTimer("SaveAVs")
+	
+	Int iAddedCount = 0 
+	Int iAdvSkills = 24 ; Start at Health
+	While iAdvSkills < 44 ; Proceed through MagicResist
 		String sAVName = GetAVName(iAdvSkills)
 		Float fAV = 0.0
-		; Game claims 155-159 don't exist, but they still have Perks attached to them. Maybe the names are wrong.
-		If iAdvSkills < 155 || iAdvSkills > 159 
-			fAV = PlayerREF.GetBaseActorValue(sAVName)
-		EndIf
+		fAV = PlayerREF.GetBaseActorValue(sAVName)
 		If fAV
 			SetRegFlt(sRegKey + ".Stats.AV." + sAVName,fAV)
 			DebugTrace("Saved AV " + sAVName + "!")
 		EndIf
-		If AVInfo.IsSkill() 
-			StartTimer("SavePerks-" + sAVName)
-			Int iLastCount = vMYC_PerkList.GetSize()
-			AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
-			Int iThisCount = vMYC_PerkList.GetSize()
-			If iThisCount - iLastCount > 0
-				SetRegInt(sRegKey + ".PerkCounts." + sAVName,iThisCount - iLastCount)
-				DebugTrace("Saved " + (iThisCount - iLastCount) + " perks in the " + sAVName + " tree!")
-			EndIf
-			StopTimer("SavePerks-" + sAVName)
-		EndIf
 		iAdvSkills += 1
-		;Skip unused AVs
-		If iAdvSkills == 45 
-			iAdvSkills = 96 
-		EndIf
-		If iAdvSkills == 114
-			iAdvSkills = 132
-		EndIf
 	EndWhile
+	StopTimer("SaveAVs")
+
+	StartTimer("SaveSkillsAndPerks")
+	Int jSkillList = GetSessionObj("SkillNames")
+	Int iSkillCount = JArray.Count(jSkillList)
+	iAdvSkills = 0
+	While iAdvSkills < iSkillCount
+		String sAVName = JArray.GetStr(jSkillList,iAdvSkills)
+		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByName(sAVName)
+		Float fAV = 0.0
+		fAV = PlayerREF.GetBaseActorValue(sAVName)
+		If fAV
+			SetRegFlt(sRegKey + ".Stats.AV." + sAVName,fAV)
+			DebugTrace("Saved AV " + sAVName + "!")
+		EndIf
+		StartTimer("SavePerks-" + sAVName)
+		vMYC_PerkList.Revert()
+		AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
+		Int iPerkCount = vMYC_PerkList.GetSize()
+		If iPerkCount
+			i = JArray.Count(jPerkList) ; Grab length of array before adding the Formlist
+			JArray.AddFromFormList(jPerkList,vMYC_PerkList)
+			SetRegInt(sRegKey + ".PerkCounts." + sAVName,iPerkCount)
+			While i < JArray.Count(jPerkList)  ; Each perk added
+				Perk kPerk = JArray.GetForm(jPerkList,i) as Perk
+				AddToReqList(kPerk,"Perk")
+				If iAddedCount % 3 == 0
+					SendModEvent("vMYC_PerkSaved")
+				EndIf
+				iAddedCount += 1
+				i += 1
+			EndWhile
+			DebugTrace("Saved " + iPerkCount + " perks in the " + sAVName + " tree!")
+		EndIf
+		StopTimer("SavePerks-" + sAVName)
+		iAdvSkills += 1
+	EndWhile
+	
+	StopTimer("SaveSkillsAndPerks")
 	SendModEvent("vMYC_PerksSaveEnd",iAddedCount)
 	DebugTrace("Saved " + iAddedCount + " perks!")
 	StopTimer("SavePerks")
 	
-	StartTimer("SavePerkCompat")
-	Int jPerkList = JArray.Object()
-	JArray.AddFromFormList(jPerkList,vMYC_PerkList)
-	SetRegObj(sRegKey + ".Perks",jPerkList)
-	Int iAddedCount = 0
-	
-	i = JArray.Count(jPerkList)
-	While i > 0
-		i -= 1
-		Perk kPerk = JArray.GetForm(jPerkList,i) as Perk
-		AddToReqList(kPerk,"Perk")
-		If iAddedCount % 3 == 0
-			SendModEvent("vMYC_PerkSaved")
-		EndIf
-		iAddedCount += 1
-	EndWhile
-	StopTimer("SavePerkCompat")
+	;StartTimer("SavePerkCompat")
+	;
+	;i = JArray.Count(jPerkList)
+	;While i > 0
+	;	i -= 1
+	;	Perk kPerk = JArray.GetForm(jPerkList,i) as Perk
+	;	AddToReqList(kPerk,"Perk")
+	;	If iAddedCount % 3 == 0
+	;		SendModEvent("vMYC_PerkSaved")
+	;	EndIf
+	;	iAddedCount += 1
+	;EndWhile
+	;StopTimer("SavePerkCompat")
 EndFunction
 
 Function SavePlayerSpells()
@@ -208,6 +226,9 @@ Function SavePlayerSpells()
 			EndIf
 		EndIf
 		i += 1
+		If i % 17 == 0
+			WaitMenuMode(0.1)
+		EndIf
 	EndWhile
 	DebugTrace("Saved " + iAddedCount + " spells for " + sPlayerName + ".")
 	SendModEvent("vMYC_SpellsSaveEnd")
@@ -365,6 +386,9 @@ Function SavePlayerInventory()
 				EndIf
 			EndIf
 		EndIf
+		If i % 13 == 0
+			WaitMenuMode(0.1)
+		EndIf
 	EndWhile
 	SetRegObj(sRegKey + ".Inventory",jInventory)
 	SendModEvent("vMYC_InventorySaveEnd")
@@ -454,6 +478,9 @@ Int Function SavePlayerData()
 	RegisterForModEvent("vMYC_SavePlayerInventory","OnSavePlayerInventory")
 	SendModEvent("vMYC_SavePlayerInventory")
 
+	;== Save character appearance ===-
+	CharGen.SaveCharacter(sPlayerName) ; So easy :P
+	
 	;== Save NIOverride overlays ===--
 
 	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
@@ -506,6 +533,8 @@ EndFunction
 
 Function AddToReqList(Form akForm, String asType, String sSID = "")
 {Take the form and add its provider/source to the required mods list of the specified ajCharacterData.}
+	Return
+	
 	If !sSID
 		sSID = SessionID
 	EndIf
@@ -536,30 +565,29 @@ EndFunction
 
 Int Function GetNINodeInfo(Actor akActor)
 	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
-	JValue.Retain(jNINodeList,"vMYC_DM")
+	SetSessionObj("NINodeList",jNINodeList)
 	DebugTrace("NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
-		
+	
 	Int jNINodes = JMap.Object()
-	JValue.Retain(jNINodes,"vMYC_DM")
+	SetSessionObj("NINodeScales",jNINodes)
 	Int i = 0
 	Int iNodeCount = JArray.Count(jNINodeList)
 	While i < iNodeCount
 		String sNodeName = JArray.getStr(jNINodeList,i)
 		If sNodeName
-			If NetImmerse.HasNode(akActor,sNodeName,false)
+			;Removing this check halved the time this takes.
+			;If NetImmerse.HasNode(akActor,sNodeName,false)
 				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
-				If fNodeScale != 1.0
+				If fNodeScale && fNodeScale != 1.0
 					Debug.Trace("Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
 					Int jNINodeData = JMap.Object()
 					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
 					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
 				EndIf
-			EndIf
+			;EndIf
 		EndIf
 		i += 1
 	EndWhile
-	JValue.Release(jNINodeList)
-	JValue.Release(jNINodes)
 	Return jNINodes
 EndFunction
 
@@ -957,6 +985,17 @@ Function CreateAVNames()
 	JArray.AddStr(jAVNames,"UNKNOWN")
 	JArray.AddStr(jAVNames,"ReflectDamage")
 	SetSessionObj("AVNames",jAVNames)
+	Int i = 0
+	Int iAVCount = JArray.Count(jAVNames)
+	Int jSkills = JArray.Object()
+	SetSessionObj("SkillNames",jSkills)
+	While i < iAVCount
+		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(i)
+		If AVInfo.IsSkill()
+			JArray.AddStr(jSkills,JArray.GetStr(jAVNames,i))
+		EndIf
+		i += 1
+	EndWhile
 EndFunction
 
 ;=== Functions - Busy state ===--
