@@ -595,7 +595,17 @@ Int Function NIO_GetOverlayData(String sTintTemplate, Int iTintCount, Actor kTar
 		If sTexture == ""
 			sTexture = "Actors\\Character\\Overlays\\Default.dds"
 		Endif
-		If !(iRGB + iGlow + fAlpha + fMultiple == 0 && StringUtil.Find(sTexture,"Default.dds") > -1) || (iRGB && iRGB != -1 && iRGB != 16777215) || iGlow || (fAlpha && fAlpha != 1.0) || (fMultiple && fMultiple != 1.0) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
+		;"HandOverlays": [
+        ;  {
+        ;    "Alpha": 0.0,
+        ;    "color": 0,
+        ;    "rgb": 0,
+        ;    "glow": 0,
+        ;    "GlowData": 0,
+        ;    "texture": "Actors\\Character\\Overlays\\Default.dds",
+        ;    "multiple": 0.0
+			;textures\\actors\\character\\overlays\\default.dds
+		If !(iRGB + iGlow + fAlpha + fMultiple == 0) && !(StringUtil.Find(sTexture,"Default.dds") > -1)  ;|| (iRGB && iRGB != -1 && iRGB != 16777215) || (sTexture && sTexture != "Textures\\Actors\\Character\\Overlays\\Default.dds")
 			Int jLayer = JMap.Object()
 			JMap.setInt(jLayer,"RGB",iRGB)
 			JMap.setInt(jLayer,"Glow",iGlow)
