@@ -29,7 +29,7 @@ Bool 				Property IsBusy 		= False 				Auto Hidden
 
 vMYC_HangoutManager Property HangoutManager 						Auto
 
-Int 				Property SerializationVersion = 3 				Auto Hidden
+Int 				Property SerializationVersion = 4 				Auto Hidden
 
 Actor 				Property PlayerRef 								Auto
 {The Player, duh}
@@ -60,6 +60,7 @@ Int		_jAVNames		= 0
 Event OnInit()
 	If IsRunning()
 		SetSessionID()
+		CreateMiscStatNames()
 		InitNINodeList()
 		DoUpkeep()
 	EndIf
@@ -104,7 +105,7 @@ Function SetConfigDefaults(Bool abForce = False)
 		SetRegBool("Config.Compat.Enabled",True,True,True)
 		SetRegBool("Config.Warnings.Enabled",True,True,True)
 		SetRegBool("Config.Debug.Perf.Threads.Limit",False,True,True)
-		SetRegInt ("Config.Debug.Perf.Threads.Max",3,True,True)
+		SetRegInt ("Config.Debug.Perf.Threads.Max",4,True,True)
 		SetRegBool("Config.DefaultsSet",True)
 	EndIf
 EndFunction
@@ -417,7 +418,32 @@ Function SavePlayerNINodeInfo()
 	
 	SendModEvent("vMYC_NINodeInfoSaveEnd")
 EndFunction
+
+Int Function SavePlayerMiscStats()
+	StartTimer("SaveMiscStats")
+	SendModEvent("vMYC_MiscStatSaveBegin")
 	
+	String sPlayerName = PlayerREF.GetActorBase().GetName()
+	String sRegKey = "Characters." + SessionID
+	
+	;== Save misc stats ===--
+	Int jMiscStatNames = GetRegObj("MiscStatNames")
+	Int i = JArray.Count(jMiscStatNames)
+	Int jMiscStats = JMap.Object()
+	SetRegObj(sRegKey + ".MiscStats",jMiscStats)
+	While i > 0
+		i -= 1
+		String sStatName = JArray.GetStr(jMiscStatNames,i)
+		If sStatName
+			Int iStat = QueryStat(sStatName)
+			If iStat
+				JMap.SetInt(jMiscStats,sStatName,iStat)
+			EndIf
+		EndIf
+	EndWhile
+	SendModEvent("vMYC_MiscStatSaveEnd")
+	StopTimer("SaveMiscStats")
+EndFunction	
 	
 Int Function SavePlayerData()
 	GotoState("Busy")
@@ -492,29 +518,14 @@ Int Function SavePlayerData()
 	_bSavedNINodeInfo	= False
 
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerEquipment")
 	
-	;RegisterForModEvent("vMYC_SavePlayerPerks","OnSavePlayerPerks")
-	;SendModEvent("vMYC_SavePlayerPerks")
-	;
-	;RegisterForModEvent("vMYC_SavePlayerEquipment","OnSavePlayerEquipment")
-	;SendModEvent("vMYC_SavePlayerEquipment")
-    ;
-	;RegisterForModEvent("vMYC_SavePlayerSpells","OnSavePlayerSpells")
-	;SendModEvent("vMYC_SavePlayerSpells")
-    ;
-	;RegisterForModEvent("vMYC_SavePlayerInventory","OnSavePlayerInventory")
-	;SendModEvent("vMYC_SavePlayerInventory")
-	
 	WaitMenuMode(1)
-	While _iThreadCount > 2
-		DebugTrace("Threadcount is " + _iThreadCount + ", waiting...")
-		WaitMenuMode(1)
-	EndWhile
 	
 	;== Save character appearance ===-
 	StartTimer("SaveCharacter")
@@ -543,11 +554,14 @@ EndFunction
 
 Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form sender)
 	Int iMaxThreads = GetRegInt("Config.Debug.Perf.Threads.Max")
-	DebugTrace("Backgrounding " + strArg + ", thread " + (_iThreadCount + 1) + "/" + iMaxThreads)
-	While _iThreadCount >= iMaxThreads
-		WaitMenuMode(0.5)
-	EndWhile
+	If _iThreadCount >= iMaxThreads
+		DebugTrace("Deferring " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
+		WaitMenuMode(1)
+		SendModEvent("vMYC_BackgroundFunction",strArg)
+		Return
+	EndIf
 	_iThreadCount += 1
+	DebugTrace("Backgrounding " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
 	If strArg == "SavePlayerEquipment"
 		SavePlayerEquipment()
 		_bSavedEquipment = True
@@ -563,6 +577,8 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 	ElseIf strArg == "SavePlayerNINodeInfo"
 		SavePlayerNINodeInfo()
 		_bSavedNINodeInfo = True
+	ElseIf strArg == "SavePlayerMiscStats"
+		SavePlayerMiscStats()
 	EndIf
 	_iThreadCount -= 1
 EndEvent
@@ -931,6 +947,115 @@ String Function GetAVName(Int iAVIndex)
 		EndIf
 	EndIf
 	Return JArray.GetStr(_jAVNames,iAVIndex)
+EndFunction
+
+Function CreateMiscStatNames()
+	Int jMiscStatNames = JArray.Object()
+	JArray.AddStr(jMiscStatNames,"Locations Discovered")
+	JArray.AddStr(jMiscStatNames,"Dungeons Cleared")
+	JArray.AddStr(jMiscStatNames,"Days Passed")
+	JArray.AddStr(jMiscStatNames,"Hours Slept")
+	JArray.AddStr(jMiscStatNames,"Hours Waiting")
+	JArray.AddStr(jMiscStatNames,"Standing Stones Found")
+	JArray.AddStr(jMiscStatNames,"Gold Found")
+	JArray.AddStr(jMiscStatNames,"Most Gold Carried")
+	JArray.AddStr(jMiscStatNames,"Chests Looted")
+	JArray.AddStr(jMiscStatNames,"Skill Increases")
+	JArray.AddStr(jMiscStatNames,"Skill Books Read")
+	JArray.AddStr(jMiscStatNames,"Food Eaten")
+	JArray.AddStr(jMiscStatNames,"Training Sessions")
+	JArray.AddStr(jMiscStatNames,"Books Read")
+	JArray.AddStr(jMiscStatNames,"Horses Owned")
+	JArray.AddStr(jMiscStatNames,"Houses Owned")
+	JArray.AddStr(jMiscStatNames,"Stores Invested In")
+	JArray.AddStr(jMiscStatNames,"Barters")
+	JArray.AddStr(jMiscStatNames,"Persuasions")
+	JArray.AddStr(jMiscStatNames,"Bribes")
+	JArray.AddStr(jMiscStatNames,"Intimidations")
+	JArray.AddStr(jMiscStatNames,"Diseases Contracted")
+	JArray.AddStr(jMiscStatNames,"Days as a Vampire")
+	JArray.AddStr(jMiscStatNames,"Days as a Werewolf")
+	JArray.AddStr(jMiscStatNames,"Necks Bitten")
+	JArray.AddStr(jMiscStatNames,"Vampirism Cures")
+	JArray.AddStr(jMiscStatNames,"Werewolf Transformations")
+	JArray.AddStr(jMiscStatNames,"Mauls")
+	JArray.AddStr(jMiscStatNames,"Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Misc Objectives Completed")
+	JArray.AddStr(jMiscStatNames,"Main Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Side Quests Completed")
+	JArray.AddStr(jMiscStatNames,"The Companions Quests Completed")
+	JArray.AddStr(jMiscStatNames,"College of Winterhold Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Thieves' Guild Quests Completed")
+	JArray.AddStr(jMiscStatNames,"The Dark Brotherhood Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Civil War Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Daedric Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Dawnguard Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Dragonborn Quests Completed")
+	JArray.AddStr(jMiscStatNames,"Questlines Completed")
+	JArray.AddStr(jMiscStatNames,"People Killed")
+	JArray.AddStr(jMiscStatNames,"Animals Killed")
+	JArray.AddStr(jMiscStatNames,"Creatures Killed")
+	JArray.AddStr(jMiscStatNames,"Undead Killed")
+	JArray.AddStr(jMiscStatNames,"Daedra Killed")
+	JArray.AddStr(jMiscStatNames,"Automatons Killed")
+	JArray.AddStr(jMiscStatNames,"Favorite Weapon")
+	JArray.AddStr(jMiscStatNames,"Critical Strikes")
+	JArray.AddStr(jMiscStatNames,"Sneak Attacks")
+	JArray.AddStr(jMiscStatNames,"Backstabs")
+	JArray.AddStr(jMiscStatNames,"Weapons Disarmed")
+	JArray.AddStr(jMiscStatNames,"Brawls Won")
+	JArray.AddStr(jMiscStatNames,"Bunnies Slaughtered")
+	JArray.AddStr(jMiscStatNames,"Spells Learned")
+	JArray.AddStr(jMiscStatNames,"Favorite Spell")
+	JArray.AddStr(jMiscStatNames,"Favorite School")
+	JArray.AddStr(jMiscStatNames,"Dragon Souls Collected")
+	JArray.AddStr(jMiscStatNames,"Words Of Power Learned")
+	JArray.AddStr(jMiscStatNames,"Words Of Power Unlocked")
+	JArray.AddStr(jMiscStatNames,"Shouts Learned")
+	JArray.AddStr(jMiscStatNames,"Shouts Unlocked")
+	JArray.AddStr(jMiscStatNames,"Shouts Mastered")
+	JArray.AddStr(jMiscStatNames,"Times Shouted")
+	JArray.AddStr(jMiscStatNames,"Favorite Shout")
+	JArray.AddStr(jMiscStatNames,"Soul Gems Used")
+	JArray.AddStr(jMiscStatNames,"Souls Trapped")
+	JArray.AddStr(jMiscStatNames,"Magic Items Made")
+	JArray.AddStr(jMiscStatNames,"Weapons Improved")
+	JArray.AddStr(jMiscStatNames,"Weapons Made")
+	JArray.AddStr(jMiscStatNames,"Armor Improved")
+	JArray.AddStr(jMiscStatNames,"Armor Made")
+	JArray.AddStr(jMiscStatNames,"Potions Mixed")
+	JArray.AddStr(jMiscStatNames,"Potions Used")
+	JArray.AddStr(jMiscStatNames,"Poisons Mixed")
+	JArray.AddStr(jMiscStatNames,"Poisons Used")
+	JArray.AddStr(jMiscStatNames,"Ingredients Harvested")
+	JArray.AddStr(jMiscStatNames,"Ingredients Eaten")
+	JArray.AddStr(jMiscStatNames,"Nirnroots Found")
+	JArray.AddStr(jMiscStatNames,"Wings Plucked")
+	JArray.AddStr(jMiscStatNames,"Total Lifetime Bounty")
+	JArray.AddStr(jMiscStatNames,"Largest Bounty")
+	JArray.AddStr(jMiscStatNames,"Locks Picked")
+	JArray.AddStr(jMiscStatNames,"Pockets Picked")
+	JArray.AddStr(jMiscStatNames,"Items Pickpocketed")
+	JArray.AddStr(jMiscStatNames,"Times Jailed")
+	JArray.AddStr(jMiscStatNames,"Days Jailed")
+	JArray.AddStr(jMiscStatNames,"Fines Paid")
+	JArray.AddStr(jMiscStatNames,"Jail Escapes")
+	JArray.AddStr(jMiscStatNames,"Items Stolen")
+	JArray.AddStr(jMiscStatNames,"Assaults")
+	JArray.AddStr(jMiscStatNames,"Murders")
+	JArray.AddStr(jMiscStatNames,"Horses Stolen")
+	JArray.AddStr(jMiscStatNames,"Trespasses")
+	JArray.AddStr(jMiscStatNames,"Eastmarch Bounty")
+	JArray.AddStr(jMiscStatNames,"Falkreath Bounty")
+	JArray.AddStr(jMiscStatNames,"Haafingar Bounty")
+	JArray.AddStr(jMiscStatNames,"Hjaalmarch Bounty")
+	JArray.AddStr(jMiscStatNames,"The Pale Bounty")
+	JArray.AddStr(jMiscStatNames,"The Reach Bounty")
+	JArray.AddStr(jMiscStatNames,"The Rift Bounty")
+	JArray.AddStr(jMiscStatNames,"Tribal Orcs Bounty")
+	JArray.AddStr(jMiscStatNames,"Whiterun Bounty")
+	JArray.AddStr(jMiscStatNames,"Winterhold Bounty")
+	SetRegObj("MiscStatNames",jMiscStatNames)
 EndFunction
 
 Function CreateAVNames()
