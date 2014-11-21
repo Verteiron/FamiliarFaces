@@ -53,11 +53,14 @@ Bool _bSavedNINodeInfo 	= False
 
 Int		_iThreadCount	= 0
 
+Int		_jAVNames		= 0
+
 ;=== Events ===--
 
 Event OnInit()
 	If IsRunning()
 		SetSessionID()
+		InitNINodeList()
 		DoUpkeep()
 	EndIf
 EndEvent
@@ -101,7 +104,7 @@ Function SetConfigDefaults(Bool abForce = False)
 		SetRegBool("Config.Compat.Enabled",True,True,True)
 		SetRegBool("Config.Warnings.Enabled",True,True,True)
 		SetRegBool("Config.Debug.Perf.Threads.Limit",False,True,True)
-		SetRegInt ("Config.Debug.Perf.Threads.Max",50,True,True)
+		SetRegInt ("Config.Debug.Perf.Threads.Max",3,True,True)
 		SetRegBool("Config.DefaultsSet",True)
 	EndIf
 EndFunction
@@ -118,7 +121,6 @@ Function SavePlayerPerks()
 	Int i = 0
 	Int jPerkList = JArray.Object()
 	SetRegObj(sRegKey + ".Perks",jPerkList)	
-	CreateAVNames()
 
 	StartTimer("SaveAVs")
 	
@@ -322,7 +324,7 @@ Function SavePlayerInventory()
 	Int jInventoryList = JArray.Object()
 	SetSessionObj("PlayerInventoryList",jInventoryList)
 	JArray.AddFromFormlist(jInventoryList,vMYC_InventoryList)
-	Int jInventory = JFormMap.Object()
+	Int jInventory = JMap.Object() ;JFormMap.Object()
 	SetRegObj(sRegKey + ".Inventory",jInventory)
 	i = JArray.Count(jInventoryList)
 	
@@ -343,58 +345,57 @@ Function SavePlayerInventory()
 		i -= 1
 		Form kItem = JArray.GetForm(jInventoryList,i)
 		If kItem
-			Int iType = kItem.GetType()
-			If IsObjectFavorited(kItem) || iType == 42 ; Ammo
-				Int iCount = PlayerREF.GetItemCount(kItem)
-				If PlayerREF.IsEquipped(kItem)
-					iCount -= 1
-				EndIf
-				If iCount
-					Int iItemID = kItem.GetFormID()
-
-					;===== Save custom weapons =====----
+			If !PlayerRef.IsEquipped(kItem)
+				Int iType = kItem.GetType()
+				Int iCount = 0
+				;===== Save favorited weapons/armor =====----
+				If (iType == 41 || iType == 26) ;&& IsObjectFavorited(kItem)
+					iCount = PlayerREF.GetItemCount(kItem)
+					Int iHand = 0
+					Int iSlotMask = 0
 					If iType == 41 ;kWeapon
-						bAddItem = False
-						PlayerREF.RemoveItem(kItem,1,True,kWeaponDummy)
-						kWeaponDummy.EquipItemEX(kItem,1,preventUnequip = True,equipSound = False)
-						If ((WornObject.GetDisplayName(kWeaponDummy,1,0) || WornObject.GetItemHealthPercent(kWeaponDummy,1,0) > 1.0)) 
-							DebugTrace(kItem + " is a weapon named " + WornObject.GetDisplayName(kWeaponDummy,1,0))
-							Int jCustomWeapon = JMap.Object()
-
-							JMap.setForm(jCustomWeapon,"Form",kItem)
-							JMap.setInt(jCustomWeapon,"Count",iCount)
-
-							SerializeEquipment(kItem,jCustomWeapon,1,0,kWeaponDummy)
-							Int jPlayerCustomItems = GetRegObj(sRegKey + ".InventoryCustomItems")
-							If !jPlayerCustomItems
-								jPlayerCustomItems = JArray.Object()
-							EndIf
-							JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
-							SetRegObj(sRegKey + ".InventoryCustomItems",jPlayerCustomItems)
+						iHand = 1
+					Else ; kArmor
+						iSlotMask = (kItem as Armor).GetSlotMask()
+					EndIf
+					PlayerREF.RemoveItem(kItem,iHand,True,kWeaponDummy)
+					kWeaponDummy.EquipItemEX(kItem,iHand,preventUnequip = True,equipSound = False)
+					String sDisplayName = WornObject.GetDisplayName(kWeaponDummy,iHand,iSlotMask)
+					If (sDisplayName && sDisplayName != kItem.GetName()) || WornObject.GetItemHealthPercent(kWeaponDummy,iHand,iSlotMask) > 1.0
+						DebugTrace(kItem + " is a custom item named " + WornObject.GetDisplayName(kWeaponDummy,iHand,iSlotMask))
+						Int jCustomWeapon = JMap.Object()
+       
+						JMap.setForm(jCustomWeapon,"Form",kItem)
+						JMap.setInt(jCustomWeapon,"Count",iCount)
+       
+						SerializeEquipment(kItem,jCustomWeapon,iHand,iSlotMask,kWeaponDummy)
+						Int jPlayerCustomItems = GetRegObj(sRegKey + ".InventoryCustomItems")
+						If !jPlayerCustomItems
+							jPlayerCustomItems = JArray.Object()
 						EndIf
-						kWeaponDummy.RemoveItem(kItem,1,True,PlayerREF)
-						;JArray.AddForm(jWeaponsToCheck,kItem)
+						JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
+						SetRegObj(sRegKey + ".InventoryCustomItems",jPlayerCustomItems)
+						iCount -= 1 ; Reduce count to keep it from being added to the main inventory list
 					EndIf
-					If iItemID > 0x05000000 || iItemID < 0 && !(iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF)
-						; Item is NOT part of Skyrim, Dawnguard, Hearthfires, or Dragonborn and is not a custom item
-						;Debug.Trace("MYC/CM: " + kItem + " is a mod-added item!")
-						;bAddItem = False
-					ElseIf (iItemID > 0xFF000000 && iItemID < 0xFFFFFFFF)
-						; This is a custom-made item
-						DebugTrace(kItem + " is a customized/forged/mixed item!")
-						bAddItem = False
+					kWeaponDummy.RemoveItem(kItem,iHand,True,PlayerREF)
+					;JArray.AddForm(jWeaponsToCheck,kItem)
+				ElseIf iType == 42 ; Ammo
+					iCount = PlayerREF.GetItemCount(kItem)
+				ElseIf IsObjectFavorited(kItem)
+					iCount = PlayerREF.GetItemCount(kItem)
+				EndIf
+				If iCount > 0 
+					Int jItemTypeFMap = JMap.getObj(jInventory,iType)
+					If !JValue.IsFormMap(jItemTypeFMap)
+						jItemTypeFMap = JFormMap.Object()
+						JMap.setObj(jInventory,iType,jItemTypeFMap)
 					EndIf
-					If kItem as ObjectReference
-						DebugTrace(kItem + " is an ObjectReference named " + (kItem as ObjectReference).GetDisplayName())
-					EndIf
-					JFormMap.SetInt(jInventory,kItem,iCount)
+					JFormMap.SetInt(jItemTypeFMap,kItem,iCount)
 				EndIf
 			EndIf
 		EndIf
-		If i % 13 == 0
-			WaitMenuMode(0.1)
-		EndIf
 	EndWhile
+	kWeaponDummy.Delete()
 	SetRegObj(sRegKey + ".Inventory",jInventory)
 	SendModEvent("vMYC_InventorySaveEnd")
 	StopTimer("SaveInventory")
@@ -490,23 +491,28 @@ Int Function SavePlayerData()
 	_bSavedInventory 	= False
 	_bSavedNINodeInfo	= False
 
-	RegisterForModEvent("vMYC_SavePlayerNINodeInfo","OnSavePlayerNINodeInfo")
-	SendModEvent("vMYC_SavePlayerNINodeInfo")
+	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerEquipment")
 	
-	RegisterForModEvent("vMYC_SavePlayerPerks","OnSavePlayerPerks")
-	SendModEvent("vMYC_SavePlayerPerks")
+	;RegisterForModEvent("vMYC_SavePlayerPerks","OnSavePlayerPerks")
+	;SendModEvent("vMYC_SavePlayerPerks")
+	;
+	;RegisterForModEvent("vMYC_SavePlayerEquipment","OnSavePlayerEquipment")
+	;SendModEvent("vMYC_SavePlayerEquipment")
+    ;
+	;RegisterForModEvent("vMYC_SavePlayerSpells","OnSavePlayerSpells")
+	;SendModEvent("vMYC_SavePlayerSpells")
+    ;
+	;RegisterForModEvent("vMYC_SavePlayerInventory","OnSavePlayerInventory")
+	;SendModEvent("vMYC_SavePlayerInventory")
 	
-	RegisterForModEvent("vMYC_SavePlayerEquipment","OnSavePlayerEquipment")
-	SendModEvent("vMYC_SavePlayerEquipment")
-
-	RegisterForModEvent("vMYC_SavePlayerSpells","OnSavePlayerSpells")
-	SendModEvent("vMYC_SavePlayerSpells")
-
-	RegisterForModEvent("vMYC_SavePlayerInventory","OnSavePlayerInventory")
-	SendModEvent("vMYC_SavePlayerInventory")
-	
-	WaitMenuMode(0.5)
-	While _iThreadCount > 4
+	WaitMenuMode(1)
+	While _iThreadCount > 2
+		DebugTrace("Threadcount is " + _iThreadCount + ", waiting...")
 		WaitMenuMode(1)
 	EndWhile
 	
@@ -534,6 +540,32 @@ Int Function SavePlayerData()
 	GotoState("")
 	Return 0 
 EndFunction
+
+Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form sender)
+	Int iMaxThreads = GetRegInt("Config.Debug.Perf.Threads.Max")
+	DebugTrace("Backgrounding " + strArg + ", thread " + (_iThreadCount + 1) + "/" + iMaxThreads)
+	While _iThreadCount >= iMaxThreads
+		WaitMenuMode(0.5)
+	EndWhile
+	_iThreadCount += 1
+	If strArg == "SavePlayerEquipment"
+		SavePlayerEquipment()
+		_bSavedEquipment = True
+	ElseIf strArg == "SavePlayerPerks"
+		SavePlayerPerks()
+		_bSavedPerks = True
+	ElseIf strArg == "SavePlayerSpells"
+		SavePlayerSpells()
+		_bSavedSpells = True
+	ElseIf strArg == "SavePlayerInventory"
+		SavePlayerInventory()
+		_bSavedInventory = True
+	ElseIf strArg == "SavePlayerNINodeInfo"
+		SavePlayerNINodeInfo()
+		_bSavedNINodeInfo = True
+	EndIf
+	_iThreadCount -= 1
+EndEvent
 
 Event OnSavePlayerEquipment(string eventName, string strArg, float numArg, Form sender)
 	_iThreadCount += 1
@@ -608,28 +640,63 @@ EndFunction
 
 ;=== Functions - NIOverride ===--
 
-Int Function GetNINodeInfo(Actor akActor)
-	Int jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
-	SetSessionObj("NINodeList",jNINodeList)
+Function InitNINodeList()
+	Int jNINodeList = GetRegObj("NINodeList")
+	If !jNINodeList
+		jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
+		SetRegObj("NINodeList",jNINodeList)
+	EndIf
 	DebugTrace("NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
-	
-	Int jNINodes = JMap.Object()
-	SetSessionObj("NINodeScales",jNINodes)
 	Int i = 0
 	Int iNodeCount = JArray.Count(jNINodeList)
+	
+	If !GetRegBool("Config.NINodeList.IsFiltered")
+		DebugTrace("NINodeList needs filtering, we'll do that now.")
+		While i < iNodeCount
+			String sNodeName = JArray.getStr(jNINodeList,i)
+			Bool bErased = False
+			If sNodeName
+				If !NetImmerse.HasNode(PlayerRef,sNodeName,False)
+					JArray.EraseIndex(jNINodeList,i)
+					bErased = True
+				EndIf
+			EndIf
+			If bErased
+				DebugTrace("NINodeList - Erased entry " + sNodeName + "!")
+				iNodeCount -= 1
+			Else
+				DebugTrace("NINodeList - Retained entry " + sNodeName + "!")
+				i += 1
+			EndIf
+		EndWhile
+		SetRegObj("NINodeList",jNINodeList)
+		SetRegBool("Config.NINodeList.IsFiltered",True)
+		DebugTrace("NINodeList now contains " + JArray.Count(jNINodeList) + " entries!")
+	EndIf
+EndFunction
+
+Int Function GetNINodeInfo(Actor akActor)
+	Int jNINodeList = GetRegObj("NINodeList")
+	If !jNINodeList
+		jNINodeList = JValue.ReadFromFile("Data/vMYC/vMYC_NodeList.json")
+		SetRegObj("NINodeList",jNINodeList)
+	EndIf
+	DebugTrace("NINodeList contains " + JArray.Count(jNINodeList) + " entries!")
+
+	Int i = 0
+	Int iNodeCount = JArray.Count(jNINodeList)
+	Int jNINodes = JMap.Object()
+	SetSessionObj("NINodeScales",jNINodes)
 	While i < iNodeCount
 		String sNodeName = JArray.getStr(jNINodeList,i)
 		If sNodeName
-			;Removing this check halved the time this takes.
-			;If NetImmerse.HasNode(akActor,sNodeName,false)
-				Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
-				If fNodeScale && fNodeScale != 1.0 ;avoid saving defaults
-					DebugTrace("Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
-					Int jNINodeData = JMap.Object()
-					JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
-					JMap.SetObj(jNINodes,sNodeName,jNINodeData)
-				EndIf
-			;EndIf
+			Float fNodeScale = NetImmerse.GetNodeScale(akActor,sNodeName,false)
+			If fNodeScale && fNodeScale != 1.0 ;avoid saving defaults
+				DebugTrace("Saving NINode " + sNodeName + " at scale " + fNodeScale + "!")
+				Int jNINodeData = JMap.Object()
+				JMap.SetFlt(jNINodeData,"Scale",fNodeScale)
+				JMap.SetObj(jNINodes,sNodeName,jNINodeData)
+			EndIf
 		EndIf
 		i += 1
 	EndWhile
@@ -855,183 +922,187 @@ String Function StringReplace(String sString, String sToFind, String sReplacemen
 EndFunction
 
 String Function GetAVName(Int iAVIndex)
-	Int jAVNames = GetRegObj("AVNames")
-	If !jAVNames
-		CreateAVNames()
-		jAVNames = GetRegObj("AVNames")
+	If !_jAVNames
+		DebugTrace("Pulling AVNames from registry...")
+		_jAVNames = GetRegObj("AVNames")
+		If !_jAVNames
+			CreateAVNames()
+			_jAVNames = GetRegObj("AVNames")
+		EndIf
 	EndIf
-	Return JArray.GetStr(jAVNames,iAVIndex)
+	Return JArray.GetStr(_jAVNames,iAVIndex)
 EndFunction
 
 Function CreateAVNames()
-	Int jAVNames = JArray.Object()
-	JArray.AddStr(jAVNames,"Aggression")
-	JArray.AddStr(jAVNames,"Confidence")
-	JArray.AddStr(jAVNames,"Energy")
-	JArray.AddStr(jAVNames,"Morality")
-	JArray.AddStr(jAVNames,"Mood")
-	JArray.AddStr(jAVNames,"Assistance")
-	JArray.AddStr(jAVNames,"OneHanded")
-	JArray.AddStr(jAVNames,"TwoHanded")
-	JArray.AddStr(jAVNames,"Marksman")
-	JArray.AddStr(jAVNames,"Block")
-	JArray.AddStr(jAVNames,"Smithing")
-	JArray.AddStr(jAVNames,"HeavyArmor")
-	JArray.AddStr(jAVNames,"LightArmor")
-	JArray.AddStr(jAVNames,"Pickpocket")
-	JArray.AddStr(jAVNames,"LockPicking")
-	JArray.AddStr(jAVNames,"Sneak")
-	JArray.AddStr(jAVNames,"Alchemy")
-	JArray.AddStr(jAVNames,"SpeechCraft")
-	JArray.AddStr(jAVNames,"Alteration")
-	JArray.AddStr(jAVNames,"Conjuration")
-	JArray.AddStr(jAVNames,"Destruction")
-	JArray.AddStr(jAVNames,"Illusion") ; Wiki says Mysticism but game expects Illusion
-	JArray.AddStr(jAVNames,"Restoration")
-	JArray.AddStr(jAVNames,"Enchanting")
-	JArray.AddStr(jAVNames,"Health")
-	JArray.AddStr(jAVNames,"Magicka")
-	JArray.AddStr(jAVNames,"Stamina")
-	JArray.AddStr(jAVNames,"HealRate")
-	JArray.AddStr(jAVNames,"MagickaRate")
-	JArray.AddStr(jAVNames,"StaminaRate")
-	JArray.AddStr(jAVNames,"SpeedMult")
-	JArray.AddStr(jAVNames,"InventoryWeight")
-	JArray.AddStr(jAVNames,"CarryWeight")
-	JArray.AddStr(jAVNames,"CritChance")
-	JArray.AddStr(jAVNames,"MeleeDamage")
-	JArray.AddStr(jAVNames,"UnarmedDamage")
-	JArray.AddStr(jAVNames,"Mass")
-	JArray.AddStr(jAVNames,"VoicePoints")
-	JArray.AddStr(jAVNames,"VoiceRate")
-	JArray.AddStr(jAVNames,"DamageResist")
-	JArray.AddStr(jAVNames,"PoisonResist")
-	JArray.AddStr(jAVNames,"FireResist")
-	JArray.AddStr(jAVNames,"ElectricResist")
-	JArray.AddStr(jAVNames,"FrostResist")
-	JArray.AddStr(jAVNames,"MagicResist")
-	JArray.AddStr(jAVNames,"NormalWeaponsResist")
-	JArray.AddStr(jAVNames,"PerceptionCondition")
-	JArray.AddStr(jAVNames,"EnduranceCondition")
-	JArray.AddStr(jAVNames,"LeftAttackCondition")
-	JArray.AddStr(jAVNames,"RightAttackCondition")
-	JArray.AddStr(jAVNames,"LeftMobilityCondition")
-	JArray.AddStr(jAVNames,"RightMobilityCondition")
-	JArray.AddStr(jAVNames,"BrainCondition")
-	JArray.AddStr(jAVNames,"Paralysis")
-	JArray.AddStr(jAVNames,"Invisibility")
-	JArray.AddStr(jAVNames,"NightEye")
-	JArray.AddStr(jAVNames,"DetectLifeRange")
-	JArray.AddStr(jAVNames,"WaterBreathing")
-	JArray.AddStr(jAVNames,"WaterWalking")
-	JArray.AddStr(jAVNames,"IgnoreCrippleLimbs")
-	JArray.AddStr(jAVNames,"Fame")
-	JArray.AddStr(jAVNames,"Infamy")
-	JArray.AddStr(jAVNames,"JumpingBonus")
-	JArray.AddStr(jAVNames,"WardPower")
-	JArray.AddStr(jAVNames,"EquippedItemCharge")
-	JArray.AddStr(jAVNames,"ArmorPerks")
-	JArray.AddStr(jAVNames,"ShieldPerks")
-	JArray.AddStr(jAVNames,"WardDeflection")
-	JArray.AddStr(jAVNames,"Variable01")
-	JArray.AddStr(jAVNames,"Variable02")
-	JArray.AddStr(jAVNames,"Variable03")
-	JArray.AddStr(jAVNames,"Variable04")
-	JArray.AddStr(jAVNames,"Variable05")
-	JArray.AddStr(jAVNames,"Variable06")
-	JArray.AddStr(jAVNames,"Variable07")
-	JArray.AddStr(jAVNames,"Variable08")
-	JArray.AddStr(jAVNames,"Variable09")
-	JArray.AddStr(jAVNames,"Variable10")
-	JArray.AddStr(jAVNames,"BowSpeedBonus")
-	JArray.AddStr(jAVNames,"FavorActive")
-	JArray.AddStr(jAVNames,"FavorsPerDay")
-	JArray.AddStr(jAVNames,"FavorsPerDayTimer")
-	JArray.AddStr(jAVNames,"EquippedStaffCharge")
-	JArray.AddStr(jAVNames,"AbsorbChance")
-	JArray.AddStr(jAVNames,"Blindness")
-	JArray.AddStr(jAVNames,"WeaponSpeedMult")
-	JArray.AddStr(jAVNames,"ShoutRecoveryMult")
-	JArray.AddStr(jAVNames,"BowStaggerBonus")
-	JArray.AddStr(jAVNames,"Telekinesis")
-	JArray.AddStr(jAVNames,"FavorPointsBonus")
-	JArray.AddStr(jAVNames,"LastBribedIntimidated")
-	JArray.AddStr(jAVNames,"LastFlattered")
-	JArray.AddStr(jAVNames,"Muffled")
-	JArray.AddStr(jAVNames,"BypassVendorStolenCheck")
-	JArray.AddStr(jAVNames,"BypassVendorKeywordCheck")
-	JArray.AddStr(jAVNames,"WaitingForPlayer")
-	JArray.AddStr(jAVNames,"OneHandedMod")
-	JArray.AddStr(jAVNames,"TwoHandedMod")
-	JArray.AddStr(jAVNames,"MarksmanMod")
-	JArray.AddStr(jAVNames,"BlockMod")
-	JArray.AddStr(jAVNames,"SmithingMod")
-	JArray.AddStr(jAVNames,"HeavyArmorMod")
-	JArray.AddStr(jAVNames,"LightArmorMod")
-	JArray.AddStr(jAVNames,"PickPocketMod")
-	JArray.AddStr(jAVNames,"LockPickingMod")
-	JArray.AddStr(jAVNames,"SneakMod")
-	JArray.AddStr(jAVNames,"AlchemyMod")
-	JArray.AddStr(jAVNames,"SpeechcraftMod")
-	JArray.AddStr(jAVNames,"AlterationMod")
-	JArray.AddStr(jAVNames,"ConjurationMod")
-	JArray.AddStr(jAVNames,"DestructionMod")
-	JArray.AddStr(jAVNames,"IllusionMod")
-	JArray.AddStr(jAVNames,"RestorationMod")
-	JArray.AddStr(jAVNames,"EnchantingMod")
-	JArray.AddStr(jAVNames,"OneHandedSkillAdvance")
-	JArray.AddStr(jAVNames,"TwoHandedSkillAdvance")
-	JArray.AddStr(jAVNames,"MarksmanSkillAdvance")
-	JArray.AddStr(jAVNames,"BlockSkillAdvance")
-	JArray.AddStr(jAVNames,"SmithingSkillAdvance")
-	JArray.AddStr(jAVNames,"HeavyArmorSkillAdvance")
-	JArray.AddStr(jAVNames,"LightArmorSkillAdvance")
-	JArray.AddStr(jAVNames,"PickPocketSkillAdvance")
-	JArray.AddStr(jAVNames,"LockPickingSkillAdvance")
-	JArray.AddStr(jAVNames,"SneakSkillAdvance")
-	JArray.AddStr(jAVNames,"AlchemySkillAdvance")
-	JArray.AddStr(jAVNames,"SpeechcraftSkillAdvance")
-	JArray.AddStr(jAVNames,"AlterationSkillAdvance")
-	JArray.AddStr(jAVNames,"ConjurationSkillAdvance")
-	JArray.AddStr(jAVNames,"DestructionSkillAdvance")
-	JArray.AddStr(jAVNames,"IllusionSkillAdvance")
-	JArray.AddStr(jAVNames,"RestorationSkillAdvance")
-	JArray.AddStr(jAVNames,"EnchantingSkillAdvance")
-	JArray.AddStr(jAVNames,"LeftWeaponSpeedMult")
-	JArray.AddStr(jAVNames,"DragonSouls")
-	JArray.AddStr(jAVNames,"CombatHealthRegenMult")
-	JArray.AddStr(jAVNames,"OneHandedPowerMod")
-	JArray.AddStr(jAVNames,"TwoHandedPowerMod")
-	JArray.AddStr(jAVNames,"MarksmanPowerMod")
-	JArray.AddStr(jAVNames,"BlockPowerMod")
-	JArray.AddStr(jAVNames,"SmithingPowerMod")
-	JArray.AddStr(jAVNames,"HeavyArmorPowerMod")
-	JArray.AddStr(jAVNames,"LightArmorPowerMod")
-	JArray.AddStr(jAVNames,"PickPocketPowerMod")
-	JArray.AddStr(jAVNames,"LockPickingPowerMod")
-	JArray.AddStr(jAVNames,"SneakPowerMod")
-	JArray.AddStr(jAVNames,"AlchemyPowerMod")
-	JArray.AddStr(jAVNames,"SpeechcraftPowerMod")
-	JArray.AddStr(jAVNames,"AlterationPowerMod")
-	JArray.AddStr(jAVNames,"ConjurationPowerMod")
-	JArray.AddStr(jAVNames,"DestructionPowerMod")
-	JArray.AddStr(jAVNames,"IllusionPowerMod")
-	JArray.AddStr(jAVNames,"RestorationPowerMod")
-	JArray.AddStr(jAVNames,"EnchantingPowerMod")
-	JArray.AddStr(jAVNames,"DragonRend")
-	JArray.AddStr(jAVNames,"AttackDamageMult")
-	JArray.AddStr(jAVNames,"CombatHealthRegenMultMod")
-	JArray.AddStr(jAVNames,"CombatHealthRegenMultPowerMod")
-	JArray.AddStr(jAVNames,"StaminaRateMult")
-	JArray.AddStr(jAVNames,"Werewolf") ; "HealRatePowerMod" before Dawnguard
-	JArray.AddStr(jAVNames,"Vampire Lord") ; "MagickaRateMod" before Dawnguard
-	JArray.AddStr(jAVNames,"GrabActorOffset")
-	JArray.AddStr(jAVNames,"Grabbed")
-	JArray.AddStr(jAVNames,"UNKNOWN")
-	JArray.AddStr(jAVNames,"ReflectDamage")
-	SetRegObj("AVNames",jAVNames)
+	DebugTrace("Indexing AVNames from scratch!")
+	_jAVNames = JArray.Object()
+	JArray.AddStr(_jAVNames,"Aggression")
+	JArray.AddStr(_jAVNames,"Confidence")
+	JArray.AddStr(_jAVNames,"Energy")
+	JArray.AddStr(_jAVNames,"Morality")
+	JArray.AddStr(_jAVNames,"Mood")
+	JArray.AddStr(_jAVNames,"Assistance")
+	JArray.AddStr(_jAVNames,"OneHanded")
+	JArray.AddStr(_jAVNames,"TwoHanded")
+	JArray.AddStr(_jAVNames,"Marksman")
+	JArray.AddStr(_jAVNames,"Block")
+	JArray.AddStr(_jAVNames,"Smithing")
+	JArray.AddStr(_jAVNames,"HeavyArmor")
+	JArray.AddStr(_jAVNames,"LightArmor")
+	JArray.AddStr(_jAVNames,"Pickpocket")
+	JArray.AddStr(_jAVNames,"LockPicking")
+	JArray.AddStr(_jAVNames,"Sneak")
+	JArray.AddStr(_jAVNames,"Alchemy")
+	JArray.AddStr(_jAVNames,"SpeechCraft")
+	JArray.AddStr(_jAVNames,"Alteration")
+	JArray.AddStr(_jAVNames,"Conjuration")
+	JArray.AddStr(_jAVNames,"Destruction")
+	JArray.AddStr(_jAVNames,"Illusion") ; Wiki says Mysticism but game expects Illusion
+	JArray.AddStr(_jAVNames,"Restoration")
+	JArray.AddStr(_jAVNames,"Enchanting")
+	JArray.AddStr(_jAVNames,"Health")
+	JArray.AddStr(_jAVNames,"Magicka")
+	JArray.AddStr(_jAVNames,"Stamina")
+	JArray.AddStr(_jAVNames,"HealRate")
+	JArray.AddStr(_jAVNames,"MagickaRate")
+	JArray.AddStr(_jAVNames,"StaminaRate")
+	JArray.AddStr(_jAVNames,"SpeedMult")
+	JArray.AddStr(_jAVNames,"InventoryWeight")
+	JArray.AddStr(_jAVNames,"CarryWeight")
+	JArray.AddStr(_jAVNames,"CritChance")
+	JArray.AddStr(_jAVNames,"MeleeDamage")
+	JArray.AddStr(_jAVNames,"UnarmedDamage")
+	JArray.AddStr(_jAVNames,"Mass")
+	JArray.AddStr(_jAVNames,"VoicePoints")
+	JArray.AddStr(_jAVNames,"VoiceRate")
+	JArray.AddStr(_jAVNames,"DamageResist")
+	JArray.AddStr(_jAVNames,"PoisonResist")
+	JArray.AddStr(_jAVNames,"FireResist")
+	JArray.AddStr(_jAVNames,"ElectricResist")
+	JArray.AddStr(_jAVNames,"FrostResist")
+	JArray.AddStr(_jAVNames,"MagicResist")
+	JArray.AddStr(_jAVNames,"NormalWeaponsResist")
+	JArray.AddStr(_jAVNames,"PerceptionCondition")
+	JArray.AddStr(_jAVNames,"EnduranceCondition")
+	JArray.AddStr(_jAVNames,"LeftAttackCondition")
+	JArray.AddStr(_jAVNames,"RightAttackCondition")
+	JArray.AddStr(_jAVNames,"LeftMobilityCondition")
+	JArray.AddStr(_jAVNames,"RightMobilityCondition")
+	JArray.AddStr(_jAVNames,"BrainCondition")
+	JArray.AddStr(_jAVNames,"Paralysis")
+	JArray.AddStr(_jAVNames,"Invisibility")
+	JArray.AddStr(_jAVNames,"NightEye")
+	JArray.AddStr(_jAVNames,"DetectLifeRange")
+	JArray.AddStr(_jAVNames,"WaterBreathing")
+	JArray.AddStr(_jAVNames,"WaterWalking")
+	JArray.AddStr(_jAVNames,"IgnoreCrippleLimbs")
+	JArray.AddStr(_jAVNames,"Fame")
+	JArray.AddStr(_jAVNames,"Infamy")
+	JArray.AddStr(_jAVNames,"JumpingBonus")
+	JArray.AddStr(_jAVNames,"WardPower")
+	JArray.AddStr(_jAVNames,"EquippedItemCharge")
+	JArray.AddStr(_jAVNames,"ArmorPerks")
+	JArray.AddStr(_jAVNames,"ShieldPerks")
+	JArray.AddStr(_jAVNames,"WardDeflection")
+	JArray.AddStr(_jAVNames,"Variable01")
+	JArray.AddStr(_jAVNames,"Variable02")
+	JArray.AddStr(_jAVNames,"Variable03")
+	JArray.AddStr(_jAVNames,"Variable04")
+	JArray.AddStr(_jAVNames,"Variable05")
+	JArray.AddStr(_jAVNames,"Variable06")
+	JArray.AddStr(_jAVNames,"Variable07")
+	JArray.AddStr(_jAVNames,"Variable08")
+	JArray.AddStr(_jAVNames,"Variable09")
+	JArray.AddStr(_jAVNames,"Variable10")
+	JArray.AddStr(_jAVNames,"BowSpeedBonus")
+	JArray.AddStr(_jAVNames,"FavorActive")
+	JArray.AddStr(_jAVNames,"FavorsPerDay")
+	JArray.AddStr(_jAVNames,"FavorsPerDayTimer")
+	JArray.AddStr(_jAVNames,"EquippedStaffCharge")
+	JArray.AddStr(_jAVNames,"AbsorbChance")
+	JArray.AddStr(_jAVNames,"Blindness")
+	JArray.AddStr(_jAVNames,"WeaponSpeedMult")
+	JArray.AddStr(_jAVNames,"ShoutRecoveryMult")
+	JArray.AddStr(_jAVNames,"BowStaggerBonus")
+	JArray.AddStr(_jAVNames,"Telekinesis")
+	JArray.AddStr(_jAVNames,"FavorPointsBonus")
+	JArray.AddStr(_jAVNames,"LastBribedIntimidated")
+	JArray.AddStr(_jAVNames,"LastFlattered")
+	JArray.AddStr(_jAVNames,"Muffled")
+	JArray.AddStr(_jAVNames,"BypassVendorStolenCheck")
+	JArray.AddStr(_jAVNames,"BypassVendorKeywordCheck")
+	JArray.AddStr(_jAVNames,"WaitingForPlayer")
+	JArray.AddStr(_jAVNames,"OneHandedMod")
+	JArray.AddStr(_jAVNames,"TwoHandedMod")
+	JArray.AddStr(_jAVNames,"MarksmanMod")
+	JArray.AddStr(_jAVNames,"BlockMod")
+	JArray.AddStr(_jAVNames,"SmithingMod")
+	JArray.AddStr(_jAVNames,"HeavyArmorMod")
+	JArray.AddStr(_jAVNames,"LightArmorMod")
+	JArray.AddStr(_jAVNames,"PickPocketMod")
+	JArray.AddStr(_jAVNames,"LockPickingMod")
+	JArray.AddStr(_jAVNames,"SneakMod")
+	JArray.AddStr(_jAVNames,"AlchemyMod")
+	JArray.AddStr(_jAVNames,"SpeechcraftMod")
+	JArray.AddStr(_jAVNames,"AlterationMod")
+	JArray.AddStr(_jAVNames,"ConjurationMod")
+	JArray.AddStr(_jAVNames,"DestructionMod")
+	JArray.AddStr(_jAVNames,"IllusionMod")
+	JArray.AddStr(_jAVNames,"RestorationMod")
+	JArray.AddStr(_jAVNames,"EnchantingMod")
+	JArray.AddStr(_jAVNames,"OneHandedSkillAdvance")
+	JArray.AddStr(_jAVNames,"TwoHandedSkillAdvance")
+	JArray.AddStr(_jAVNames,"MarksmanSkillAdvance")
+	JArray.AddStr(_jAVNames,"BlockSkillAdvance")
+	JArray.AddStr(_jAVNames,"SmithingSkillAdvance")
+	JArray.AddStr(_jAVNames,"HeavyArmorSkillAdvance")
+	JArray.AddStr(_jAVNames,"LightArmorSkillAdvance")
+	JArray.AddStr(_jAVNames,"PickPocketSkillAdvance")
+	JArray.AddStr(_jAVNames,"LockPickingSkillAdvance")
+	JArray.AddStr(_jAVNames,"SneakSkillAdvance")
+	JArray.AddStr(_jAVNames,"AlchemySkillAdvance")
+	JArray.AddStr(_jAVNames,"SpeechcraftSkillAdvance")
+	JArray.AddStr(_jAVNames,"AlterationSkillAdvance")
+	JArray.AddStr(_jAVNames,"ConjurationSkillAdvance")
+	JArray.AddStr(_jAVNames,"DestructionSkillAdvance")
+	JArray.AddStr(_jAVNames,"IllusionSkillAdvance")
+	JArray.AddStr(_jAVNames,"RestorationSkillAdvance")
+	JArray.AddStr(_jAVNames,"EnchantingSkillAdvance")
+	JArray.AddStr(_jAVNames,"LeftWeaponSpeedMult")
+	JArray.AddStr(_jAVNames,"DragonSouls")
+	JArray.AddStr(_jAVNames,"CombatHealthRegenMult")
+	JArray.AddStr(_jAVNames,"OneHandedPowerMod")
+	JArray.AddStr(_jAVNames,"TwoHandedPowerMod")
+	JArray.AddStr(_jAVNames,"MarksmanPowerMod")
+	JArray.AddStr(_jAVNames,"BlockPowerMod")
+	JArray.AddStr(_jAVNames,"SmithingPowerMod")
+	JArray.AddStr(_jAVNames,"HeavyArmorPowerMod")
+	JArray.AddStr(_jAVNames,"LightArmorPowerMod")
+	JArray.AddStr(_jAVNames,"PickPocketPowerMod")
+	JArray.AddStr(_jAVNames,"LockPickingPowerMod")
+	JArray.AddStr(_jAVNames,"SneakPowerMod")
+	JArray.AddStr(_jAVNames,"AlchemyPowerMod")
+	JArray.AddStr(_jAVNames,"SpeechcraftPowerMod")
+	JArray.AddStr(_jAVNames,"AlterationPowerMod")
+	JArray.AddStr(_jAVNames,"ConjurationPowerMod")
+	JArray.AddStr(_jAVNames,"DestructionPowerMod")
+	JArray.AddStr(_jAVNames,"IllusionPowerMod")
+	JArray.AddStr(_jAVNames,"RestorationPowerMod")
+	JArray.AddStr(_jAVNames,"EnchantingPowerMod")
+	JArray.AddStr(_jAVNames,"DragonRend")
+	JArray.AddStr(_jAVNames,"AttackDamageMult")
+	JArray.AddStr(_jAVNames,"CombatHealthRegenMultMod")
+	JArray.AddStr(_jAVNames,"CombatHealthRegenMultPowerMod")
+	JArray.AddStr(_jAVNames,"StaminaRateMult")
+	JArray.AddStr(_jAVNames,"Werewolf") ; "HealRatePowerMod" before Dawnguard
+	JArray.AddStr(_jAVNames,"Vampire Lord") ; "MagickaRateMod" before Dawnguard
+	JArray.AddStr(_jAVNames,"GrabActorOffset")
+	JArray.AddStr(_jAVNames,"Grabbed")
+	JArray.AddStr(_jAVNames,"UNKNOWN")
+	JArray.AddStr(_jAVNames,"ReflectDamage")
+	SetRegObj("AVNames",_jAVNames)
 	Int i = 0
-	Int iAVCount = JArray.Count(jAVNames)
+	Int iAVCount = JArray.Count(_jAVNames)
 	Int jSkills = JArray.Object()
 	SetRegObj("SkillAVIs",jSkills)
 	While i < iAVCount
