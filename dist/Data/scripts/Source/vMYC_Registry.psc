@@ -184,6 +184,13 @@ Int Function CreateSessionDataIfMissing() Global
 	Return jSessionData
 EndFunction
 
+Function SaveSession() Global
+	;Debug.Trace("MYC/Reg: SaveReg called!")
+	Int jRegData = JDB.solveObj(".vMYC.Session")
+	JValue.WriteToFile(jRegData,JContainers.userDirectory() + "vMYC/vMYC_Session.json")
+EndFunction
+
+
 Bool Function HasSessionKey(String asPath) Global
 	Int jSession = CreateSessionDataIfMissing()
 	Return JValue.hasPath(jSession,"." + asPath) || JMap.hasKey(jSession,asPath)
