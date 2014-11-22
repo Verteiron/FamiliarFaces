@@ -29,6 +29,8 @@ Bool 				Property IsBusy 		= False 				Auto Hidden
 
 vMYC_HangoutManager Property HangoutManager 						Auto
 
+vMYC_PlayerTracker	Property PlayerTracker							Auto
+
 Int 				Property SerializationVersion = 4 				Auto Hidden
 
 Actor 				Property PlayerRef 								Auto
@@ -58,11 +60,14 @@ Int		_jAVNames		= 0
 ;=== Events ===--
 
 Event OnInit()
-	If IsRunning()
+	If IsRunning() && !IsBusy
+		IsBusy = True
 		SetSessionID()
 		CreateMiscStatNames()
+		CreateAVNames()
 		InitNINodeList()
-		DoUpkeep()
+		DoUpkeep(False)
+		SendModEvent("vMYC_DataManagerReady")
 	EndIf
 EndEvent
 
@@ -70,7 +75,14 @@ Event OnUpdate()
 	If NeedUpkeep
 		DoUpkeep(False)
 	EndIf
-	Debug.MessageBox("Done!")
+EndEvent
+
+Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
+	DebugTrace("Tracker reports ready, save the player!")
+	While IsBusy
+		DebugTrace("Waiting to be not busy....")
+		WaitMenuMode(1)
+	EndWhile
 EndEvent
 
 ;=== Functions - Startup ===--
@@ -78,6 +90,7 @@ EndEvent
 Function DoUpkeep(Bool bInBackground = True)
 	{Run whenever the player loads up the Game.}
 	RegisterForModEvent("vMYC_SetCustomHangout","OnSetCustomHangout")
+	RegisterForModEvent("vMYC_TrackerReady","OnTrackerReady")
 	If bInBackground
 		NeedUpkeep = True
 		RegisterForSingleUpdate(0.25)
@@ -93,9 +106,13 @@ Function DoUpkeep(Bool bInBackground = True)
 		SetRegObj("Shrine",JMap.Object(),True)
 		SetConfigDefaults()
 	EndIf
+
+	;Don't register this until after we've init'd everything else
+	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
+
+	IsBusy = False
 	DebugTrace("Finished upkeep!")
 	SendModEvent("vMYC_UpkeepEnd")
-	SavePlayerData()
 EndFunction
 
 Function SetConfigDefaults(Bool abForce = False)
@@ -113,16 +130,18 @@ EndFunction
 
 ;=== Functions - Character data ===--
 
-Function SavePlayerPerks()
-	;== Actor values and Perks ===--
-	StartTimer("SavePerks")
-	SendModEvent("vMYC_PerksSaveBegin")
-	
-	String sRegKey = "Characters." + SessionID
+Function ScanPlayerStats()
+{Writes current player stats to the session}
+	If GetSessionBool("Status.Stats.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.Stats.Busy",True)
+	StartTimer("ScanPlayerStats")
 	Int i = 0
-	Int jPerkList = JArray.Object()
-	SetRegObj(sRegKey + ".Perks",jPerkList)	
-
+	
+	SetSessionFlt("Stats.Experience",GetPlayerExperience())
+	SetSessionFlt("Stats.PerkPoints",GetPerkPoints())
+	
 	StartTimer("SaveAVs")
 	
 	Int iAddedCount = 0 
@@ -132,14 +151,14 @@ Function SavePlayerPerks()
 		Float fAV = 0.0
 		fAV = PlayerREF.GetBaseActorValue(sAVName)
 		If fAV
-			SetRegFlt(sRegKey + ".Stats.AV." + sAVName,fAV)
+			SetSessionFlt("Stats.AV." + sAVName,fAV)
 			DebugTrace("Saved AV " + sAVName + "!")
 		EndIf
 		iAdvSkills += 1
 	EndWhile
 	StopTimer("SaveAVs")
 
-	StartTimer("SaveSkillsAndPerks")
+	StartTimer("SaveSkills")
 	Int jSkillList = GetRegObj("SkillAVIs")
 	Int iSkillCount = JArray.Count(jSkillList)
 	iAdvSkills = 0
@@ -148,21 +167,51 @@ Function SavePlayerPerks()
 		String sAVName = GetAVName(iAVI)
 		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAVI)
 		Float fAV = 0.0
+		Int iLL = 0
 		If iAVI < 158 || iAVI > 159 ; Skip Werewolf/Vampire Lord
 			fAV = PlayerREF.GetBaseActorValue(sAVName)
+			iLL = GetSkillLegendaryLevel(sAVName)
+		EndIf
+		If iLL
+			SetSessionInt("Stats.Legendary." + sAVName,iLL)
 		EndIf
 		If fAV
-			SetRegFlt(sRegKey + ".Stats.AV." + sAVName,fAV)
+			SetSessionFlt("Stats.AV." + sAVName,fAV)
 			DebugTrace("Saved AV " + sAVName + "!")
 		EndIf
-		StartTimer("SavePerks-" + sAVName)
+		iAdvSkills += 1
+	EndWhile
+	StopTimer("SaveSkills")
+	StopTimer("ScanPlayerStats")
+	SetSessionBool("Status.Stats.Busy",False)
+EndFunction
+
+Function ScanPlayerPerks()
+{Writes current player perks to the session}
+;Slight redundancy with ScanPlayerStats but this will need to be called less often
+	If GetSessionBool("Status.Perks.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.Perks.Busy",True)
+	StartTimer("ScanPlayerPerks")
+	Int jPerkList = JArray.Object()
+	SetSessionObj("Perks",jPerkList)	
+	
+	Int jSkillList = GetRegObj("SkillAVIs")
+	Int iSkillCount = JArray.Count(jSkillList)
+	Int iAdvSkills = 0
+	Int iAddedCount = 0
+	While iAdvSkills < iSkillCount
 		vMYC_PerkList.Revert()
+		Int iAVI = JArray.GetInt(jSkillList,iAdvSkills)
+		String sAVName = GetAVName(iAVI)
+		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAVI)
 		AVInfo.GetPerkTree(vMYC_PerkList, PlayerREF, false, true)
 		Int iPerkCount = vMYC_PerkList.GetSize()
 		If iPerkCount
-			i = JArray.Count(jPerkList) ; Grab length of array before adding the Formlist
+			Int i = JArray.Count(jPerkList) ; Grab length of array before adding the Formlist
 			JArray.AddFromFormList(jPerkList,vMYC_PerkList)
-			SetRegInt(sRegKey + ".PerkCounts." + sAVName,iPerkCount)
+			SetSessionInt("PerkCounts." + sAVName,iPerkCount)
 			While i < JArray.Count(jPerkList)  ; Each perk added
 				Perk kPerk = JArray.GetForm(jPerkList,i) as Perk
 				AddToReqList(kPerk,"Perk")
@@ -174,43 +223,54 @@ Function SavePlayerPerks()
 			EndWhile
 			DebugTrace("Saved " + iPerkCount + " perks in the " + sAVName + " tree!")
 		EndIf
-		StopTimer("SavePerks-" + sAVName)
 		iAdvSkills += 1
 	EndWhile
-	
-	StopTimer("SaveSkillsAndPerks")
-	SendModEvent("vMYC_PerksSaveEnd",iAddedCount)
-	DebugTrace("Saved " + iAddedCount + " perks!")
-	StopTimer("SavePerks")
-	
-	;StartTimer("SavePerkCompat")
-	;
-	;i = JArray.Count(jPerkList)
-	;While i > 0
-	;	i -= 1
-	;	Perk kPerk = JArray.GetForm(jPerkList,i) as Perk
-	;	AddToReqList(kPerk,"Perk")
-	;	If iAddedCount % 3 == 0
-	;		SendModEvent("vMYC_PerkSaved")
-	;	EndIf
-	;	iAddedCount += 1
-	;EndWhile
-	;StopTimer("SavePerkCompat")
+	SaveSession()
+	StopTimer("ScanPlayerPerks")
+	SetSessionBool("Status.Perks.Busy",False)
 EndFunction
 
-Function SavePlayerSpells()
-	;== Spells ===--
+Function SavePlayerPerks(Bool bSessionOnly = False)
+	;== Actor values and Perks ===--
+	StartTimer("SavePlayerPerks")
+	SendModEvent("vMYC_PerksSaveBegin")
 	
-	StartTimer("SaveSpells")
-	SendModEvent("vMYC_SpellsSaveBegin")
-
-	String sPlayerName = PlayerREF.GetActorBase().GetName()
 	String sRegKey = "Characters." + SessionID
+	
+	While GetSessionBool("Status.Perks.Busy") || GetSessionBool("Status.Stats.Busy")
+		WaitMenuMode(1)
+	EndWhile
+	
+	If !HasSessionKey("Stats")
+		ScanPlayerStats()
+	EndIf
+	If !HasSessionKey("Perks")
+		ScanPlayerPerks()
+	EndIf
+	
+	If !bSessionOnly
+		SetRegObj(sRegKey + ".Stats",GetSessionObj("Stats"))
+		SetRegObj(sRegKey + ".Perks",GetSessionObj("Perks"))
+		SetRegObj(sRegKey + ".PerkCounts",GetSessionObj("PerkCounts"))
+	EndIf
+	
+	SendModEvent("vMYC_PerksSaveEnd",JArray.Count(GetSessionObj("Perks")))
+	StopTimer("SavePlayerPerks")
+EndFunction
+
+Function ScanPlayerSpells()
+	;== Spells ===--
+	If GetSessionBool("Status.Spells.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.Spells.Busy",True)
+	StartTimer("ScanPlayerSpells")
+
 	Int i = 0
 	Int iAddedCount = 0
 	
 	Int jPlayerSpells = JArray.Object()
-	SetRegObj(sRegKey + ".Spells",jPlayerSpells)
+	SetSessionObj("Spells",jPlayerSpells)
 	
 	Int iSpellCount = PlayerREF.GetSpellCount()
 	iAddedCount = 0
@@ -222,7 +282,7 @@ Function SavePlayerSpells()
 		If kSpell
 			bAddItem = True
 			Int iSpellID = kSpell.GetFormID()
-			;Debug.Trace("MYC/CM: " + sPlayerName + " knows the spell " + kSpell + ", " + kSpell.GetName())
+			DebugTrace("Player knows the spell " + kSpell + ", " + kSpell.GetName())
 			If bAddItem
 				;vMYC_PlayerFormlist.AddForm(kSpell)
 				JArray.AddForm(jPlayerSpells,kSpell)
@@ -234,29 +294,50 @@ Function SavePlayerSpells()
 			EndIf
 		EndIf
 		i += 1
-		If i % 17 == 0
-			WaitMenuMode(0.1)
-		EndIf
 	EndWhile
-	DebugTrace("Saved " + iAddedCount + " spells for " + sPlayerName + ".")
+	DebugTrace("Scanned " + iAddedCount + " spells.")
 	SendModEvent("vMYC_SpellsSaveEnd")
-	StopTimer("SaveSpells")
+	StopTimer("ScanPlayerSpells")
+	SetSessionBool("Status.Spells.Busy",False)
+EndFunction
+
+Function SavePlayerSpells()
+	;== Spells ===--
+	
+	StartTimer("SavePlayerSpells")
+	SendModEvent("vMYC_SpellsSaveBegin")
+
+	While GetSessionBool("Status.Spells.Busy")
+		WaitMenuMode(1)
+	EndWhile
+	
+	String sPlayerName = PlayerREF.GetActorBase().GetName()
+	String sRegKey = "Characters." + SessionID
+	
+	If !HasSessionKey("Spells")
+		ScanPlayerSpells()
+	EndIf
+	
+	SetRegObj(sRegKey + ".Spells",GetSessionObj("Spells"))
+	
+	SendModEvent("vMYC_SpellsSaveEnd")
+	StopTimer("SavePlayerSpells")
 
 EndFunction
 
-Function SavePlayerEquipment()
+Function ScanPlayerEquipment()
 	;== Equipment ===--
-	
-	StartTimer("SaveEquipment")
-	SendModEvent("vMYC_EquipmentSaveBegin")
+	If GetSessionBool("Status.Equipment.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.Equipment.Busy",True)
+	StartTimer("ScanPlayerEquipment")
 
-	String sPlayerName = PlayerREF.GetActorBase().GetName()
-	String sRegKey = "Characters." + SessionID
 	Int i = 0
 	Int iAddedCount = 0
 	
 	Int jPlayerEquipment = JMap.Object()
-	SetRegObj(sRegKey + ".Equipment",jPlayerEquipment)
+	SetSessionObj("Equipment",jPlayerEquipment)
 
 	Int jPlayerArmorList = JArray.Object()
 	JMap.SetObj(jPlayerEquipment,"Armor",jPlayerArmorList)
@@ -304,30 +385,133 @@ Function SavePlayerEquipment()
 	AddToReqList(PlayerREF.GetEquippedObject(1),"Equipment")
 	AddToReqList(PlayerREF.GetEquippedObject(2),"Equipment")
 
-	SendModEvent("vMYC_EquipmentSaveEnd")
-	
-	StopTimer("SaveEquipment")
-
+	StopTimer("ScanPlayerEquipment")
+	SetSessionBool("Status.Equipment.Busy",False)
 EndFunction
 
-Function SavePlayerInventory()
-	;== Inventory ===--
-	StartTimer("SaveInventory")
-	SendModEvent("vMYC_InventorySaveBegin")
+Function SavePlayerEquipment()
+	;== Equipment ===--
+	
+	StartTimer("SavePlayerEquipment")
+	SendModEvent("vMYC_EquipmentSaveBegin")
+
+	While GetSessionBool("Status.Equipment.Busy")
+		WaitMenuMode(1)
+	EndWhile
 	
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
 	String sRegKey = "Characters." + SessionID
-	Int i = 0
-	Int iAddedCount = 0
+	
+	If !HasSessionKey("Equipment")
+		ScanPlayerEquipment()
+	EndIf
+	
+	SetRegObj(sRegKey + ".Equipment",GetSessionObj("Equipment"))
+	
+	SendModEvent("vMYC_EquipmentSaveEnd")
+	
+	StopTimer("SavePlayerEquipment")
+
+EndFunction
+
+Function ScanPlayerInventory()
+	If GetSessionBool("Status.Inventory.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.Inventory.Busy",True)
+
+	DebugTrace("Refreshing player inventory...")
+	StartTimer("ScanPlayerInventory")
 	
 	vMYC_InventoryList.Revert()
 	PlayerREF.GetAllForms(vMYC_InventoryList)
 	Int jInventoryList = JArray.Object()
 	SetSessionObj("PlayerInventoryList",jInventoryList)
 	JArray.AddFromFormlist(jInventoryList,vMYC_InventoryList)
-	Int jInventory = JMap.Object() ;JFormMap.Object()
-	SetRegObj(sRegKey + ".Inventory",jInventory)
-	i = JArray.Count(jInventoryList)
+
+	Int jInventory = JMap.Object()
+	SetSessionObj("Inventory",jInventory)
+	Int i = JArray.Count(jInventoryList)
+	While i > 0
+		i -= 1
+		Form kItem = JArray.GetForm(jInventoryList,i)
+		If kItem
+			If !PlayerRef.IsEquipped(kItem)
+				Int iType = kItem.GetType()
+				Int iCount = PlayerRef.GetItemCount(kItem)
+				If iCount > 0 
+					Int jItemTypeFMap = JMap.getObj(jInventory,iType)
+					If !JValue.IsFormMap(jItemTypeFMap)
+						jItemTypeFMap = JFormMap.Object()
+						JMap.setObj(jInventory,iType,jItemTypeFMap)
+					EndIf
+					JFormMap.SetInt(jItemTypeFMap,kItem,iCount)
+				EndIf
+			EndIf
+			If IsObjectFavorited(kItem)
+				Int jItemFavoriteFMap = JMap.getObj(jInventory,"Favorites")
+				If !JValue.IsArray(jItemFavoriteFMap)
+					jItemFavoriteFMap = JArray.Object()
+					JMap.setObj(jInventory,"Favorites",jItemFavoriteFMap)
+				EndIf
+				If JArray.FindForm(jItemFavoriteFMap,kItem) < 0
+					JArray.AddForm(jItemFavoriteFMap,kItem)
+				EndIf
+			EndIf
+		EndIf
+	EndWhile
+	DebugTrace("Refreshed player inventory! Got " + JArray.Count(jInventoryList) + " items!")
+	StopTimer("ScanPlayerInventory")
+	SaveSession()
+	SetSessionBool("Status.Inventory.Busy",False)
+EndFunction
+
+Function SavePlayerInventory()
+	;== Inventory ===--
+	StartTimer("SavePlayerInventory")
+	SendModEvent("vMYC_InventorySaveBegin")
+	
+	String sPlayerName = PlayerREF.GetActorBase().GetName()
+	String sRegKey = "Characters." + SessionID
+	Int i = 0
+	Int iAddedCount = 0
+
+	;vMYC_InventoryList.Revert()
+	;PlayerREF.GetAllForms(vMYC_InventoryList)
+	;Int jInventoryList = JArray.Object()
+	;SetSessionObj("PlayerInventoryList",jInventoryList)
+	;JArray.AddFromFormlist(jInventoryList,vMYC_InventoryList)
+	;Int jInventory = JMap.Object() ;JFormMap.Object()
+	;SetRegObj(sRegKey + ".Inventory",jInventory)
+	;i = JArray.Count(jInventoryList)
+
+	While GetSessionBool("Status.Inventory.Busy")
+		WaitMenuMode(1)
+	EndWhile
+	
+	If !HasSessionKey("Inventory")
+		ScanPlayerInventory()
+	EndIf
+	
+	Int jInventory = GetSessionObj("Inventory")
+	
+	Int jWeaponsFMap 	= GetSessionObj("Inventory.41") ; kWeapon
+	Int jArmorFMap 		= GetSessionObj("Inventory.26") ; kArmor
+	Int jAmmoFMap 		= GetSessionObj("Inventory.42") ; kAmmo
+	Int jFavoritesList 	= GetSessionObj("Inventory.Favorites") ; Favorites
+	
+	Int jWeaponList		= JFormMap.AllKeys(jWeaponsFMap)
+	Int jArmorList 		= JFormMap.AllKeys(jArmorFMap)
+	Int jAmmoList 		= JFormMap.AllKeys(jAmmoFMap)
+
+	Int jWeaponArmorList = JArray.Object()
+	JArray.AddFromArray(jWeaponArmorList,jWeaponList)
+	JArray.AddFromArray(jWeaponArmorList,jArmorList)
+	
+	JValue.AddToPool(jWeaponList,"vMYC_InventoryPool")
+	JValue.AddToPool(jArmorList,"vMYC_InventoryPool")
+	JValue.AddToPool(jAmmoList,"vMYC_InventoryPool")
+	JValue.AddToPool(jWeaponArmorList,"vMYC_InventoryPool")
 	
 	;== Create dummy actor for custom weapon scans ===--
 
@@ -342,85 +526,89 @@ Function SavePlayerInventory()
 		Wait(0.1)
 	EndWhile
 	Bool bAddItem = True
+	
+	i = JArray.Count(jWeaponArmorList)
 	While i > 0
 		i -= 1
-		Form kItem = JArray.GetForm(jInventoryList,i)
+		Form kItem = JArray.GetForm(jWeaponArmorList,i)
 		If kItem
-			If !PlayerRef.IsEquipped(kItem)
-				Int iType = kItem.GetType()
-				Int iCount = 0
-				;===== Save favorited weapons/armor =====----
-				If (iType == 41 || iType == 26) ;&& IsObjectFavorited(kItem)
-					iCount = PlayerREF.GetItemCount(kItem)
-					Int iHand = 0
-					Int iSlotMask = 0
-					If iType == 41 ;kWeapon
-						iHand = 1
-					Else ; kArmor
-						iSlotMask = (kItem as Armor).GetSlotMask()
-					EndIf
-					PlayerREF.RemoveItem(kItem,iHand,True,kWeaponDummy)
-					kWeaponDummy.EquipItemEX(kItem,iHand,preventUnequip = True,equipSound = False)
-					String sDisplayName = WornObject.GetDisplayName(kWeaponDummy,iHand,iSlotMask)
-					If (sDisplayName && sDisplayName != kItem.GetName()) || WornObject.GetItemHealthPercent(kWeaponDummy,iHand,iSlotMask) > 1.0
-						DebugTrace(kItem + " is a custom item named " + WornObject.GetDisplayName(kWeaponDummy,iHand,iSlotMask))
-						Int jCustomWeapon = JMap.Object()
-       
-						JMap.setForm(jCustomWeapon,"Form",kItem)
-						JMap.setInt(jCustomWeapon,"Count",iCount)
-       
-						SerializeEquipment(kItem,jCustomWeapon,iHand,iSlotMask,kWeaponDummy)
-						Int jPlayerCustomItems = GetRegObj(sRegKey + ".InventoryCustomItems")
-						If !jPlayerCustomItems
-							jPlayerCustomItems = JArray.Object()
-						EndIf
-						JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
-						SetRegObj(sRegKey + ".InventoryCustomItems",jPlayerCustomItems)
-						iCount -= 1 ; Reduce count to keep it from being added to the main inventory list
-					EndIf
-					kWeaponDummy.RemoveItem(kItem,iHand,True,PlayerREF)
-					;JArray.AddForm(jWeaponsToCheck,kItem)
-				ElseIf iType == 42 ; Ammo
-					iCount = PlayerREF.GetItemCount(kItem)
-				ElseIf IsObjectFavorited(kItem)
-					iCount = PlayerREF.GetItemCount(kItem)
-				EndIf
-				If iCount > 0 
-					Int jItemTypeFMap = JMap.getObj(jInventory,iType)
-					If !JValue.IsFormMap(jItemTypeFMap)
-						jItemTypeFMap = JFormMap.Object()
-						JMap.setObj(jInventory,iType,jItemTypeFMap)
-					EndIf
-					JFormMap.SetInt(jItemTypeFMap,kItem,iCount)
-				EndIf
+			Int iHand = 0
+			Int iSlotMask = 0
+			Int iType = kItem.GetType()
+			If iType == 41 ;kWeapon
+				iHand = 1
+			Else ; kArmor
+				iSlotMask = (kItem as Armor).GetSlotMask()
 			EndIf
+			PlayerREF.RemoveItem(kItem,iHand,True,kWeaponDummy)
+			kWeaponDummy.EquipItemEX(kItem,iHand,preventUnequip = True,equipSound = False)
+			String sDisplayName = WornObject.GetDisplayName(kWeaponDummy,iHand,iSlotMask)
+			If (sDisplayName && sDisplayName != kItem.GetName()) || WornObject.GetItemHealthPercent(kWeaponDummy,iHand,iSlotMask) > 1.0
+				DebugTrace(kItem + " is a custom item named " + WornObject.GetDisplayName(kWeaponDummy,iHand,iSlotMask))
+				Int jCustomWeapon = JMap.Object()
+
+				JMap.setForm(jCustomWeapon,"Form",kItem)
+				;JMap.setInt(jCustomWeapon,"Count",iCount)
+
+				SerializeEquipment(kItem,jCustomWeapon,iHand,iSlotMask,kWeaponDummy)
+				Int jPlayerCustomItems = GetRegObj(sRegKey + ".InventoryCustomItems")
+				If !jPlayerCustomItems
+					jPlayerCustomItems = JArray.Object()
+				EndIf
+				JArray.AddObj(jPlayerCustomItems,jCustomWeapon)
+				SetRegObj(sRegKey + ".InventoryCustomItems",jPlayerCustomItems)
+			EndIf
+			kWeaponDummy.RemoveItem(kItem,iHand,True,PlayerREF)
 		EndIf
 	EndWhile
 	kWeaponDummy.Delete()
 	SetRegObj(sRegKey + ".Inventory",jInventory)
 	SendModEvent("vMYC_InventorySaveEnd")
-	StopTimer("SaveInventory")
+	StopTimer("SavePlayerInventory")
+	JValue.CleanPool("vMYC_InventoryPool")
+EndFunction
+
+Function ScanPlayerNINodeInfo()
+	;== NINodeInfo ===--
+	If GetSessionBool("Status.NINodeInfo.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.NINodeInfo.Busy",True)
+	StartTimer("ScanPlayerNINodeInfo")
+		
+	;== Save node info from RaceMenuPlugins ===--
+	SetSessionObj("NINodeData",GetNINodeInfo(PlayerREF))
+	
+	StopTimer("ScanPlayerNINodeInfo")
+	
+	SetSessionBool("Status.NINodeInfo.Busy",False)
 EndFunction
 
 Function SavePlayerNINodeInfo()
 	;== NINodeInfo ===--
 	
-	StartTimer("SaveNINodeInfo")
+	StartTimer("SavePlayerNINodeInfo")
 	SendModEvent("vMYC_NINodeInfoSaveBegin")
-	
+
+	While GetSessionBool("Status.NINodeInfo.Busy")
+		WaitMenuMode(1.0)
+	EndWhile
+	If !HasSessionKey("NINodeData")
+		ScanPlayerNINodeInfo()
+	EndIf
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
 	String sRegKey = "Characters." + SessionID
 	
 	;== Save node info from RaceMenuPlugins ===--
-	SetRegObj(sRegKey + ".NINodeData",GetNINodeInfo(PlayerREF))
+	SetRegObj(sRegKey + ".NINodeData",GetSessionObj("NINodeData"))
 	
-	StopTimer("SaveNINodeInfo")
+	StopTimer("SavePlayerNINodeInfo")
 	
 	SendModEvent("vMYC_NINodeInfoSaveEnd")
 EndFunction
 
 Int Function SavePlayerMiscStats()
-	StartTimer("SaveMiscStats")
+	StartTimer("SavePlayerMiscStats")
 	SendModEvent("vMYC_MiscStatSaveBegin")
 	
 	String sPlayerName = PlayerREF.GetActorBase().GetName()
@@ -442,13 +630,14 @@ Int Function SavePlayerMiscStats()
 		EndIf
 	EndWhile
 	SendModEvent("vMYC_MiscStatSaveEnd")
-	StopTimer("SaveMiscStats")
+	StopTimer("SavePlayerMiscStats")
+	Return 0
 EndFunction	
 	
 Int Function SavePlayerData()
 	GotoState("Busy")
 	DebugTrace("Saving player data...")
-	StartTimer("SavePlayer")
+	StartTimer("SavePlayerData")
 	SetSessionID()
 	String sSessionID = GetSessionStr("SessionID")
 	
@@ -517,6 +706,12 @@ Int Function SavePlayerData()
 	_bSavedInventory 	= False
 	_bSavedNINodeInfo	= False
 
+	Int iSafety = 10
+	While PlayerTracker.Busy && iSafety > 0
+		iSafety -= 1
+		WaitMenuMode(1.0)
+	EndWhile
+
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
@@ -546,9 +741,11 @@ Int Function SavePlayerData()
 	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells || !_bSavedNINodeInfo) 
 		WaitMenuMode(0.5)
 	EndWhile
-	
-	StopTimer("SavePlayer")
+
+	JValue.WriteToFile(GetRegObj(sRegKey),"Data/vMYC/" + sPlayerName + ".char.json")
+	StopTimer("SavePlayerData")
 	GotoState("")
+	Debug.MessageBox("Finished saving player!")
 	Return 0 
 EndFunction
 
@@ -561,6 +758,12 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 		Return
 	EndIf
 	_iThreadCount += 1
+	If GetSessionBool("Status.Background." + strArg)
+		DebugTrace(strArg + " is already running! Ignoring duplicate request.")
+		Return
+	EndIf
+	SetSessionBool("Status.Background." + strArg,True)
+	
 	DebugTrace("Backgrounding " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
 	If strArg == "SavePlayerEquipment"
 		SavePlayerEquipment()
@@ -579,42 +782,20 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 		_bSavedNINodeInfo = True
 	ElseIf strArg == "SavePlayerMiscStats"
 		SavePlayerMiscStats()
+	ElseIf strArg == "ScanPlayerPerks"
+		ScanPlayerPerks()
+	ElseIf strArg == "ScanPlayerStats"
+		ScanPlayerStats()
+	ElseIf strArg == "ScanPlayerInventory"
+		ScanPlayerInventory()
+	ElseIf strArg == "ScanPlayerEquipment"
+		ScanPlayerEquipment()
+	ElseIf strArg == "ScanPlayerNINodeInfo"
+		ScanPlayerNINodeInfo()
+	ElseIf strArg == "ScanPlayerSpells"
+		ScanPlayerSpells()
 	EndIf
-	_iThreadCount -= 1
-EndEvent
-
-Event OnSavePlayerEquipment(string eventName, string strArg, float numArg, Form sender)
-	_iThreadCount += 1
-	SavePlayerEquipment()
-	_bSavedEquipment = True
-	_iThreadCount -= 1
-EndEvent
-
-Event OnSavePlayerPerks(string eventName, string strArg, float numArg, Form sender)
-	_iThreadCount += 1
-	SavePlayerPerks()
-	_bSavedPerks = True
-	_iThreadCount -= 1
-EndEvent
-
-Event OnSavePlayerSpells(string eventName, string strArg, float numArg, Form sender)
-	_iThreadCount += 1
-	SavePlayerSpells()
-	_bSavedSpells = True
-	_iThreadCount -= 1
-EndEvent
-
-Event OnSavePlayerInventory(string eventName, string strArg, float numArg, Form sender)
-	_iThreadCount += 1
-	SavePlayerInventory()
-	_bSavedInventory = True
-	_iThreadCount -= 1
-EndEvent
-
-Event OnSavePlayerNINodeInfo(string eventName, string strArg, float numArg, Form sender)
-	_iThreadCount += 1
-	SavePlayerNINodeInfo()
-	_bSavedNINodeInfo = True
+	SetSessionBool("Status.Background." + strArg,False)
 	_iThreadCount -= 1
 EndEvent
 
@@ -641,9 +822,9 @@ Function AddToReqList(Form akForm, String asType, String sSID = "")
 	EndIf
 	String sModName = GetSourceMod(akForm)
 	If sModName
-		;If sModName == "Skyrim.esm" || sModName == "Update.esm"
-		;	Return
-		;EndIf
+		If sModName == "Skyrim.esm" || sModName == "Update.esm"
+			Return
+		EndIf
 		
 		sModName = StringReplace(sModName,".","_dot_") ; Strip . to avoid confusing JContainers
 		String sFormName = akForm.GetName()
@@ -917,6 +1098,7 @@ EndFunction
 Function StartTimer(String sTimerLabel)
 	Float fTime = GetCurrentRealTime()
 	;Debug.Trace("TimerStart(" + sTimerLabel + ") " + fTime)
+	DebugTrace("Timer: Starting for " + sTimerLabel)
 	SetSessionFlt("Timers." + sTimerLabel,fTime)
 EndFunction
 
