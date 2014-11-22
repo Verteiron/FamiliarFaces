@@ -170,25 +170,25 @@ EndFunction
 Function DoInit()
 	Debug.Trace("MYC: Initializing...")
 	;FIXME: Do init stuff!
-	If !(CharacterManager as Quest).IsRunning()
-		(CharacterManager as Quest).Start()
-		WaitMenuMode(0.5)
-		CharacterManager.DoInit()
-	EndIf
+	;If !(CharacterManager as Quest).IsRunning()
+	;	(CharacterManager as Quest).Start()
+	;	WaitMenuMode(0.5)
+	;	CharacterManager.DoInit()
+	;EndIf
 	InitConfig()
 	If !GetConfigBool("DefaultsSet")
 		SetConfigDefaults()
 	EndIf
-	If !(ShrineOfHeroes as Quest).IsRunning()
-		WaitMenuMode(0.5)
-		(ShrineOfHeroes as Quest).Start()
-		;CharacterManager.DoInit()
-	EndIf
-	If !(HangoutManager as Quest).IsRunning()
-		(HangoutManager as Quest).Start()
-		WaitMenuMode(0.5)
-		HangoutManager.DoInit()
-	EndIf
+	;If !(ShrineOfHeroes as Quest).IsRunning()
+	;	WaitMenuMode(0.5)
+	;	(ShrineOfHeroes as Quest).Start()
+	;	;CharacterManager.DoInit()
+	;EndIf
+	;If !(HangoutManager as Quest).IsRunning()
+	;	(HangoutManager as Quest).Start()
+	;	WaitMenuMode(0.5)
+	;	HangoutManager.DoInit()
+	;EndIf
 
 	;Wait(3)
 	;CharacterManager.SaveCurrentPlayer()
