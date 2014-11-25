@@ -13,12 +13,19 @@ Import vMYC_Registry
 
 Bool Property IsAvailable Hidden
 {Return whether this actor has been assigned a character.}
-	Bool Function get()
+	Bool Function Get()
 		If GetState() == "Available"
 			Return True
 		Else
 			Return False
 		EndIf
+	EndFunction
+EndProperty
+
+String Property ScriptState Hidden
+{Return this actor's script state.}
+	String Function Get()
+		Return GetState()
 	EndFunction
 EndProperty
 
@@ -32,6 +39,7 @@ Bool 				Property NeedReset 		= False 				Auto Hidden
 Bool				Property NeedUpkeep		= False					Auto Hidden
 
 Bool 				Property IsBusy 		= False 				Auto Hidden
+Bool 				Property IsCharGenBusy	= False 				Auto Hidden
 Bool 				Property IsInCity		= False 				Auto Hidden
 Bool				Property IsRaceInvalid	= False					Auto Hidden
 
@@ -76,11 +84,14 @@ CombatStyle _kLastCombatStyle
 
 Int 		_iCharGenVersion
 
+Int			_jCharacterData
+
+String 		_sCharacterInfo
+
 ;=== Events ===--
 
 Event OnInit()
 	_kActorBase = GetActorBase()
-	DoUpkeep()
 EndEvent
 
 Event OnUpdate()
@@ -94,9 +105,48 @@ Auto State Available
 		;Clear out because we shouldn't be loaded
 	EndEvent
 	
+	Function AssignCharacter(String sUUID)
+	{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
+		GoToState("Busy")
+		_jCharacterData = GetRegObj("Characters." + sUUID)
+		_sCharacterInfo = "Characters." + sUUID + ".Info."
+		SaveSession()
+		If !_jCharacterData
+			DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, but there's no data for that UUID!")
+			GotoState("Available")
+			Return
+		EndIf
+		DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, transforming into " + GetRegStr(_sCharacterInfo + "Name") + "!")
+		SetRegForm("Doppelgangers.Preferred." + sUUID + ".ActorBase",_kActorBase)
+		SetSessionForm("Doppelgangers." + sUUID + ".ActorBase",_kActorBase)
+		SetSessionForm("Doppelgangers." + sUUID + ".Actor",Self as Actor)
+		CharacterName = GetRegStr(_sCharacterInfo + "Name")
+		CharacterRace = GetRegForm(_sCharacterInfo + "Race") as Race
+		_kActorBase.SetName(CharacterName)
+		NeedAppearance	= True
+		NeedPerks		= True
+		NeedSpells		= True
+		NeedEquipment	= True
+		NeedInventory	= True
+		NeedRefresh 	= True
+		NeedUpkeep		= True
+		GotoState("Assigned")
+	EndFunction
 EndState
 
 State Assigned
+	Event OnBeginState()
+		DebugTrace("Entered Assigned state! CharacterName is " + CharacterName + ". Will update appearance, etc in just a sec...")
+		RegisterForSingleUpdate(1)
+		SetNameIfNeeded()
+	EndEvent
+
+	Event OnUpdate()
+		If NeedAppearance
+			UpdateAppearance()
+		EndIf
+	EndEvent
+
 	Event OnLoad()
 		
 	EndEvent
@@ -105,6 +155,11 @@ EndState
 State Busy
 
 EndState
+
+Function AssignCharacter(String sUUID)
+{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
+	DebugTrace("AssignCharacter(" + sUUID + ") was called outside of Available state, doing nothing!",1)
+EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 {Run whenever the player loads up the Game. Sets the name and such.}
@@ -145,6 +200,101 @@ Function DoUpkeep(Bool bInBackground = True)
 	GotoState("")
 EndFunction
 
+Function SetNameIfNeeded(Bool abForce = False)
+	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
+		DebugTrace("Setting actorbase name!")
+		_kActorBase.SetName(CharacterName)
+		SetName(CharacterName)
+		;FIXME: This will need to be reenabled, just disabling now to simply things
+		;Int i = GetNumReferenceAliases()
+		;While i > 0
+		;	i -= 1
+		;	ReferenceAlias kThisRefAlias = GetNthReferenceAlias(i)
+		;	;If kThisRefAlias.GetOwningQuest() != CharacterManager && kThisRefAlias.GetOwningQuest() != ShrineOfHeroes
+		;		DebugTrace("Resetting RefAlias " + kThisRefAlias + "!")
+		;		kThisRefAlias.TryToClear()
+		;		kThisRefAlias.ForceRefIfEmpty(Self)
+		;	;EndIf
+		;EndWhile
+		SendModEvent("vMYC_UpdateXFLPanel")
+	EndIf
+EndFunction
+
+;=== Appearance functions ===--
+
+Int Function UpdateAppearance()
+	Bool _bInvulnerableState = _kActorBase.IsInvulnerable()
+	Bool _bCharGenSuccess = False
+	_kActorBase.SetInvulnerable(True)
+	_bCharGenSuccess = CharGenLoadCharacter(Self,CharacterRace,CharacterName)
+	_kActorBase.SetInvulnerable(_bInvulnerableState)
+	If _bCharGenSuccess
+		Return 0
+	Else
+		DebugTrace("Something went wrong during UpdateAppearance!",1)
+		;FIXME: Add more error handling like checking for missing files, etc
+		Return -1
+	EndIf
+EndFunction
+
+Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
+	;Debug.Trace("MYC/Actor/" + CharacterName + ": CharGenLoadCharacter was called more than once!",1)
+	;	Return False
+	Bool bResult
+	Int iDismountSafetyTimer = 10
+	While akActor.IsOnMount() && iDismountSafetyTimer
+		iDismountSafetyTimer -= 1
+		Bool bDismountSent = akActor.Dismount()
+		Wait(1)
+	EndWhile
+	If !iDismountSafetyTimer
+		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dismount timer expired!",1)
+	EndIf
+	If akActor.IsOnMount()
+		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		GotoState("")
+		Return False
+	EndIf
+	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
+	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
+	If CharGen.IsExternalEnabled()
+		If !_bExternalHeadExists
+			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
+			bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+			GotoState("")
+			Return bResult
+		EndIf
+		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is true, using LoadExternalCharacter...")
+		bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+		GotoState("")
+		Return bResult
+	Else
+		If _bExternalHeadExists
+			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
+			bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
+			GotoState("")
+			Return bResult
+		EndIf
+		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is false, using LoadCharacter...")
+		bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
+		WaitMenuMode(1)
+		RegenerateHead()
+		GotoState("")
+		Return bResult
+	EndIf
+	GotoState("")
+EndFunction
+
+Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
+	While !kObjectRef.Is3DLoaded() && iSafety > 0
+		iSafety -= 1
+		Wait(0.1)
+	EndWhile
+	Return iSafety As Bool
+EndFunction
+
+;=== Utility functions ===--
+
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	If CharacterName
 		Debug.Trace("MYC/Doppelganger/" + CharacterName + ": " + sDebugString,iSeverity)
@@ -152,3 +302,4 @@ Function DebugTrace(String sDebugString, Int iSeverity = 0)
 		Debug.Trace("MYC/Doppelganger/" + Self.GetFormID() + ": " + sDebugString,iSeverity)
 	EndIf
 EndFunction
+
