@@ -116,6 +116,11 @@ Function DoUpkeep(Bool bInBackground = True)
 		SetConfigDefaults()
 	EndIf
 
+	String sMatchedSID = MatchSession()
+	If sMatchedSID
+		SetSessionID(sMatchedSID)
+	EndIf
+	
 	;Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 
@@ -692,7 +697,8 @@ Int Function SavePlayerData()
 	SetRegForm(sRegKey + META + ".Race",kPlayerBase.GetRace())
 	AddToReqList(kPlayerBase.GetRace(),"Race")
 	SetRegStr(sRegKey + META + ".RaceText",kPlayerBase.GetRace().GetName())
-
+	SetRegInt(sRegKey + META + ".SerializationVersion",SerializationVersion)
+	
 	SetRegObj(sRegKey + "._MYC",GetRegObj(sRegKey + META))
 	
 	Int jPlayerModList = JArray.Object()
@@ -733,7 +739,21 @@ Int Function SavePlayerData()
 	
 	;== Save character appearance ===-
 	StartTimer("SaveCharacter")
-	CharGen.SaveCharacter(sPlayerName) ; So easy :P
+	
+	Bool bUseExternal = False
+	If GetModByName("EnhancedCharacterEdit.esp") < 255
+		DebugTrace("ECE detected, using SaveExternalCharacter!")
+		bUseExternal = True
+	EndIf
+	
+	If CharGen.IsExternalEnabled() || bUseExternal
+		SetRegBool(sRegKey + META + ".UsesExternalHead",True)
+		 CharGen.SaveExternalCharacter(sPlayerName) 
+	Else
+		SetRegBool(sRegKey + META + ".UsesExternalHead",False)
+		 CharGen.SaveCharacter(sPlayerName) 
+	EndIf
+	
 	StopTimer("SaveCharacter")
 	
 	;== Save NIOverride overlays ===--
@@ -1138,6 +1158,24 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	EndIf
 	;Debug.Trace("MYC/CM: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
 	GotoState("")
+EndFunction
+
+String Function MatchSession()
+	Int jSIDList = JMap.AllKeys(GetRegObj("Names." + PlayerREF.GetActorBase().GetName()))
+	DebugTrace("Looking for matching session in " + JArray.Count(jSIDList) + " saved sessions!")
+	If jSIDList
+		Int iSID = JArray.Count(jSIDList)
+		While iSID > 0
+			iSID -= 1
+			String sSID = JArray.GetStr(jSIDList,iSID)
+			DebugTrace("Checking current session against " + sSID + "...")
+			If Math.ABS(GetRegFlt("Characters." + sSID + META + ".PlayTime") - GetRealHoursPassed()) < 0.1
+				DebugTrace("Current session matches " + sSID + "!")
+				Return sSID
+			EndIf
+		EndWhile
+	EndIf
+	Return ""
 EndFunction
 
 Function SetSessionID(String sSessionID = "")
