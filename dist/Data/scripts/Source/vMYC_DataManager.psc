@@ -1179,7 +1179,27 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	GotoState("")
 EndFunction
 
-;Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
+Event OnLoadSerializedEquipmentReq(Int jItem)
+	Int iMaxThreads = GetRegInt("Config.Debug.Perf.Threads.Max")
+	If _iThreadCount >= iMaxThreads
+		DebugTrace("Deferring LoadSerializedEquipmentReq, thread " + _iThreadCount + "/" + iMaxThreads)
+		WaitMenuMode(RandomFloat(0.8,1.2))
+		Int iEventHandle = ModEvent.Create("vMYC_LoadSerializedEquipmentObj")
+		If iEventHandle
+			ModEvent.PushForm(iEventHandle,LoadSerializedEquipment(jItem))
+			ModEvent.Send(iEventHandle)
+		EndIf
+		Return
+	EndIf
+	_iThreadCount += 1
+	Int iEventHandle = ModEvent.Create("vMYC_LoadSerializedEquipmentObject")
+	If iEventHandle
+		ModEvent.PushForm(iEventHandle,LoadSerializedEquipment(jItem))
+		ModEvent.Send(iEventHandle)
+	EndIf
+	_iThreadCount -= 1
+EndEvent
+
 ObjectReference Function LoadSerializedEquipment(Int jItem)
 {Recreate a custom weapon or armor using jItem. }
 	Form kItem = JMap.getForm(jItem,"Form")
