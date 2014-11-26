@@ -77,6 +77,7 @@ Event OnInit()
 		EndIf
 		DoUpkeep(False)
 		SendModEvent("vMYC_DataManagerReady")
+		RegisterForSingleUpdate(5.0)
 	EndIf
 EndEvent
 
@@ -84,6 +85,8 @@ Event OnUpdate()
 	If NeedUpkeep
 		DoUpkeep(False)
 	EndIf
+	SendModEvent("vMYC_DataManagerReady")
+	RegisterForSingleUpdate(5.0)
 EndEvent
 
 Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
@@ -129,7 +132,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	
 	;Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
-
+	RegisterForModEvent("vMYC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
 	IsBusy = False
 	DebugTrace("Finished upkeep!")
 	SendModEvent("vMYC_UpkeepEnd")
