@@ -582,6 +582,16 @@ Function SavePlayerInventory()
 		EndIf
 	EndWhile
 	kWeaponDummy.Delete()
+	i = JArray.Count(jAmmoList)
+	While i > 0
+		i -= 1
+		Form kItem = JArray.GetForm(jWeaponArmorList,i)
+		If kItem
+			If PlayerRef.IsEquipped(kItem)
+				SetRegForm(sRegKey + ".Equipment.Ammo",kItem)
+			EndIf
+		EndIf
+	EndWhile
 	SetRegObj(sRegKey + ".Inventory",jInventory)
 	SendModEvent("vMYC_InventorySaveEnd")
 	StopTimer("SavePlayerInventory")
@@ -1211,6 +1221,7 @@ ObjectReference Function LoadSerializedEquipment(Int jItem)
 			EndWhile
 			;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " creating custom enchantment...")
 			kObject.CreateEnchantment(JMap.getFlt(jItem,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
+			kObject.SetItemCharge(JMap.getFlt(jItem,"ItemCharge"))
 			;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " done!")
 		EndIf
 	Else
