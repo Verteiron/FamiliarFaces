@@ -156,6 +156,11 @@ State Assigned
 				NeedEquipment = False
 			EndIf
 		EndIf
+		If NeedInventory
+			If UpdateInventory() >= 0
+				NeedInventory = False
+			EndIf
+		EndIf
 	EndEvent
 
 	Event OnLoad()
@@ -311,12 +316,12 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 	DebugTrace("Applying Armor...")
 
 	If !ScriptState == "Assigned"
-		DebugTrace("ApplyCharacterArmor called outside Assigned state!",1)
+		DebugTrace("UpdateArmor called outside Assigned state!",1)
 		Return -2
 	EndIf
 	
 	If !_jCharacterData
-		DebugTrace("ApplyCharacterArmor called but _jCharacterData is missing!",1)
+		DebugTrace("UpdateArmor called but _jCharacterData is missing!",1)
 		Return -3
 	EndIf
 	
@@ -331,72 +336,30 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
 		Form kItem = JMap.GetForm(jArmor,"Form")
 		If kItem
+			Int h = (kItem as Armor).GetSlotMask()
 			ObjectReference kObject = DataManager.LoadSerializedEquipment(jArmor)
 			If kObject
-				kObject.MoveTo(PlayerREF,RandomInt(-250,250),RandomInt(-250,250),RandomInt(120,150))
-				Waitfor3DLoad(kObject)
-				vMYC_BlindingLightGold.Play(kObject,1)
+				kCharacterActor.AddItem(kObject,1,True)
+				kCharacterActor.EquipItemEx(kItem,0,False,True)
+				;== Load NIO dye, if applicable ===--
+				If GetRegBool("Config.NIO.ArmorDye.Enabled")
+					Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+					If JValue.isArray(jNIODyeColors)
+						Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
+						Int iMaskIndex = 0
+						Int iIndexMax = 15
+						While iMaskIndex < iIndexMax
+							Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+							If Math.RightShift(iColor,24) > 0
+								NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+							EndIf
+							iMaskIndex += 1
+						EndWhile
+					EndIf
+				EndIf
+			Else ;kObject failed, armor didn't get loaded/created for some reason
+				DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
 			EndIf
-			;If kCharacterActor.GetItemCount(kItem)
-			;	kCharacterActor.RemoveItem(kItem)
-			;EndIf
-			;kCharacterActor.AddItem(kItem)
-			;kCharacterActor.EquipItemEx(kItem,0,True)
-			;iCount += 1
-			;Int h = (kItem as Armor).GetSlotMask()
-			;;Debug.Trace("MYC/CM/" + sCharacterName + ":  setting up " + kItem.GetName() + "...")
-			;Enchantment kItemEnchantment = JMap.GetForm(jArmor,"Enchantment") as Enchantment
-			;If kItemEnchantment && (kItem as Armor).GetEnchantment() != kItemEnchantment
-			;	;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + kItem.GetName() + " is enchanted!")
-			;	WornObject.SetEnchantment(kCharacterActor,1,h,kItemEnchantment,JMap.GetFlt(jArmor,"ItemMaxCharge"))
-			;	;WornObject.SetItemCharge(
-			;EndIf
-			;If JMap.GetInt(jArmor,"IsCustom")
-			;	String sDisplayName = JMap.GetStr(jArmor,"DisplayName")
-			;	;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + kItem.GetName() + " is customized item " + sDisplayName + "!")
-			;	WornObject.SetItemHealthPercent(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemHealthPercent"))
-			;	WornObject.SetItemMaxCharge(kCharacterActor,1,h,JMap.GetFlt(jArmor,"ItemMaxCharge"))
-			;	If sDisplayName ; Will be blank if player hasn't renamed the item
-			;		WornObject.SetDisplayName(kCharacterActor,1,h,sDisplayName)
-			;	EndIf
-            ;
-			;	Float[] fMagnitudes = New Float[8]
-			;	Int[] iDurations = New Int[8]
-			;	Int[] iAreas = New Int[8]
-			;	MagicEffect[] kMagicEffects = New MagicEffect[8]
-            ;
-			;	If JValue.solveInt(jArmor,".Enchantment.IsCustom")
-			;		Int iNumEffects = JValue.SolveInt(jArmor,".Enchantment.NumEffects")
-			;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
-			;		Int j = 0
-			;		Int jArmorEnchEffects = JValue.SolveObj(jArmor,".Enchantment.Effects")
-			;		While j < iNumEffects
-			;			Int jArmorEnchEffect = JArray.getObj(jArmorEnchEffects,j)
-			;			fMagnitudes[j] = JMap.GetFlt(jArmorEnchEffect,"Magnitude")
-			;			iDurations[j] = JMap.GetFlt(jArmorEnchEffect,"Duration") as Int
-			;			iAreas[j] = JMap.GetFlt(jArmorEnchEffect,"Area") as Int
-			;			kMagicEffects[j] = JMap.GetForm(jArmorEnchEffect,"MagicEffect") as MagicEffect
-			;			j += 1
-			;		EndWhile
-			;		WornObject.CreateEnchantment(kCharacterActor, 1, h, JMap.GetFlt(jArmor,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
-			;	EndIf
-			;EndIf
-			;Load NIO dye, if applicable
-			;If GetRegBool("Config.NIO.ArmorDye.Enabled")
-			;	Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
-			;	If JValue.isArray(jNIODyeColors)
-			;		Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
-			;		Int iMaskIndex = 0
-			;		Int iIndexMax = 15
-			;		While iMaskIndex < iIndexMax
-			;			Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
-			;			If Math.RightShift(iColor,24) > 0
-			;				NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
-			;			EndIf
-			;			iMaskIndex += 1
-			;		EndWhile
-			;	EndIf
-			;EndIf
 		EndIf
 	EndWhile
 
@@ -406,36 +369,20 @@ EndFunction
 Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = False)
 	Int i
 	Int iCount
-	DebugTrace("Applying Armor...")
+	DebugTrace("Applying Weapons...")
 
 	If !ScriptState == "Assigned"
-		DebugTrace("ApplyCharacterArmor called outside Assigned state!",1)
+		DebugTrace("UpdateWeapons called outside Assigned state!",1)
 		Return -2
 	EndIf
 	
 	If !_jCharacterData
-		DebugTrace("ApplyCharacterArmor called but _jCharacterData is missing!",1)
+		DebugTrace("UpdateWeapons called but _jCharacterData is missing!",1)
 		Return -3
 	EndIf
 
-	Int jCustomItems = JValue.SolveObj(_jCharacterData,".InventoryCustomItems")
-
 	Actor kCharacterActor = Self
 	
-	i = JArray.Count(jCustomItems)
-	DebugTrace("Has " + i + " items to be customized!")
-	While i > 0
-		i -= 1
-		Int jItem = JArray.GetObj(jCustomItems,i)
-		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
-		If kObject
-			kObject.MoveTo(PlayerREF,RandomInt(-250,250),RandomInt(-250,250),RandomInt(120,150))
-			Waitfor3DLoad(kObject)
-			vMYC_BlindingLightGold.Play(kObject,1)
-		EndIf
-		iCount += 1
-	EndWhile
-
 	Int iHand = 1 ; start with right
 	While iHand >= 0
 		Bool bTwoHanded = False
@@ -444,38 +391,79 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 			sHand = "Left"
 		EndIf
 		Int jItem = JValue.SolveObj(_jCharacterData,".Equipment." + sHand)
+		Form kItem = JMap.GetForm(jItem,"Form")
 		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
 		If kObject
-			kObject.MoveTo(PlayerREF,RandomInt(-250,250),RandomInt(-250,250),RandomInt(120,150))
-			Waitfor3DLoad(kObject)
-			vMYC_BlindingLightGold.Play(kObject,1)
+			kCharacterActor.AddItem(kObject,1,True)
+			kCharacterActor.EquipItemEx(kItem,iHand,False,True)
+			Weapon kWeapon = kObject.GetBaseObject() as Weapon
+			If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
+				bTwoHanded = True
+			EndIf
+		Else ;kObject failed, weapon didn't get loaded/created for some reason
+			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
 		EndIf
-		;If iHand == 1 ; Equip in proper hand and prevent removal
-			;kCharacterActor.UnEquipItem(kItem)
-			;kCharacterActor.EquipItemEx(kItem,1,True) ; Right
-		;ElseIf !bTwoHanded
-			;kCharacterActor.UnEquipItem(kItem)
-			;kCharacterActor.EquipItemEx(kItem,2,True) ; Left
-		;EndIf
 		iHand -= 1
 		iCount += 1
 		If bTwoHanded ; skip left hand
-			;Debug.Trace("MYC/CM/" + sCharacterName + ":  two-handed weapon, so skipping further processing...")
 			iHand -= 1
 			iCount -= 1
 		EndIf
 	EndWhile
-	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Equipping power!")
-	;kCharacterActor.EquipItemEx(GetCharacterForm(sCharacterName,"Equipment.Voice"),0)
-	
-	;If GetLocalInt(sCharacterName,"BowEquipped") == 0 && GetLocalForm(sCharacterName,"AmmoDefault")
-	;	kCharacterActor.UnEquipItem(GetLocalForm(sCharacterName,"AmmoDefault"))
-	;EndIf
 	
 	Return iCount
 EndFunction
 
+Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = False)
+	Int i
+	Int iCount
+	DebugTrace("Applying Inventory...")
 
+	If !ScriptState == "Assigned"
+		DebugTrace("UpdateInventory called outside Assigned state!",1)
+		Return -2
+	EndIf
+	
+	If !_jCharacterData
+		DebugTrace("UpdateInventory called but _jCharacterData is missing!",1)
+		Return -3
+	EndIf
+
+	Actor kCharacterActor = Self
+	
+	Int jCustomItems = JValue.SolveObj(_jCharacterData,".InventoryCustomItems")
+
+	i = JArray.Count(jCustomItems)
+	DebugTrace("Has " + i + " items to be customized!")
+	While i > 0
+		i -= 1
+		Int jItem = JArray.GetObj(jCustomItems,i)
+		Form kItem = JMap.GetForm(jItem,"Form")
+		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
+		If kObject
+			kCharacterActor.AddItem(kObject,1,True)
+		Else ;kObject failed, weapon didn't get loaded/created for some reason
+			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
+		EndIf
+		iCount += 1
+	EndWhile
+
+	Int jAmmoFMap = JValue.SolveObj(_jCharacterData,".Inventory.42") ; kAmmo
+	Int jAmmoList = JFormMap.AllKeys(jAmmoFMap)
+	i = JArray.Count(jAmmoList)
+	While i > 0
+		i -= 1
+		Form kItem = JArray.GetForm(jAmmoList,i)
+		Int iItemCount = JFormMap.GetInt(jAmmoFMap,kItem)
+		If kItem
+			If iItemCount
+				kCharacterActor.AddItem(kItem,iItemCount,True)
+			EndIf
+		EndIf
+		iCount += iItemCount
+	EndWhile
+	
+EndFunction
 ;=== Utility functions ===--
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
