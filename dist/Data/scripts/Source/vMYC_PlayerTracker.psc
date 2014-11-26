@@ -42,6 +42,11 @@ Event OnInit()
 EndEvent
 
 Event OnUpdate()
+	If PlayerREF.IsInCombat() ; Don't do this while in combat, it may slow down other more important scripts
+		RegisterForSingleUpdate(5)
+		Return
+	EndIf
+	
 	If !_bRefreshed
 		_bRefreshed = True
 		SendModEvent("vMYC_BackgroundFunction","ScanPlayerStats")
@@ -71,7 +76,7 @@ Event OnUpdate()
 	EndIf
 	SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
 	SetSessionInt("PerkPoints",GetPerkPoints())
-	
+
 	RegisterForSingleUpdate(5)
 ;	JValue.WriteToFile(_jInventory,"Data/vMYC/_PlayerInventory.json")
 EndEvent
@@ -81,6 +86,7 @@ Event OnPlayerLoadGame()
 EndEvent
 
 Event OnDataManagerReady(string eventName, string strArg, float numArg, Form sender)
+	UnregisterForModEvent("vMYC_DataManagerReady")
 	RegisterForSingleUpdate(0.1)
 EndEvent
 
