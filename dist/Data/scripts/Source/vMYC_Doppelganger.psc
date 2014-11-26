@@ -146,19 +146,26 @@ State Assigned
 	EndEvent
 
 	Event OnUpdate()
+		If NeedInventory 
+			If UpdateInventory() >= 0
+				NeedInventory = False
+			EndIf
+			; Adding items usually makes the target unequip gear, so make sure it's back on.
+			If !NeedEquipment
+				EquipDefaultGear() 
+			EndIf
+		EndIf
 		If NeedAppearance
 			If UpdateAppearance() == 0 ; No error
+				UpdateNINodes()
 				NeedAppearance = False
 			EndIf
 		EndIf
 		If NeedEquipment
-			If UpdateArmor() >= 0 && UpdateWeapons() >= 0 ; No error
+			Int bResultArmor = UpdateArmor()
+			Int bResultWeapons = UpdateWeapons()
+			If bResultArmor >= 0 && bResultWeapons >= 0 ; No error
 				NeedEquipment = False
-			EndIf
-		EndIf
-		If NeedInventory
-			If UpdateInventory() >= 0
-				NeedInventory = False
 			EndIf
 		EndIf
 	EndEvent
@@ -182,7 +189,6 @@ Function DoUpkeep(Bool bInBackground = True)
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If bInBackground
-		
 		NeedUpkeep = True
 		RegisterForSingleUpdate(0)
 		Return
@@ -255,6 +261,26 @@ Int Function UpdateAppearance()
 	EndIf
 EndFunction
 
+Int Function UpdateNINodes()
+	If !ScriptState == "Assigned"
+		DebugTrace("UpdateAppearance called outside Assigned state!")
+		Return -2
+	EndIf
+	Int jNINodeData = JValue.SolveObj(_jCharacterData,".NINodeData")
+	
+	Int jNiNodeNames = JMap.AllKeys(jNINodeData)
+	Int i = JArray.Count(jNINodeNames)
+	While i > 0
+		i -= 1
+		String sNodeName = JArray.GetStr(jNINodeNames,i)
+		If sNodeName
+			Float NINodeScale = JMap.GetFlt(JArray.getObj(jNINodeData,i),"Scale")
+			NetImmerse.SetNodeScale(Self,sNodeName,NINodeScale,False)
+			NetImmerse.SetNodeScale(Self,sNodeName,NINodeScale,True)
+		EndIf
+	EndWhile
+EndFunction
+
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
 	If !ScriptState == "Assigned"
 		DebugTrace("CharGenLoadCharacter called outside Assigned state!")
@@ -308,6 +334,45 @@ Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
 EndFunction
 
 ;=== Equipment and inventory functions ===--
+
+Int Function EquipDefaultGear(Bool abLockEquip = False)
+{Re-equip the gear this character was saved with, optionally locking it in place}
+;FIXME: This may fail to equip the correct item if character has both the base 
+;and a customized version of the same item in their inventory
+
+	Int jCharacterArmor = JValue.SolveObj(_jCharacterData,".Equipment.Armor")
+	Int jCharacterArmorInfo = JValue.SolveObj(_jCharacterData,".Equipment.ArmorInfo")
+
+	Actor kCharacterActor = Self
+	
+	Int i = JArray.Count(jCharacterArmorInfo)
+	Int iCount = 0
+	While i > 0
+		i -= 1
+		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
+		Form kItem = JMap.GetForm(jArmor,"Form")
+		If !IsEquipped(kItem)
+			kCharacterActor.EquipItemEx(kItem,0,abLockEquip,True)
+			iCount += 1
+		EndIf
+	EndWhile
+	Form kItemL = JValue.SolveForm(_jCharacterData,".Equipment.Left.Form")
+	Form kItemR = JValue.SolveForm(_jCharacterData,".Equipment.Right.Form")
+	If !IsEquipped(kItemL)
+		kCharacterActor.EquipItemEx(kItemL,2,abLockEquip,True)
+		iCount += 1
+	EndIf
+	If !IsEquipped(kItemR)
+		kCharacterActor.EquipItemEx(kItemR,1,abLockEquip,True)
+		iCount += 1
+	EndIf
+	Form kAmmo = JValue.SolveForm(_jCharacterData,".Equipment.Ammo")
+	If kAmmo
+		kCharacterActor.EquipItemEx(kAmmo,0,abLockEquip,True)
+		iCount += 1
+	EndIf
+	Return iCount
+EndFunction
 
 Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 	Int i
@@ -411,6 +476,47 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 		EndIf
 	EndWhile
 	
+	Bool bBow = False
+	Bool bCrossbow = False
+	If GetEquippedItemType(0) == 12
+		bCrossBow = True
+	ElseIf GetEquippedItemType(0) == 7
+		bBow = True
+	EndIf
+	
+	Float fBestAmmoDamage = 0.0
+	Ammo kBestAmmo = JValue.SolveForm(_jCharacterData,".Equipment.Ammo") as Ammo
+	Bool bFindBestAmmo = False
+	If !kBestAmmo && (bBow || bCrossbow)
+		bFindBestAmmo = True
+	EndIf
+	If bFindBestAmmo 
+		Int jAmmoFMap = JValue.SolveObj(_jCharacterData,".Inventory.42") ; kAmmo
+		Int jAmmoList = JFormMap.AllKeys(jAmmoFMap)
+		i = JArray.Count(jAmmoList)
+		While i > 0
+			i -= 1
+			Ammo kAmmo = JArray.GetForm(jAmmoList,i) as Ammo
+			If kAmmo
+				If (kAmmo.IsBolt() && bCrossBow) || (!kAmmo.IsBolt() && bBow) ;right ammo
+					If kCharacterActor.GetItemCount(kAmmo) ; character has it
+						If bFindBestAmmo ; but is it the BEST? OF THE BEST? OF THE BEST? SIR?
+							Float fAmmoDamage = (kAmmo as Ammo).GetDamage()
+							If fAmmoDamage > fBestAmmoDamage
+								fBestAmmoDamage = fAmmoDamage
+								kBestAmmo = kAmmo as Ammo
+								DebugTrace("BestAmmo is now " + kBestAmmo.GetName())
+							EndIf
+						EndIf
+					EndIf
+				EndIf
+			EndIf
+		EndWhile
+	EndIf
+	If kBestAmmo
+		EquipItemEx(kBestAmmo,0,False,False)
+	EndIf
+	
 	Return iCount
 EndFunction
 
@@ -458,11 +564,25 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 		If kItem
 			If iItemCount
 				kCharacterActor.AddItem(kItem,iItemCount,True)
+				iCount += iItemCount
 			EndIf
 		EndIf
-		iCount += iItemCount
 	EndWhile
 	
+	Int jPotionFMap = JValue.SolveObj(_jCharacterData,".Inventory.46") ; kPotion
+	Int	jPotionList = JFormMap.AllKeys(jPotionFMap)
+	i = JArray.Count(jPotionList)
+	While i > 0
+		i -= 1
+		Form kItem = JArray.GetForm(jPotionList,i)
+		Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
+		If !kItem.HasKeywordString("VendorItemFood")
+			AddItem(kItem,iItemCount,True)
+			iCount += iItemCount
+		EndIf
+	EndWhile
+	
+	Return iCount
 EndFunction
 ;=== Utility functions ===--
 
