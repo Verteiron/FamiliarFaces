@@ -92,6 +92,12 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
+	WaitMenuMode(10)
+	;SavePlayerData()
+	ActorBase kDoppelganger = GetAvailableActorBase(PlayerREF.GetActorBase().GetSex())
+	Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
+	vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
+	kDoppelScript.AssignCharacter(SessionID)
 EndEvent
 
 ;=== Functions - Startup ===--
@@ -1131,7 +1137,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	EndIf
 	
 	;Save dye color, if applicable
-	If GetRegBool("Config.Extras.NIO.ArmorDye.Enabled") && kItem as Armor 
+	If GetRegBool("Config.NIO.ArmorDye.Enabled") && kItem as Armor 
 		Bool bHasDye = False
 		Int iHandle = NiOverride.GetItemUniqueID(kWornObjectActor, 0, (kItem as Armor).GetSlotMask(), False)
 		Int[] iNIODyeColors = New Int[15]
@@ -1158,6 +1164,59 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	EndIf
 	;Debug.Trace("MYC/CM: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jEquipmentInfo))
 	GotoState("")
+EndFunction
+
+;Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
+ObjectReference Function LoadSerializedEquipment(Int jItem)
+{Recreate a custom weapon or armor using jItem. }
+	Form kItem = JMap.getForm(jItem,"Form")
+	If !(kItem as Weapon) && !(kItem as Armor)
+		DebugTrace("Passed item is neither weapon nor armor!",1)
+		Return None
+	EndIf
+	ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
+	ObjectReference kObject = kNowhere.PlaceAtMe(kItem)
+	If !kObject
+		DebugTrace("Couldn't create ObjectReference for " + kItem + "!",1)
+		Return None
+	EndIf
+	If JMap.getInt(jItem,"IsCustom")
+		String sDisplayName = JMap.getStr(jItem,"DisplayName")
+		DebugTrace(kItem.GetName() + " is customized item " + sDisplayName + "!")
+		kObject.SetItemHealthPercent(JMap.getFlt(jItem,"ItemHealthPercent"))
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  WornObject.SetItemMaxCharge(kCharacterActor," + iHand + ",0," + JMap.getFlt(jItem,"ItemMaxCharge"))
+		kObject.SetItemMaxCharge(JMap.getFlt(jItem,"ItemMaxCharge"))
+		If sDisplayName ; Will be blank if player hasn't renamed the item
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  WornObject.SetDisplayName(kCharacterActor," + iHand + ",0," + sDisplayName)
+			kObject.SetDisplayName(sDisplayName)
+		EndIf
+
+		Float[] fMagnitudes = New Float[8]
+		Int[] iDurations = New Int[8]
+		Int[] iAreas = New Int[8]
+		MagicEffect[] kMagicEffects = New MagicEffect[8]
+		;Wait(1)
+		If JValue.solveInt(jItem,".Enchantment.IsCustom")
+			Int iNumEffects = JValue.solveInt(jItem,".Enchantment.NumEffects")
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " has a customized enchantment with " + inumEffects + " magiceffects!")
+			Int j = 0
+			Int jWeaponEnchEffects = JValue.SolveObj(jItem,".Enchantment.Effects")
+			While j < iNumEffects
+				Int jWeaponEnchEffect = JArray.getObj(jWeaponEnchEffects,j)
+				fMagnitudes[j] = JMap.GetFlt(jWeaponEnchEffect,"Magnitude")
+				iDurations[j] = JMap.GetFlt(jWeaponEnchEffect,"Duration") as Int
+				iAreas[j] = JMap.GetFlt(jWeaponEnchEffect,"Area") as Int
+				kMagicEffects[j] = JMap.GetForm(jWeaponEnchEffect,"MagicEffect") as MagicEffect
+				j += 1
+			EndWhile
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " creating custom enchantment...")
+			kObject.CreateEnchantment(JMap.getFlt(jItem,"ItemMaxCharge"), kMagicEffects, fMagnitudes, iAreas, iDurations)
+			;Debug.Trace("MYC/CM/" + sCharacterName + ":  " + sDisplayName + " done!")
+		EndIf
+	Else
+		kObject.SetItemCharge(JMap.getFlt(jItem,"ItemCharge"))
+	EndIf
+	Return kObject
 EndFunction
 
 String Function MatchSession()
