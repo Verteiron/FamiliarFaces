@@ -51,6 +51,9 @@ Formlist 			Property vMYC_PerkList 							Auto
 Formlist 			Property vMYC_InventoryList						Auto
 {A list of all Forms as found by ObjectReference.GetAllForms.}
 
+Formlist 			Property vMYC_PlayerShoutCheckList 				Auto
+{A list of all Shouts the player can learn.}
+
 Formlist			Property vMYC_zTempListsList					Auto
 {A list of Formlists to be used as temporary storage for functions requiring them.}
 
@@ -99,7 +102,8 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		WaitMenuMode(1)
 	EndWhile
 	WaitMenuMode(10)
-	;SavePlayerData()
+	SavePlayerData()
+	WaitMenuMode(5)
 	ActorBase kDoppelganger = GetAvailableActorBase(PlayerREF.GetActorBase().GetSex())
 	Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
 	vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
@@ -131,6 +135,17 @@ Function DoUpkeep(Bool bInBackground = True)
 	String sMatchedSID = MatchSession()
 	If sMatchedSID
 		SetSessionID(sMatchedSID)
+	EndIf
+
+	;=== Add shouts from expansions to the checklist ===--
+	If GetModByName("Dawnguard.esm") != 255
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x02007CB6,"Dawnguard.esm")) ; Soul Tear
+	EndIf
+	If GetModByName("Dragonborn.esm") != 255
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x020179d8,"Dragonborn.esm")) ; Bend Will
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x0201df92,"Dragonborn.esm")) ; Dragon Aspect
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x020200c0,"Dragonborn.esm")) ; Cyclone
+		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x0202ad09,"Dragonborn.esm")) ; Battle Fury
 	EndIf
 	
 	;Don't register this until after we've init'd everything else
@@ -167,6 +182,7 @@ Function ScanPlayerStats()
 	
 	SetSessionFlt("Stats.Experience",GetPlayerExperience())
 	SetSessionFlt("Stats.PerkPoints",GetPerkPoints())
+	SetSessionInt("Stats.Level",PlayerREF.GetLevel())
 	
 	StartTimer("SaveAVs")
 	
@@ -322,7 +338,6 @@ Function ScanPlayerSpells()
 		i += 1
 	EndWhile
 	DebugTrace("Scanned " + iAddedCount + " spells.")
-	SendModEvent("vMYC_SpellsSaveEnd")
 	StopTimer("ScanPlayerSpells")
 	SetSessionBool("Status.Spells.Busy",False)
 EndFunction
@@ -348,6 +363,85 @@ Function SavePlayerSpells()
 	
 	SendModEvent("vMYC_SpellsSaveEnd")
 	StopTimer("SavePlayerSpells")
+
+EndFunction
+
+Function ScanPlayerShouts()
+	;== Shouts ===--
+	If GetSessionBool("Status.Shouts.Busy")
+		Return
+	EndIf
+	SetSessionBool("Status.Shouts.Busy",True)
+	StartTimer("ScanPlayerShouts")
+
+	Int i = 0
+	Int iAddedCount = 0
+	
+	Int jPlayerShouts = JArray.Object()
+	SetSessionObj("Shouts",jPlayerShouts)
+	Int jPlayerShoutInfo = JArray.Object()
+	SetSessionObj("ShoutInfo",jPlayerShoutInfo)
+	
+	Int iShoutCount = vMYC_PlayerShoutCheckList.GetSize()
+	i = 0
+	While i < iShoutCount
+		Shout kShout = vMYC_PlayerShoutCheckList.GetAt(i) as Shout
+		If PlayerREF.HasSpell(kShout)
+			Int jShoutInfo = JMap.Object()
+			JMap.SetForm(jShoutInfo,"Form",kShout)
+			Int iWord = 0
+			While iWord < 3
+				WordOfPower kWord = kShout.GetNthWordOfPower(iWord)
+				If kWord
+					If Game.IsWordUnlocked(kWord)
+						If iWord == 0 ; 
+							JArray.AddForm(jPlayerShouts,kShout)
+							DebugTrace("Player knows Shout " + kShout.Getname() + " and has unlocked at least one word of it.")
+							iAddedCount += 1
+						EndIf
+						JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",iWord,True)
+						String sWordName = kWord.GetName()
+						If !sWordName
+							sWordName = GetFormIDString(kWord)
+						EndIf
+						JValue.SolveFormSetter(jShoutInfo,".Words." + sWordName + ".Form",kWord,True)
+					EndIf
+					DebugTrace("Word " + iWord + " of " + kShout.GetName() + " is " + kWord.GetName() + ". Unlocked: " + Game.IsWordUnlocked(kWord))
+				EndIf
+				iWord += 1
+			EndWhile
+			JArray.AddObj(jPlayerShoutInfo,jShoutInfo)
+		EndIf
+		i += 1
+	EndWhile
+
+	DebugTrace("Scanned " + iAddedCount + " Shouts.")
+	StopTimer("ScanPlayerShouts")
+	SetSessionBool("Status.Shouts.Busy",False)
+EndFunction
+
+Function SavePlayerShouts()
+	;== Shouts ===--
+	
+	StartTimer("SavePlayerShouts")
+	SendModEvent("vMYC_ShoutsSaveBegin")
+
+	While GetSessionBool("Status.Shouts.Busy")
+		WaitMenuMode(1)
+	EndWhile
+	
+	String sPlayerName = PlayerREF.GetActorBase().GetName()
+	String sRegKey = "Characters." + SessionID
+	
+	If !HasSessionKey("Shouts")
+		ScanPlayerShouts()
+	EndIf
+	
+	SetRegObj(sRegKey + ".Shouts",GetSessionObj("Shouts"))
+	SetRegObj(sRegKey + ".ShoutInfo",GetSessionObj("ShoutInfo"))
+	
+	SendModEvent("vMYC_ShoutsSaveEnd")
+	StopTimer("SavePlayerShouts")
 
 EndFunction
 
@@ -717,6 +811,7 @@ Int Function SavePlayerData()
 	SetRegStr(sRegKey + META + ".UUID",sSessionID)
 	SetRegInt(sRegKey + META + ".Sex",kPlayerBase.GetSex())
 	SetRegForm(sRegKey + META + ".Race",kPlayerBase.GetRace())
+	SetRegInt(sRegKey + META + ".Level",PlayerREF.GetLevel())
 	AddToReqList(kPlayerBase.GetRace(),"Race")
 	SetRegStr(sRegKey + META + ".RaceText",kPlayerBase.GetRace().GetName())
 	SetRegInt(sRegKey + META + ".SerializationVersion",SerializationVersion)
@@ -755,6 +850,7 @@ Int Function SavePlayerData()
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerShouts")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerEquipment")
 	
 	WaitMenuMode(1)
@@ -825,6 +921,9 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 	ElseIf strArg == "SavePlayerSpells"
 		SavePlayerSpells()
 		_bSavedSpells = True
+	ElseIf strArg == "SavePlayerShouts"
+		SavePlayerShouts()
+		_bSavedSpells = True
 	ElseIf strArg == "SavePlayerInventory"
 		SavePlayerInventory()
 		_bSavedInventory = True
@@ -845,6 +944,8 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 		ScanPlayerNINodeInfo()
 	ElseIf strArg == "ScanPlayerSpells"
 		ScanPlayerSpells()
+	ElseIf strArg == "ScanPlayerShouts"
+		ScanPlayerShouts()
 	EndIf
 	SetSessionBool("Status.Background." + strArg,False)
 	_iThreadCount -= 1

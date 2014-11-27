@@ -34,6 +34,7 @@ vMYC_DataManager	Property DataManager							Auto
 Bool 				Property NeedAppearance	= False 				Auto Hidden
 Bool 				Property NeedPerks		= False 				Auto Hidden
 Bool 				Property NeedSpells		= False 				Auto Hidden
+Bool 				Property NeedShouts		= False 				Auto Hidden
 Bool 				Property NeedEquipment	= False 				Auto Hidden
 Bool 				Property NeedInventory	= False 				Auto Hidden
 Bool 				Property NeedRefresh 	= False 				Auto Hidden
@@ -134,6 +135,7 @@ Auto State Available
 		NeedAppearance	= True
 		NeedPerks		= True
 		NeedSpells		= True
+		NeedShouts		= True
 		NeedEquipment	= True
 		NeedInventory	= True
 		NeedRefresh 	= True
@@ -177,11 +179,11 @@ State Assigned
 				NeedPerks = False
 			EndIf
 		EndIf
-		;If NeedPerks
-		;	If UpdatePerks() >= 0 ; No error
-		;		NeedPerks = False
-		;	EndIf
-		;EndIf
+		If NeedShouts
+			If UpdateShouts() >= 0 ; No error
+				NeedShouts = False
+			EndIf
+		EndIf
 		;If NeedSpells
 		;	If UpdatePerks() >= 0 ; No error
 		;		NeedPerks = False
@@ -657,9 +659,11 @@ Int Function UpdatePerks()
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + kPerklist.GetSize() + " perks to Actorbase...")
 	If iPerkCountTotal + iMissingCount != JArray.Count(jPerks)
 		Debug.Trace("PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		DataManager.UnlockFormlist(kPerklist)
 		Return -1
 	ElseIf iPerkCountTotal == 0
 		DebugTrace("PerkList size is 0. Won't attempt to apply this.")
+		DataManager.UnlockFormlist(kPerklist)
 		Return 0
 	EndIf
 	If iMissingCount
@@ -674,73 +678,72 @@ Int Function UpdatePerks()
 	Return iPerkCountTotal
 EndFunction
 
-;;=== Shouts ===--
-;
-;Int Function UpdateShouts()
-;{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption. }
-;	Int iConfigShoutHandling = GetConfigInt("SHOUTS_HANDLING")
-;	vMYC_Shoutlist.Revert()
-;	Int jCharacterShouts = GetCharacterObj(sCharacterName,"Shouts")
-;	Int i = JArray.Count(jCharacterShouts)
-;	Int iMissingCount = 0
-;	While i > 0
-;		i -= 1
-;		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
-;		If !kShout
-;			iMissingCount += 1
-;		Else
-;			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
-;			Shout kDragonAspectShout
-;			If GetModByName("Dragonborn.esm")
-;				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
-;			EndIf
-;			If kShout == kStormCallShout && (iConfigShoutHandling == 1 || iConfigShoutHandling == 3)
-;				;Don't add it
-;			ElseIf kShout == kDragonAspectShout && (iConfigShoutHandling == 2 || iConfigShoutHandling == 3)
-;				;Don't add it
-;			ElseIf GetConfigBool("SHOUTS_BLOCK_UNLEARNED")
-;				If PlayerREF.HasSpell(kShout)
-;					vMYC_ShoutList.AddForm(kShout)
-;				EndIf
-;			Else
-;				vMYC_ShoutList.AddForm(kShout)		
-;			EndIf
-;		EndIf
-;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
-;	EndWhile
-;	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
-;	If vMYC_ShoutList.GetSize() == 0
-;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size is 0. Won't attempt to apply this.")
-;		_bApplyShoutsBusy = False
-;		Return 0
-;	EndIf
-;	If iMissingCount
-;		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts with " + iMissingCount + " skipped.",1)
-;	Else
-;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
-;	EndIf
-;	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
-;	WaitMenuMode(0.1)
-;	_bApplyShoutsBusy = False
-;	Return vMYC_ShoutList.GetSize()
-;EndFunction
-;
-;Function RemoveCharacterShouts(String sCharacterName)
-;{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
-;	While _bApplyShoutsBusy
-;		WaitMenuMode(0.1)
-;	EndWhile
-;	_bApplyShoutsBusy = True
-;	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Character is not allowed to use shouts, removing them!")
-;	vMYC_Shoutlist.Revert()
-;	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
-;	vMYC_ShoutList.AddForm(vMYC_NullShout)
-;	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
-;	WaitMenuMode(0.1)
-;	_bApplyShoutsBusy = False
-;EndFunction
+;=== Shouts ===--
 
+Int Function UpdateShouts()
+{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption.}
+	
+	Int jShouts = JValue.SolveObj(_jCharacterData,".Shouts")
+	
+	Formlist kShoutlist = DataManager.LockFormList()
+	kShoutlist.Revert() ; Should already be empty, but just in case
+	
+	Int i = JArray.Count(jShouts)
+	Int iMissingCount = 0
 
+	While i > 0
+		i -= 1
+		Shout kShout = JArray.getForm(jShouts,i) as Shout
+		If !kShout
+			iMissingCount += 1
+		Else
+			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
+			Shout kDragonAspectShout
+			If GetModByName("Dragonborn.esm")
+				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
+			EndIf
+			If kShout == kStormCallShout && GetRegBool("Config.Shouts.Disabled.CallStorm")
+				;Don't add it
+			ElseIf kShout == kDragonAspectShout && GetRegBool("Config.Shouts.Disabled.DragonAspect") ;FIXME: Maybe use an array for disabled shouts, then test each one
+				;Don't add it
+			ElseIf GetRegBool("Config.Shouts.BlockUnlearned")
+				If PlayerREF.HasSpell(kShout)
+					kShoutlist.AddForm(kShout)
+				EndIf
+			Else
+				kShoutlist.AddForm(kShout)		
+			EndIf
+		EndIf
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
+	EndWhile
+	Int iShoutCount = kShoutlist.GetSize()
+	DebugTrace("Loading " + iShoutCount + " Shouts to Actorbase...")
+	If iShoutCount == 0
+		DebugTrace("ShoutList size is 0. Won't attempt to apply this.")
+		DataManager.UnlockFormlist(kShoutlist)
+		Return 0
+	EndIf
+	If iMissingCount
+		DebugTrace("Loading " + iShoutCount + " Shouts with " + iMissingCount + " skipped.",1)
+	Else
+		DebugTrace("Loaded " + iShoutCount + " Shouts.")
+	EndIf
+	FFUtils.LoadCharacterShouts(_kActorBase,kShoutlist)
+	WaitMenuMode(0.1)
+	DataManager.UnlockFormlist(kShoutlist)
+	Return kShoutlist.GetSize()
+EndFunction
+
+Function RemoveCharacterShouts(String sCharacterName)
+{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
+	DebugTrace("Character is not allowed to use shouts, removing them!")
+	Formlist kShoutlist = DataManager.LockFormList()
+	kShoutlist.Revert() ; Should already be empty, but just in case
+	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
+	kShoutlist.AddForm(vMYC_NullShout)
+	FFUtils.LoadCharacterShouts(_kActorBase,kShoutlist)
+	WaitMenuMode(0.1)
+EndFunction
 
 ;=== Utility functions ===--
 
