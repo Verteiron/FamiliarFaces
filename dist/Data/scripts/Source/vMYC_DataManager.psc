@@ -51,6 +51,9 @@ Formlist 			Property vMYC_PerkList 							Auto
 Formlist 			Property vMYC_InventoryList						Auto
 {A list of all Forms as found by ObjectReference.GetAllForms.}
 
+Formlist			Property vMYC_zTempListsList					Auto
+{A list of Formlists to be used as temporary storage for functions requiring them.}
+
 ;=== Variables ===--
 
 Bool _bSavedPerks 		= False
@@ -1251,6 +1254,35 @@ ObjectReference Function LoadSerializedEquipment(Int jItem)
 		kObject.SetItemCharge(JMap.getFlt(jItem,"ItemCharge"))
 	EndIf
 	Return kObject
+EndFunction
+
+Formlist Function LockFormlist()
+	Int jTempFormlistPool = GetSessionObj("TempFormlistPool")
+	If !JValue.IsArray(jTempFormlistPool)
+		jTempFormlistPool = JArray.Object()
+		JArray.AddFromFormList(jTempFormlistPool,vMYC_zTempListsList)
+		SetSessionObj("TempFormlistPool",jTempFormlistPool)
+	EndIf
+	Int iSafetyTimer = 5
+	While JArray.Count(jTempFormlistPool) == 0 && iSafetyTimer
+		iSafetyTimer -= 1
+		WaitMenuMode(0.5)
+	EndWhile
+	If !iSafetyTimer
+		DebugTrace("Warning! Couldn't lock a formlist!",1)
+		Return None
+	EndIf
+	Formlist kFormlist = JArray.GetForm(jTempFormlistPool,0) as Formlist
+	JArray.EraseIndex(jTempFormlistPool,0)
+	Return kFormList
+EndFunction
+
+Function UnlockFormlist(Formlist kLockedFormlist)
+	Int jTempFormlistPool = GetSessionObj("TempFormlistPool")
+	kLockedFormlist.Revert()
+	If JArray.FindForm(jTempFormlistPool,kLockedFormList) < 0
+		JArray.AddForm(jTempFormlistPool,kLockedFormlist)
+	EndIf
 EndFunction
 
 String Function MatchSession()

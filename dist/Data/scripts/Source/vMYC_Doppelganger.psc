@@ -63,6 +63,9 @@ FormList 			Property vMYC_ModCompatibility_SpellList_Safe 		Auto
 FormList 			Property vMYC_ModCompatibility_SpellList_Unsafe 	Auto
 FormList 			Property vMYC_ModCompatibility_SpellList_Healing 	Auto
 FormList 			Property vMYC_ModCompatibility_SpellList_Armor 		Auto
+Formlist 			Property vMYC_ModCompatibility_PerkList_Unsafe 		Auto
+{A list of Perks that are known to be unsafe or unnecessary to load on NPCs.}
+
 Message 			Property vMYC_VoiceTypeNoFollower 					Auto
 Message 			Property vMYC_VoiceTypeNoSpouse						Auto
 
@@ -96,6 +99,7 @@ String		_sFormID
 
 Event OnInit()
 	_kActorBase = GetActorBase()
+	_kActorBase.SetEssential(True)
 EndEvent
 
 Event OnUpdate()
@@ -168,6 +172,21 @@ State Assigned
 				NeedEquipment = False
 			EndIf
 		EndIf
+		If NeedPerks
+			If UpdatePerks() >= 0 ; No error
+				NeedPerks = False
+			EndIf
+		EndIf
+		;If NeedPerks
+		;	If UpdatePerks() >= 0 ; No error
+		;		NeedPerks = False
+		;	EndIf
+		;EndIf
+		;If NeedSpells
+		;	If UpdatePerks() >= 0 ; No error
+		;		NeedPerks = False
+		;	EndIf
+		;EndIf
 	EndEvent
 
 	Event OnLoad()
@@ -268,15 +287,18 @@ Int Function UpdateNINodes()
 	EndIf
 	Int jNINodeData = JValue.SolveObj(_jCharacterData,".NINodeData")
 	
-	Int jNiNodeNames = JMap.AllKeys(jNINodeData)
-	Int i = JArray.Count(jNINodeNames)
+	Int jNiNodeNameList = JMap.AllKeys(jNINodeData)
+	Int jNiNodeValueList = JMap.AllValues(jNINodeData)
+	Int i = JArray.Count(jNiNodeNameList)
 	While i > 0
 		i -= 1
-		String sNodeName = JArray.GetStr(jNINodeNames,i)
+		String sNodeName = JArray.GetStr(jNiNodeNameList,i)
 		If sNodeName
-			Float NINodeScale = JMap.GetFlt(JArray.getObj(jNINodeData,i),"Scale")
-			NetImmerse.SetNodeScale(Self,sNodeName,NINodeScale,False)
-			NetImmerse.SetNodeScale(Self,sNodeName,NINodeScale,True)
+			Int jNINodeValues = JArray.GetObj(jNiNodeValueList,i)
+			Float fNINodeScale = JMap.GetFlt(jNINodeValues,"Scale")
+			Debug.Trace("Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
+			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,False)
+			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,True)
 		EndIf
 	EndWhile
 EndFunction
@@ -404,8 +426,9 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 			Int h = (kItem as Armor).GetSlotMask()
 			ObjectReference kObject = DataManager.LoadSerializedEquipment(jArmor)
 			If kObject
+				kObject.SetActorOwner(_kActorBase)
 				kCharacterActor.AddItem(kObject,1,True)
-				kCharacterActor.EquipItemEx(kItem,0,False,True)
+				kCharacterActor.EquipItemEx(kItem,0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
 				;== Load NIO dye, if applicable ===--
 				If GetRegBool("Config.NIO.ArmorDye.Enabled")
 					Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
@@ -459,6 +482,7 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 		Form kItem = JMap.GetForm(jItem,"Form")
 		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
 		If kObject
+			kObject.SetActorOwner(_kActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 			kCharacterActor.EquipItemEx(kItem,iHand,False,True)
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
@@ -547,6 +571,7 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 		Form kItem = JMap.GetForm(jItem,"Form")
 		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
 		If kObject
+			kObject.SetActorOwner(_kActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
 			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
@@ -584,6 +609,139 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	
 	Return iCount
 EndFunction
+
+;=== Perks ===--
+
+Int Function UpdatePerks()
+{Apply perks. Return -1 for failure, or number of perks applied for success.}
+	Int i
+	Int iCount
+	DebugTrace("Applying Perks...")
+
+	If !ScriptState == "Assigned"
+		DebugTrace("UpdatePerks called outside Assigned state!",1)
+		Return -2
+	EndIf
+	
+	If !_jCharacterData
+		DebugTrace("UpdatePerks called but _jCharacterData is missing!",1)
+		Return -3
+	EndIf
+
+	Actor kCharacterActor = Self
+	
+	Int jPerks = JValue.SolveObj(_jCharacterData,".Perks")
+
+	Formlist kPerklist = DataManager.LockFormList()
+	kPerkList.Revert() ; Should already be empty, but just in case
+
+	i = JArray.Count(jPerks)
+	DebugTrace("Has " + i + " perks to be checked!")
+	Int iMissingCount = 0
+	While i > 0
+		i -= 1
+		Perk kPerk = JArray.getForm(jPerks,i) as Perk
+		If !kPerk
+			iMissingCount += 1
+		Else
+			If vMYC_ModCompatibility_PerkList_Unsafe.HasForm(kPerk)
+				iMissingCount += 1
+			Else
+				kPerklist.AddForm(kPerk)
+			EndIf
+		EndIf
+		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Perk is from " + JArray.getStr(jPerks,i))
+		;DebugTrace("Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+	EndWhile
+	Int iPerkCountTotal = kPerklist.GetSize()
+	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + kPerklist.GetSize() + " perks to Actorbase...")
+	If iPerkCountTotal + iMissingCount != JArray.Count(jPerks)
+		Debug.Trace("PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+		Return -1
+	ElseIf iPerkCountTotal == 0
+		DebugTrace("PerkList size is 0. Won't attempt to apply this.")
+		Return 0
+	EndIf
+	If iMissingCount
+		DebugTrace("Loading " + iPerkCountTotal + " Perks with " + iMissingCount + " skipped...")
+	Else
+		DebugTrace("Loading " + iPerkCountTotal + " Perks...")
+	EndIf
+	FFUtils.LoadCharacterPerks(_kActorBase,kPerklist)
+	DebugTrace("Perks loaded successfully!")
+	WaitMenuMode(0.1)
+	DataManager.UnlockFormlist(kPerklist)
+	Return iPerkCountTotal
+EndFunction
+
+;;=== Shouts ===--
+;
+;Int Function UpdateShouts()
+;{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption. }
+;	Int iConfigShoutHandling = GetConfigInt("SHOUTS_HANDLING")
+;	vMYC_Shoutlist.Revert()
+;	Int jCharacterShouts = GetCharacterObj(sCharacterName,"Shouts")
+;	Int i = JArray.Count(jCharacterShouts)
+;	Int iMissingCount = 0
+;	While i > 0
+;		i -= 1
+;		Shout kShout = JArray.getForm(jCharacterShouts,i) as Shout
+;		If !kShout
+;			iMissingCount += 1
+;		Else
+;			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
+;			Shout kDragonAspectShout
+;			If GetModByName("Dragonborn.esm")
+;				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
+;			EndIf
+;			If kShout == kStormCallShout && (iConfigShoutHandling == 1 || iConfigShoutHandling == 3)
+;				;Don't add it
+;			ElseIf kShout == kDragonAspectShout && (iConfigShoutHandling == 2 || iConfigShoutHandling == 3)
+;				;Don't add it
+;			ElseIf GetConfigBool("SHOUTS_BLOCK_UNLEARNED")
+;				If PlayerREF.HasSpell(kShout)
+;					vMYC_ShoutList.AddForm(kShout)
+;				EndIf
+;			Else
+;				vMYC_ShoutList.AddForm(kShout)		
+;			EndIf
+;		EndIf
+;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
+;	EndWhile
+;	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts to Actorbase...")
+;	If vMYC_ShoutList.GetSize() == 0
+;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  ShoutList size is 0. Won't attempt to apply this.")
+;		_bApplyShoutsBusy = False
+;		Return 0
+;	EndIf
+;	If iMissingCount
+;		Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + vMYC_ShoutList.GetSize() + " Shouts with " + iMissingCount + " skipped.",1)
+;	Else
+;		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loaded " + vMYC_ShoutList.GetSize() + " Shouts.")
+;	EndIf
+;	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
+;	WaitMenuMode(0.1)
+;	_bApplyShoutsBusy = False
+;	Return vMYC_ShoutList.GetSize()
+;EndFunction
+;
+;Function RemoveCharacterShouts(String sCharacterName)
+;{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
+;	While _bApplyShoutsBusy
+;		WaitMenuMode(0.1)
+;	EndWhile
+;	_bApplyShoutsBusy = True
+;	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Character is not allowed to use shouts, removing them!")
+;	vMYC_Shoutlist.Revert()
+;	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
+;	vMYC_ShoutList.AddForm(vMYC_NullShout)
+;	FFUtils.LoadCharacterShouts(GetCharacterDummy(sCharacterName),vMYC_Shoutlist)
+;	WaitMenuMode(0.1)
+;	_bApplyShoutsBusy = False
+;EndFunction
+
+
+
 ;=== Utility functions ===--
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
