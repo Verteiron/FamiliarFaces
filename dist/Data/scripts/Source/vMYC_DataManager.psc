@@ -57,6 +57,20 @@ Formlist 			Property vMYC_PlayerShoutCheckList 				Auto
 Formlist			Property vMYC_zTempListsList					Auto
 {A list of Formlists to be used as temporary storage for functions requiring them.}
 
+;=== Achievement test Properties ===--
+
+Faction 			Property CWImperialFaction 						Auto
+Faction 			Property CWSonsFaction 							Auto
+
+Spell 				Property WerewolfChange 						Auto 
+{Beast form, if player has this then they're a worwelf}
+
+Spell 				Property DLC1VampireChange						Auto 
+{Vampire lord form, if player has this then they're a wampire}
+
+GlobalVariable 		Property DLC1PlayingVampireLine 				Auto 
+{1 = Vampires, 0 = Dawnguard}
+
 ;=== Variables ===--
 
 Bool _bSavedPerks 		= False
@@ -101,7 +115,7 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
-	WaitMenuMode(10)
+	WaitMenuMode(90)
 	SavePlayerData()
 	WaitMenuMode(5)
 	ActorBase kDoppelganger = GetAvailableActorBase(PlayerREF.GetActorBase().GetSex())
@@ -298,6 +312,129 @@ Function SavePlayerPerks(Bool bSessionOnly = False)
 	
 	SendModEvent("vMYC_PerksSaveEnd",JArray.Count(GetSessionObj("Perks")))
 	StopTimer("SavePlayerPerks")
+EndFunction
+
+Function ScanPlayerAchievements()
+{Writes current player achievements to the session}
+;These were called Spawnpoints in 1.x
+	If GetSessionBool("Status.Achievements.Busy")
+		Return
+	EndIf
+	
+	SetSessionBool("Status.Achievements.Busy",True)
+	StartTimer("ScanPlayerAchievements")
+	Int i = 0
+
+	Int jAchievementsList = JArray.Object()
+	SetSessionObj("Achievements",jAchievementsList)
+	
+	If Quest.GetQuest("MQ305").IsCompleted()
+		JArray.AddStr(jAchievementsList,"Hero")
+	EndIf
+	If Quest.GetQuest("DB11").IsCompleted()
+		JArray.AddStr(jAchievementsList,"DarkBrotherhoodRestored")
+	ElseIf Quest.GetQuest("DBDestroy").IsCompleted()
+		JArray.AddStr(jAchievementsList,"DarkBrotherhoodDestroyed")
+	EndIf
+	If Quest.GetQuest("MG08").IsCompleted()
+		JArray.AddStr(jAchievementsList,"Mage")
+	EndIf
+	If Quest.GetQuest("TG09").IsCompleted()
+		JArray.AddStr(jAchievementsList,"Thief")
+	EndIf
+	If Quest.GetQuest("MQ206").IsCompleted()
+		If Quest.GetQuest("MQPaarthurnax").IsCompleted()
+			JArray.AddStr(jAchievementsList,"Blade")
+		Else
+			JArray.AddStr(jAchievementsList,"Greybeard")
+		EndIf
+	EndIf
+	If Quest.GetQuest("CWSiegeObj").IsCompleted()
+		If PlayerREF.IsInFaction(CWImperialFaction)
+			JArray.AddStr(jAchievementsList,"Imperial")
+		ElseIf PlayerREF.IsInFaction(CWSonsFaction)
+			JArray.AddStr(jAchievementsList,"Stormcloak")
+		EndIf
+	EndIf
+	If Quest.GetQuest("MS05").IsCompleted()
+		JArray.AddStr(jAchievementsList,"Bard")
+	EndIf
+	If Quest.GetQuest("C06").IsCompleted()
+		JArray.AddStr(jAchievementsList,"Companion")
+	EndIf
+
+	; Dawnguard
+	If GetModByName("Dawnguard.esm") != 255
+		DLC1VampireChange = GetFormFromFile(0x0200283B,"Dawnguard.esm") as Spell
+	EndIf
+	If PlayerREF.HasSpell(WerewolfChange) ; Player is a worwelf
+		JArray.AddStr(jAchievementsList,"Werewolf")
+	ElseIf DLC1VampireChange
+		If PlayerREF.HasSpell(DLC1VampireChange) ; Player is a vampire lord
+			JArray.AddStr(jAchievementsList,"VampireLord")
+		EndIf
+	EndIf
+	If Quest.GetQuest("DLC1MQ02") ;Only filled if Dawnguard is loaded
+		If Quest.GetQuest("DLC1MQ02").IsCompleted() ; Only handle dawnguard if player is actually doing the questline
+			If DLC1PlayingVampireLine.GetValue() == 1
+				JArray.AddStr(jAchievementsList,"VampireFaction")
+			Else
+				JArray.AddStr(jAchievementsList,"DawnguardFaction")
+			EndIf
+			If Quest.GetQuest("DLC1MQ08").IsCompleted()
+				JArray.AddStr(jAchievementsList,"DLC1Completed")
+			EndIf
+		EndIf
+	EndIf
+
+	; Dragonborn
+	If Quest.GetQuest("DLC2MQ06") ;Only filled if Dragonborn is loaded
+		If Quest.GetQuest("DLC2MQ06").IsCompleted()
+			JArray.AddStr(jAchievementsList,"DLC2KilledMiraak")
+		EndIf
+	EndIf
+
+	;Thane of X
+	FavorJarlsMakeFriendsScript ThaneTracker = Quest.GetQuest("FavorJarlsMakeFriends") as FavorJarlsMakeFriendsScript
+	If ThaneTracker.PaleImpGetOutOfJail > 0 || ThaneTracker.PaleSonsGetOutOfJail > 0
+		JArray.AddStr(jAchievementsList,"Dawnstar")
+	EndIf
+	If ThaneTracker.WhiterunImpGetOutofJail > 0 || ThaneTracker.WhiterunSonsGetOutofJail > 0
+		JArray.AddStr(jAchievementsList,"Whiterun")
+	EndIf
+	If ThaneTracker.HjaalmarchImpGetOutofJail > 0 || ThaneTracker.HjaalmarchSonsGetOutofJail > 0
+		JArray.AddStr(jAchievementsList,"Morthal")
+	EndIf
+	If ThaneTracker.ReachImpGetOutofJail > 0 || ThaneTracker.ReachSonsGetOutofJail > 0
+		JArray.AddStr(jAchievementsList,"Markarth")
+	EndIf
+	If ThaneTracker.FalkreathImpGetOutofJail > 0 || ThaneTracker.FalkreathSonsGetOutofJail > 0
+		JArray.AddStr(jAchievementsList,"Falkreath")
+	EndIf
+	StopTimer("ScanPlayerAchievements")
+	SetSessionBool("Status.Achievements.Busy",False)
+EndFunction
+
+Function SavePlayerAchievements()
+	StartTimer("SavePlayerAchievements")
+	SendModEvent("vMYC_AchievementsSaveBegin")
+
+	While GetSessionBool("Status.Achievements.Busy")
+		WaitMenuMode(1)
+	EndWhile
+	
+	String sPlayerName = PlayerREF.GetActorBase().GetName()
+	String sRegKey = "Characters." + SessionID
+	
+	If !HasSessionKey("Achievements")
+		ScanPlayerAchievements()
+	EndIf
+	
+	SetRegObj(sRegKey + ".Achievements",GetSessionObj("Achievements"))
+	
+	SendModEvent("vMYC_AchievementsSaveEnd")
+	StopTimer("SavePlayerAchievements")
+
 EndFunction
 
 Function ScanPlayerSpells()
@@ -859,6 +996,7 @@ Int Function SavePlayerData()
 	EndWhile
 
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
+	SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
@@ -944,6 +1082,8 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 	ElseIf strArg == "SavePlayerNINodeInfo"
 		SavePlayerNINodeInfo()
 		_bSavedNINodeInfo = True
+	ElseIf strArg == "SavePlayerAchievements"
+		SavePlayerAchievements()
 	ElseIf strArg == "SavePlayerMiscStats"
 		SavePlayerMiscStats()
 	ElseIf strArg == "ScanPlayerPerks"
@@ -960,6 +1100,8 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 		ScanPlayerSpells()
 	ElseIf strArg == "ScanPlayerShouts"
 		ScanPlayerShouts()
+	ElseIf strArg == "ScanPlayerAchievements"
+		ScanPlayerAchievements()
 	EndIf
 	SetSessionBool("Status.Background." + strArg,False)
 	_iThreadCount -= 1
