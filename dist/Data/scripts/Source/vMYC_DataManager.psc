@@ -551,6 +551,9 @@ Function ScanPlayerInventory()
 
 	Int jInventory = JMap.Object()
 	SetSessionObj("Inventory",jInventory)
+	Int jInventoryInfo = JArray.Object()
+	SetSessionObj("InventoryInfo",jInventoryInfo)
+	
 	Int i = JArray.Count(jInventoryList)
 	While i > 0
 		i -= 1
@@ -560,6 +563,15 @@ Function ScanPlayerInventory()
 				Int iType = kItem.GetType()
 				Int iCount = PlayerRef.GetItemCount(kItem)
 				If iCount > 0 
+					Int iFormID = kItem.GetFormId()
+					If iFormID >= 0xFF000000 && iFormID <= 0xFFFFFFFF
+						DebugTrace("Found a session object: " + kItem + " is " + kItem.GetName() + ".")
+						If iType == 46
+							Int jPotionItem = JMap.Object()
+							SerializePotion(kItem,jPotionItem)
+							JArray.AddObj(jInventoryInfo,jPotionItem)
+						EndIf
+					EndIf
 					Int jItemTypeFMap = JMap.getObj(jInventory,iType)
 					If !JValue.IsFormMap(jItemTypeFMap)
 						jItemTypeFMap = JFormMap.Object()
@@ -614,6 +626,7 @@ Function SavePlayerInventory()
 	EndIf
 	
 	Int jInventory = GetSessionObj("Inventory")
+	Int jInventoryInfo = GetSessionObj("InventoryInfo")
 	
 	Int jWeaponsFMap 	= GetSessionObj("Inventory.41") ; kWeapon
 	Int jArmorFMap 		= GetSessionObj("Inventory.26") ; kArmor
@@ -693,6 +706,7 @@ Function SavePlayerInventory()
 		EndIf
 	EndWhile
 	SetRegObj(sRegKey + ".Inventory",jInventory)
+	SetRegObj(sRegKey + ".InventoryInfo",jInventoryInfo)
 	SendModEvent("vMYC_InventorySaveEnd")
 	StopTimer("SavePlayerInventory")
 	JValue.CleanPool("vMYC_InventoryPool")
@@ -1355,6 +1369,76 @@ ObjectReference Function LoadSerializedEquipment(Int jItem)
 		kObject.SetItemCharge(JMap.getFlt(jItem,"ItemCharge"))
 	EndIf
 	Return kObject
+EndFunction
+
+Function SerializePotion(Form kItem, Int jPotionInfo)
+{Fills the JMap jPotionInfo with all info from Form kItem}
+	GotoState("SerializeBusy")
+	Potion kPotion = kItem as Potion
+	JMap.SetForm(jPotionInfo,"Form",kItem)
+	If !kItem as Potion
+		GotoState("")
+		Return 
+	EndIf
+	
+	JMap.SetStr(jPotionInfo,"Name",kPotion.GetName())
+	JMap.SetStr(jPotionInfo,"WorldModelPath",kPotion.GetWorldModelPath())
+	JMap.SetStr(jPotionInfo,"Source",GetModName(kPotion.GetFormID() / 0x1000000))
+	
+	JMap.SetInt(jPotionInfo,"IsHostile",kPotion.IsHostile() as Int)
+	JMap.SetInt(jPotionInfo,"IsFood",kPotion.IsFood() as Int)
+	JMap.SetInt(jPotionInfo,"IsPoison",kPotion.IsPoison() as Int)
+
+	Int iNumEffects = kPotion.GetNumEffects()
+	JMap.SetInt(jPotionInfo,"NumEffects",iNumEffects)
+	Int jEffectsArray = JArray.Object()
+	Int i = 0
+	While i < iNumEffects
+		Int jEffectsInfo = JMap.Object()
+		JMap.SetFlt(jEffectsInfo, "Magnitude", kPotion.GetNthEffectMagnitude(i))
+		JMap.SetFlt(jEffectsInfo, "Area", kPotion.GetNthEffectArea(i))
+		JMap.SetFlt(jEffectsInfo, "Duration", kPotion.GetNthEffectDuration(i))
+		JMap.SetForm(jEffectsInfo,"MagicEffect", kPotion.GetNthEffectMagicEffect(i))
+		JMap.SetStr(jEffectsInfo,"Source",GetModName(kPotion.GetNthEffectMagicEffect(i).GetFormID() / 0x1000000))
+		;AddToReqList(kPotion.GetNthEffectMagicEffect(i),"MagicEffect")
+		JArray.AddObj(jEffectsArray,jEffectsInfo)
+		i += 1
+	EndWhile
+	JMap.SetObj(jPotionInfo,"Effects",jEffectsArray)
+	;Debug.Trace("MYC/CM: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jPotionInfo))
+	GotoState("")
+EndFunction
+
+ObjectReference Function LoadSerializedPotion(Int jPotionInfo)
+{Recreate a custom potion using jPotionInfo. }
+;FIXME: This won't work because there is no SetNthMagicEffect!
+	GotoState("SerializeBusy")
+	Potion kDefaultPotion = GetformFromFile(0x0005661f,"Skyrim.esm") as Potion
+	Potion kDefaultPoison = GetformFromFile(0x0005629e,"Skyrim.esm") as Potion
+	
+	ObjectReference kNowhere = GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
+	Potion kPotion 
+	If JMap.GetInt(jPotionInfo,"IsPoison")
+		kPotion = kDefaultPoison
+	Else
+		kPotion = kDefaultPotion
+	EndIf
+	
+	
+	Int jEffectsArray = JMap.GetObj(jPotionInfo,"Effects")
+	Int i = JArray.Count(jEffectsArray)
+	While i > 0
+		i -= 1
+		Int jEffectsInfo = JArray.GetObj(jEffectsArray,i)
+		;kPotion.SetNthEffectMagicEffect(i,JMap.GetForm(jEffectsInfo,"MagicEffect"))
+		kPotion.SetNthEffectDuration(i,JMap.GetInt(jEffectsInfo,"Duration"))
+		kPotion.SetNthEffectMagnitude(i,JMap.GetFlt(jEffectsInfo,"Magnitude"))
+		kPotion.SetNthEffectArea(i,JMap.GetInt(jEffectsInfo,"Area"))
+	EndWhile
+	
+	Return kNowhere.PlaceAtMe(kPotion,abForcePersist = True)
+	;Debug.Trace("MYC/CM: Finished serializing " + kItem.GetName() + ", JMap count is " + JMap.Count(jPotionInfo))
+	GotoState("")
 EndFunction
 
 Formlist Function LockFormlist()
