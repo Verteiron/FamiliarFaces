@@ -32,6 +32,7 @@ EndProperty
 vMYC_DataManager	Property DataManager							Auto
 
 Bool 				Property NeedAppearance	= False 				Auto Hidden
+Bool 				Property NeedStats		= False 				Auto Hidden
 Bool 				Property NeedPerks		= False 				Auto Hidden
 Bool 				Property NeedSpells		= False 				Auto Hidden
 Bool 				Property NeedShouts		= False 				Auto Hidden
@@ -109,6 +110,26 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnAnimationEvent(ObjectReference akSource, String asEventName)
+	DebugTrace("AnimationEvent:" + asEventName)
+	;If asEventName == "BeginCastVoice"
+	;	Wait(0.1)
+	;	InterruptCast()
+	;EndIf
+EndEvent
+
+Event OnLoad()
+
+EndEvent
+
+Event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
+	NeedStats = True
+EndEvent
+
+Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
+	NeedStats = True
+EndEvent
+
 Auto State Available
 	Event OnLoad()
 		;Clear out because we shouldn't be loaded
@@ -133,6 +154,7 @@ Auto State Available
 		CharacterRace = GetRegForm(_sCharacterInfo + "Race") as Race
 		_kActorBase.SetName(CharacterName)
 		NeedAppearance	= True
+		NeedStats		= True
 		NeedPerks		= True
 		NeedSpells		= True
 		NeedShouts		= True
@@ -152,6 +174,12 @@ State Assigned
 	EndEvent
 
 	Event OnUpdate()
+		If NeedAppearance
+			If UpdateAppearance() == 0 ; No error
+				UpdateNINodes()
+				NeedAppearance = False
+			EndIf
+		EndIf
 		If NeedInventory 
 			If UpdateInventory() >= 0
 				NeedInventory = False
@@ -161,17 +189,16 @@ State Assigned
 				EquipDefaultGear() 
 			EndIf
 		EndIf
-		If NeedAppearance
-			If UpdateAppearance() == 0 ; No error
-				UpdateNINodes()
-				NeedAppearance = False
-			EndIf
-		EndIf
 		If NeedEquipment
 			Int bResultArmor = UpdateArmor()
 			Int bResultWeapons = UpdateWeapons()
 			If bResultArmor >= 0 && bResultWeapons >= 0 ; No error
 				NeedEquipment = False
+			EndIf
+		EndIf
+		If NeedStats
+			If UpdateStats() >= 0
+				NeedStats = False
 			EndIf
 		EndIf
 		If NeedPerks
@@ -184,6 +211,7 @@ State Assigned
 				NeedShouts = False
 			EndIf
 		EndIf
+		ReportStats()
 		;If NeedSpells
 		;	If UpdatePerks() >= 0 ; No error
 		;		NeedPerks = False
@@ -192,8 +220,8 @@ State Assigned
 	EndEvent
 
 	Event OnLoad()
-		
 	EndEvent
+	
 EndState
 
 State Busy
@@ -603,13 +631,78 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 		i -= 1
 		Form kItem = JArray.GetForm(jPotionList,i)
 		Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
-		If !kItem.HasKeywordString("VendorItemFood")
-			AddItem(kItem,iItemCount,True)
-			iCount += iItemCount
+		If kItem
+			If !(kItem as Potion).IsFood() ;.HasKeywordString("VendorItemFood")
+				AddItem(kItem,iItemCount,True)
+				iCount += iItemCount
+			EndIf
 		EndIf
 	EndWhile
 	
 	Return iCount
+EndFunction
+
+;=== Stats ===--
+
+Int Function UpdateStats(Bool abForceValues = False)
+{Apply AVs and other stats like health. Return -1 for generic failure.}
+	Int i
+	Int iCount
+	DebugTrace("Applying Perks...")
+
+	If !ScriptState == "Assigned"
+		DebugTrace("UpdatePerks called outside Assigned state!",1)
+		Return -2
+	EndIf
+
+	If !_jCharacterData
+		DebugTrace("UpdatePerks called but _jCharacterData is missing!",1)
+		Return -3
+	EndIf
+
+	Actor kCharacterActor = Self
+
+	Int jStats = JValue.SolveObj(_jCharacterData,".Stats")
+	Int jAVs = JValue.SolveObj(_jCharacterData,".Stats.AV")
+	
+	Int jAVNames = JMap.AllKeys(jAVs)
+	i = JArray.Count(jAVNames)
+	While i > 0
+		i -= 1
+		String sAVName = JArray.GetStr(jAVNames,i)
+		If sAVName
+			Float fAV = JMap.GetFlt(jAVS,sAVName)
+			If abForceValues
+				ForceActorValue(sAVName,fAV)
+				DebugTrace("Force " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+			Else
+				SetActorValue(sAVName,fAV) 
+				DebugTrace("Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+			EndIf
+		EndIf
+	EndWhile
+	
+	Return JArray.Count(jAVNames)
+EndFunction
+
+Function ReportStats()
+{Just log all stats to the logfile, for testing purposes}
+	Actor kCharacterActor = Self
+
+	Int jStats = JValue.SolveObj(_jCharacterData,".Stats")
+	Int jAVs = JValue.SolveObj(_jCharacterData,".Stats.AV")
+	
+	Int jAVNames = JMap.AllKeys(jAVs)
+	Int i = JArray.Count(jAVNames)
+	While i > 0
+		i -= 1
+		String sAVName = JArray.GetStr(jAVNames,i)
+		If sAVName
+			Float fAV = JMap.GetFlt(jAVS,sAVName)
+			DebugTrace("Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+		EndIf
+	EndWhile
+	
 EndFunction
 
 ;=== Perks ===--
@@ -691,6 +784,32 @@ Int Function UpdateShouts()
 	Int i = JArray.Count(jShouts)
 	Int iMissingCount = 0
 
+	RegisterForAnimationEvent(Self,"BeginCastVoice")
+	RegisterForAnimationEvent(Self,"MT_Shout_Exhale")
+	RegisterForAnimationEvent(Self,"MT_Shout_ExhaleLong")
+	RegisterForAnimationEvent(Self,"MT_Shout_ExhaleMedium")
+	RegisterForAnimationEvent(Self,"MT_Shout_ExhaleSlowTime")
+	RegisterForAnimationEvent(Self,"MT_Shout_Inhale")
+	RegisterForAnimationEvent(Self,"shoutStop")
+	RegisterForAnimationEvent(Self,"Sneak1HM_Shout_Inhale")
+	RegisterForAnimationEvent(Self,"SneakMT_Shout_Exhale")
+	RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleLong")
+	RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleMedium")
+	RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleSlowTime")
+	RegisterForAnimationEvent(Self,"Voice_SpellFire_Event")
+	RegisterForAnimationEvent(Self,"CombatReady_ShoutExhaleMedium")
+	RegisterForAnimationEvent(Self,"MC_shoutStart")
+	RegisterForAnimationEvent(Self,"NPCshoutStart")
+	RegisterForAnimationEvent(Self,"shoutLoopingRelease")
+	RegisterForAnimationEvent(Self,"shoutRelease")
+	RegisterForAnimationEvent(Self,"shoutReleaseSlowTime")
+	RegisterForAnimationEvent(Self,"ShoutSprintLongestStart")
+	RegisterForAnimationEvent(Self,"ShoutSprintLongStart")
+	RegisterForAnimationEvent(Self,"ShoutSprintMediumStart")
+	RegisterForAnimationEvent(Self,"ShoutSprintShortStart")
+	RegisterForAnimationEvent(Self,"shoutStart")
+	RegisterForAnimationEvent(Self,"shoutStop")
+	
 	While i > 0
 		i -= 1
 		Shout kShout = JArray.getForm(jShouts,i) as Shout
@@ -753,8 +872,10 @@ Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	EndIf
 	If CharacterName
 		Debug.Trace("MYC/Doppelganger/" + _sFormID + "(" + CharacterName + "): " + sDebugString,iSeverity)
+		FFUtils.TraceConsole(sDebugString)
 	Else
 		Debug.Trace("MYC/Doppelganger/" + _sFormID + ": " + sDebugString,iSeverity)
+		FFUtils.TraceConsole(sDebugString)
 	EndIf
 EndFunction
 
