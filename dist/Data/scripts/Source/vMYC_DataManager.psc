@@ -178,6 +178,10 @@ Function SetConfigDefaults(Bool abForce = False)
 		SetRegBool("Config.Warnings.Enabled",True,True,True)
 		SetRegBool("Config.Debug.Perf.Threads.Limit",False,True,True)
 		SetRegInt ("Config.Debug.Perf.Threads.Max",4,True,True)
+		SetRegBool("Config.Magic.AutoSelect",True)
+		SetSessionBool("Config.Magic.AllowOther",True)
+		SetSessionBool("Config.Magic.AllowHealing",True)
+		SetSessionBool("Config.Magic.AllowDefensive",True)
 		SetRegBool("Config.DefaultsSet",True)
 	EndIf
 EndFunction
