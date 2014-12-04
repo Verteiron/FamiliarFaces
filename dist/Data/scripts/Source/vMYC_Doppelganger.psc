@@ -177,6 +177,7 @@ State Assigned
 		If NeedAppearance
 			If UpdateAppearance() == 0 ; No error
 				UpdateNINodes()
+				UpdateNIOverlays()
 				NeedAppearance = False
 			EndIf
 		EndIf
@@ -335,6 +336,54 @@ Int Function UpdateNINodes()
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,False)
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,True)
 		EndIf
+	EndWhile
+EndFunction
+
+Int Function UpdateNIOverlays()
+	If !ScriptState == "Assigned"
+		DebugTrace("UpdateNIOverlays called outside Assigned state!")
+		Return -2
+	EndIf
+	Int jOverlayData = JValue.SolveObj(_jCharacterData,".NIOverrideData")
+
+	If !jOverlayData
+		Return 0 
+	EndIf
+
+	If !NiOverride.HasOverlays(Self)
+		NiOverride.AddOverlays(Self)
+	EndIf
+	
+	NiOverride.RevertOverlays(Self)
+	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
+	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
+	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
+	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
+
+	Return 1
+EndFunction
+
+Function ApplyNIOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
+	If !kCharacter
+		Return
+	EndIf
+	Int iLayerCount = JArray.Count(jLayers)
+	Int i = 0
+	Bool bIsFemale = kCharacter.GetActorBase().GetSex()
+	While i < iLayerCount
+		Int jLayer = JArray.GetObj(jLayers,i)
+		String sNodeName = sNodeTemplate + i + "]"
+
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 7, -1, JMap.GetInt(jLayer,"RGB"), True) ; Set the tint color
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), True) ; Set the alpha
+		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), True) ; Set the tint texture
+
+		Int iGlowData = JMap.GetInt(jLayer,"GlowData")
+		Int iGlowColor = iGlowData
+		Int iGlowEmissive = Math.RightShift(iGlowColor, 24)
+		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, iGlowColor, True) ; Set the emissive color
+		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 1, -1, iGlowEmissive / 10.0, True) ; Set the emissive multiple
+		i += 1
 	EndWhile
 EndFunction
 
