@@ -159,6 +159,10 @@ Fixes in 1.1.3
 
     Add support for the .jslot files used by future versions of Racemenu.
 
+Fixes in 1.1.4
+
+    Fixed version check that failed for newer version of Racemenu/CharGen.
+
 
 What Familiar Faces does
 

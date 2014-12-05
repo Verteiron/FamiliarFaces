@@ -130,6 +130,11 @@ Tons. The following list is not exhaustive. Pretty much every part of the mod go
 [list][*] Add support for the .jslot files used by future versions of Racemenu. [/*]
 [/list]
 
+[center][b][size=5]Fixes in 1.1.4[/size][/b][/center]
+
+[list][*] Fixed version check that failed for newer version of Racemenu/CharGen. [/*]
+[/list]
+
 [center][b][size=5]What Familiar Faces does[/size][/b][/center]
  
 Familiar Faces allows you to create persistent copies of your character that exist independently of saved games. You can then visit those characters from any of your saved games; send them into the world to interact with, recruit as followers, marry or kill.
