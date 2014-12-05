@@ -530,6 +530,7 @@ Function ScanPlayerShouts()
 		If PlayerREF.HasSpell(kShout)
 			Int jShoutInfo = JMap.Object()
 			JMap.SetForm(jShoutInfo,"Form",kShout)
+			JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",0,True)
 			Int iWord = 0
 			While iWord < 3
 				WordOfPower kWord = kShout.GetNthWordOfPower(iWord)
@@ -540,7 +541,7 @@ Function ScanPlayerShouts()
 							DebugTrace("Player knows Shout " + kShout.Getname() + " and has unlocked at least one word of it.")
 							iAddedCount += 1
 						EndIf
-						JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",iWord,True)
+						JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",iWord + 1,True)
 						String sWordName = kWord.GetName()
 						If !sWordName
 							sWordName = GetFormIDString(kWord)
