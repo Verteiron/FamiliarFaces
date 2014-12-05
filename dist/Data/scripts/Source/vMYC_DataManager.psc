@@ -115,6 +115,7 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
+	ImportCharacterFiles()
 	WaitMenuMode(90)
 	SavePlayerData()
 	WaitMenuMode(5)
@@ -161,7 +162,6 @@ Function DoUpkeep(Bool bInBackground = True)
 		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x020200c0,"Dragonborn.esm")) ; Cyclone
 		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x0202ad09,"Dragonborn.esm")) ; Battle Fury
 	EndIf
-	
 	;Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	RegisterForModEvent("vMYC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
@@ -1111,6 +1111,70 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 	SetSessionBool("Status.Background." + strArg,False)
 	_iThreadCount -= 1
 EndEvent
+
+;=== Functions - Character data import/export ===--
+
+Function ImportCharacterFiles()
+{Load data from all Data/vMYC/*.char.json files.}
+	DebugTrace("ImportCharacters!")
+	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+
+	Int jCharFiles = JMap.allKeys(jDirectoryScan)
+	Int jCharData = JMap.allValues(jDirectoryScan)
+
+	JValue.AddToPool(jDirectoryScan,"vMYC_DM_Import")
+	JValue.AddToPool(jCharFiles,"vMYC_DM_Import")
+	JValue.AddToPool(jCharData,"vMYC_DM_Import")
+	
+	Int i = JArray.Count(jCharData)
+	;== Load and validate all files in the data directory ===--
+	While i > 0
+		i -= 1
+		Int jCharacterData = JArray.getObj(jCharData,i)
+		
+;		DebugTrace("ImportCharacters - Checking " + JArray.GetStr(jCharFiles,i) + "...")
+;		SetSessionObj(StringReplace(JArray.GetStr(jCharFiles,i),".","_"),jCharacterData)
+;		SaveSession()
+;		Debug.MessageBox("Saved session with " + JArray.GetStr(jCharFiles,i) + "!")
+		
+		Int iDataVersion = jValue.SolveInt(jCharacterData,META + ".SerializationVersion")
+		String sUUID = jValue.SolveStr(jCharacterData,META + ".UUID")
+		String sCharacterName = jValue.SolveStr(jCharacterData,META + ".Name")
+		Float fPlayTime = jValue.SolveFlt(jCharacterData,META + ".Playtime")
+		DebugTrace("ImportCharacters - " + JArray.GetStr(jCharFiles,i) + " is " + sCharacterName + "!")
+		If iDataVersion >= 3 && !sUUID
+			;It's possible the UUID is missing due to a bug in an earlier version
+			sUUID = FFUtils.UUID()
+			;Get a UUID if FFUtils failed to do it
+			If !sUUID
+				sUUID = GetUUID()
+			EndIf
+		EndIf
+		If iDataVersion >= 3 && sCharacterName && fPlayTime && sUUID
+			;=== Data is complete enough to load ===--
+			If !HasRegKey("Characters." + sUUID) ; Character doesn't exist, import them
+				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
+				SetRegObj("Characters." + sUUID,jCharacterData)
+				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
+			Else  ; Data already exists for this SSID
+				;FIXME: If we're going to overwrite existing data check the playtime, ask the player
+				If Math.ABS(GetRegFlt("Characters." + sUUID + META + ".PlayTime") - fPlayTime) < 0.1
+					DebugTrace("ImportCharacters - Data for " + sCharacterName + " matches what's in the registry for UUID " + sUUID)
+				Else ;== Data does NOT match up, prompt the player for what to do about it
+					DebugTrace("ImportCharacters - Data for " + sCharacterName + " DOES NOT MATCH what's in the registry for UUID " + sUUID)
+					;FIXME: This needs to do something
+				EndIf
+			EndIf
+		ElseIf sCharacterName
+			;== Data is from a version too old to be worth importing ==--
+			DebugTrace("ImportCharacters - Data for " + sCharacterName + " is too old to import!",1)
+		Else
+			;== Data is not a character file. ==--
+			DebugTrace("ImportCharacters - Skipping " + JArray.GetStr(jCharFiles,i) + "!")
+		EndIf
+	EndWhile
+	JValue.CleanPool("vMYC_DM_Import")
+EndFunction
 
 
 ;=== Functions - Actorbase/Actor management ===--
