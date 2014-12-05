@@ -131,7 +131,7 @@ Event OnLoad()
 	CheckArmor()
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
-		If _iCharGenVersion == 3
+		If _iCharGenVersion >= 3
 			;RefreshMeshNewCG()
 		EndIf
 		_bFirstLoad = False
@@ -202,7 +202,7 @@ Event OnUpdate()
 		_bDoUpkeep = False
 		DoUpkeep(False)
 	EndIf
-	If _bNeedRefresh && _iCharGenVersion == 3
+	If _bNeedRefresh && _iCharGenVersion >= 3
 		RefreshMeshNewCG()
 		;CheckArmor()
 		_bNeedRefresh = False
@@ -588,7 +588,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		CharacterManager.SetLocalInt(CharacterName,"ShoutsAllowMaster",1) ; allow shouts by default
 	EndIf
 	SetNonpersistent()
-	If _iCharGenVersion == 3
+	If _iCharGenVersion >= 3
 		RefreshMeshNewCG()
 	EndIf
 	_bWarnedVoiceTypeNoFollower = False
@@ -611,7 +611,7 @@ EndFunction
 
 Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
 	;Extra one because sometimes external heads don't apply correctly the first run
-	If _iCharGenVersion == 3
+	If _iCharGenVersion >= 3
 		RefreshMeshNewCG()
 	EndIf
 EndEvent
