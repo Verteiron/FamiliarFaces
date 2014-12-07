@@ -217,12 +217,7 @@ State Assigned
 				NeedSpells = False
 			EndIf
 		EndIf
-		ReportStats()
-		;If NeedSpells
-		;	If UpdatePerks() >= 0 ; No error
-		;		NeedPerks = False
-		;	EndIf
-		;EndIf
+		;ReportStats()
 	EndEvent
 
 	Event OnLoad()

@@ -92,6 +92,19 @@ Event OnInit()
 		CreateMiscStatNames()
 		CreateAVNames()
 		InitNINodeList()
+
+		;== Init ActorBasePool forms in case they're not there already ===-- 
+		If !HasRegKey("ActorbasePool.F")
+			Int jABPool = JArray.Object()
+			JArray.AddFromFormlist(jABPool,vMYC_DummyActorsFList)
+			SetRegObj("ActorbasePool.F",jABPool)
+		EndIf
+		If !HasRegKey("ActorbasePool.M")
+			Int jABPool = JArray.Object()
+			JArray.AddFromFormlist(jABPool,vMYC_DummyActorsMList)
+			SetRegObj("ActorbasePool.M",jABPool)
+		EndIf
+
 		If !HasSessionKey("ActorbaseMap")
 			SetSessionObj("ActorbaseMap",JFormMap.Object())
 		EndIf
@@ -115,14 +128,21 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
-	ImportCharacterFiles()
 	WaitMenuMode(90)
 	SavePlayerData()
 	WaitMenuMode(5)
-	ActorBase kDoppelganger = GetAvailableActorBase(PlayerREF.GetActorBase().GetSex())
-	Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
-	vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
-	kDoppelScript.AssignCharacter(SessionID)
+	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
+	Int i = JArray.Count(jCharacters)
+	While i > 0
+		i -= 1
+		String sUUID = JArray.GetStr(jCharacters,i)
+		Int iSex = GetRegInt("Characters." + sUUID + META + ".Sex")
+		ActorBase kDoppelganger = GetAvailableActorBase(iSex)
+		Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
+		vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
+		kDoppelScript.AssignCharacter(sUUID)	
+	EndWhile
+	
 EndEvent
 
 ;=== Functions - Startup ===--
@@ -136,6 +156,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		RegisterForSingleUpdate(0.25)
 		Return
 	EndIf
+	GotoState("Busy")
 	IsBusy = True
 	DebugTrace("Starting upkeep...")
 	SendModEvent("vMYC_UpkeepBegin")
@@ -162,10 +183,13 @@ Function DoUpkeep(Bool bInBackground = True)
 		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x020200c0,"Dragonborn.esm")) ; Cyclone
 		vMYC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x0202ad09,"Dragonborn.esm")) ; Battle Fury
 	EndIf
+
+	ImportCharacterFiles()
 	;Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	RegisterForModEvent("vMYC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
 	IsBusy = False
+	GotoState("")
 	DebugTrace("Finished upkeep!")
 	SendModEvent("vMYC_UpkeepEnd")
 EndFunction
@@ -1116,6 +1140,7 @@ EndEvent
 
 Function ImportCharacterFiles()
 {Load data from all Data/vMYC/*.char.json files.}
+	StartTimer("ImportCharacterFiles")
 	DebugTrace("ImportCharacters!")
 	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
 
@@ -1136,26 +1161,37 @@ Function ImportCharacterFiles()
 ;		SetSessionObj(StringReplace(JArray.GetStr(jCharFiles,i),".","_"),jCharacterData)
 ;		SaveSession()
 ;		Debug.MessageBox("Saved session with " + JArray.GetStr(jCharFiles,i) + "!")
-		
+		If !JValue.SolveObj(jCharacterData,META)
+			;Missing META key, copy it from the older one
+			JValue.SolveObjSetter(jCharacterData,META,JValue.SolveObj(jCharacterData,"._MYC"),True)
+		EndIf
 		Int iDataVersion = jValue.SolveInt(jCharacterData,META + ".SerializationVersion")
 		String sUUID = jValue.SolveStr(jCharacterData,META + ".UUID")
 		String sCharacterName = jValue.SolveStr(jCharacterData,META + ".Name")
 		Float fPlayTime = jValue.SolveFlt(jCharacterData,META + ".Playtime")
 		DebugTrace("ImportCharacters - " + JArray.GetStr(jCharFiles,i) + " is " + sCharacterName + "!")
-		If iDataVersion >= 3 && !sUUID
-			;It's possible the UUID is missing due to a bug in an earlier version
-			sUUID = FFUtils.UUID()
-			;Get a UUID if FFUtils failed to do it
+
+		;It's possible the UUID is missing due to a bug in an earlier version		
+		If iDataVersion >= 3 && sCharacterName && fPlayTime && !sUUID 
+			sUUID = MatchSession(sCharacterName,fPlayTime)
 			If !sUUID
-				sUUID = GetUUID()
+				sUUID = FFUtils.UUID()
+				;Get a UUID if FFUtils failed to do it
+				If !sUUID
+					sUUID = GetUUID()
+				EndIf
 			EndIf
 		EndIf
+		
 		If iDataVersion >= 3 && sCharacterName && fPlayTime && sUUID
 			;=== Data is complete enough to load ===--
 			If !HasRegKey("Characters." + sUUID) ; Character doesn't exist, import them
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
 				SetRegObj("Characters." + sUUID,jCharacterData)
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
+				If iDataVersion == 3
+					UpgradeData(sUUID)
+				EndIf
 			Else  ; Data already exists for this SSID
 				;FIXME: If we're going to overwrite existing data check the playtime, ask the player
 				If Math.ABS(GetRegFlt("Characters." + sUUID + META + ".PlayTime") - fPlayTime) < 0.1
@@ -1174,8 +1210,41 @@ Function ImportCharacterFiles()
 		EndIf
 	EndWhile
 	JValue.CleanPool("vMYC_DM_Import")
+	StopTimer("ImportCharacterFiles")
 EndFunction
 
+Function UpgradeData(String sUUID)
+{Upgrade data from earlier version to match current version}
+	Int jCharacterData = GetRegObj("Characters." + sUUID)
+	If !jCharacterData
+		DebugTrace("UpgradeData - No data for " + sUUID + "!")
+		Return
+	EndIf
+	StartTimer("UpgradeData")
+	Int jOldInventory = GetRegObj("Characters." + sUUID + ".Inventory")
+	If JValue.IsFormMap(jOldInventory)
+		;Old inventory storage, upgrade it
+		Int jOldItems = JFormMap.AllKeys(jOldInventory)
+		Int jNewInventory = JMap.Object()
+		Int i = JArray.Count(jOldItems)
+		While i > 0
+			i -= 1
+			Form kItem = JArray.GetForm(jOldItems,i)
+			If kItem
+				Int iItemCount = JFormMap.GetInt(jOldInventory,kItem)
+				Int iItemType = kItem.GetType()
+				Int jItemTypeMap = JMap.GetObj(jNewInventory,iItemType)
+				If !jItemTypeMap
+					jItemTypeMap = JFormMap.Object()
+					JMap.SetObj(jNewInventory,iItemType,jItemTypeMap)
+				EndIf
+				JFormMap.SetInt(jItemTypeMap,kItem,iItemCount)
+			EndIf
+		EndWhile
+		JMap.SetObj(jCharacterData,"Inventory",jNewInventory)
+	EndIf
+	StopTimer("UpgradeData")
+EndFunction
 
 ;=== Functions - Actorbase/Actor management ===--
 
@@ -1193,19 +1262,6 @@ ActorBase Function GetAvailableActorBase(Int iSex, ActorBase kPreferredAB = None
 	EndIf
 	
 	;== If we got this far then the preferred base is either not set or is in use ===--
-
-	
-	;== Init ActorBasePool forms in case they're not there already ===-- FIXME: Move this to init!
-	If !HasRegKey("ActorbasePool.F")
-		Int jABPool = JArray.Object()
-		JArray.AddFromFormlist(jABPool,vMYC_DummyActorsFList)
-		SetRegObj("ActorbasePool.F",jABPool)
-	EndIf
-	If !HasRegKey("ActorbasePool.M")
-		Int jABPool = JArray.Object()
-		JArray.AddFromFormlist(jABPool,vMYC_DummyActorsMList)
-		SetRegObj("ActorbasePool.M",jABPool)
-	EndIf
 
 	Int jActorbasePool = 0
 	
@@ -1681,8 +1737,15 @@ Function UnlockFormlist(Formlist kLockedFormlist)
 	EndIf
 EndFunction
 
-String Function MatchSession()
-	Int jSIDList = JMap.AllKeys(GetRegObj("Names." + PlayerREF.GetActorBase().GetName()))
+String Function MatchSession(String sCharacterName = "", Float fPlayTime = 0.0)
+{Return the UUID of a session that matches the passed name and playtime. Use the current player's data if none supplied.}
+	If !sCharacterName
+		sCharacterName = PlayerREF.GetActorBase().GetName()
+	EndIf
+	If !fPlayTime
+		fPlayTime = GetRealHoursPassed()
+	EndIf
+	Int jSIDList = JMap.AllKeys(GetRegObj("Names." + sCharacterName))
 	DebugTrace("Looking for matching session in " + JArray.Count(jSIDList) + " saved sessions!")
 	If jSIDList
 		Int iSID = JArray.Count(jSIDList)
@@ -1690,7 +1753,7 @@ String Function MatchSession()
 			iSID -= 1
 			String sSID = JArray.GetStr(jSIDList,iSID)
 			DebugTrace("Checking current session against " + sSID + "...")
-			If Math.ABS(GetRegFlt("Characters." + sSID + META + ".PlayTime") - GetRealHoursPassed()) < 0.1
+			If Math.ABS(GetRegFlt("Characters." + sSID + META + ".PlayTime") - fPlayTime) < 0.1
 				DebugTrace("Current session matches " + sSID + "!")
 				Return sSID
 			EndIf
