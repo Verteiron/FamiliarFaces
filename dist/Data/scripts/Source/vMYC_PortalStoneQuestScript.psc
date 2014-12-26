@@ -40,6 +40,7 @@ Event OnUpdate()
 		alias_PortalStone.ForceRefTo(_kPortalStone)
 		PlayerREF.AddItem(_kPortalStone,1,abSilent = True)
 		vMYC_PortalStoneAddedMSG.Show()
+		RegisterForSingleUpdate(10.0)
 	Else
 		RegisterForSingleUpdate(1.0)
 	EndIf

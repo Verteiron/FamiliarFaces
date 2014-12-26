@@ -51,6 +51,8 @@ Bool _bShowedCompatibilityErrorSkyRE = False
 Bool _bShowedCompatibilityErrorEFF = False
 Bool _bShowedCompatibilityErrorAFT = False
 
+Bool _bPlacedPortalStone = False
+
 Float _ScriptLatency
 Float _StartTime
 Float _EndTime
@@ -104,7 +106,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	;FIXME: CHANGE THIS WHEN UPDATING!
 	ModVersionMajor = 1
 	ModVersionMinor = 1
-	ModVersionPatch = 3
+	ModVersionPatch = 4
 	_iCurrentVersion = GetVersionInt(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	_sCurrentVersion = GetVersionString(_iCurrentVersion)
 	String sModVersion = GetVersionString(ModVersion as Int)
@@ -161,6 +163,12 @@ Function DoUpkeep(Bool DelayedStart = True)
 	CheckForExtras()
 	CheckCompatibilityModules()
 	UpdateConfig()
+	
+	;Make absolutely sure the portal stone quest is running!
+	Quest vMYC_PortalStoneQuest = Quest.GetQuest("vMYC_PortalStoneQuest")
+	vMYC_PortalStoneQuest.Stop()
+	vMYC_PortalStoneQuest.Start()
+	
 	Debug.Trace("MYC: Upkeep complete!")
 	Ready = True
 	;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
@@ -199,6 +207,7 @@ Function DoInit()
 		;EndIf
 		;i += 1
 	;EndWhile
+	
 	_Running = True
 	ModVersion = _iCurrentVersion
 	vMYC_ModLoadedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
@@ -276,7 +285,16 @@ Function DoUpgrade()
 		Debug.Trace("MYC/Upgrade/1.1.2: Upgrade to 1.1.2 complete!")
 		ModVersion = GetVersionInt(1,1,2)
 	EndIf
-	
+	If ModVersion < GetVersionInt(1,1,5)
+		Debug.Trace("MYC/Upgrade/1.1.5: Upgrading to 1.1.5...")
+		Quest vMYC_PortalStoneQuest = Quest.GetQuest("vMYC_PortalStoneQuest")
+		vMYC_PortalStoneQuest.Stop()
+		vMYC_PortalStoneQuest.Start()
+		CharacterManager.DoUpkeep()
+		ShrineOfHeroes.DoUpkeep()
+		Debug.Trace("MYC/Upgrade/1.1.5: Upgrade to 1.1.5 complete!")
+		ModVersion = GetVersionInt(1,1,5)
+	EndIf
 	;Generic upgrade code
 	If ModVersion < _iCurrentVersion
 		Debug.Trace("MYC: Upgrading to " + GetVersionString(_iCurrentVersion) + "...")
