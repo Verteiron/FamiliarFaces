@@ -28,6 +28,10 @@ Bool _bTesting
 ;--=== Events ===--
 
 Event OnInit()
+	If !GetConfigBool("LatencyTestEnabled")
+		Stop()
+		Return
+	EndIf
 	_fTimeUpdDeltas = New Float[30]
 	RegisterForModEvent("vMYC_RequestLatencyCheck","OnRequestLatencyCheck")
 	Wait(5)
@@ -37,6 +41,10 @@ Event OnInit()
 EndEvent
 
 Event OnRequestLatencyCheck(string eventName, string strArg, float numArg, Form sender)
+	If !GetConfigBool("LatencyTestEnabled")
+		Stop()
+		Return
+	EndIf
 	Int iSamples = 5
 	If numArg
 		iSamples = numArg as Int
@@ -47,6 +55,10 @@ Event OnRequestLatencyCheck(string eventName, string strArg, float numArg, Form 
 EndEvent
 
 Event OnUpdate()
+	If !GetConfigBool("LatencyTestEnabled")
+		Stop()
+		Return
+	EndIf
 	_fTimeUpdDeltas[_UpdCount] = GetCurrentRealTime() - _fTimeUpdMark
 	_UpdCount += 1
 	If _UpdCount < _UpdSamples
@@ -74,11 +86,19 @@ Event OnUpdate()
 EndEvent
 
 Function DoLatencyCheck(Int iSamples = 5)
+	If !GetConfigBool("LatencyTestEnabled")
+		Stop()
+		Return
+	EndIf
 	Debug.Trace("MYC/ScriptLatencyCheck: Running latency checks...")
 	DoUpdateCheck(iSamples)
 EndFunction
 
 Function DoUpdateCheck(Int iSamples = 5)
+	If !GetConfigBool("LatencyTestEnabled")
+		Stop()
+		Return
+	EndIf
 	_bTesting = True
 	If iSamples > 30
 		iSamples = 30
