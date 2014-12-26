@@ -46,6 +46,15 @@ ObjectReference Property AlcoveLightTorchAmb	Auto
 ObjectReference Property AlcoveLightShrineAmb	Auto
 {Shrine ambient light (blue)}
 
+ObjectReference Property AlcoveFogDense			Auto
+{Dense fog for filling alcove}
+
+ObjectReference Property AlcoveFogFloor			Auto
+{Floor mist}
+
+ObjectReference Property AlcoveCurtain			Auto
+{Totally opaque white wall for blocking alcove}
+
 ;--=== Variables ===--
 
 String _sFormID
@@ -98,12 +107,15 @@ Function SetLightState(Int aiDesiredLightState, Bool abForce = False)
 			AlcoveLightTorchSPar.DisableNoWait()
 			AlcoveLightTorchAmb.DisableNoWait()
 			AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,1000)
+			ShowFog(True)
 		Else
 			AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-638)
 			AlcoveLightTorchAmb.EnableNoWait()
+			ShowFog(True)
 		EndIf
 		If _iDesiredLightState == ALCOVE_LIGHTS_ON
 			AlcoveLightTorchSPar.EnableNoWait()
+			ShowFog(False)
 		EndIf
 		_iAlcoveLightState = _iDesiredLightState
 		Return ; No need to continue, everything is set.
@@ -123,6 +135,8 @@ Event OnUpdate()
 		Return ; Nothing to do
 	EndIf
 	If _iDesiredLightState == ALCOVE_LIGHTS_OFF
+		ShowFog(True)
+		AlcoveCurtain.EnableNoWait(True)
 		If AlcoveLightTorchSPar.IsEnabled()
 			AlcoveLightTorchSPar.DisableNoWait()
 		EndIf
@@ -149,11 +163,25 @@ Event OnUpdate()
 			AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-638,0,0,0,500)
 			RegisterForSingleUpdate(0.5)
 		Else
+			AlcoveCurtain.DisableNoWait(True)
+			ShowFog(False)
 			_iAlcoveLightState = ALCOVE_LIGHTS_ON
 			DebugTrace("Lights are now ON!")
 		EndIf
 	EndIf
 EndEvent
+
+Function ShowFog(Bool abShowFog = True)
+	If abShowFog
+		AlcoveFogDense.EnableNoWait(True)
+		WaitMenuMode(0.25)
+		AlcoveFogFloor.EnableNoWait(True)
+	Else
+		AlcoveFogDense.DisableNoWait(True)
+		WaitMenuMode(0.25)
+		AlcoveFogFloor.DisableNoWait(True)
+	EndIf
+EndFunction
 
 ;=== Utility functions ===--
 
