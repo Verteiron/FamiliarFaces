@@ -624,24 +624,24 @@ Function DeleteIfOrphaned()
 	If sCellName == "vMYC_Staging"
 		If _bOrphaned && !CharacterManager.GetLocalInt(CharacterName,"IsSummoned") ; Prevent deletion if we got marooned here due to a bad Hangout.
 			If GetCurrentRealTime() - _fOrphanedTime > 15
-				;Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over " + (GetCurrentRealTime() - _fOrphanedTime) as Int + " seconds, nobody loves me! :(")
+				Debug.Trace("MYC/Actor/" + CharacterName + ": Orphaned in staging cell for over " + (GetCurrentRealTime() - _fOrphanedTime) as Int + " seconds, nobody loves me! :(",1)
 				UnregisterForUpdate()
 				If CharacterManager.GetCharacterActorByName(CharacterName) == Self
-					;Debug.Trace("MYC/Actor/" + CharacterName + ": I'm the right actor, so what's up?")
+					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm the right actor, so what's up?",1)
 					If (GetCurrentRealTime() - _fOrphanedTime) > 60
-						;Debug.Trace("MYC/Actor/" + CharacterName + ": 60 seconds is long enough, I'm outta here!")
+						Debug.Trace("MYC/Actor/" + CharacterName + ": 60 seconds is long enough, I'm outta here!",1)
 						CharacterManager.DeleteCharacterActor(CharacterName)
 					EndIf
 					Return
 				Else
-					;Debug.Trace("MYC/Actor/" + CharacterName + ": I'm not even the right actor! I'm " + Self + " but CharacterManager says I should be " + CharacterManager.GetCharacterActorByName(CharacterName) + "! This is terrible! Deleting myself :(")
+					Debug.Trace("MYC/Actor/" + CharacterName + ": I'm not even the right actor! I'm " + Self + " but CharacterManager says I should be " + CharacterManager.GetCharacterActorByName(CharacterName) + "! This is terrible! Deleting myself :(",1)
 					Delete()
 					Return
 				EndIf
 			EndIf
 		Else
 			_bOrphaned = True
-			;Debug.Trace("MYC/Actor/" + CharacterName + ": I am apparently orphaned in the staging cell.")
+			Debug.Trace("MYC/Actor/" + CharacterName + ": I am apparently orphaned in the staging cell.",1)
 			_fOrphanedTime = GetCurrentRealTime()
 		EndIf
 		SendModEvent("vMYC_OrphanedActor",CharacterName,_fOrphanedTime)

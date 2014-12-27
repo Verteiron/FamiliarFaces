@@ -285,15 +285,15 @@ Function DoUpgrade()
 		Debug.Trace("MYC/Upgrade/1.1.2: Upgrade to 1.1.2 complete!")
 		ModVersion = GetVersionInt(1,1,2)
 	EndIf
-	If ModVersion < GetVersionInt(1,1,5)
-		Debug.Trace("MYC/Upgrade/1.1.5: Upgrading to 1.1.5...")
+	If ModVersion < GetVersionInt(1,1,4)
+		Debug.Trace("MYC/Upgrade/1.1.4: Upgrading to 1.1.4...")
 		Quest vMYC_PortalStoneQuest = Quest.GetQuest("vMYC_PortalStoneQuest")
 		vMYC_PortalStoneQuest.Stop()
 		vMYC_PortalStoneQuest.Start()
 		CharacterManager.DoUpkeep()
 		ShrineOfHeroes.DoUpkeep()
-		Debug.Trace("MYC/Upgrade/1.1.5: Upgrade to 1.1.5 complete!")
-		ModVersion = GetVersionInt(1,1,5)
+		Debug.Trace("MYC/Upgrade/1.1.4: Upgrade to 1.1.4 complete!")
+		ModVersion = GetVersionInt(1,1,4)
 	EndIf
 	;Generic upgrade code
 	If ModVersion < _iCurrentVersion
