@@ -8,6 +8,9 @@ if %I% GTR 12 goto TooManyLevels
 for /f "tokens=%I% delims=\" %%A in ('dir Data\* /a-D /b /s') DO set DATA=%%A
 if /I not %DATA%==data goto TryAgain
 if exist filelist.txt del filelist.txt
+echo Recompiling scripts...
+del %DATA%\scripts\*.pex
+call build_ScriptCompile.bat %DATA%
 echo Creating file list...
 del %DATA%\*.bsa
 del %DATA%\*.bsl
