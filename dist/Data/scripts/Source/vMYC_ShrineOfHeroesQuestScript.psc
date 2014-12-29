@@ -133,7 +133,7 @@ Event OnAlcoveStatusUpdate(string eventName, string strArg, float numArg, Form s
 EndEvent
 
 Event OnConfigUpdate(String asConfigPath)
-	Debug.Trace("MYC/Shrine: OnConfigUpdate(" + asConfigPath + ")")
+	;Debug.Trace("MYC/Shrine: OnConfigUpdate(" + asConfigPath + ")")
 	If asConfigPath == "DEBUG_SHRINE_RESET"
 		_bShrineNeedsReset = GetConfigBool("DEBUG_SHRINE_RESET")
 		RegisterForSingleUpdate(0.5)
@@ -157,7 +157,7 @@ Function UpdateShrineStatus()
 		EndIf
 	EndWhile
 	If Ready != bReady
-		Debug.Trace("MYC/Shrine: Ready: " + bReady)
+		;Debug.Trace("MYC/Shrine: Ready: " + bReady)
 		Ready = bReady
 		SendModEvent("vMYC_ShrineReady","",bReady as Int)
 	EndIf
@@ -262,14 +262,14 @@ Bool Function SyncShrineData(Bool abForceLoadFile = False, Bool abRewriteFile = 
 		GotoState("")
 	EndIf
 	If DataSerial > DataFileSerial
-		Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
+		;Debug.Trace("MYC/Shrine: Our data is newer than the saved file, overwriting it!")
 		If !JMap.HasKey(_jShrineData,"UUID")
 			JMap.SetStr(_jShrineData,"UUID",FFUtils.UUID())
 		EndIf
 		;JValue.WriteToFile(_jShrineData,"Data/vMYC/_ShrineOfHeroes.json")
 		JValue.WriteToFile(_jShrineData,JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
 	ElseIf DataSerial < DataFileSerial
-		Debug.Trace("MYC/Shrine: Our data is older than the saved file, loading it!")
+		;Debug.Trace("MYC/Shrine: Our data is older than the saved file, loading it!")
 		_jShrineData = JValue.ReadFromFile(JContainers.userDirectory() + "vMYC/_ShrineOfHeroes.json")
 		JMap.SetObj(_jMYC,"ShrineOfHeroes",_jShrineData)
 		ShrineDataSerial = DataFileSerial

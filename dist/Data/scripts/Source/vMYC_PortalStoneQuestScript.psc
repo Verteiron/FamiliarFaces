@@ -35,11 +35,12 @@ EndEvent
 
 Event OnUpdate()
 	If !PlayerREF.GetItemCount(vMYC_PortalStone) && IsRunning()
-		Debug.Trace("MYC/PortalStoneQuest: Adding portal stone to player...")
+		;Debug.Trace("MYC/PortalStoneQuest: Adding portal stone to player...")
 		_kPortalStone = PlayerREF.PlaceAtMe(vMYC_PortalStone)
 		alias_PortalStone.ForceRefTo(_kPortalStone)
 		PlayerREF.AddItem(_kPortalStone,1,abSilent = True)
 		vMYC_PortalStoneAddedMSG.Show()
+		RegisterForSingleUpdate(10.0)
 	Else
 		RegisterForSingleUpdate(1.0)
 	EndIf

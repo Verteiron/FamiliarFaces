@@ -228,6 +228,7 @@ Idle			Property	CombatIdleStretching		Auto
 ImageSpaceModifier	Property	vMYC_ShrineLightISMD			Auto
 ImageSpaceModifier	Property	vMYC_ShrineLightWhiteoutISMD	Auto
 
+Message 		Property 	vMYC_ShrineInterruptSaveProcessMenu	Auto
 
 SoundCategory	Property	AudioCategorySFX			Auto
 
@@ -257,6 +258,7 @@ Bool			_bSavedPerks
 Bool			_bSavedInventory
 Bool			_bSavedSpells
 Bool			_bCharacterSummoned
+Bool			_bDeferValidation
 
 ObjectReference	_FogBlowing
 ObjectReference	_FogEmpty
@@ -466,11 +468,11 @@ EndFunction
 State Validating
 
 	Bool Function ValidateAlcove()
-		;_iValidateStateCount += 1
-		;If _iValidateStateCount > 4
+		_iValidateStateCount += 1
+		If _iValidateStateCount > 10
 			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": ValidateAlcove called repeatedly while in Validating state, returning to normal state!")
-			;GotoState("")
-		;EndIf
+			GotoState("")
+		EndIf
 		Return False
 	EndFunction
 
@@ -478,6 +480,9 @@ EndState
 
 Bool Function ValidateAlcove()
 	GoToState("Validating")
+	If _bDeferValidation
+		Return True
+	EndIf
 	If _bPlayerIsSaving ;Disable validation if player is saving here!
 		AlcoveLightState = ALCOVE_LIGHTS_LOADING
 		Return True
@@ -615,7 +620,7 @@ Bool Function ValidateAlcove()
 	ValidationState = 0
 	
 	If AlcoveState == ALCOVE_STATE_ERROR
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": In Error state!")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": In Error state!")
 		AlcoveState == ALCOVE_STATE_BUSY
 	EndIf
 
@@ -675,16 +680,16 @@ Bool Function ValidateAlcove()
 			If AlcoveActor
 				SendModEvent("vMYC_ForceBookUpdate","",AlcoveIndex)
 			EndIf
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Passed validation in " + _fValidationTime + "s!" + " CharacterName is " + CharacterName + ", AlcoveActor is " + AlcoveActor)
 			RegisterForSingleUpdate(5)
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": *** sActorName:" + sActorName + ", bActorInAlcove:" + bActorInAlcove + ", AlcoveStatueState:" + AlcoveStatueState + ", kCharacterToUse:" + kCharacterToUse)
 		EndIf
 		_fValidationTime = 0.0
 		LastValidationState = 0
 		_iRepeatFailureCount = 0
 	Else
 		If _bLastValidation
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Failed validation! Initial reason: " + FailureText(ValidationState))
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Failed validation! Initial reason: " + FailureText(ValidationState))
 			_fValidationTime = 0.0
 		EndIf
 		If LastValidationState == ValidationState
@@ -693,15 +698,15 @@ Bool Function ValidateAlcove()
 			_iRepeatFailureCount == 0
 		EndIf
 		If _iRepeatFailureCount > 60
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed repeatedly with: " + ValidationState + "! Notify the player.")
-			Debug.Notification("Alcove " + _iAlcoveIndex + " appears to be stuck. You can reset it from the MCM panel.")
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed repeatedly with: " + ValidationState + "! Notify the player.")
+			Debug.Notification("Alcove " + (_iAlcoveIndex + 1) + " appears to be stuck. You can reset it from the MCM panel.")
 			;A stuck alcove may mean duplicate actorbases. 
 			CharacterManager.SanityCheckActors()		
 			_iRepeatFailureCount = 0
 			;ResetAlcove()
 		ElseIf _fValidationTime > 120
-			Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation has been stuck for over 2 minutes. Last ValidationState was " + ValidationState + " Notify the player.")
-			Debug.Notification("Alcove " + _iAlcoveIndex + " has been busy for a long time. You can reset it from the MCM panel.")
+			;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation has been stuck for over 2 minutes. Last ValidationState was " + ValidationState + " Notify the player.")
+			Debug.Notification("Alcove " + (_iAlcoveIndex + 1) + " has been busy for a long time. You can reset it from the MCM panel.")
 			;A stuck alcove may mean duplicate actorbases. 
 			CharacterManager.SanityCheckActors()
 			_fValidationTime -= 60
@@ -710,7 +715,7 @@ Bool Function ValidateAlcove()
 		LastValidationState = ValidationState
 		_bLastValidation = False
 		_fValidationTime += fValidationTime
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + FailureText(ValidationState) + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": --- Validation failed: " + FailureText(ValidationState) + " CharacterName is " + CharacterName + ", sWantCharacterName is " + sWantCharacterName + ", AlcoveActor is " + AlcoveActor)
 		RegisterForModEvent("vMYC_AlcoveSelfValidate","OnAlcoveSelfValidate")
 		SendModEvent("vMYC_AlcoveSelfValidate")
 		;RegisterForSingleUpdate(1)
@@ -758,14 +763,14 @@ Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Fo
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
 	If iRequestingIndex != AlcoveIndex && strArg == "Request"
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling my lights by request of " + iRequestingIndex)
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Disabling my lights by request of " + iRequestingIndex)
 		DisableLights = True
 		_Torches.DisableNoWait(True)
 		GetLinkedRef(vMYC_ShrineLightingMaster).DisableNoWait(True)
 		_Light.StopTranslation()
 		_Light.DisableNoWait(True)
 	ElseIf iRequestingIndex != AlcoveIndex && strArg == "Release"
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Restoring my lights by request of " + iRequestingIndex)
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Restoring my lights by request of " + iRequestingIndex)
 		DisableLights = False
 		If AlcoveLightState == ALCOVE_LIGHTS_ON
 			_Torches.EnableNoWait(True)
@@ -1052,9 +1057,6 @@ Function DoSaveAnimation()
 	;Save the player
 	_Book.FlipPages = True
 	CharacterManager.SaveCurrentPlayer(bForceSave = True)
-	While !_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells
-		Wait(0.5)
-	EndWhile
 	_bForceSave = False
 	vMYC_SpellAbsorbTargetVFX.Stop(PlayerREF)
 	Wait(1.0)
@@ -1247,7 +1249,8 @@ EndEvent
 
 Function SummonCharacter()
 {Summon the character from Alcove into Tamriel}
-	Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": SummonCharacter!")
+	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": SummonCharacter!")
+	_bDeferValidation = True
 	AlcoveStatueState = ALCOVE_STATUE_SUMMONED
 	CharacterManager.SetLocalInt(_sCharacterName,"InAlcove",0)
 	_Book = GetLinkedRef(vMYC_ShrineBook) as vMYC_CharacterBookActiScript
@@ -1285,14 +1288,16 @@ Function SummonCharacter()
 	_Book.IsGlowing = False
 	Wait(1.0)
 	If sCellName == "vMYC_Staging" || sCellName == "vMYC_ShrineOfHeroes"  || sCellName == "Shrine of Heroes"
-		Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
+		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": Character got lost, sending them on...")
 		CharacterManager.ResetCharacterPosition(CharacterName)
 	EndIf
+	WaitMenuMode(2)
 	AlcoveActor.SetAlpha(1.0)
 	CharacterManager.SetLocalInt(_sCharacterName,"IsSummoned",1)
 	If GetConfigBool("TRACKBYDEFAULT")
 		CharacterManager.SetCharacterTracking(_sCharacterName,True)
 	EndIf
+	_bDeferValidation = False
 EndFunction
 
 Function BanishCharacter()
