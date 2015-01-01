@@ -130,7 +130,12 @@ Event OnLoad()
 	SetNINodes()
 	CheckArmor()
 	CheckWeapons()
-	
+
+	;Extra stuff to make sure NPC responds when activated
+	BlockActivation(False)
+	_bWarnedVoiceTypeNoFollower = False
+	_bWarnedVoiceTypeNoSpouse = False
+
 	;DumpNIOData(CharacterName + "_OnLoad_" + GetCurrentRealTime())
 	If _bFirstLoad
 		If _iCharGenVersion >= 3
