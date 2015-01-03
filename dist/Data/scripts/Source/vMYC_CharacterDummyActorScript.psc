@@ -332,6 +332,7 @@ Event OnConfigUpdate(String asConfigPath)
 	If asConfigPath == "MAGIC_OVERRIDES" || asConfigPath == "MAGIC_ALLOWFROMMODS"
 		_bNeedSpells = True
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
+		CharacterManager.SetLocalInt(CharacterName,"DisableAutoLevel",(!GetConfigBool("AUTOLEVEL_CHARACTERS")) as Int)
 		SetNonpersistent()
 	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES" || asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
 		_bNeedShouts = True
