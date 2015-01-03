@@ -130,7 +130,7 @@ Event OnLoad()
 	SetNINodes()
 	CheckArmor()
 	CheckWeapons()
-
+	SetAutolevelOptions()
 	;Extra stuff to make sure NPC responds when activated
 	BlockActivation(False)
 	_bWarnedVoiceTypeNoFollower = False
@@ -332,6 +332,7 @@ Event OnConfigUpdate(String asConfigPath)
 	If asConfigPath == "MAGIC_OVERRIDES" || asConfigPath == "MAGIC_ALLOWFROMMODS"
 		_bNeedSpells = True
 	ElseIf asConfigPath == "AUTOLEVEL_CHARACTERS"
+		CharacterManager.SetLocalInt(CharacterName,"DisableAutoLevel",(!GetConfigBool("AUTOLEVEL_CHARACTERS")) as Int)
 		SetNonpersistent()
 	ElseIf asConfigPath == "SHOUTS_DISABLE_CITIES" || asConfigPath == "SHOUTS_HANDLING" || asConfigPath == "SHOUTS_BLOCK_UNLEARNED"
 		_bNeedShouts = True
@@ -746,17 +747,7 @@ Function SetNonpersistent()
 		EndIf
 	EndIf
 	SetFactions()
-	If !CharacterManager.GetCharacterForm(CharacterName,"Class") 
-		If CharacterManager.GetLocalInt(CharacterName,"DisableAutoLevel") == 1
-			SetCustomActorValues(False)
-		ElseIf GetConfigBool("AUTOLEVEL_CHARACTERS")
-			SetCustomActorValues(True)
-		EndIf
-	Else
-		Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values!")
-		AddItem(vMYC_DummyArmor, 1, true)
-		RemoveItem(vMYC_DummyArmor, 1)
-	EndIf
+	SetAutolevelOptions()
 	SetAV("Confidence",3)
 	SetAV("Assistance",2)
 	;Force stat recalc 
@@ -851,6 +842,20 @@ Function SetFactions()
 		If CharacterManager.GetLocalInt(CharacterName,"CanMarry") && GetFactionRank(PotentialMarriageFaction) <= -2
 			Debug.Trace("MYC/Actor/" + CharacterName + ": LOVES the player!")
 			SetFactionRank(PotentialMarriageFaction,0)
+		EndIf
+	EndIf
+EndFunction
+
+Function SetAutolevelOptions()
+	If GetConfigBool("AUTOLEVEL_CHARACTERS") || CharacterManager.GetLocalInt(CharacterName,"DisableAutoLevel") == 0
+		SetCustomActorValues(True)
+	Else
+		If CharacterManager.GetCharacterForm(CharacterName,"Class")
+			Debug.Trace("MYC/Actor/" + CharacterName + ": has an assigned class, ignoring saved actor values and recalculating!")
+			AddItem(vMYC_DummyArmor, 1, true)
+			RemoveItem(vMYC_DummyArmor, 1)
+		Else
+			SetCustomActorValues(False)
 		EndIf
 	EndIf
 EndFunction
@@ -1190,6 +1195,7 @@ Function SetCustomActorValues(Bool bScaleToLevel = False)
 			If sAVNames[i]
 				Float fAV = CharacterManager.GetCharacterAV(CharacterName,sAVNames[i])
 				SetActorValue(sAVName,fAV As Int)
+				Debug.Trace("MYC: (" + CharacterName + ") Set dummy's " + sAVName + " to " + fAV)
 			EndIf
 		EndWhile
 	EndIf
