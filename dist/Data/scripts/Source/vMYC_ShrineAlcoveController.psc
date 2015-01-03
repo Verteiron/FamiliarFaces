@@ -1427,50 +1427,135 @@ Function ShowTrophies()
 		;i += 1
 	;EndWhile
 	If sSpawnPoints.Find("Hero") > -1
-		GetLinkedRef(vMYC_ShrineTrophyHero).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyHero)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Companion") > -1
-		GetLinkedRef(vMYC_ShrineTrophyCompanion).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyCompanion)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Mage") > -1
-		GetLinkedRef(vMYC_ShrineTrophyMage).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyMage)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Thief") > -1
-		GetLinkedRef(vMYC_ShrineTrophyThief).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyThief)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("DarkBrotherhoodRestored") > -1
-		GetLinkedRef(vMYC_ShrineTrophyDBRestored).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyDBRestored)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	ElseIf sSpawnPoints.Find("DarkBrotherhoodDestroyed") > -1
-		GetLinkedRef(vMYC_ShrineTrophyDBDestroyed).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyDBDestroyed)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Imperial") > -1
-		GetLinkedRef(vMYC_ShrineTrophyImperial).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyImperial)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	ElseIf sSpawnPoints.Find("Stormcloak") > -1
-		GetLinkedRef(vMYC_ShrineTrophyStormcloak).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyStormcloak)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Bard") > -1
-		GetLinkedRef(vMYC_ShrineTrophyBard).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyBard)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Greybeard") > -1
-		GetLinkedRef(vMYC_ShrineTrophyGreybeard).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyGreybeard)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	ElseIf sSpawnPoints.Find("Blade") > -1
-		GetLinkedRef(vMYC_ShrineTrophyBlade).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyBlade)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("Werewolf") > -1
-		GetLinkedRef(vMYC_ShrineTrophyWerewolfSymbol).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyWerewolfSymbol)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	ElseIf sSpawnPoints.Find("VampireLord") > -1
-		GetLinkedRef(vMYC_ShrineTrophyVampireSymbol).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyVampireSymbol)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("VampireFaction") > -1
-		GetLinkedRef(vMYC_ShrineTrophyDLC1Vampire).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyDLC1Vampire)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	ElseIf sSpawnPoints.Find("DawnguardFaction") > -1
-		GetLinkedRef(vMYC_ShrineTrophyDLC1Dawnguard).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyDLC1Dawnguard)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("DLC1Completed") > -1
-		GetLinkedRef(vMYC_ShrineTrophyDLC1Complete).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyDLC1Complete)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	If sSpawnPoints.Find("DLC2KilledMiraak") > -1
-		GetLinkedRef(vMYC_ShrineTrophyDLC2Miraak).EnableNoWait()
+		ObjectReference kTrophy = GetLinkedRef(vMYC_ShrineTrophyDLC2Miraak)
+		If !kTrophy.IsEnabled()
+			kTrophy.EnableNoWait()
+		ElseIf (kTrophy as vMYC_ShrineTrophyFXScript)
+			(kTrophy as vMYC_ShrineTrophyFXScript).ShowTrophies()
+		EndIf
 	EndIf
 	AlcoveTrophyState = ALCOVE_TROPHIES_ON
 EndFunction
