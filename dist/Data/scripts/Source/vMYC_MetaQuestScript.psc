@@ -106,7 +106,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	;FIXME: CHANGE THIS WHEN UPDATING!
 	ModVersionMajor = 1
 	ModVersionMinor = 1
-	ModVersionPatch = 4
+	ModVersionPatch = 5
 	_iCurrentVersion = GetVersionInt(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	_sCurrentVersion = GetVersionString(_iCurrentVersion)
 	String sModVersion = GetVersionString(ModVersion as Int)
