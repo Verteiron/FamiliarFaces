@@ -185,6 +185,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	EndIf
 
 	ImportCharacterFiles()
+	ImportCharacterFiles(JContainers.userDirectory() + "/vMYC/")
 	;Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	RegisterForModEvent("vMYC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
@@ -1138,11 +1139,12 @@ EndEvent
 
 ;=== Functions - Character data import/export ===--
 
-Function ImportCharacterFiles()
+Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 {Load data from all Data/vMYC/*.char.json files.}
 	StartTimer("ImportCharacterFiles")
 	DebugTrace("ImportCharacters!")
-	Int jDirectoryScan = JValue.readFromDirectory("Data/vMYC/")
+	DebugTrace("ImportCharacters is checking " + sDataFolder + " for character files...")
+	Int jDirectoryScan = JValue.readFromDirectory(sDataFolder)
 
 	Int jCharFiles = JMap.allKeys(jDirectoryScan)
 	Int jCharData = JMap.allValues(jDirectoryScan)
@@ -1169,7 +1171,9 @@ Function ImportCharacterFiles()
 		String sUUID = jValue.SolveStr(jCharacterData,META + ".UUID")
 		String sCharacterName = jValue.SolveStr(jCharacterData,META + ".Name")
 		Float fPlayTime = jValue.SolveFlt(jCharacterData,META + ".Playtime")
-		DebugTrace("ImportCharacters - " + JArray.GetStr(jCharFiles,i) + " is " + sCharacterName + "!")
+		If sCharacterName
+			DebugTrace("ImportCharacters - " + JArray.GetStr(jCharFiles,i) + " is " + sCharacterName + "!")
+		EndIf
 
 		;It's possible the UUID is missing due to a bug in an earlier version		
 		If iDataVersion >= 3 && sCharacterName && fPlayTime && !sUUID 
