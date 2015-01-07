@@ -1,6 +1,57 @@
-Familiar Faces 1.1.3
+Familiar Faces 1.1.5
 
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the only way to do it!
+
+
+Version 1.1.5 - Released Jan 4th, 2015
+
+Bugs squashed:
+
+    Many and various bugs related to level scaling. #112 - At least in more circumstances. Bear in mind that the imported character's level (i.e. what you see if you use the getlevel console command) will rarely if ever be their original level, but the levels of their various actor values will either be scaled appropriately based on class, or will match the original values. This is now checked much more frequently, so it should work more reliably.
+    Trophies sometimes not appearing after saving or moving a character in the Shrine. #104
+
+
+
+Version 1.1.4 - Released Jan 1st, 2015
+THIS VERSION (OR HIGHER) IS REQUIRED IF YOU USE RACEMENU 3!
+
+Bugs squashed:
+
+    Portal Stone STILL not appearing in player inventory sometimes. #107
+    Imported characters sometimes do not respond at all when spoken to. #108
+    ScriptLatency test script is getting started and won't shut down, filling the screen with notifications. #109
+    Tweaks needed for new RaceMenu version checks. #110
+    Characters sometimes arrive with armor, but no weapons. #111
+
+
+
+
+FUTURE UPDATES aka WHERE IS VERT?
+
+
+The rumors of my death are greatly exaggerated! (Yes, someone actually emailed me and asked if I was dead. Were they expecting a response if I was?) The short answer is no, I'm not dead, but I have been... away... for a while, for very good reasons that are unlikely to become clear to the general public at the moment. Suffice it to say that I have been unable to participate in my preferred hobby of modding Skyrim for some time now, has been almost absolute until a couple of weeks ago. Lest anyone think I've simply been ignoring questions, my absence from the Nexus in particular has caused me to miss out on at least 2 donations, so it's not been all roses over here, I assure you. So am I back? Let's say yes. The reasons for my absence are no less prevalent, but my ability to divide my time up is improving and so I have been doing some work on this (and other) Skyrim projects.
+
+So I ask your indulgence in tolerating my peculiarities, and please accept my assurances that Familiar Faces is neither abandoned, nor stuck with bugs forever.
+
+So... what does the future hold for Familiar Faces?
+
+
+
+Version 2.0.0 - Release date - Late February-ish
+
+    Complete rewrite of many major components.
+    Much faster saving of characters, allowing for background saves without visiting the shrine.
+    Redesigned Shrine of Heroes, with larger alcoves, support for more trophies, and an API allowing other mod authors to add their own trophies. Trophies for Falskaar and Wyrmstooth will be added.
+    Much more data will be saved in the character file to allow for future features.
+    May NOT be a completely automated update. More on this later.
+
+
+
+So you see, good things are coming. You can track progress through the Github links above, or through waffle.io. Thanks for sticking with me! -- Vert
+
+On to the rest of the readme!
+
+
 
 1.1 has been released!
 

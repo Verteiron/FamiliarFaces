@@ -1,8 +1,50 @@
 [img]http://i.imgur.com/qSeywkt.png[/img]
 
-[center][youtube]5nE6BEAPG4A[/youtube][youtube]sYXx6NM4E5g[/youtube][/center]
-
 Bring your characters together at last! Visit the Shrine of Heroes, where you can meet your Dragonborn from past play-throughs, create a monument to their achievements, and even bring them to your world as faithful allies... or worthy opponents! Whether you're a role-player trying to build a coherent story of Skyrim or you just think it'd be cool to use your other players as followers, Familiar Faces is the [i]only[/i] way to do it!
+
+[center][b][size=4]Version 1.1.5 - Released Jan 4th, 2015[/size][/b][/center]
+[b][size=3]Bugs squash[/size][/b][size=3]ed:
+[/size][list][*][size=3]Many and various bugs related to level scaling. [url=https://github.com/Verteiron/FamiliarFaces/issues/112]#112[/url][/size][size=3] - At least in more circumstances. Bear in mind that the imported character's level (i.e. what you see if you use the getlevel console command) will rarely if ever be their original level, but the levels of their various actor values will either be scaled appropriately based on class, or will match the original values. This is now checked much more frequently, so it should work more reliably.
+[/size][/*]
+[*][size=3]Trophies sometimes not appearing after saving or moving a character in the Shrine. [url=https://github.com/Verteiron/FamiliarFaces/issues/104]#104[/url][/size][/*]
+[/list]
+
+[center][b][size=4]Version 1.1.4 - Released Jan 1st, 2015
+[color=#ff0000]THIS VERSION (OR HIGHER) IS REQUIRED IF YOU USE RACEMENU 3![/color]
+[/size][/b][/center]
+[b][size=3]Bugs squashed:[/size][/b][size=3]
+[/size][list][*][size=3]Portal Stone STILL not appearing in player inventory sometimes. [url=https://github.com/Verteiron/FamiliarFaces/issues/107]#107[/url][/size][size=3]
+[/size][/*]
+[*][size=3]Imported characters sometimes do not respond at all when spoken to. [url=https://github.com/Verteiron/FamiliarFaces/issues/108]#108[/url][/size][/*]
+[*][size=3]ScriptLatency test script is getting started and won't shut down, filling the screen with notifications. [url=https://github.com/Verteiron/FamiliarFaces/issues/109]#109[/url][/size][/*]
+[*][size=3]Tweaks needed for new RaceMenu version checks. [url=https://github.com/Verteiron/FamiliarFaces/issues/110]#110[/url][/size][/*]
+[*][size=3]Characters sometimes arrive with armor, but no weapons. [url=https://github.com/Verteiron/FamiliarFaces/issues/111]#111[/url]
+[/size][/*]
+[/list]
+
+
+[center][b][size=6]FUTURE UPDATES aka [color=#ff0000]WHERE IS VERT[/color]?[/size][/b][/center]
+
+The rumors of my death are greatly exaggerated! (Yes, someone actually emailed me and asked if I was dead. [size=1]Were they expecting a response if I was?[/size]) The short answer is no, I'm not dead, but I have been... away... for a while, for very good reasons that are unlikely to become clear to the general public at the moment. Suffice it to say that I have been unable to participate in my preferred hobby of modding Skyrim for some time now, has been almost absolute until a couple of weeks ago. Lest anyone think I've simply been ignoring questions, my absence from the Nexus in particular has caused me to miss out on at least 2 donations, so it's not been all roses over here, I assure you. So am I back? Let's say yes. The reasons for my absence are no less prevalent, but my ability to divide my time up is improving and so I have been doing some work on this (and other) Skyrim projects.
+
+[b]So I ask your indulgence in tolerating my peculiarities, and please accept my assurances that Familiar Faces is neither abandoned, nor stuck with bugs forever. [/b]
+
+So... what does the future hold for Familiar Faces? 
+
+
+
+[center][size=4]Version 2.0.0 - Release date - Late February-ish[/size][/center]
+[list][*][size=3]Complete rewrite of many major components.[/size][/*]
+[*][size=3]Much faster saving of characters, allowing for background saves without visiting the shrine.[/size][/*]
+[*][size=3]Redesigned Shrine of Heroes, with larger alcoves, support for more trophies, and an API allowing other mod authors to add their own trophies. Trophies for Falskaar and Wyrmstooth will be added.[/size][/*]
+[*][size=3]Much more data will be saved in the character file to allow for future features.[/size][/*]
+[*][size=3]May NOT be a completely automated update. More on this later.[/size][/*]
+[/list]
+
+So you see, good things are coming. You can track progress through the Github links above, or through [url=https://waffle.io/Verteiron/FamiliarFaces]waffle.io[/url]. Thanks for sticking with me! -- Vert
+
+On to the rest of the readme!
+
 
 [center][b][size=6]1.1 has been released![/size][/b][/center]
 
