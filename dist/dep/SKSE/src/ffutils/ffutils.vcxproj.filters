@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="skse">
+      <UniqueIdentifier>{7c4a0c16-62b7-427b-b6c8-9204182793cb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusFFUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\SafeWrite.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameAPI.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameBSExtraData.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameData.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameExtraData.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameFormComponents.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameForms.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameObjects.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameReferences.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameRTTI.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\GameTypes.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\HashUtil.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\PapyrusArgs.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\PapyrusNativeFunctions.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\PapyrusVM.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PapyrusFFUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameAPI.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameData.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameFormComponents.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameForms.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameObjects.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameReferences.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameRTTI.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameTypes.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\PapyrusArgs.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\PapyrusNativeFunctions.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\PapyrusVM.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+    <None Include="..\skse\PapyrusNativeFunctionDef.inl">
+      <Filter>skse</Filter>
+    </None>
+    <None Include="..\skse\PapyrusNativeFunctionDef_Base.inl">
+      <Filter>skse</Filter>
+    </None>
+  </ItemGroup>
+</Project>

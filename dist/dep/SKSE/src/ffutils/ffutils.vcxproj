@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>ffutils</ProjectName>
-    <ProjectGuid>{FC9A1EE6-D9DB-47F6-B0ED-8867439C43CE}</ProjectGuid>
+    <ProjectGuid>{B73F63CF-8434-4460-9547-52D0626EAEB3}</ProjectGuid>
     <RootNamespace>ffutils</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -69,6 +69,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ShowProgress>LinkVerbose</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -95,13 +96,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\skse\GameAPI.cpp" />
+    <ClCompile Include="..\skse\GameBSExtraData.cpp" />
     <ClCompile Include="..\skse\GameData.cpp" />
+    <ClCompile Include="..\skse\GameExtraData.cpp" />
     <ClCompile Include="..\skse\GameFormComponents.cpp" />
     <ClCompile Include="..\skse\GameForms.cpp" />
     <ClCompile Include="..\skse\GameObjects.cpp" />
     <ClCompile Include="..\skse\GameReferences.cpp" />
     <ClCompile Include="..\skse\GameRTTI.cpp" />
     <ClCompile Include="..\skse\GameTypes.cpp" />
+    <ClCompile Include="..\skse\HashUtil.cpp" />
     <ClCompile Include="..\skse\PapyrusArgs.cpp" />
     <ClCompile Include="..\skse\PapyrusNativeFunctions.cpp" />
     <ClCompile Include="..\skse\PapyrusVM.cpp" />
