@@ -16,6 +16,9 @@
     <Filter Include="skse">
       <UniqueIdentifier>{7c4a0c16-62b7-427b-b6c8-9204182793cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ziputils">
+      <UniqueIdentifier>{4da9a2b2-c88a-4972-aaa3-effd3c8269e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -31,9 +34,6 @@
       <Filter>skse</Filter>
     </ClCompile>
     <ClCompile Include="..\skse\GameBSExtraData.cpp">
-      <Filter>skse</Filter>
-    </ClCompile>
-    <ClCompile Include="..\skse\GameData.cpp">
       <Filter>skse</Filter>
     </ClCompile>
     <ClCompile Include="..\skse\GameExtraData.cpp">
@@ -69,15 +69,21 @@
     <ClCompile Include="..\skse\PapyrusVM.cpp">
       <Filter>skse</Filter>
     </ClCompile>
+    <ClCompile Include="..\skse\GameData.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="ziputils\unzip.cpp">
+      <Filter>ziputils</Filter>
+    </ClCompile>
+    <ClCompile Include="ziputils\zip.cpp">
+      <Filter>ziputils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PapyrusFFUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\skse\GameAPI.h">
-      <Filter>skse</Filter>
-    </ClInclude>
-    <ClInclude Include="..\skse\GameData.h">
       <Filter>skse</Filter>
     </ClInclude>
     <ClInclude Include="..\skse\GameFormComponents.h">
@@ -106,6 +112,15 @@
     </ClInclude>
     <ClInclude Include="..\skse\PapyrusVM.h">
       <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\GameData.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="ziputils\unzip.h">
+      <Filter>ziputils</Filter>
+    </ClInclude>
+    <ClInclude Include="ziputils\zip.h">
+      <Filter>ziputils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

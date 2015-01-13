@@ -190,7 +190,6 @@ Function SaveSession() Global
 	JValue.WriteToFile(jRegData,JContainers.userDirectory() + "vMYC/vMYC_Session.json")
 EndFunction
 
-
 Bool Function HasSessionKey(String asPath) Global
 	Int jSession = CreateSessionDataIfMissing()
 	Return JValue.hasPath(jSession,"." + asPath) || JMap.hasKey(jSession,asPath)
@@ -467,6 +466,7 @@ String Function GetUUID(Bool abFast = True) Global
 EndFunction
 
 String Function GetUUIDTrue() Global
+{This should be identical to GetUUIDFast, but follows the proper procedure for generating the randoms.}
 	Int[] iBytes = New Int[16]
 	Int i = 0
 	While i < 16
