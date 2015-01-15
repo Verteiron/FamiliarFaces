@@ -2,12 +2,15 @@
 
 #include "common/IFileStream.h"
 
-//#include "skse/GameAPI.h"
-//#include "skse/GameFormComponents.h"
+#include "skse/GameAPI.h"
+#include "skse/GameFormComponents.h"
 #include "skse/GameData.h"
 #include "skse/GameRTTI.h"
-//#include "skse/GameExtraData.h"
-//#include "skse/GameForms.h"
+#include "skse/GameExtraData.h"
+#include "skse/GameForms.h"
+#include "skse/PapyrusArgs.h"
+//#include "skse/PapyrusGame.h"
+//#include "skse/PapyrusObjectReference.h"
 
 #include "ziputils\unzip.h"
 #include "ziputils\zip.h"
@@ -15,6 +18,8 @@
 #include <shlobj.h>
 #include <functional>
 #include <random>
+#include <vector>
+#include <map>
 
 void VisitFormList(BGSListForm * formList, std::function<void(TESForm*)> functor)
 {
@@ -81,6 +86,37 @@ UInt32 FFCopyFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 		}
 	}
 	return ret;
+}
+
+bool IsObjectFavorited(TESForm * form)
+{
+	PlayerCharacter* player = (*g_thePlayer);
+	if (!player || !form)
+		return false;
+
+	UInt8 formType = form->formType;
+
+	// Spell or shout - check MagicFavorites
+	if (formType == kFormType_Spell || formType == kFormType_Shout)
+	{
+		MagicFavorites * magicFavorites = MagicFavorites::GetSingleton();
+
+		return magicFavorites && magicFavorites->IsFavorited(form);
+	}
+	// Other - check ExtraHotkey. Any hotkey data (including -1) means favorited
+	else
+	{
+		bool result = false;
+
+		ExtraContainerChanges* pContainerChanges = static_cast<ExtraContainerChanges*>(player->extraData.GetByType(kExtraData_ContainerChanges));
+		if (pContainerChanges) {
+			HotkeyData data = pContainerChanges->FindHotkey(form);
+			if (data.pHotkey)
+				result = true;
+		}
+
+		return result;
+	}
 }
 
 namespace papyrusFFUtils
@@ -223,6 +259,38 @@ namespace papyrusFFUtils
 		}
 	}
 	
+	VMResultArray<TESForm*> GetActorSpellList(StaticFunctionTag*, Actor* character, bool includeBaseSpells)
+	{
+		VMResultArray<TESForm*> result;
+		TESNPC* actorBase = DYNAMIC_CAST(character->baseForm, TESForm, TESNPC);
+		if (actorBase) {
+			TESSpellList * spellList = &actorBase->spellList;
+			TESSpellList::Data * spellData = spellList->unk04;
+
+			if (spellData && includeBaseSpells)
+			{
+				if (spellData->spells)
+				{
+					// Add spells from the actorbase
+					for (int i = 0; i < spellData->numSpells; i++)
+					{
+						result.push_back(spellData->spells[i]);
+					}
+				}
+			}
+
+			if (character->addedSpells.Length())
+			{
+				// Add spells from the actor's own list
+				for (int i = 0; i < character->addedSpells.Length(); i++)
+				{
+					result.push_back(character->addedSpells.Get(i));
+				}
+			}
+		}
+		return result;
+	}
+
 	void GetCharacterSpells(StaticFunctionTag*, Actor* character,  BGSListForm * list, bool includeBase)
 	{
 		TESNPC* actorBase = DYNAMIC_CAST(character->baseForm, TESForm, TESNPC);
@@ -248,6 +316,31 @@ namespace papyrusFFUtils
 				CALL_MEMBER_FN(list, AddFormToList)(character->addedSpells.Get(i));
 			}
 		}
+	}
+
+	VMResultArray<TESForm*> GetActorShoutList(StaticFunctionTag*, TESNPC* actorBase)
+	{
+		VMResultArray<TESForm*> result;
+		if (actorBase) {
+			TESSpellList * spellList = &actorBase->spellList;
+			TESSpellList::Data * spellData = spellList->unk04;
+
+			if (spellData)
+			{
+				if (spellData->shouts)
+				{
+					// Add shouts from the actorbase
+					for (int i = 0; i < spellData->numShouts; i++)
+					{
+						if (TESShout * shout = DYNAMIC_CAST(spellData->shouts[i], TESForm, TESShout)) {
+							result.push_back(shout);
+						}
+					}
+				}
+			}
+
+		}
+		return result;
 	}
 
 	void GetCharacterShouts(StaticFunctionTag*, Actor* character, BGSListForm * list)
@@ -437,6 +530,150 @@ namespace papyrusFFUtils
 		}
 		return formCount;
 	}
+
+	VMResultArray<TESForm*> GetFilteredList(StaticFunctionTag*, BGSListForm* sourceList, UInt32 typeFilter)
+	{
+		VMResultArray<TESForm*> result;
+		if (sourceList) {
+			VisitFormList(sourceList, [&](TESForm * form){
+				if (form->formType == typeFilter) {
+					result.push_back(form);
+				}
+			});
+		}
+		return result;
+	}
+
+	VMResultArray<SInt32> GetItemCounts(StaticFunctionTag*, VMArray<TESForm*> formArr, TESObjectREFR* object)
+	{
+		VMResultArray<SInt32> result;
+
+		TESContainer* pContainer = NULL;
+		TESForm* pBaseForm = object->baseForm;
+		if (pBaseForm)
+			pContainer = DYNAMIC_CAST(pBaseForm, TESForm, TESContainer);
+
+		ExtraContainerChanges* pXContainerChanges = static_cast<ExtraContainerChanges*>(object->extraData.GetByType(kExtraData_ContainerChanges));
+
+		TESForm *form = NULL;
+
+		if (formArr.Length() && object) {
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					UInt32 countBase = pContainer->CountItem(form);
+					ExtraContainerChanges::EntryData *entrydata = pXContainerChanges->data->FindItemEntry(form);
+					UInt32 countXtra = (entrydata) ? entrydata->countDelta : 0;
+					result.push_back(countBase + countXtra);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	VMResultArray<SInt32> GetItemTypes(StaticFunctionTag*, VMArray<TESForm*> formArr)
+	{
+		VMResultArray<SInt32> result;
+
+		TESForm *form = NULL;
+
+		if (formArr.Length()) {
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					result.push_back(form->formType);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	VMResultArray<BSFixedString> GetItemNames(StaticFunctionTag*, VMArray<TESForm*> formArr)
+	{
+		VMResultArray<BSFixedString> result;
+
+		TESForm *form = NULL;
+
+		if (formArr.Length()) {
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					TESFullName* pFullName = DYNAMIC_CAST(form, TESForm, TESFullName);
+					result.push_back(pFullName->name.data);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	VMResultArray<SInt32> GetItemFavorited(StaticFunctionTag* base, VMArray<TESForm*> formArr)
+	{
+		VMResultArray<SInt32> result;
+		TESForm *form = NULL;
+
+		if (formArr.Length()) {
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					result.push_back(IsObjectFavorited(form));
+				}
+			}
+		}
+
+		return result;
+	}
+
+	VMResultArray<SInt32> GetItemCustomized(StaticFunctionTag*, VMArray<TESForm*> formArr)
+	{
+		VMResultArray<SInt32> result;
+
+		TESForm *form = NULL;
+
+		PlayerCharacter* player = (*g_thePlayer);
+		if (!player)
+			return result;
+		
+		ExtraContainerChanges* pContainerChanges = static_cast<ExtraContainerChanges*>(player->extraData.GetByType(kExtraData_ContainerChanges));
+		
+		if (formArr.Length()) {
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				int thisResult = 0;
+				if (form) {
+					ExtraContainerChanges::EntryData * formEntryData = pContainerChanges->data->FindItemEntry(form);
+					//TESFullName* pFullName = DYNAMIC_CAST(form, TESForm, TESFullName);
+					//_MESSAGE("Dumping extendDataList for form %08X (%s)-------", form->formID, (pFullName) ? pFullName->name.data : 0);
+					if (formEntryData) {
+						if (formEntryData->extendDataList->Count())
+							thisResult = 1;
+					}
+					//_MESSAGE("------------------------------------------------", form->formID, (pFullName) ? pFullName->name.data : 0);
+				}
+				result.push_back(thisResult);
+			}
+		}
+
+		return result;
+	}
+
+	BSFixedString GetSourceMod(StaticFunctionTag*, TESForm* form)
+	{
+		if (!form)
+		{
+			return NULL;
+		}
+		UInt8 modIndex = form->formID >> 24;
+		if (modIndex > 255)
+		{
+			return NULL;
+		}
+		DataHandler* pDataHandler = DataHandler::GetSingleton();
+		ModInfo* modInfo = pDataHandler->modList.modInfoList.GetNthItem(modIndex);
+		return (modInfo) ? modInfo->name : NULL;
+	}
 }
 
 #include "skse/PapyrusVM.h"
@@ -457,7 +694,13 @@ void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction3<StaticFunctionTag, void, Actor*, BGSListForm*, bool>("GetCharacterSpells", "FFUtils", papyrusFFUtils::GetCharacterSpells, registry));
 
 	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, VMResultArray<TESForm*>, Actor*, bool>("GetActorSpellList", "FFUtils", papyrusFFUtils::GetActorSpellList, registry));
+
+	registry->RegisterFunction(
 		new NativeFunction2<StaticFunctionTag, void, Actor*, BGSListForm*>("GetCharacterShouts", "FFUtils", papyrusFFUtils::GetCharacterShouts, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, VMResultArray<TESForm*>, TESNPC*>("GetActorShoutList", "FFUtils", papyrusFFUtils::GetActorShoutList, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1<StaticFunctionTag, SInt32, TESNPC*>("DeleteFaceGenData", "FFUtils", papyrusFFUtils::DeleteFaceGenData, registry));
@@ -476,4 +719,25 @@ void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction3<StaticFunctionTag, SInt32, BGSListForm*, BGSListForm*, UInt32>("FilterFormlist", "FFUtils", papyrusFFUtils::FilterFormlist, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, BSFixedString, TESForm*>("GetSourceMod", "FFUtils", papyrusFFUtils::GetSourceMod, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, VMResultArray<TESForm*>, BGSListForm*, UInt32>("GetFilteredList", "FFUtils", papyrusFFUtils::GetFilteredList, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>, TESObjectREFR*>("GetItemCounts", "FFUtils", papyrusFFUtils::GetItemCounts, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>>("GetItemTypes", "FFUtils", papyrusFFUtils::GetItemTypes, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>>("GetItemFavorited", "FFUtils", papyrusFFUtils::GetItemFavorited, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>>("GetItemCustomized", "FFUtils", papyrusFFUtils::GetItemCustomized, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, VMResultArray<BSFixedString>, VMArray<TESForm*>>("GetItemNames", "FFUtils", papyrusFFUtils::GetItemNames, registry));
 }
