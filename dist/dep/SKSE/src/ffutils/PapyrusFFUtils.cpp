@@ -11,6 +11,7 @@
 #include "skse/PapyrusArgs.h"
 //#include "skse/PapyrusGame.h"
 //#include "skse/PapyrusObjectReference.h"
+#include "skse/NiNodes.h"
 
 #include "ziputils\unzip.h"
 #include "ziputils\zip.h"
@@ -42,6 +43,29 @@ void VisitFormList(BGSListForm * formList, std::function<void(TESForm*)> functor
 	}
 }
 
+// probably shouldn't use this, it has problems
+void VisitNIFNodes(NiNode * thisNode, std::function<void(NiNode*)> functor) 
+{
+	if (thisNode)
+	{ 
+		//make sure this is actually an ninode pointer, these values are equal in every one I've examined
+		if (thisNode->m_children.m_arrayBufLen == thisNode->m_children.m_size)
+		{
+			for (int i = 0; i < thisNode->m_children.m_size; i++)
+			{
+				NiNode* childNode = NULL;
+				if (!(thisNode->m_children.m_data[i] == NULL))
+					childNode = (NiNode*)thisNode->m_children.m_data[i];
+
+				if (childNode) {
+					if (childNode->m_children.m_size)
+						VisitNIFNodes(childNode, functor);
+					functor(childNode);
+				}
+			}
+		}
+	}
+}
 
 bool isReadable(const std::string& name) {
 	FILE *file;
@@ -324,7 +348,7 @@ namespace papyrusFFUtils
 		if (actorBase) {
 			TESSpellList * spellList = &actorBase->spellList;
 			TESSpellList::Data * spellData = spellList->unk04;
-
+			
 			if (spellData)
 			{
 				if (spellData->shouts)
@@ -626,7 +650,7 @@ namespace papyrusFFUtils
 		return result;
 	}
 
-	VMResultArray<SInt32> GetItemCustomized(StaticFunctionTag*, VMArray<TESForm*> formArr)
+	VMResultArray<SInt32> GetItemHasExtraData(StaticFunctionTag*, VMArray<TESForm*> formArr)
 	{
 		VMResultArray<SInt32> result;
 
@@ -674,6 +698,49 @@ namespace papyrusFFUtils
 		ModInfo* modInfo = pDataHandler->modList.modInfoList.GetNthItem(modIndex);
 		return (modInfo) ? modInfo->name : NULL;
 	}
+
+	BSFixedString ReadStringFromFile(StaticFunctionTag*, BSFixedString path)
+	{
+		BSFixedString retString;
+
+		IFileStream	fileToRead;
+
+		std::string fileString;
+
+		if (fileToRead.Open(path.data))
+		{
+			while (!fileToRead.HitEOF())
+			{
+				char buf[512];
+				fileToRead.ReadString(buf, 512);
+				fileString.append(buf);
+			}
+			retString = fileString.c_str();
+		}
+		fileToRead.Close();
+
+		return retString;
+	}
+
+	//purely a learning exercise, don't actually use this
+	VMResultArray<BSFixedString> GetNodeList(StaticFunctionTag*, TESForm * form)
+	{
+		VMResultArray<BSFixedString> ret;
+
+		PlayerCharacter* player = (*g_thePlayer);
+		
+		NiNode * thisNode = player->GetNiNode();
+		
+		VisitNIFNodes(thisNode, [&](NiNode * childNode){
+			if (childNode) {
+				if (childNode->m_name)
+					ret.push_back(childNode->m_name);
+			}
+		});
+
+		return ret;
+	}
+
 }
 
 #include "skse/PapyrusVM.h"
@@ -736,8 +803,15 @@ void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction1<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>>("GetItemFavorited", "FFUtils", papyrusFFUtils::GetItemFavorited, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>>("GetItemCustomized", "FFUtils", papyrusFFUtils::GetItemCustomized, registry));
+		new NativeFunction1<StaticFunctionTag, VMResultArray<SInt32>, VMArray<TESForm*>>("GetItemHasExtraData", "FFUtils", papyrusFFUtils::GetItemHasExtraData, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1<StaticFunctionTag, VMResultArray<BSFixedString>, VMArray<TESForm*>>("GetItemNames", "FFUtils", papyrusFFUtils::GetItemNames, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, BSFixedString, BSFixedString>("ReadStringFromFile", "FFUtils", papyrusFFUtils::ReadStringFromFile, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<StaticFunctionTag, VMResultArray<BSFixedString>, TESForm*>("GetNodeList", "FFUtils", papyrusFFUtils::GetNodeList, registry));
+
 }
