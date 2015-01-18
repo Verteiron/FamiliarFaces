@@ -128,8 +128,8 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
-;	WaitMenuMode(90)
-;	SavePlayerData()
+	SavePlayerData()
+	Debug.MessageBox("Finished saving!")
 ;	WaitMenuMode(5)
 ;	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
 ;	Int i = JArray.Count(jCharacters)
@@ -232,9 +232,10 @@ Function ScanPlayerStats()
 	Int iAddedCount = 0 
 	Int iAdvSkills = 24 ; Start at Health
 	While iAdvSkills < 44 ; Proceed through MagicResist
+		ActorValueInfo AVInfo = ActorValueInfo.GetActorValueInfoByID(iAdvSkills)
 		String sAVName = GetAVName(iAdvSkills)
 		Float fAV = 0.0
-		fAV = PlayerREF.GetBaseActorValue(sAVName)
+		fAV = AVInfo.GetBaseValue(PlayerREF)
 		If fAV
 			SetSessionFlt("Stats.AV." + sAVName,fAV)
 			DebugTrace("Saved AV " + sAVName + "!")
@@ -254,7 +255,7 @@ Function ScanPlayerStats()
 		Float fAV = 0.0
 		Int iLL = 0
 		If iAVI < 158 || iAVI > 159 ; Skip Werewolf/Vampire Lord
-			fAV = PlayerREF.GetBaseActorValue(sAVName)
+			fAV = AVInfo.GetBaseValue(PlayerREF)
 			iLL = GetSkillLegendaryLevel(sAVName)
 		EndIf
 		If iLL
@@ -477,16 +478,18 @@ Function ScanPlayerSpells()
 	Int i = 0
 	Int iAddedCount = 0
 	
+	Form[] kPlayerSpellList = FFUtils.GetActorSpellList(PlayerREF)
+	
 	Int jPlayerSpells = JArray.Object()
 	SetSessionObj("Spells",jPlayerSpells)
 	
-	Int iSpellCount = PlayerREF.GetSpellCount()
+	Int iSpellCount = kPlayerSpellList.Length
 	iAddedCount = 0
 	Bool bAddItem = False
 	i = 0
 	While i < iSpellCount
 		bAddItem = False
-		Spell kSpell = PlayerREF.GetNthSpell(i)
+		Spell kSpell = kPlayerSpellList[i] as Spell
 		If kSpell
 			bAddItem = True
 			Int iSpellID = kSpell.GetFormID()
@@ -548,37 +551,38 @@ Function ScanPlayerShouts()
 	Int jPlayerShoutInfo = JArray.Object()
 	SetSessionObj("ShoutInfo",jPlayerShoutInfo)
 	
-	Int iShoutCount = vMYC_PlayerShoutCheckList.GetSize()
+	Form[] kPlayerShoutList = FFUtils.GetActorShoutList(PlayerREF.GetActorBase())
+	String[] sShoutNames = FFUtils.GetItemNames(kPlayerShoutList)
+	
+	Int iShoutCount = kPlayerShoutList.Length
 	i = 0
 	While i < iShoutCount
-		Shout kShout = vMYC_PlayerShoutCheckList.GetAt(i) as Shout
-		If PlayerREF.HasSpell(kShout)
-			Int jShoutInfo = JMap.Object()
-			JMap.SetForm(jShoutInfo,"Form",kShout)
-			JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",0,True)
-			Int iWord = 0
-			While iWord < 3
-				WordOfPower kWord = kShout.GetNthWordOfPower(iWord)
-				If kWord
-					If Game.IsWordUnlocked(kWord)
-						If iWord == 0 ; 
-							JArray.AddForm(jPlayerShouts,kShout)
-							DebugTrace("Player knows Shout " + kShout.Getname() + " and has unlocked at least one word of it.")
-							iAddedCount += 1
-						EndIf
-						JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",iWord + 1,True)
-						String sWordName = kWord.GetName()
-						If !sWordName
-							sWordName = GetFormIDString(kWord)
-						EndIf
-						JValue.SolveFormSetter(jShoutInfo,".Words." + sWordName + ".Form",kWord,True)
+		Shout kShout = kPlayerShoutList[i] as Shout
+		Int jShoutInfo = JMap.Object()
+		JMap.SetForm(jShoutInfo,"Form",kShout)
+		JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",0,True)
+		Int iWord = 0
+		While iWord < 3
+			WordOfPower kWord = kShout.GetNthWordOfPower(iWord)
+			If kWord
+				If Game.IsWordUnlocked(kWord)
+					If iWord == 0 ; 
+						JArray.AddForm(jPlayerShouts,kShout)
+						DebugTrace("Player knows Shout " + sShoutNames[i] + " and has unlocked at least one word of it.")
+						iAddedCount += 1
 					EndIf
-					DebugTrace("Word " + iWord + " of " + kShout.GetName() + " is " + kWord.GetName() + ". Unlocked: " + Game.IsWordUnlocked(kWord))
+					JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",iWord + 1,True)
+					String sWordName = kWord.GetName()
+					If !sWordName
+						sWordName = GetFormIDString(kWord)
+					EndIf
+					JValue.SolveFormSetter(jShoutInfo,".Words." + sWordName + ".Form",kWord,True)
 				EndIf
-				iWord += 1
-			EndWhile
-			JArray.AddObj(jPlayerShoutInfo,jShoutInfo)
-		EndIf
+				DebugTrace("Word " + iWord + " of " + sShoutNames[i] + " is " + kWord.GetName() + ". Unlocked: " + Game.IsWordUnlocked(kWord))
+			EndIf
+			iWord += 1
+		EndWhile
+		JArray.AddObj(jPlayerShoutInfo,jShoutInfo)
 		i += 1
 	EndWhile
 
@@ -711,7 +715,14 @@ Function ScanPlayerInventory()
 	StartTimer("ScanPlayerInventory")
 	
 	vMYC_InventoryList.Revert()
-	PlayerREF.GetAllForms(vMYC_InventoryList)
+	;PlayerREF.GetAllForms(vMYC_InventoryList)
+	Form[] kInventoryList = PlayerREF.GetContainerForms()
+	Int[] iInventoryCount = FFUtils.GetItemCounts(kInventoryList,PlayerREF)
+	Int[] iInventoryTypes = FFUtils.GetItemTypes(kInventoryList)
+	String[] sInventoryNames = FFUtils.GetItemNames(kInventoryList)
+	Int[] iInventoryHasExtra = FFUtils.GetItemHasExtraData(kInventoryList)
+	Int[] iInventoryFavorites = FFUtils.GetItemFavorited(kInventoryList)
+	
 	Int jInventoryList = JArray.Object()
 	SetSessionObj("PlayerInventoryList",jInventoryList)
 	JArray.AddFromFormlist(jInventoryList,vMYC_InventoryList)
@@ -721,24 +732,24 @@ Function ScanPlayerInventory()
 	Int jInventoryInfo = JArray.Object()
 	SetSessionObj("InventoryInfo",jInventoryInfo)
 	
-	Int i = JArray.Count(jInventoryList)
+	Int i = kInventoryList.Length
 	While i > 0
 		i -= 1
-		Form kItem = JArray.GetForm(jInventoryList,i)
+		Form kItem = kInventoryList[i]
 		If kItem
+			Int iType = iInventoryTypes[i]
+			Int iCount = iInventoryCount[i]
 			If !PlayerRef.IsEquipped(kItem)
-				Int iType = kItem.GetType()
-				Int iCount = PlayerRef.GetItemCount(kItem)
 				If iCount > 0 
-					Int iFormID = kItem.GetFormId()
-					If iFormID >= 0xFF000000 && iFormID <= 0xFFFFFFFF
-						DebugTrace("Found a session object: " + kItem + " is " + kItem.GetName() + ".")
-						If iType == 46
-							Int jPotionItem = JMap.Object()
-							SerializePotion(kItem,jPotionItem)
-							JArray.AddObj(jInventoryInfo,jPotionItem)
-						EndIf
-					EndIf
+					;Int iFormID = kItem.GetFormId()
+					;If iFormID >= 0xFF000000 && iFormID <= 0xFFFFFFFF
+					;	DebugTrace("Found a session object: " + kItem + " is " + sInventoryNames[i] + ".")
+					;	If iType == 46
+					;		Int jPotionItem = JMap.Object()
+					;		SerializePotion(kItem,jPotionItem)
+					;		JArray.AddObj(jInventoryInfo,jPotionItem)
+					;	EndIf
+					;EndIf
 					Int jItemTypeFMap = JMap.getObj(jInventory,iType)
 					If !JValue.IsFormMap(jItemTypeFMap)
 						jItemTypeFMap = JFormMap.Object()
@@ -747,7 +758,7 @@ Function ScanPlayerInventory()
 					JFormMap.SetInt(jItemTypeFMap,kItem,iCount)
 				EndIf
 			EndIf
-			If IsObjectFavorited(kItem)
+			If iInventoryFavorites[i]
 				Int jItemFavoriteFMap = JMap.getObj(jInventory,"Favorites")
 				If !JValue.IsArray(jItemFavoriteFMap)
 					jItemFavoriteFMap = JArray.Object()
@@ -757,9 +768,19 @@ Function ScanPlayerInventory()
 					JArray.AddForm(jItemFavoriteFMap,kItem)
 				EndIf
 			EndIf
+			If iInventoryHasExtra[i] && iCount
+				Int jItemHasExtraFMap = JMap.getObj(jInventory,"HasExtraData")
+				If !JValue.IsArray(jItemHasExtraFMap)
+					jItemHasExtraFMap = JArray.Object()
+					JMap.setObj(jInventory,"HasExtraData",jItemHasExtraFMap)
+				EndIf
+				If JArray.FindForm(jItemHasExtraFMap,kItem) < 0
+					JArray.AddForm(jItemHasExtraFMap,kItem)
+				EndIf
+			EndIf
 		EndIf
 	EndWhile
-	DebugTrace("Refreshed player inventory! Got " + JArray.Count(jInventoryList) + " items!")
+	DebugTrace("Refreshed player inventory! Got " + kInventoryList.Length + " items!")
 	StopTimer("ScanPlayerInventory")
 	SaveSession()
 	SetSessionBool("Status.Inventory.Busy",False)
@@ -799,6 +820,7 @@ Function SavePlayerInventory()
 	Int jArmorFMap 		= GetSessionObj("Inventory.26") ; kArmor
 	Int jAmmoFMap 		= GetSessionObj("Inventory.42") ; kAmmo
 	Int jFavoritesList 	= GetSessionObj("Inventory.Favorites") ; Favorites
+	Int jExtraDataList 	= GetSessionObj("Inventory.HasExtraData") ; list of forms with extradata to scan
 	
 	Int jWeaponList		= JFormMap.AllKeys(jWeaponsFMap)
 	Int jArmorList 		= JFormMap.AllKeys(jArmorFMap)
@@ -831,7 +853,7 @@ Function SavePlayerInventory()
 	While i > 0
 		i -= 1
 		Form kItem = JArray.GetForm(jWeaponArmorList,i)
-		If kItem
+		If kItem && JArray.FindForm(jExtraDataList,kItem) >= 0
 			Int iHand = 0
 			Int iSlotMask = 0
 			Int iType = kItem.GetType()
@@ -1028,7 +1050,7 @@ Int Function SavePlayerData()
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
-	SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
+	;SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
@@ -1067,7 +1089,7 @@ Int Function SavePlayerData()
 	EndIf
 	StopTimer("NIOverrideData")
 		
-	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells || !_bSavedNINodeInfo) 
+	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) 
 		WaitMenuMode(0.5)
 	EndWhile
 
@@ -1298,7 +1320,7 @@ EndFunction
 ;=== Functions - Requirement list ===--
 
 String Function GetSourceMod(Form akForm)
-	Return GetModName(akForm.GetFormID() / 0x1000000)
+	Return FFUtils.GetSourceMod(akForm)
 EndFunction
 
 Function AddToReqList(Form akForm, String asType, String sSID = "")
@@ -1316,13 +1338,14 @@ Function AddToReqList(Form akForm, String asType, String sSID = "")
 	If !jReqList
 		jReqList = JMap.Object()
 	EndIf
-	String sModName = GetSourceMod(akForm)
+	String sModName = FFUtils.GetSourceMod(akForm) ;GetSourceMod(akForm)
 	If sModName
 		If sModName == "Skyrim.esm" || sModName == "Update.esm"
 			Return
 		EndIf
 		
-		sModName = StringReplace(sModName,".","_dot_") ; Strip . to avoid confusing JContainers
+		;sModName = StringReplace(sModName,".","_dot_") ; Strip . to avoid confusing JContainers
+		sModName = StringUtil.Substring(sModName,0,StringUtil.Find(sModName,".")) ; Strip extension to avoid confusing JContainers
 		String sFormName = akForm.GetName()
 		If !sFormName
 			sFormName = akForm as String
@@ -1471,7 +1494,8 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 	Enchantment kItemEnchantment
 	If kItem
 		;Debug.Trace("MYC/CM: " + kItem.GetName() + " is Mod ID " + (kItem.GetFormID() / 0x1000000))
-		JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItem.GetFormID() / 0x1000000))
+		;JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItem.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentInfo,"Source",FFUtils.GetSourceMod(kItem))
 	EndIf
 	;Debug.Trace("MYC/CM: Serializing " + kItem.GetName() + "...")
 	If (kItem as Weapon)
@@ -1496,9 +1520,9 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		;PlayerEnchantments[newindex] = kItemEnchantment
 		;Debug.Trace("MYC/CM: " + kItem.GetName() + " has enchantment " + kItemEnchantment.GetFormID() + ", " + kItemEnchantment.GetName())
 		JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
-		JMap.SetStr(jEquipmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentInfo,"Source",FFUtils.GetSourceMod(kItemEnchantment))
 		AddToReqList(kItemEnchantment,"Enchantment")
-		JMap.SetStr(jEquipmentEnchantmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
+		JMap.SetStr(jEquipmentEnchantmentInfo,"Source",FFUtils.GetSourceMod(kItemEnchantment))
 		JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",0)
 	EndIf
 	String sItemDisplayName = WornObject.GetDisplayName(kWornObjectActor,iHand,h)
@@ -1514,7 +1538,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 		kItemEnchantment = WornObject.GetEnchantment(kWornObjectActor,iHand,h)
 		If kItemEnchantment
 			JMap.SetForm(jEquipmentEnchantmentInfo,"Form",kItemEnchantment)
-			JMap.SetStr(jEquipmentEnchantmentInfo,"Source",GetModName(kItemEnchantment.GetFormID() / 0x1000000))
+			JMap.SetStr(jEquipmentEnchantmentInfo,"Source",FFUtils.GetSourceMod(kItemEnchantment))
 			AddToReqList(kItemEnchantment,"Enchantment")
 			JMap.SetInt(jEquipmentEnchantmentInfo,"IsCustom",1)
 			Int iNumEffects = kItemEnchantment.GetNumEffects()
@@ -1527,7 +1551,7 @@ Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h
 				JMap.SetFlt(jEffectsInfo, "Area", kItemEnchantment.GetNthEffectArea(j))
 				JMap.SetFlt(jEffectsInfo, "Duration", kItemEnchantment.GetNthEffectDuration(j))
 				JMap.SetForm(jEffectsInfo,"MagicEffect", kItemEnchantment.GetNthEffectMagicEffect(j))
-				JMap.SetStr(jEffectsInfo,"Source",GetModName(kItemEnchantment.GetNthEffectMagicEffect(j).GetFormID() / 0x1000000))
+				JMap.SetStr(jEffectsInfo,"Source",FFUtils.GetSourceMod(kItemEnchantment.GetNthEffectMagicEffect(j)))
 				AddToReqList(kItemEnchantment.GetNthEffectMagicEffect(j),"MagicEffect")
 				JArray.AddObj(jEffectsArray,jEffectsInfo)
 				j += 1
@@ -1654,7 +1678,7 @@ Function SerializePotion(Form kItem, Int jPotionInfo)
 	
 	JMap.SetStr(jPotionInfo,"Name",kPotion.GetName())
 	JMap.SetStr(jPotionInfo,"WorldModelPath",kPotion.GetWorldModelPath())
-	JMap.SetStr(jPotionInfo,"Source",GetModName(kPotion.GetFormID() / 0x1000000))
+	JMap.SetStr(jPotionInfo,"Source",FFUtils.GetSourceMod(kPotion))
 	
 	JMap.SetInt(jPotionInfo,"IsHostile",kPotion.IsHostile() as Int)
 	JMap.SetInt(jPotionInfo,"IsFood",kPotion.IsFood() as Int)
@@ -1670,7 +1694,7 @@ Function SerializePotion(Form kItem, Int jPotionInfo)
 		JMap.SetFlt(jEffectsInfo, "Area", kPotion.GetNthEffectArea(i))
 		JMap.SetFlt(jEffectsInfo, "Duration", kPotion.GetNthEffectDuration(i))
 		JMap.SetForm(jEffectsInfo,"MagicEffect", kPotion.GetNthEffectMagicEffect(i))
-		JMap.SetStr(jEffectsInfo,"Source",GetModName(kPotion.GetNthEffectMagicEffect(i).GetFormID() / 0x1000000))
+		JMap.SetStr(jEffectsInfo,"Source",FFUtils.GetSourceMod(kPotion))
 		;AddToReqList(kPotion.GetNthEffectMagicEffect(i),"MagicEffect")
 		JArray.AddObj(jEffectsArray,jEffectsInfo)
 		i += 1
