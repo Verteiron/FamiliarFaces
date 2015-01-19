@@ -1,20 +1,15 @@
-Scriptname vMYC_CompatAFT extends Quest  
-{Module for AFT compatibility. Mostly disables FF functionality to avoid conflict, since AFT doesn't appear to provide a method to enable/disable its features.}
+Scriptname vMYC_CompatAFT extends vMYC_CompatBase
+{Base for compatibility modules.}
 
 ;--=== Imports ===--
 
 Import Utility
 Import Game
-Import vMYC_Config
+Import vMYC_Registry
 
 ;--=== Properties ===--
 
-vMYC_CharacterManagerScript Property CharacterManager Auto
-
-GlobalVariable	Property	vMYC_Compat_AFT_Enable		Auto
-GlobalVariable	Property	vMYC_Compat_AFT_Loaded		Auto
-
-Message 		Property	vMYC_zCompat_AFT_EnabledMSG	Auto
+Message 		Property	NotificationMessage				Auto
 
 ;Properties from AFT
 Faction			Property 	TweakPotentialFollowerFaction	Auto
@@ -27,89 +22,93 @@ Quest			Property	TweakFollower					Auto
 
 ;--=== Events/Functions ===--
 
-Event OnGameReloaded()
-	If IsRunning()
-		CheckVars()
-		RegisterForSingleUpdate(5)
-	EndIf
-EndEvent
+Bool Function IsRequired()
+{Return true if the mod that this module supports is installed.}
 
-Event OnInit()
-	If IsRunning()
-		Debug.Trace("MYC/CompatAFT: Initializing!")
-		DoInit()
-		RegisterForSingleUpdate(1)
-		vMYC_zCompat_AFT_EnabledMSG.Show()
-	EndIf
-EndEvent
-
-Event OnUpdate()
-	String[] sCharacterNames = CharacterManager.CharacterNames
-	Int i = sCharacterNames.Length
-	While i > 0
-		i -= 1
-		If sCharacterNames[i]
-			If CharacterManager.GetLocalInt(sCharacterNames[i],"IsSummoned")
-				Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
-				If kActor
-					If IsTweakedFollower(kActor)
-						CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_Tweaked",1)
-						CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_MagicDisabled",kActor.IsInFaction(TweakDisableMagic) as Int)
-					Else
-						CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_Tweaked",0)
-					EndIf
-				EndIf
-			EndIf
-		EndIf
-	EndWhile
-	If IsRunning()
-		RegisterForSingleUpdate(15)
-	EndIf
-EndEvent
-
-Bool Function IsTweakedFollower(Actor akActor)
-	If !IsRunning()
-		Return False
-	EndIf
-	Int i = akActor.GetNumReferenceAliases()
-	While i > 0
-		i -= 1
-		If akActor.GetNthReferenceAlias(i).GetOwningQuest() == TweakFollower && !akActor.IsInFaction(TweakIgnoreFaction)
-	;If (akActor.IsInFaction(TweakPotentialFollowerFaction) || akActor.IsInFaction(TweakImportFaction)) ;&& akActor.IsInFaction(TweakIgnoreFaction) == -2
-			Debug.Trace("MYC/CompatAFT: " + akActor.GetActorBase().GetName() + " is Tweaked!")
-			Return True
-		EndIf
-	EndWhile
-	Debug.Trace("MYC/CompatAFT: " + akActor.GetActorBase().GetName() + " is NOT Tweaked!")
 	Return False
 EndFunction
 
-Function DoInit()
-	CheckVars()
+Int Function StartModule()
+{User code for startup}
+	RegisterForSingleUpdate(1)
+	NotificationMessage.Show()
+	Return 1
+EndFunction
+
+Int Function StopModule()
+{User code for shutdown}
+	UnregisterForUpdate()
+	WaitMenuMode(1)
+	UpdateAFTSettings(abForceRemove = True)
+	Return 1
+EndFunction
+
+Int Function UpkeepModule()
+{User code for upkeep}
+	RegisterForSingleUpdate(5)
+	Return 1
 EndFunction
 
 Function CheckVars()
+{Any extra variables that might need setting up during OnInit. Will also be run OnGameLoad}
+
 	TweakPotentialFollowerFaction 	= GetFormFromFile(0x02033cf9,"AmazingFollowerTweaks.esp") as Faction
 	TweakIgnoreFaction 				= GetFormFromFile(0x020229c3,"AmazingFollowerTweaks.esp") as Faction
 	TweakImportFaction				= GetFormFromFile(0x020362b8,"AmazingFollowerTweaks.esp") as Faction
 	TweakDisableMagic				= GetFormFromFile(0x0200eb22,"AmazingFollowerTweaks.esp") as Faction
 	
 	TweakFollower					= GetFormFromFile(0x020012ce,"AmazingFollowerTweaks.esp") as Quest
+
 EndFunction
 
-Function DoShutdown()
-	UnregisterForUpdate()
-	String[] sCharacterNames = CharacterManager.CharacterNames
-	Int i = sCharacterNames.Length
+Event OnUpdate()
+	UpdateAFTSettings()
+	If Enabled
+		RegisterForSingleUpdate(15)
+	EndIf
+EndEvent
+
+Function UpdateAFTSettings(Bool abForceRemove = False)
+	Int jCIDs = JMap.AllKeys(GetSessionObj("Doppelgangers"))
+	Int i = JMap.Count(jCIDs)
 	While i > 0
 		i -= 1
-		If sCharacterNames[i]
-			Actor kActor = CharacterManager.GetCharacterActorByName(sCharacterNames[i])
-			If kActor
-				CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_Tweaked",0)
-				CharacterManager.SetLocalInt(sCharacterNames[i],"Compat_AFT_MagicDisabled",0)
+		String sCID = JArray.GetStr(jCIDs,i)
+		If GetSessionBool("Doppelgangers." + sCID + ".Summoned")
+			String sCharacterName = GetRegStr("Characters." + sCID + ".Info.Name")
+			If !abForceRemove
+				Actor kActor = GetSessionForm("Doppelgangers." + sCID + ".Actor") as Actor
+				If kActor
+					If IsTweakedFollower(kActor) && !HasSessionKey("Doppelgangers." + sCID + ".Actor.Compat.AFT")
+						DebugTrace("Adding " + kActor + " (" + sCharacterName + ") to AFT list.")
+						SetSessionBool("Doppelgangers." + sCID + ".Compat.AFT.Enabled",True)
+						SetSessionBool("Doppelgangers." + sCID + ".Compat.AFT.ForceMagicDisabled",kActor.IsInFaction(TweakDisableMagic))
+					ElseIf HasSessionKey("Doppelgangers." + sCID + ".Compat.AFT")
+						DebugTrace("Removing " + kActor + " (" + sCharacterName + ") from AFT list.")
+						ClearSessionKey("Doppelgangers." + sCID + ".Compat.AFT")
+					EndIf
+				EndIf
+			Else ; Force removal, presumably for uninstall
+				DebugTrace("Forcing removal of " + sCharacterName + " from AFT list.")
+				ClearSessionKey("Doppelgangers." + sCID + ".Compat.AFT")
 			EndIf
 		EndIf
 	EndWhile
-	
 EndFunction
+
+Bool Function IsTweakedFollower(Actor akActor)
+	If !Enabled
+		Return False
+	EndIf
+	Int i = akActor.GetNumReferenceAliases()
+	While i > 0
+		i -= 1
+		If akActor.GetNthReferenceAlias(i).GetOwningQuest() == TweakFollower && !akActor.IsInFaction(TweakIgnoreFaction)
+			DebugTrace(akActor.GetActorBase().GetName() + " is Tweaked!")
+			Return True
+		EndIf
+	EndWhile
+	DebugTrace(akActor.GetActorBase().GetName() + " is NOT Tweaked!")
+	Return False
+EndFunction
+

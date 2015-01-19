@@ -1,11 +1,11 @@
-Scriptname vMYC_CompatSkyRe extends Quest  
+Scriptname vMYC_CompatSkyRe extends vMYC_CompatBase  
 {Module for SkyRE compatibility. Right now this just excludes a bunch of Perks.}
 
 ;--=== Imports ===--
 
 Import Utility
 Import Game
-Import vMYC_Config
+Import vMYC_Registry
 
 ;--=== Properties ===--
 
@@ -15,34 +15,36 @@ Formlist Property vMYC_ModCompatibility_PerkList_Unsafe Auto
 
 ;--=== Events/Functions ===--
 
-Event OnGameReloaded()
-	If IsRunning()
-		SetConfigInt("Compat_SkyRE_Enabled",1)
-		If GetModByName("SkyRe_Main.esp") != 255
-			If !vMYC_ModCompatibility_PerkList_Unsafe.HasForm(GetFormFromFile(0x1D050DE9,"SkyRe_Main.esp"))
-				AddSkyRePerks()
-			EndIf
-		EndIf
-	Else
-		SetConfigInt("Compat_SkyRE_Enabled",0)
-	EndIf
-EndEvent
-
-Event OnInit()
-	Debug.Trace("MYC/CompatSkyRE: Adding SkyRE perks to vMYC_ModCompatibility_PerkList_Unsafe!")
-	If IsRunning()
-		AddSkyREPerks()
-	EndIf
-EndEvent
-
-Event OnUpdate()
+Bool Function IsRequired()
+{Return true if the mod that this module supports is installed.}
 	If GetModByName("SkyRe_Main.esp") != 255
-
+		Return True
 	EndIf
-EndEvent
+	Return False
+EndFunction
 
-Function DoShutdown()
-	
+Int Function StartModule()
+{User code for startup}
+	AddSkyRePerks()
+	Return 1
+EndFunction
+
+Int Function StopModule()
+{User code for shutdown}
+	Return 1
+EndFunction
+
+Int Function UpkeepModule()
+{User code for upkeep}
+	If !vMYC_ModCompatibility_PerkList_Unsafe.HasForm(GetFormFromFile(0x1D050DE9,"SkyRe_Main.esp"))
+		AddSkyRePerks()
+	EndIf
+	Return 1
+EndFunction
+
+Function CheckVars()
+{Any extra variables that might need setting up during OnInit. Will also be run OnGameLoad}
+
 EndFunction
 
 Function AddSkyREPerks()

@@ -1,7 +1,5 @@
 Scriptname vMYC_PlayerLoadGameEFFCompatAlias extends ReferenceAlias  
-
-;--=== Events ===--
+{Legacy file. Ignore.}
 
 Event OnPlayerLoadGame()
-	(GetOwningQuest() as vMYC_CompatEFF).OnGameReloaded()
 EndEvent
