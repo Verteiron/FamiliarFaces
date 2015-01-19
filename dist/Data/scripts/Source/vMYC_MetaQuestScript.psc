@@ -224,7 +224,20 @@ Function DoUpgrade()
 EndFunction
 
 Function CheckCompatibilityModules(Bool abReset = False)
+	DebugTrace("Checking compatibility modules!")
+	RegisterForModEvent("vMYC_CompatReport","OnCompatReport")
+	Int iHandle = ModEvent.Create("vMYC_CompatCheck")
+	If iHandle
+		ModEvent.PushForm(iHandle,Self)
+		ModEvent.Send(iHandle)
+	Else
+		DebugTrace("WARNING! Could not send vMYC_CompatCheck event!",1)
+	EndIf
 EndFunction
+
+Event OnCompatReport(String asName, Form akSender, Bool abRequired, Bool abEnabled)
+	DebugTrace("Compat module " + asName + " report - Required: " + abRequired + ", Enabled: " + abEnabled)
+EndEvent
 
 Function AbortStartup(String asAbortReason = "None specified")
 	DebugTrace("Aborting startup! Reason: " + asAbortReason,2)
