@@ -1,4 +1,4 @@
-Scriptname vMYC_MetaQuestScript extends Quest
+Scriptname vMYC_MetaQuestScript extends vMYC_BaseQuest
 {Do initialization and track variables for scripts}
 
 ;--=== Imports ===--

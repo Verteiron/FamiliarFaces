@@ -1,4 +1,4 @@
-Scriptname vMYC_CompatBase extends Quest  
+Scriptname vMYC_CompatBase extends vMYC_BaseQuest  
 {Base for compatibility modules. Don't modify this script! Extend it and modify that.}
 
 ;--=== Imports ===--

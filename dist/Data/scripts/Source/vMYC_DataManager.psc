@@ -1,4 +1,4 @@
-Scriptname vMYC_DataManager extends Quest
+Scriptname vMYC_DataManager extends vMYC_ManagerBase
 {Save and restore character and other data using the registry.}
 
 ;=== Imports ===--
