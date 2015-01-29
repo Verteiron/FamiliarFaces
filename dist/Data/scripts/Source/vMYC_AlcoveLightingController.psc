@@ -53,6 +53,8 @@ Form			Property FXAmbBeamSlowFogBig_Dim03				Auto
 Form			Property FXFogRollingFacing01					Auto
 Form			Property FXAmbBlowingFog01						Auto
 
+;Torch glow
+Static			Property FXGlowFillRoundBrt						Auto
 
 ;=== Objects ===--
 
@@ -68,7 +70,7 @@ ObjectReference Property AlcoveFogDense			Auto
 {Dense fog for filling alcove}
 ObjectReference Property AlcoveFogFloor			Auto
 {Floor mist}
-ObjectReference Property AlcoveFogCurtain			Auto
+ObjectReference Property AlcoveFogCurtain		Auto
 {Fog wall for blocking alcove}
 ObjectReference Property AlcoveFogLit			Auto
 {Light rays shining from lit alcove}
@@ -135,12 +137,12 @@ Function SetLightState(Int aiDesiredLightState, Bool abForce = False)
 			AlcoveLightTorchNSPar.DisableNoWait()
 			AlcoveLightTorchSPar.DisableNoWait()
 			AlcoveLightTorchAmb.DisableNoWait()
-			AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,1000)
+			;AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,1000)
 			ShowFog(True)
 		Else
 			AlcoveTorchTriggerBox.EnableNoWait(False)
 			AlcoveLightTorchNSPar.EnableNoWait()
-			AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-638)
+			;AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-448)
 			AlcoveLightTorchAmb.EnableNoWait()
 			ShowFog(True)
 		EndIf
@@ -175,16 +177,17 @@ Event OnUpdate()
 		If AlcoveLightTorchNSPar.IsEnabled()
 			AlcoveLightTorchNSPar.DisableNoWait()
 		EndIf
-		DebugTrace("Want lights OFF! Diff: " + Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 250))
-		If Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 250) > 10 && AlcoveLightTorchAmb.IsEnabled()
-			AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-250,0,0,0,500)
-			RegisterForSingleUpdate(0.5)
-		Else
-			AlcoveLightTorchAmb.StopTranslation()
-			AlcoveLightTorchAmb.DisableNoWait()
+		AlcoveLightTorchAmb.DisableNoWait(True)
+		;DebugTrace("Want lights OFF! Diff: " + Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 250))
+		;If Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 250) > 10 && AlcoveLightTorchAmb.IsEnabled()
+			;AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-250,0,0,0,500)
+			;RegisterForSingleUpdate(0.5)
+		;Else
+			;AlcoveLightTorchAmb.StopTranslation()
+			;AlcoveLightTorchAmb.DisableNoWait()
 			_iAlcoveLightState = ALCOVE_LIGHTS_OFF
 			DebugTrace("Lights are now OFF!")
-		EndIf
+		;EndIf
 		If AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.DisableNoWait(True)
 		EndIf
@@ -194,11 +197,12 @@ Event OnUpdate()
 			AlcoveLightTorchAmb.EnableNoWait()
 			WaitFor3DLoad(AlcoveLightTorchAmb)
 		EndIf
-		DebugTrace("Want lights ON! Diff: " + Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 638))
-		If Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 638) > 10
-			AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-638,0,0,0,500)
-			RegisterForSingleUpdate(0.5)
-		Else
+		AlcoveLightTorchAmb.EnableNoWait(True)
+		;DebugTrace("Want lights ON! Diff: " + Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 448))
+		;If Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 448) > 10
+		;	AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-448,0,0,0,500)
+		;	RegisterForSingleUpdate(0.5)
+		;Else
 			If !AlcoveLightTorchNSPar.IsEnabled() && !AlcoveLightTorchSPar.IsEnabled() 
 				AlcoveLightTorchNSPar.EnableNoWait()
 			EndIf
@@ -206,7 +210,7 @@ Event OnUpdate()
 			ShowFog(False)
 			_iAlcoveLightState = ALCOVE_LIGHTS_ON
 			DebugTrace("Lights are now ON!")
-		EndIf
+		;EndIf
 		If !AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.EnableNoWait(True)
 		EndIf
