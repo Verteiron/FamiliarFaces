@@ -16,8 +16,13 @@ Import Game
 
 Function CheckVars()
 	TrophyName  	= "Alduin's Bane"
-	TrophyType  	= TROPHY_TYPE_WALLMOUNT
-	TrophyPriority 	= 0
+	TrophyPriority 	= 1
+	
+	TrophyType 		= TROPHY_TYPE_OBJECT
+	TrophySize		= TROPHY_RADIUS_LARGE
+	TrophyLoc		= TROPHY_LOC_WALLBACK
+	;TrophyExtras	= 0
+	
 EndFunction
 
 Bool Function IsAvailable()

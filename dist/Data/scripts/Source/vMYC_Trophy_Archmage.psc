@@ -16,8 +16,12 @@ Import Game
 
 Function CheckVars()
 	TrophyName  	= "Archmage of Winterhold College"
-	TrophyType  	= TROPHY_TYPE_WALLMOUNT
 	TrophyPriority 	= 4
+	
+	TrophyType 		= TROPHY_TYPE_SEAL
+	TrophySize		= TROPHY_RADIUS_LARGE
+	TrophyLoc		= TROPHY_LOC_WALLBACK
+	;TrophyExtras	= 0
 EndFunction
 
 Bool Function IsAvailable()

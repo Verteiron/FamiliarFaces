@@ -16,8 +16,12 @@ Import Game
 
 Function CheckVars()
 	TrophyName  	= "Master of the Thieves Guild"
-	TrophyType  	= TROPHY_TYPE_FLOORSMALL
 	TrophyPriority 	= 4
+
+	TrophyType 		= TROPHY_TYPE_OBJECT
+	;TrophySize		= 0
+	TrophyLoc		= TROPHY_LOC_PLINTHBASE
+	;TrophyExtras	= 0
 EndFunction
 
 Bool Function IsAvailable()

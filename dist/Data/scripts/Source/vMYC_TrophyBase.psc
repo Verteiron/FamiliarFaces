@@ -8,34 +8,69 @@ Import Game
 
 ;=== Constants ===--
 
-Int				Property	TROPHY_TYPE_BANNER		= 1		AutoReadOnly
-Int				Property	TROPHY_TYPE_PEDESTAL	= 2		AutoReadOnly
-Int				Property	TROPHY_TYPE_FLOORSMALL	= 3		AutoReadOnly
-Int				Property	TROPHY_TYPE_FLOORLARGE	= 4		AutoReadOnly
-Int				Property	TROPHY_TYPE_WALLMOUNT	= 5		AutoReadOnly
+Int				Property	TROPHY_TYPE_OBJECT		= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_TYPE_BANNER		= 0x00000001		AutoReadOnly Hidden
+Int				Property	TROPHY_TYPE_SEAL		= 0x00000002		AutoReadOnly Hidden
+Int				Property	TROPHY_TYPE_DECAL		= 0x00000004		AutoReadOnly Hidden
+Int				Property	TROPHY_TYPE_CUSTOM		= 0x00000008		AutoReadOnly Hidden
+
+Int				Property	TROPHY_RADIUS_TINY		= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_RADIUS_SMALL		= 0x00000001		AutoReadOnly Hidden
+Int				Property	TROPHY_RADIUS_MEDIUM	= 0x00000002		AutoReadOnly Hidden
+Int				Property	TROPHY_RADIUS_LARGE		= 0x00000004		AutoReadOnly Hidden
+Int				Property	TROPHY_RADIUS_HUGE		= 0x00000008		AutoReadOnly Hidden
+
+Int				Property	TROPHY_HEIGHT_SHORT		= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_HEIGHT_MEDIUM	= 0x00000001		AutoReadOnly Hidden
+Int				Property	TROPHY_HEIGHT_TALL		= 0x00000002		AutoReadOnly Hidden
+
+Int				Property	TROPHY_LOC_PLINTH		= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_PLINTHBASE	= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_WALLBACK		= 0x00000001		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_WALLSIDES	= 0x00000002		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_ENTRYINNER	= 0x00000004		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_ENTRYHALL	= 0x00000008		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_ENTRYOUTER	= 0x00000010		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_ENTRYLINTEL	= 0x00000020		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_SHRINEWALL	= 0x00000040		AutoReadOnly Hidden
+Int				Property	TROPHY_LOC_CUSTOM		= 0x00000080		AutoReadOnly Hidden
+
+Int				Property	TROPHY_EXTRAS_NONE		= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_EXTRAS_ACTIVATOR	= 0x00000001		AutoReadOnly Hidden
+Int				Property	TROPHY_EXTRAS_HASHAVOK	= 0x00000002		AutoReadOnly Hidden
+Int				Property	TROPHY_EXTRAS_HASLIGHT	= 0x00000004		AutoReadOnly Hidden
+Int				Property	TROPHY_EXTRAS_NOSPACE	= 0x00000008		AutoReadOnly Hidden
 
 ;--=== Properties ===--
 
-Activator		Property	TrophyActivator					Auto
+Activator		Property	TrophyActivator		= None		Auto
 {The trophy activator object. More items can be added by creating additional properties but custom code will be needed in the Display function.}
 
-String			Property	TrophyName						Auto
+String			Property	TrophyName			= "Trophy"	Auto
 {Name of the trophy that should be displayed when the player examines it.}
 
-EffectShader	Property	TrophyFadeInFXS					Auto
+EffectShader	Property	TrophyFadeInFXS		= None		Auto
 {Shader that should play when the trophy first appears.}
 
-Int				Property	TrophyPriority					Auto
+Int				Property	TrophyPriority		= 100		Auto
 {How great/unique of an achievement is this? LOWER IS BETTER! DLC (or large mod such as Falskaar) completion is 2, Faction completion is 4. See docs for more info!}
 
-Int				Property	TrophyType						Auto
-{1 = Banner, 2 = small item on a pedestal or shelf, 3 = small item that sits on the floor, 4 = large item that requires a tall space, 5 = wall-mounted item}
+Int				Property	TrophyType			= 0			Auto
+Int				Property	TrophySize			= 0			Auto
+Int				Property	TrophyLoc			= 0			Auto
+Int				Property	TrophyExtras		= 0			Auto
+
+Int				Property	TrophyFlags			= 0			Auto
+{See TROPHY enums above}
 
 Int				Property	TrophyVersion					Auto
 {Increment this if the trophy's requirements or mesh have changed.}
 
-Bool			Property	Available						Auto Hidden
-Bool			Property	Enabled							Auto Hidden
+String[]		Property	TrophyExclusionList				Auto
+{If this trophy is displayed, prevent these trophies from being displayed. Use with caution!}
+
+Bool			Property	Available			= False		Auto Hidden
+Bool			Property	Enabled				= True		Auto Hidden
 
 ;--=== Variables ===--
 
@@ -68,6 +103,9 @@ Event OnInit()
 			Stop()
 		EndIf
 		Return
+	EndIf
+	If !TrophyFlags
+		SetTrophyFlags(TrophyType,TrophySize,TrophyLoc,TrophyExtras)
 	EndIf
 	RegisterForModEvent("vMYC_TrophyManagerReady","OnTrophyManagerReady")
 	RegisterForModEvent("vMYC_TrophySelfMessage" + TrophyName,"OnTrophySelfMessage")
@@ -189,6 +227,14 @@ Function SendSelfMessage(String asMessage)
 	Else
 		DebugTrace("WARNING: Couldn't send self message!",1)
 	EndIf
+EndFunction
+
+Function SetTrophyFlags(Int aiTrophyType, Int aiTrophySize, Int aiTrophyLocation, Int aiTrophyExtras)
+	TrophyFlags = 0
+	TrophyFlags = Math.LogicalOr(TrophyFlags, aiTrophyType)
+	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophySize,8))
+	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyLocation,16))
+	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyExtras,24))
 EndFunction
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
