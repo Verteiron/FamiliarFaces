@@ -19,7 +19,7 @@ Function CheckVars()
 	TrophyPriority 	= 4
 
 	TrophyType 		= TROPHY_TYPE_OBJECT
-	;TrophySize		= 0
+	TrophySize		= TROPHY_SIZE_SMALL
 	TrophyLoc		= TROPHY_LOC_PLINTHBASE
 	;TrophyExtras	= 0
 EndFunction

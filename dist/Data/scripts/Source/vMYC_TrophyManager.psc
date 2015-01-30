@@ -45,11 +45,16 @@ Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 	Int jTrophy = JMap.Object()
 	JMap.SetStr(jTrophy,"Name",asTrophyName)
 	JMap.SetInt(jTrophy,"Version",kTrophy.TrophyVersion)
-	JMap.SetStr(jTrophy,"Priority",kTrophy.TrophyPriority)
+	JMap.SetInt(jTrophy,"Priority",kTrophy.TrophyPriority)
 	JMap.SetStr(jTrophy,"Source",FFUtils.GetSourceMod(kTrophy))
-	JMap.SetStr(jTrophy,"Flags",kTrophy.TrophyFlags)
+	JMap.SetInt(jTrophy,"Loc",kTrophy.TrophyLoc)
+	JMap.SetInt(jTrophy,"Size",kTrophy.TrophySize)
+	JMap.SetInt(jTrophy,"Type",kTrophy.TrophyType)
+	JMap.SetInt(jTrophy,"Extras",kTrophy.TrophyExtras)
+	JMap.SetInt(jTrophy,"Flags",kTrophy.TrophyFlags)
 	JMap.SetInt(jTrophy,"Enabled",kTrophy.Enabled as Int)
 	SetRegObj("Trophies." + asTrophyName,jTrophy)
+	
 EndEvent
 
 Function SendTrophyManagerReady()
@@ -66,7 +71,9 @@ EndFunction
 
 Function CreatePlacementGrid()
 	Int jTrophies = GetRegObj("Trophies")
-
+	
+	
+	
 	TrophyPlacementMarker = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTrophyPlacementMarker,PlayerREF,5000)
 	Debug.Trace("TrophyPlacementMarker has node TrophyPlinthObjectSmallRCenter " + TrophyPlacementMarker.HasNode("TrophyPlinthObjectSmallRCenter"))
 	Debug.Trace("TrophyPlacementMarker has node TrophyPlinthBaseDecalCenter " + TrophyPlacementMarker.HasNode("TrophyPlinthBaseDecalCenter"))
@@ -98,6 +105,11 @@ Function CreatePlacementGrid()
 	object1.EnableNoWait()
 	object2.EnableNoWait()
 	
+EndFunction
+
+ObjectReference Function GetTrophyOrigin()
+;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
+	Return GetFormFromFile(0x0203051d,"vMYC_MeetYourCharacters.esp") as ObjectReference
 EndFunction
 
 

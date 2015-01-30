@@ -14,15 +14,9 @@ Int				Property	TROPHY_TYPE_SEAL		= 0x00000002		AutoReadOnly Hidden
 Int				Property	TROPHY_TYPE_DECAL		= 0x00000004		AutoReadOnly Hidden
 Int				Property	TROPHY_TYPE_CUSTOM		= 0x00000008		AutoReadOnly Hidden
 
-Int				Property	TROPHY_RADIUS_TINY		= 0x00000000		AutoReadOnly Hidden
-Int				Property	TROPHY_RADIUS_SMALL		= 0x00000001		AutoReadOnly Hidden
-Int				Property	TROPHY_RADIUS_MEDIUM	= 0x00000002		AutoReadOnly Hidden
-Int				Property	TROPHY_RADIUS_LARGE		= 0x00000004		AutoReadOnly Hidden
-Int				Property	TROPHY_RADIUS_HUGE		= 0x00000008		AutoReadOnly Hidden
-
-Int				Property	TROPHY_HEIGHT_SHORT		= 0x00000000		AutoReadOnly Hidden
-Int				Property	TROPHY_HEIGHT_MEDIUM	= 0x00000001		AutoReadOnly Hidden
-Int				Property	TROPHY_HEIGHT_TALL		= 0x00000002		AutoReadOnly Hidden
+Int				Property	TROPHY_SIZE_SMALL		= 0x00000000		AutoReadOnly Hidden
+Int				Property	TROPHY_SIZE_MEDIUM		= 0x00000001		AutoReadOnly Hidden
+Int				Property	TROPHY_SIZE_LARGE		= 0x00000002		AutoReadOnly Hidden
 
 Int				Property	TROPHY_LOC_PLINTH		= 0x00000000		AutoReadOnly Hidden
 Int				Property	TROPHY_LOC_PLINTHBASE	= 0x00000000		AutoReadOnly Hidden
@@ -72,11 +66,33 @@ String[]		Property	TrophyExclusionList				Auto
 Bool			Property	Available			= False		Auto Hidden
 Bool			Property	Enabled				= True		Auto Hidden
 
+ObjectReference	Property	TrophyBaseObject	= None 		Auto
+{The base object that defines the trophy's location in the alcove. If missing, it will be placed at the coordinates defined in the Base value below.}
+
+;The following are used to place the object in absolute terms if a preset position is not being used. The origin is the base of the player statue
+Float			Property	BaseX					= 0.0		Auto
+Float			Property	BaseY					= 0.0		Auto
+Float			Property	BaseZ					= 0.0		Auto
+
+;The following are used to place the object relative to its "base", that is the origin of its position
+Float			Property	OffsetX			= 0.0		Auto
+Float			Property	OffsetY			= 0.0		Auto
+Float			Property	OffsetZ			= 0.0		Auto
+Float			Property	AngleX			= 0.0		Auto
+Float			Property	AngleY			= 0.0		Auto
+Float			Property	AngleZ			= 0.0		Auto
+Float			Property	Scale				= 1.0		Auto
+
+Activator 		Property	vMYC_TrophyEmptyBase			Auto
+{Base Activator to be placed as a base object if none other is defined.}
+
 ;--=== Variables ===--
 
 Int					_TrophyVersion
 
 vMYC_TrophyManager	_TrophyManager
+
+ObjectReference[]	_DisplayedObjects
 
 ;--=== Events/Functions ===--
 
@@ -97,6 +113,10 @@ Event OnInit()
 		Return
 	EndIf
 
+	If !_DisplayedObjects
+		_DisplayedObjects = New ObjectReference[128]
+	EndIf
+	
 	CheckVars()
 	If !TrophyName
 		If IsRunning()
@@ -138,6 +158,8 @@ Function SendRegisterEvent()
 	Else
 		DebugTrace("WARNING: Couldn't send vMYC_TrophyRegister!",1)
 	EndIf
+	Wait(5)
+	_Display()
 EndFunction
 
 Event OnTrophySelfMessage(String asMessage)
@@ -154,7 +176,10 @@ EndFunction
 
 Bool Function _IsAvailable()
 	Bool bIsAvailable = IsAvailable()
-	Return bIsAvailable
+	
+	;FIXME - Always return TRUE for testing!
+	;Return bIsAvailable
+	Return True
 EndFunction
 
 Bool Function IsAvailable()
@@ -185,6 +210,18 @@ EndFunction
 
 Function _Display()
 	DebugTrace("Displaying...")
+	If !vMYC_TrophyEmptyBase
+		vMYC_TrophyEmptyBase = GetFormFromFile(0x0203055F,"vMYC_MeetYourCharacters.esp") as Activator
+	EndIf
+	If !TrophyBaseObject
+		DebugTrace("TrophyBaseObject is not defined! Trophy will be based around absolute coordinates.")
+		ObjectReference kTrophyOrigin = _TrophyManager.GetTrophyOrigin()
+		TrophyBaseObject = kTrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase,abInitiallyDisabled = True)
+		TrophyBaseObject.MoveTo(kTrophyOrigin,BaseX + OffsetX,BaseY + OffsetY,BaseZ + OffsetZ)
+		TrophyBaseObject.SetAngle(AngleX,AngleY,AngleZ)
+		TrophyBaseObject.SetScale(Scale)
+		TrophyBaseObject.Enable(0)
+	EndIf
 	Int iResult = Display()
 	If iResult == 1
 		Enabled = True
@@ -192,6 +229,13 @@ Function _Display()
 	Else
 		DebugTrace("Failed with error " + iResult + "!",1)
 	EndIf
+	Int i = _DisplayedObjects.Length
+	While i > 0
+		i -= 1
+		If _DisplayedObjects[i]
+			_DisplayedObjects[i].EnableNoWait(True)
+		EndIf
+	EndWhile
 EndFunction
 
 Function _Remove()
@@ -217,6 +261,21 @@ EndFunction
 
 Function DoShutdown()
 	UnregisterForUpdate()
+EndFunction
+
+Function PlaceForm(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0)
+	If !akForm
+		Return
+	EndIf
+	Int idx = _DisplayedObjects.Find(None)
+	_DisplayedObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm,abInitiallyDisabled = True)
+	If afOffsetX || afOffsetY || afOffsetZ
+		_DisplayedObjects[idx].MoveTo(TrophyBaseObject,afOffsetX,afOffsetY,afOffsetZ)
+	EndIf
+	If afAngleX || afAngleY || afAngleZ
+		_DisplayedObjects[idx].SetAngle(afAngleX,afAngleY,afAngleZ)
+	EndIf
+	_DisplayedObjects[idx].SetScale(Scale)
 EndFunction
 
 Function SendSelfMessage(String asMessage)

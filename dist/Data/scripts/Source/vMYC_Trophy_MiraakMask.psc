@@ -1,5 +1,5 @@
-Scriptname vMYC_Trophy_ArchMage extends vMYC_TrophyBase
-{Player has become Archmage.}
+Scriptname vMYC_Trophy_MiraakMask extends vMYC_TrophyBase
+{Player has killed Miraak}
 
 ;--=== Imports ===--
 
@@ -10,23 +10,35 @@ Import Game
 
 ;--=== Properties ===--
 
+Static	Property	vMYC_ShrineDLC2MiraakHelm	Auto
+
 ;--=== Variables ===--
 
 ;--=== Events/Functions ===--
 
 Function CheckVars()
-	TrophyName  	= "Archmage of Winterhold College"
-	TrophyPriority 	= 4
+
+	BaseX 		= 	-77.0
+	BaseY 		= 	 21.0
+	BaseZ 		= 	  7.3128
+	AngleX 		= 	-45.8613
+	AngleY 		= 	 23.1461
+	AngleZ 		= 	 23.0
+	Scale 		= 	  1.24
 	
-	TrophyType 		= TROPHY_TYPE_SEAL
-	TrophySize		= TROPHY_SIZE_LARGE
-	TrophyLoc		= TROPHY_LOC_WALLBACK
+	TrophyName  	= "Miraak's Mask"
+	TrophyPriority 	= 2
+	
+	TrophyType 		= TROPHY_TYPE_OBJECT
+	TrophySize		= TROPHY_SIZE_SMALL
+	TrophyLoc		= TROPHY_LOC_PLINTH
 	;TrophyExtras	= 0
+	
 EndFunction
 
 Bool Function IsAvailable()
 {Return true if this trophy is available to the current player.}
-	Quest kGoalQuest = Quest.GetQuest("MG08")
+	Quest kGoalQuest = Quest.GetQuest("DLC2MQ06") ;Only filled if Dragonborn is loaded
 	If kGoalQuest
 		Return kGoalQuest.IsCompleted()
 	EndIf
@@ -35,6 +47,8 @@ EndFunction
 
 Int Function Display()
 {User code for display}
+	PlaceForm(vMYC_ShrineDLC2MiraakHelm)
+	
 	Return 1
 EndFunction
 
