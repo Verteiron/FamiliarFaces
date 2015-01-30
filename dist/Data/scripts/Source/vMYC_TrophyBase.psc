@@ -229,11 +229,17 @@ Function _Display()
 	Else
 		DebugTrace("Failed with error " + iResult + "!",1)
 	EndIf
+	If !TrophyFadeInFXS
+		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
+	EndIf
 	Int i = _DisplayedObjects.Length
 	While i > 0
 		i -= 1
 		If _DisplayedObjects[i]
+			DebugTrace("Found object at index " + i + ": " + _DisplayedObjects[i])
 			_DisplayedObjects[i].EnableNoWait(True)
+			Wait(0.1)
+			TrophyFadeInFXS.Play(_DisplayedObjects[i],1)
 		EndIf
 	EndWhile
 EndFunction
@@ -263,7 +269,14 @@ Function DoShutdown()
 	UnregisterForUpdate()
 EndFunction
 
-Function PlaceForm(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0)
+Function PlaceTemplate(ObjectReference akTemplate)
+	PlaceForm(akTemplate.GetBaseObject(), \
+		akTemplate.GetPositionX(),akTemplate.GetPositionY(),akTemplate.GetPositionZ(), \
+		akTemplate.GetAngleX(),akTemplate.GetAngleY(),akTemplate.GetAngleZ(), \
+		akTemplate.GetScale())
+EndFunction
+
+Function PlaceForm(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
 	If !akForm
 		Return
 	EndIf
@@ -275,7 +288,11 @@ Function PlaceForm(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Fl
 	If afAngleX || afAngleY || afAngleZ
 		_DisplayedObjects[idx].SetAngle(afAngleX,afAngleY,afAngleZ)
 	EndIf
-	_DisplayedObjects[idx].SetScale(Scale)
+	If afScale != 1.0
+		_DisplayedObjects[idx].SetScale(afScale)
+	ElseIf Scale != 1.0
+		_DisplayedObjects[idx].SetScale(Scale)
+	EndIf
 EndFunction
 
 Function SendSelfMessage(String asMessage)

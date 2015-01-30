@@ -20,10 +20,10 @@ Function CheckVars()
 
 	BaseX 		= 	-77.0
 	BaseY 		= 	 21.0
-	BaseZ 		= 	  7.3128
-	AngleX 		= 	-45.8613
-	AngleY 		= 	 23.1461
-	AngleZ 		= 	 23.0
+	BaseZ 		= 	  6.2352
+	AngleX 		= 	-53.7840
+	AngleY 		= 	 18.8350
+	AngleZ 		= 	 13.3018
 	Scale 		= 	  1.24
 	
 	TrophyName  	= "Miraak's Mask"
