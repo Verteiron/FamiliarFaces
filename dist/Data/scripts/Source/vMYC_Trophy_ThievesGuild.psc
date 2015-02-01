@@ -28,7 +28,9 @@ Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Quest kGoalQuest = Quest.GetQuest("TG09")
 	If kGoalQuest
-		Return kGoalQuest.IsCompleted() as Int
+		If kGoalQuest.IsCompleted()
+			Return 1
+		EndIf
 	EndIf
 	Return 0
 EndFunction

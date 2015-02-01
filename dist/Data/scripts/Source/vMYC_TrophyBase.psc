@@ -63,7 +63,7 @@ Int				Property	TrophyVersion					Auto
 String[]		Property	TrophyExclusionList				Auto
 {If this trophy is displayed, prevent these trophies from being displayed. Use with caution!}
 
-Bool			Property	Available			= False		Auto Hidden
+Int				Property	Available			= 0			Auto Hidden
 Bool			Property	Enabled				= True		Auto Hidden
 
 ObjectReference	Property	TrophyBaseObject	= None 		Auto
@@ -105,6 +105,7 @@ Event OnGameReload()
 		Return
 	EndIf
 	RegisterForModEvent("vMYC_TrophyManagerReady","OnTrophyManagerReady")
+	RegisterForModEvent("vMYC_TrophyCheckAvailable","OnTrophyCheckAvailable")
 	RegisterForModEvent("vMYC_TrophySelfMessage" + TrophyName,"OnTrophySelfMessage")
 EndEvent
 
@@ -128,13 +129,14 @@ Event OnInit()
 		SetTrophyFlags(TrophyType,TrophySize,TrophyLoc,TrophyExtras)
 	EndIf
 	RegisterForModEvent("vMYC_TrophyManagerReady","OnTrophyManagerReady")
+	RegisterForModEvent("vMYC_TrophyCheckAvailable","OnTrophyCheckAvailable")
 	RegisterForModEvent("vMYC_TrophySelfMessage" + TrophyName,"OnTrophySelfMessage")
 	DoInit()
 	
 EndEvent
 
 Event OnTrophyManagerReady(Form akSender)
-	Bool bIsAvailable = _IsAvailable()
+	Int iAvailable = _IsAvailable()
 	If !_TrophyManager && akSender as vMYC_TrophyManager
 		_TrophyManager = akSender as vMYC_TrophyManager
 		SendRegisterEvent()
@@ -143,8 +145,8 @@ Event OnTrophyManagerReady(Form akSender)
 	If _TrophyVersion != TrophyVersion 
 		_TrophyVersion = TrophyVersion
 	EndIf
-	If bIsAvailable != Available
-		Available = bIsAvailable
+	If iAvailable != Available
+		Available = iAvailable
 	EndIf
 		
 EndEvent
@@ -162,6 +164,23 @@ Function SendRegisterEvent()
 	_Display()
 EndFunction
 
+Event OnTrophyCheckAvailable(Form akSender)
+	If _TrophyManager
+		SendAvailableEvent(_IsAvailable())
+	EndIf
+EndEvent
+
+Function SendAvailableEvent(Int aiAvailable = 0)
+	Int iHandle = ModEvent.Create("vMYC_TrophyAvailable")
+	If iHandle
+		ModEvent.PushString(iHandle,TrophyName)
+		ModEvent.PushInt(iHandle,aiAvailable)
+		ModEvent.Send(iHandle)
+	Else
+		DebugTrace("WARNING: Couldn't send vMYC_TrophyAvailable!",1)
+	EndIf
+EndFunction
+
 Event OnTrophySelfMessage(String asMessage)
 	
 EndEvent
@@ -177,9 +196,9 @@ EndFunction
 Int Function _IsAvailable()
 	Int iAvailable = IsAvailable()
 	;FIXME - Always return >0 for testing!
-	If !iAvailable
-		iAvailable = 1
-	EndIf
+	;If !iAvailable
+	;	iAvailable = 1
+	;EndIf
 	Return iAvailable
 EndFunction
 

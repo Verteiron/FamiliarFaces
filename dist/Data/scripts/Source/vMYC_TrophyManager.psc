@@ -44,6 +44,7 @@ Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 	vMYC_TrophyBase kTrophy = akTrophyForm as vMYC_TrophyBase
 	Int jTrophy = JMap.Object()
 	JMap.SetStr(jTrophy,"Name",asTrophyName)
+	JMap.SetForm(jTrophy,"Form",kTrophy)
 	JMap.SetInt(jTrophy,"Version",kTrophy.TrophyVersion)
 	JMap.SetInt(jTrophy,"Priority",kTrophy.TrophyPriority)
 	JMap.SetStr(jTrophy,"Source",FFUtils.GetSourceMod(kTrophy))
@@ -67,6 +68,29 @@ Function SendTrophyManagerReady()
 	Else
 		DebugTrace("WARNING! Could not send vMYC_TrophyRegister event!",1)
 	EndIf
+EndFunction
+
+Function UpdateAvailabilityList()
+	DebugTrace("Updating trophy availability...")
+	Int jTrophies = GetRegObj("Trophies")
+	If !jTrophies
+		DebugTrace("WARNING! No trophies found!",1)
+	EndIf
+	Int jTrophyNames = JMap.AllKeys(jTrophies)
+	Int i = JArray.Count(jTrophyNames)
+	While i > 0
+		i -= 1
+		String sTrophyName = JArray.GetStr(jTrophyNames,i)
+		If sTrophyName
+			vMYC_TrophyBase kTrophy = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
+			If kTrophy
+				DebugTrace("Trophy " + sTrophyName + " reports availability of " + kTrophy._IsAvailable())
+				SetSessionInt("Trophies." + sTrophyName,kTrophy._IsAvailable())
+			Else
+				DebugTrace("WARNING! Couldn't find form for " + sTrophyName + "!",1)
+			EndIf
+		EndIf
+	EndWhile
 EndFunction
 
 Function CreatePlacementGrid()
