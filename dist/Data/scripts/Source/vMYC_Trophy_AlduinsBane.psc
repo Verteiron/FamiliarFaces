@@ -25,16 +25,16 @@ Function CheckVars()
 	
 EndFunction
 
-Bool Function IsAvailable()
-{Return true if this trophy is available to the current player.}
+Int Function IsAvailable()
+{Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Quest kGoalQuest = Quest.GetQuest("MQ305")
 	If kGoalQuest
-		Return kGoalQuest.IsCompleted()
+		Return kGoalQuest.IsCompleted() as Int
 	EndIf
-	Return False
+	Return 0
 EndFunction
 
-Int Function Display()
+Int Function Display(Int aiDisplayFlags = 0)
 {User code for display}
 	Return 1
 EndFunction

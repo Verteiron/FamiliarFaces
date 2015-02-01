@@ -174,21 +174,22 @@ Function DoInit()
 	CheckVars()
 EndFunction
 
-Bool Function _IsAvailable()
-	Bool bIsAvailable = IsAvailable()
-	
-	;FIXME - Always return TRUE for testing!
-	;Return bIsAvailable
-	Return True
+Int Function _IsAvailable()
+	Int iAvailable = IsAvailable()
+	;FIXME - Always return >0 for testing!
+	If !iAvailable
+		iAvailable = 1
+	EndIf
+	Return iAvailable
 EndFunction
 
-Bool Function IsAvailable()
-{Return true if this trophy is available to the current player.}
+Int Function IsAvailable()
+{Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 
-	Return False
+	Return 0
 EndFunction
 
-Int Function Display()
+Int Function Display(Int aiDisplayFlags = 0)
 {User code for display}
 	Return 1
 EndFunction

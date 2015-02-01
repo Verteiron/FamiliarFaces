@@ -8,6 +8,10 @@ Import Game
 
 ;=== Constants ===--
 
+Int		TROPHY_DG_CHOSEDAWNGUARD 	= 0x00000001
+Int		TROPHY_DG_CHOSEVAMPIRES 	= 0x00000002
+Int		TROPHY_DG_COMPLETED		 	= 0x00000004
+
 ;--=== Properties ===--
 
 GlobalVariable Property DLC1PlayingVampireLine Auto ; 1 = Vampires, 0 = Dawnguard
@@ -54,26 +58,36 @@ Function CheckVars()
 	;EndIf
 EndFunction
 
-Bool Function IsAvailable()
-{Return true if this trophy is available to the current player.}
-	If DLC1MQ02
-		Return True
+Int Function IsAvailable()
+{Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
+	Int iTrophyFlags = 0
+	If DLC1MQ02.IsCompleted() ; Only handle dawnguard if player is actually doing the questline
+		If DLC1PlayingVampireLine.GetValue() == 1
+			iTrophyFlags += TROPHY_DG_CHOSEVAMPIRES
+		Else
+			iTrophyFlags += TROPHY_DG_CHOSEDAWNGUARD
+		EndIf
+		If DLC1MQ08.IsCompleted()
+			iTrophyFlags += TROPHY_DG_COMPLETED
+		EndIf
 	EndIf
-	Return False
+	Return iTrophyFlags
 EndFunction
 
-Int Function Display()
+Int Function Display(Int aiDisplayFlags = 0)
 {User code for display}
-;	If DLC1MQ02.IsCompleted() ; Only handle dawnguard if player is actually doing the questline
-;		If DLC1PlayingVampireLine.GetValue() == 1
-			PlaceTemplate(TemplateChalice)
-;		Else
-			PlaceTemplate(TemplateCrossbow)
-;		EndIf
-;		If DLC1MQ08.IsCompleted()
-			PlaceTemplate(TemplateSunPedestal)
-;		EndIf
-;	EndIf
+	If !aiDisplayFlags
+		Return 0
+	EndIf
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_CHOSEVAMPIRES)
+		PlaceTemplate(TemplateChalice)
+	EndIf
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_CHOSEDAWNGUARD)
+		PlaceTemplate(TemplateCrossbow)
+	EndIf
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_COMPLETED)
+		PlaceTemplate(TemplateSunPedestal)
+	EndIf
 	Return 1
 EndFunction
 
