@@ -27,6 +27,7 @@ ObjectReference	TrophyPlacementMarker
 
 Event OnInit()
 	If IsRunning()
+		SetRegObj("Trophies",0)
 		RegisterForSingleUpdate(5)
 	EndIf
 EndEvent
@@ -84,8 +85,9 @@ Function UpdateAvailabilityList()
 		If sTrophyName
 			vMYC_TrophyBase kTrophy = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
 			If kTrophy
-				DebugTrace("Trophy " + sTrophyName + " reports availability of " + kTrophy._IsAvailable())
-				SetSessionInt("Trophies." + sTrophyName,kTrophy._IsAvailable())
+				Int iAvailable = kTrophy._IsAvailable()
+				DebugTrace("Trophy " + sTrophyName + " reports availability of " + iAvailable)
+				SetSessionInt("Trophies." + sTrophyName,iAvailable)
 			Else
 				DebugTrace("WARNING! Couldn't find form for " + sTrophyName + "!",1)
 			EndIf

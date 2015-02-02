@@ -26,7 +26,8 @@ Function CheckVars()
 	AngleZ 		= 	 13.3018
 	Scale 		= 	  1.24
 	
-	TrophyName  	= "Miraak's Mask"
+	TrophyName  	= "DLC02"
+	TrophyFullName  = "Miraak's Mask"
 	TrophyPriority 	= 2
 	
 	TrophyType 		= TROPHY_TYPE_OBJECT

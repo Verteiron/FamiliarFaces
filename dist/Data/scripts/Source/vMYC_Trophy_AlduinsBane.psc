@@ -15,7 +15,8 @@ Import Game
 ;--=== Events/Functions ===--
 
 Function CheckVars()
-	TrophyName  	= "Alduin's Bane"
+	TrophyName  	= "AlduinsBane"
+	TrophyFullName  = "Alduin's Bane"
 	TrophyPriority 	= 1
 	
 	TrophyType 		= TROPHY_TYPE_OBJECT

@@ -15,7 +15,9 @@ Import Game
 ;--=== Events/Functions ===--
 
 Function CheckVars()
-	TrophyName  	= "Master of the Thieves Guild"
+	TrophyName  	= "ThievesGuild"
+	TrophyFullName  = "Master of the Thieves Guild"
+	
 	TrophyPriority 	= 4
 
 	TrophyType 		= TROPHY_TYPE_OBJECT

@@ -41,7 +41,10 @@ Activator		Property	TrophyActivator		= None		Auto
 {The trophy activator object. More items can be added by creating additional properties but custom code will be needed in the Display function.}
 
 String			Property	TrophyName			= "Trophy"	Auto
-{Name of the trophy that should be displayed when the player examines it.}
+{Name of the trophy to be used by scripts. Same rules as a Papyrus variable name.}
+
+String			Property	TrophyFullName		= "Demo"	Auto
+{Name of the trophy for display purposes.}
 
 EffectShader	Property	TrophyFadeInFXS		= None		Auto
 {Shader that should play when the trophy first appears.}
@@ -65,6 +68,8 @@ String[]		Property	TrophyExclusionList				Auto
 
 Int				Property	Available			= 0			Auto Hidden
 Bool			Property	Enabled				= True		Auto Hidden
+
+Bool			Property	DoNotRegister		= False		Auto
 
 ObjectReference	Property	TrophyBaseObject	= None 		Auto
 {The base object that defines the trophy's location in the alcove. If missing, it will be placed at the coordinates defined in the Base value below.}
@@ -104,9 +109,7 @@ Event OnGameReload()
 		EndIf
 		Return
 	EndIf
-	RegisterForModEvent("vMYC_TrophyManagerReady","OnTrophyManagerReady")
-	RegisterForModEvent("vMYC_TrophyCheckAvailable","OnTrophyCheckAvailable")
-	RegisterForModEvent("vMYC_TrophySelfMessage" + TrophyName,"OnTrophySelfMessage")
+	RegisterForModEvents()
 EndEvent
 
 Event OnInit()
@@ -128,12 +131,19 @@ Event OnInit()
 	If !TrophyFlags
 		SetTrophyFlags(TrophyType,TrophySize,TrophyLoc,TrophyExtras)
 	EndIf
-	RegisterForModEvent("vMYC_TrophyManagerReady","OnTrophyManagerReady")
-	RegisterForModEvent("vMYC_TrophyCheckAvailable","OnTrophyCheckAvailable")
-	RegisterForModEvent("vMYC_TrophySelfMessage" + TrophyName,"OnTrophySelfMessage")
+	RegisterForModEvents()
 	DoInit()
 	
 EndEvent
+
+Function RegisterForModEvents()
+	If DoNotRegister
+		Return
+	EndIf
+	RegisterForModEvent("vMYC_TrophyManagerReady","OnTrophyManagerReady")
+	RegisterForModEvent("vMYC_TrophyCheckAvailable","OnTrophyCheckAvailable")
+	RegisterForModEvent("vMYC_TrophySelfMessage" + TrophyName,"OnTrophySelfMessage")
+EndFunction
 
 Event OnTrophyManagerReady(Form akSender)
 	Int iAvailable = _IsAvailable()
@@ -160,8 +170,8 @@ Function SendRegisterEvent()
 	Else
 		DebugTrace("WARNING: Couldn't send vMYC_TrophyRegister!",1)
 	EndIf
-	Wait(5)
-	_Display()
+	;Wait(5)
+	;_Display()
 EndFunction
 
 Event OnTrophyCheckAvailable(Form akSender)

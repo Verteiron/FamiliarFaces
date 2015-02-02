@@ -8,9 +8,9 @@ Import Game
 
 ;=== Constants ===--
 
-Int		TROPHY_DG_CHOSEDAWNGUARD 	= 0x00000001
-Int		TROPHY_DG_CHOSEVAMPIRES 	= 0x00000002
-Int		TROPHY_DG_COMPLETED		 	= 0x00000004
+Int		Property	TROPHY_DG_CHOSEDAWNGUARD 	= 0x00000001	AutoReadonly Hidden
+Int		Property	TROPHY_DG_CHOSEVAMPIRES 	= 0x00000002	AutoReadonly Hidden
+Int		Property	TROPHY_DG_COMPLETED		 	= 0x00000004	AutoReadonly Hidden
 
 ;--=== Properties ===--
 
@@ -34,6 +34,7 @@ ObjectReference		Property	TemplateSunPedestal		Auto
 Function CheckVars()
 
 	TrophyName  	= "DLC01"
+	TrophyFullName  = "Dawnguard DLC"
 	TrophyPriority 	= 2
 	
 	TrophyType 		= TROPHY_TYPE_OBJECT
