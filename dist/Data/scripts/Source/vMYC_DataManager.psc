@@ -238,7 +238,7 @@ Function ScanPlayerStats()
 		fAV = AVInfo.GetBaseValue(PlayerREF)
 		If fAV
 			SetSessionFlt("Stats.AV." + sAVName,fAV)
-			DebugTrace("Saved AV " + sAVName + "!")
+			;DebugTrace("Saved AV " + sAVName + "!")
 		EndIf
 		iAdvSkills += 1
 	EndWhile
@@ -263,7 +263,7 @@ Function ScanPlayerStats()
 		EndIf
 		If fAV
 			SetSessionFlt("Stats.AV." + sAVName,fAV)
-			DebugTrace("Saved AV " + sAVName + "!")
+			;DebugTrace("Saved AV " + sAVName + "!")
 		EndIf
 		iAdvSkills += 1
 	EndWhile
@@ -307,7 +307,7 @@ Function ScanPlayerPerks()
 				iAddedCount += 1
 				i += 1
 			EndWhile
-			DebugTrace("Saved " + iPerkCount + " perks in the " + sAVName + " tree!")
+			;DebugTrace("Saved " + iPerkCount + " perks in the " + sAVName + " tree!")
 		EndIf
 		iAdvSkills += 1
 	EndWhile
@@ -493,7 +493,7 @@ Function ScanPlayerSpells()
 		If kSpell
 			bAddItem = True
 			Int iSpellID = kSpell.GetFormID()
-			DebugTrace("Player knows the spell " + kSpell + ", " + kSpell.GetName())
+			;DebugTrace("Player knows the spell " + kSpell + ", " + kSpell.GetName())
 			If bAddItem
 				;vMYC_PlayerFormlist.AddForm(kSpell)
 				JArray.AddForm(jPlayerSpells,kSpell)
@@ -568,7 +568,7 @@ Function ScanPlayerShouts()
 				If Game.IsWordUnlocked(kWord)
 					If iWord == 0 ; 
 						JArray.AddForm(jPlayerShouts,kShout)
-						DebugTrace("Player knows Shout " + sShoutNames[i] + " and has unlocked at least one word of it.")
+						;DebugTrace("Player knows Shout " + sShoutNames[i] + " and has unlocked at least one word of it.")
 						iAddedCount += 1
 					EndIf
 					JValue.SolveIntSetter(jShoutInfo,".UnlockLevel",iWord + 1,True)
@@ -578,7 +578,7 @@ Function ScanPlayerShouts()
 					EndIf
 					JValue.SolveFormSetter(jShoutInfo,".Words." + sWordName + ".Form",kWord,True)
 				EndIf
-				DebugTrace("Word " + iWord + " of " + sShoutNames[i] + " is " + kWord.GetName() + ". Unlocked: " + Game.IsWordUnlocked(kWord))
+				;DebugTrace("Word " + iWord + " of " + sShoutNames[i] + " is " + kWord.GetName() + ". Unlocked: " + Game.IsWordUnlocked(kWord))
 			EndIf
 			iWord += 1
 		EndWhile
@@ -1088,7 +1088,13 @@ Int Function SavePlayerData()
 		SetRegObj(sRegKey + ".NIOverrideData.FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumBodyOverlays()))
 	EndIf
 	StopTimer("NIOverrideData")
-		
+
+	StartTimer("TrophyManagerUpdate")
+	vMYC_TrophyManager TrophyManager = Quest.GetQuest("vMYC_TrophyManagerQuest") as vMYC_TrophyManager
+	TrophyManager.UpdateAvailabilityList()
+	StopTimer("TrophyManagerUpdate")
+	SetRegObj(sRegKey + ".Trophies",GetSessionObj("Trophies"))
+	
 	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) 
 		WaitMenuMode(0.5)
 	EndWhile
@@ -1103,7 +1109,7 @@ EndFunction
 Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form sender)
 	Int iMaxThreads = GetRegInt("Config.Debug.Perf.Threads.Max")
 	If _iThreadCount >= iMaxThreads
-		DebugTrace("Deferring " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
+		;DebugTrace("Deferring " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
 		WaitMenuMode(1)
 		SendModEvent("vMYC_BackgroundFunction",strArg)
 		Return
@@ -1115,7 +1121,7 @@ Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form s
 	EndIf
 	SetSessionBool("Status.Background." + strArg,True)
 	
-	DebugTrace("Backgrounding " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
+	;DebugTrace("Backgrounding " + strArg + ", thread " + _iThreadCount + "/" + iMaxThreads)
 	If strArg == "SavePlayerEquipment"
 		SavePlayerEquipment()
 		_bSavedEquipment = True

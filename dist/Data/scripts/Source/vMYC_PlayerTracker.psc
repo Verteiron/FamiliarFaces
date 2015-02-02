@@ -49,35 +49,35 @@ Event OnUpdate()
 	
 	If !_bRefreshed
 		_bRefreshed = True
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerStats")
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerInventory")
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerNINodeInfo")
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerShouts")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerStats")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerInventory")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerNINodeInfo")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerShouts")
 		SendModEvent("vMYC_TrackerReady")
 		SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
 		SetSessionInt("PerkPoints",GetPerkPoints())
 	EndIf
-	If GetPerkPoints() != GetSessionInt("PerkPoints")
-		_bNeedPerkScan = True
-	EndIf
-	If _bNeedEquipmentScan
-		_bNeedEquipmentScan = False
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
-	EndIf
-	If _bNeedSpellScan
-		_bNeedSpellScan = False
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
-	EndIf
-	If _bNeedPerkScan
-		_bNeedPerkScan = False
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
-	EndIf
-	SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
-	SetSessionInt("PerkPoints",GetPerkPoints())
-
+	;If GetPerkPoints() != GetSessionInt("PerkPoints")
+	;	_bNeedPerkScan = True
+	;EndIf
+	;If _bNeedEquipmentScan
+	;	_bNeedEquipmentScan = False
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
+	;EndIf
+	;If _bNeedSpellScan
+	;	_bNeedSpellScan = False
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
+	;EndIf
+	;If _bNeedPerkScan
+	;	_bNeedPerkScan = False
+	;	SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
+	;EndIf
+	;SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
+	;SetSessionInt("PerkPoints",GetPerkPoints())
+	Busy = False
 	RegisterForSingleUpdate(5)
 ;	JValue.WriteToFile(_jInventory,"Data/vMYC/_PlayerInventory.json")
 EndEvent
