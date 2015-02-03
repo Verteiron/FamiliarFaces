@@ -5,6 +5,7 @@ Scriptname vMYC_TrophyBase extends vMYC_BaseQuest
 
 Import Utility
 Import Game
+Import Math
 
 ;=== Constants ===--
 
@@ -86,16 +87,20 @@ Float			Property	OffsetZ			= 0.0		Auto
 Float			Property	AngleX			= 0.0		Auto
 Float			Property	AngleY			= 0.0		Auto
 Float			Property	AngleZ			= 0.0		Auto
-Float			Property	Scale				= 1.0		Auto
+Float			Property	Scale			= 1.0		Auto
 
-Activator 		Property	vMYC_TrophyEmptyBase			Auto
+Activator 		Property	vMYC_TrophyEmptyBase		Auto
 {Base Activator to be placed as a base object if none other is defined.}
+
+Float			Property	AngleDelta		= 0.0		Auto Hidden
+
+ObjectReference	Property	TrophyOrigin				Auto Hidden
+
+vMYC_TrophyManager	Property	TrophyManager			Auto Hidden
 
 ;--=== Variables ===--
 
 Int					_TrophyVersion
-
-vMYC_TrophyManager	_TrophyManager
 
 ObjectReference[]	_DisplayedObjects
 
@@ -147,8 +152,8 @@ EndFunction
 
 Event OnTrophyManagerReady(Form akSender)
 	Int iAvailable = _IsAvailable()
-	If !_TrophyManager && akSender as vMYC_TrophyManager
-		_TrophyManager = akSender as vMYC_TrophyManager
+	If !TrophyManager && akSender as vMYC_TrophyManager
+		TrophyManager = akSender as vMYC_TrophyManager
 		SendRegisterEvent()
 	EndIf
 
@@ -158,7 +163,6 @@ Event OnTrophyManagerReady(Form akSender)
 	If iAvailable != Available
 		Available = iAvailable
 	EndIf
-		
 EndEvent
 
 Function SendRegisterEvent()
@@ -170,12 +174,13 @@ Function SendRegisterEvent()
 	Else
 		DebugTrace("WARNING: Couldn't send vMYC_TrophyRegister!",1)
 	EndIf
-	;Wait(5)
-	;_Display()
+	TrophyOrigin = TrophyManager.GetTrophyOrigin()
+	Wait(1)
+	_Display()
 EndFunction
 
 Event OnTrophyCheckAvailable(Form akSender)
-	If _TrophyManager
+	If TrophyManager
 		SendAvailableEvent(_IsAvailable())
 	EndIf
 EndEvent
@@ -245,9 +250,8 @@ Function _Display()
 	EndIf
 	If !TrophyBaseObject
 		DebugTrace("TrophyBaseObject is not defined! Trophy will be based around absolute coordinates.")
-		ObjectReference kTrophyOrigin = _TrophyManager.GetTrophyOrigin()
-		TrophyBaseObject = kTrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase,abInitiallyDisabled = True)
-		TrophyBaseObject.MoveTo(kTrophyOrigin,BaseX + OffsetX,BaseY + OffsetY,BaseZ + OffsetZ)
+		TrophyBaseObject = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase,abInitiallyDisabled = True)
+		TrophyBaseObject.MoveTo(TrophyOrigin,BaseX + OffsetX,BaseY + OffsetY,BaseZ + OffsetZ)
 		TrophyBaseObject.SetAngle(AngleX,AngleY,AngleZ)
 		TrophyBaseObject.SetScale(Scale)
 		TrophyBaseObject.Enable(0)
@@ -311,18 +315,37 @@ Function PlaceForm(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Fl
 		Return
 	EndIf
 	Int idx = _DisplayedObjects.Find(None)
-	_DisplayedObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm,abInitiallyDisabled = True)
-	If afOffsetX || afOffsetY || afOffsetZ
-		_DisplayedObjects[idx].MoveTo(TrophyBaseObject,afOffsetX,afOffsetY,afOffsetZ)
-	EndIf
-	If afAngleX || afAngleY || afAngleZ
-		_DisplayedObjects[idx].SetAngle(afAngleX,afAngleY,afAngleZ)
-	EndIf
-	If afScale != 1.0
-		_DisplayedObjects[idx].SetScale(afScale)
-	ElseIf Scale != 1.0
-		_DisplayedObjects[idx].SetScale(Scale)
-	EndIf
+	;_DisplayedObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm,abInitiallyDisabled = True)
+	;
+	;If afOffsetX || afOffsetY || afOffsetZ
+	;	_DisplayedObjects[idx].MoveTo(TrophyBaseObject,afOffsetX,afOffsetY,afOffsetZ)
+	;EndIf
+	;Float[] fRotatedCoords = GetPosXYZRotateAroundRef(TrophyOrigin,_DisplayedObjects[idx],0,0,AngleZ + AngleDelta)
+	;_DisplayedObjects[idx].MoveTo(TrophyOrigin,fRotatedCoords[0],fRotatedCoords[1],fRotatedCoords[2])
+	;_DisplayedObjects[idx].SetAngle(AngleX + afAngleX,AngleY + afAngleY,AngleZ + afAngleZ + AngleDelta)
+	;If afScale != 1.0
+	;	_DisplayedObjects[idx].SetScale(afScale)
+	;ElseIf Scale != 1.0
+	;	_DisplayedObjects[idx].SetScale(Scale)
+	;EndIf
+	
+	;ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, float[] fOriginAng, \
+	;									   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
+	;									   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
+	;									   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
+	;									   bool abIsHanging = false)
+	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,TrophyBaseObject)
+	Float[] fOriginAng = New Float[3]
+	
+	fOriginAng[0] = 0  ;AngleX + afAngleX
+	fOriginAng[1] = 0  ;AngleY + afAngleY
+	fOriginAng[2] = 0  ;AngleZ + afAngleZ + AngleDelta
+	
+	DebugTrace("AngleDelta: " + AngleDelta)
+	
+	_DisplayedObjects[idx] = PlaceAtMeRelative(TrophyOrigin, akForm, fOriginAng, fRelativePos, AngleDelta, AngleX + afAngleX, AngleY + afAngleY, AngleZ + afAngleZ, 0, False, True, True, False)
+	_DisplayedObjects[idx].SetScale(Scale)
+	
 EndFunction
 
 Function SendSelfMessage(String asMessage)
@@ -346,3 +369,138 @@ EndFunction
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	Debug.Trace("MYC/Trophy/" + TrophyName + ": " + sDebugString,iSeverity)
 EndFunction
+
+
+;=== The following functions are blatantly stolen from Chesko. Thanks bud! ===--
+
+float[] function GetPosXYZRotateAroundRef(ObjectReference akOrigin, ObjectReference akObject, float fAngleX, float fAngleY, float fAngleZ)
+
+	;-----------\
+	;Description \ 
+	;----------------------------------------------------------------
+	;Rotates a 3D position (akObject) offset from the center of 
+	;rotation (akOrigin) by the supplied degrees fAngleX, fAngleY,
+	;fAngleZ, and returns the new 3D position of the point.
+	
+	;-------------\
+	;Return Values \
+	;----------------------------------------------------------------
+	;		fNewPos[0]	= 	The new X position of the point
+	;		fNewPos[1]	= 	The new Y position of the point
+	;		fNewPos[2]	= 	The new Z position of the point
+
+	;				|1			0			0		|
+	;Rx(t) = 		|0			cos(t)		-sin(t)	|
+	;				|0			sin(t)		cos(t)	|
+	;
+	;				|cos(t)		0			sin(t)	|
+	;Ry(t) =		|0			1			0		|
+	;				|-sin(t)	0			cos(t)	|
+	;
+	;				|cos(t)		-sin(t)		0		|
+	;Rz(t) = 		|sin(t)		cos(t)		0		|
+	;				|0			0			1		|
+	
+	;R * v = Rv, where R = rotation matrix, v = column vector of point [ x y z ], Rv = column vector of point after rotation
+		
+	fAngleX = -(fAngleX)
+	fAngleY = -(fAngleY)
+	fAngleZ = -(fAngleZ)
+	
+	float myOriginPosX = akOrigin.GetPositionX()
+	float myOriginPosY = akOrigin.GetPositionY()
+	float myOriginPosZ = akOrigin.GetPositionZ()
+	
+	float fInitialX = akObject.GetPositionX() - myOriginPosX
+	float fInitialY = akObject.GetPositionY() - myOriginPosY
+	float fInitialZ = akObject.GetPositionZ() - myOriginPosZ
+	
+	float fNewX
+	float fNewY
+	float fNewZ
+	
+	;Objects in Skyrim are rotated in order of Z, Y, X, so we will do that here as well.
+	
+	;Z-axis rotation matrix
+	float fVectorX = fInitialX
+	float fVectorY = fInitialY
+	float fVectorZ = fInitialZ
+	fNewX = (fVectorX * cos(fAngleZ)) + (fVectorY * sin(-fAngleZ)) + (fVectorZ * 0)
+	fNewY = (fVectorX * sin(fAngleZ)) + (fVectorY * cos(fAngleZ)) + (fVectorZ * 0)
+	fNewZ = (fVectorX * 0) + (fVectorY * 0) + (fVectorZ * 1)	
+	
+	;Y-axis rotation matrix
+	fVectorX = fNewX
+	fVectorY = fNewY
+	fVectorZ = fNewZ
+	fNewX = (fVectorX * cos(fAngleY)) + (fVectorY * 0) + (fVectorZ * sin(fAngleY))
+	fNewY = (fVectorX * 0) + (fVectorY * 1) + (fVectorZ * 0)
+	fNewZ = (fVectorX * sin(-fAngleY)) + (fVectorY * 0) + (fVectorZ * cos(fAngleY))
+	
+	;X-axis rotation matrix
+	fVectorX = fNewX
+	fVectorY = fNewY
+	fVectorZ = fNewZ	
+	fNewX = (fVectorX * 1) + (fVectorY * 0) + (fVectorZ * 0)
+	fNewY = (fVectorX * 0) + (fVectorY * cos(fAngleX)) + (fVectorZ * sin(-fAngleX))
+	fNewZ = (fVectorX * 0) + (fVectorY * sin(fAngleX)) + (fVectorZ * cos(fAngleX))
+	
+	;Return result
+	float[] fNewPos = new float[3]
+	fNewPos[0] = fNewX
+	fNewPos[1] = fNewY
+	fNewPos[2] = fNewZ
+	return fNewPos 
+endFunction
+
+float[] function GetRelativePosition(ObjectReference akOrigin, ObjectReference akObject)
+	float[] myRelativePosition = new float[6]
+	myRelativePosition[0] = akObject.GetPositionX() - akOrigin.GetPositionX()
+	myRelativePosition[1] = akObject.GetPositionY() - akOrigin.GetPositionY()
+	myRelativePosition[2] = akObject.GetPositionZ() - akOrigin.GetPositionZ()
+	myRelativePosition[3] = akObject.GetAngleX()
+	myRelativePosition[4] = akObject.GetAngleY()
+	myRelativePosition[5] = akObject.GetAngleZ()
+	
+	return myRelativePosition
+endFunction
+
+ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, float[] fOriginAng, \
+										   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
+										   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
+										   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
+										   bool abIsHanging = false)
+
+	ObjectReference myObject
+    ObjectReference myTempMarker = akOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
+	myTempMarker.MoveTo(myTempMarker, fRelativePos[0], fRelativePos[1], fRelativePos[2])
+    
+	float[] myNewPos = new float[3]
+    myNewPos = GetPosXYZRotateAroundRef(akOrigin, myTempMarker, fOriginAng[0], fOriginAng[1], fOriginAng[2] + fZGlobalAngAdjust)
+    myTempMarker.MoveTo(akOrigin, myNewPos[0], myNewPos[1], myNewPos[2])
+	
+	if abIsPropped
+		if abInvertedLocalY
+			myTempMarker.SetAngle(fXLocalAngAdjust, -(fOriginAng[2] + fYLocalAngAdjust), fZLocalAngAdjust)
+		else
+			myTempMarker.SetAngle(fXLocalAngAdjust, fOriginAng[2] + fYLocalAngAdjust, fZLocalAngAdjust)
+		endif
+	elseif abIsHanging
+		myTempMarker.MoveTo(myTempMarker, afZOffset = fZHangingOffset)
+		myTempMarker.SetAngle(0.0, 0.0, myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
+	else
+		myTempMarker.SetAngle(myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
+							  myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
+							  myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
+	endif
+	
+	if abInitiallyDisabled
+		myObject = myTempMarker.PlaceAtMe(akFormToPlace, abInitiallyDisabled = true)
+	else
+		myObject = myTempMarker.PlaceAtMe(akFormToPlace)
+	endif
+    
+    myTempMarker.Delete()
+
+    return myObject
+endFunction
