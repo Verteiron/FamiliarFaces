@@ -102,7 +102,11 @@ vMYC_TrophyManager	Property	TrophyManager			Auto Hidden
 
 Int					_TrophyVersion
 
+Int[]				_TemplatesToDisplay
+
 ObjectReference[]	_DisplayedObjects
+
+ObjectReference[]	_TemplateObjects
 
 ;--=== Events/Functions ===--
 
@@ -124,6 +128,14 @@ Event OnInit()
 
 	If !_DisplayedObjects
 		_DisplayedObjects = New ObjectReference[128]
+	EndIf
+
+	If !_TemplateObjects
+		_TemplateObjects = New ObjectReference[128]
+	EndIf
+
+	If !_TemplatesToDisplay
+		_TemplatesToDisplay = New Int[16]
 	EndIf
 	
 	CheckVars()
@@ -175,8 +187,21 @@ Function SendRegisterEvent()
 		DebugTrace("WARNING: Couldn't send vMYC_TrophyRegister!",1)
 	EndIf
 	TrophyOrigin = TrophyManager.GetTrophyOrigin()
+	If !vMYC_TrophyEmptyBase
+		vMYC_TrophyEmptyBase = GetFormFromFile(0x0203055F,"vMYC_MeetYourCharacters.esp") as Activator
+	EndIf
 	Wait(1)
-	_Display()
+	_CreateTemplates()
+	If TrophyName == "DLC02"
+		ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
+		Int i = 0
+		While i < 360
+			newOrigin.SetAngle(0,0,i)
+			_DisplayedObjects = New ObjectReference[128]
+			_Display(newOrigin,1)
+			i += 30
+		EndWhile
+	EndIf
 EndFunction
 
 Event OnTrophyCheckAvailable(Form akSender)
@@ -205,7 +230,7 @@ Event OnUpdate()
 EndEvent
 
 Function DoInit()
-	CheckVars()
+	
 EndFunction
 
 Int Function _IsAvailable()
@@ -223,10 +248,10 @@ Int Function IsAvailable()
 	Return 0
 EndFunction
 
-Int Function Display(Int aiDisplayFlags = 0)
+Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
-	Return 1
-EndFunction
+	
+EndEvent
 
 Int Function Remove()
 {User code for hide}
@@ -243,58 +268,6 @@ Int Function ActivateTrophy()
 	Return 1
 EndFunction
 
-Function _Display()
-	DebugTrace("Displaying...")
-	If !vMYC_TrophyEmptyBase
-		vMYC_TrophyEmptyBase = GetFormFromFile(0x0203055F,"vMYC_MeetYourCharacters.esp") as Activator
-	EndIf
-	If !TrophyBaseObject
-		DebugTrace("TrophyBaseObject is not defined! Trophy will be based around absolute coordinates.")
-		TrophyBaseObject = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase,abInitiallyDisabled = True)
-		TrophyBaseObject.MoveTo(TrophyOrigin,BaseX + OffsetX,BaseY + OffsetY,BaseZ + OffsetZ)
-		TrophyBaseObject.SetAngle(AngleX,AngleY,AngleZ)
-		TrophyBaseObject.SetScale(Scale)
-		TrophyBaseObject.Enable(0)
-	EndIf
-	Int iResult = Display()
-	If iResult == 1
-		Enabled = True
-		DebugTrace("Succeeded!")
-	Else
-		DebugTrace("Failed with error " + iResult + "!",1)
-	EndIf
-	If !TrophyFadeInFXS
-		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
-	EndIf
-	Int i = _DisplayedObjects.Length
-	While i > 0
-		i -= 1
-		If _DisplayedObjects[i]
-			DebugTrace("Found object at index " + i + ": " + _DisplayedObjects[i])
-			_DisplayedObjects[i].EnableNoWait(True)
-			Wait(0.1)
-			TrophyFadeInFXS.Play(_DisplayedObjects[i],1)
-		EndIf
-	EndWhile
-EndFunction
-
-Function _Remove()
-	DebugTrace("Hiding...")
-	Int iResult = Remove()
-	If iResult == 1
-		Enabled = False
-	Else
-		DebugTrace("Failed with error " + iResult + "!",1)
-	EndIf
-EndFunction
-
-Int Function _ActivateTrophy()
-	DebugTrace("Activating...")
-	Int iResult = ActivateTrophy()
-	
-	Return 1
-EndFunction
-
 Function CheckVars()
 
 EndFunction
@@ -303,49 +276,31 @@ Function DoShutdown()
 	UnregisterForUpdate()
 EndFunction
 
-Function PlaceTemplate(ObjectReference akTemplate)
-	PlaceForm(akTemplate.GetBaseObject(), \
-		akTemplate.GetPositionX(),akTemplate.GetPositionY(),akTemplate.GetPositionZ(), \
-		akTemplate.GetAngleX(),akTemplate.GetAngleY(),akTemplate.GetAngleZ(), \
-		akTemplate.GetScale())
+Event OnSetTemplate()
+	;User event
+EndEvent
+
+Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
+	Int idx = _TemplateObjects.Find(None)
+	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm)
+	If afOffsetX || afOffsetY || afOffsetZ
+		_TemplateObjects[idx].MoveTo(TrophyBaseObject)
+	EndIf
+	If afAngleX || afAngleY || afAngleZ
+		_TemplateObjects[idx].SetAngle(AngleX + afAngleX, AngleY + afAngleY, AngleZ + afAngleZ)
+	EndIf
+	If afScale
+		_TemplateObjects[idx].SetScale(afScale)
+	ElseIf Scale != 1
+		_TemplateObjects[idx].SetScale(Scale)
+	EndIf
+	Return idx
 EndFunction
 
-Function PlaceForm(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
-	If !akForm
-		Return
-	EndIf
-	Int idx = _DisplayedObjects.Find(None)
-	;_DisplayedObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm,abInitiallyDisabled = True)
-	;
-	;If afOffsetX || afOffsetY || afOffsetZ
-	;	_DisplayedObjects[idx].MoveTo(TrophyBaseObject,afOffsetX,afOffsetY,afOffsetZ)
-	;EndIf
-	;Float[] fRotatedCoords = GetPosXYZRotateAroundRef(TrophyOrigin,_DisplayedObjects[idx],0,0,AngleZ + AngleDelta)
-	;_DisplayedObjects[idx].MoveTo(TrophyOrigin,fRotatedCoords[0],fRotatedCoords[1],fRotatedCoords[2])
-	;_DisplayedObjects[idx].SetAngle(AngleX + afAngleX,AngleY + afAngleY,AngleZ + afAngleZ + AngleDelta)
-	;If afScale != 1.0
-	;	_DisplayedObjects[idx].SetScale(afScale)
-	;ElseIf Scale != 1.0
-	;	_DisplayedObjects[idx].SetScale(Scale)
-	;EndIf
-	
-	;ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, float[] fOriginAng, \
-	;									   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
-	;									   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
-	;									   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
-	;									   bool abIsHanging = false)
-	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,TrophyBaseObject)
-	Float[] fOriginAng = New Float[3]
-	
-	fOriginAng[0] = 0  ;AngleX + afAngleX
-	fOriginAng[1] = 0  ;AngleY + afAngleY
-	fOriginAng[2] = 0  ;AngleZ + afAngleZ + AngleDelta
-	
-	DebugTrace("AngleDelta: " + AngleDelta)
-	
-	_DisplayedObjects[idx] = PlaceAtMeRelative(TrophyOrigin, akForm, fOriginAng, fRelativePos, AngleDelta, AngleX + afAngleX, AngleY + afAngleY, AngleZ + afAngleZ, 0, False, True, True, False)
-	_DisplayedObjects[idx].SetScale(Scale)
-	
+Int Function SetTemplate(ObjectReference akTargetObject)
+	Int idx = _TemplateObjects.Find(None)
+	_TemplateObjects[idx] = akTargetObject
+	Return idx
 EndFunction
 
 Function SendSelfMessage(String asMessage)
@@ -366,9 +321,114 @@ Function SetTrophyFlags(Int aiTrophyType, Int aiTrophySize, Int aiTrophyLocation
 	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyExtras,24))
 EndFunction
 
+Function DisplayForm(Int aiTemplateID)
+	Int idx = _TemplatesToDisplay.Find(0)
+	_TemplatesToDisplay[idx] = aiTemplateID
+EndFunction
+
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	Debug.Trace("MYC/Trophy/" + TrophyName + ": " + sDebugString,iSeverity)
 EndFunction
+
+Function _CreateTemplates()
+	If !TrophyBaseObject
+		TrophyBaseObject = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase, abInitiallyDisabled = True)
+		TrophyBaseObject.MoveTo(TrophyOrigin,BaseX,BaseY,BaseZ)
+		TrophyBaseObject.SetAngle(AngleX,AngleY,AngleZ)
+		TrophyBaseObject.SetScale(Scale)
+	EndIf
+	If !_TemplateObjects[0]
+		_TemplateObjects[0] = TrophyBaseObject
+	EndIf
+	OnSetTemplate()
+EndFunction
+
+Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
+	If !akTarget
+		akTarget = TrophyManager.GetTrophyOrigin()
+	EndIf
+	_TemplatesToDisplay = New Int[16]
+	DebugTrace("Displaying...")
+	If !TrophyBaseObject
+		DebugTrace("WARNING! TrophyBaseObject not set, terrible things are about to happen :(",1)
+	EndIf
+	OnDisplayTrophy(aiTrophyFlags)
+	If !TrophyFadeInFXS
+		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
+	EndIf
+	Int i = 0
+	Int iLen = _TemplatesToDisplay.Length
+	DebugTrace("TemplatesToDisplay: " + iLen)
+	While i < iLen && _TemplatesToDisplay[i]
+		Int idx = _TemplatesToDisplay[i]
+		If _TemplateObjects[idx]
+			If _TemplateObjects[idx].GetBaseObject()
+				_DisplayObject(akTarget,_TemplateObjects[idx])
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	
+	i = 0
+	iLen = _DisplayedObjects.Length
+	DebugTrace("DisplayedObjects: " + iLen)
+	While i < iLen && _DisplayedObjects[i]
+		If !_DisplayedObjects[i].IsEnabled()
+			DebugTrace("Enabling " + _DisplayedObjects[i] + "!")
+			_DisplayedObjects[i].EnableNoWait(True)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
+	;ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, float[] fOriginAng, \
+	;									   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
+	;									   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
+	;									   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
+	;									   bool abIsHanging = false)
+	
+	DebugTrace("_DisplayObject(" + akTarget + ", " + akTemplate + ")")
+	
+	Int idx = _DisplayedObjects.Find(None)
+	
+	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,akTemplate)
+	Float[] fOriginAng = New Float[3]
+	Float[] fObjectAng = New Float[3]
+
+	fOriginAng[0] = 0 ;akTarget.GetAngleX()
+	fOriginAng[1] = 0 ;akTarget.GetAngleY()
+	fOriginAng[2] = akTarget.GetAngleZ() ;akTarget.GetAngleZ()
+
+	fObjectAng[0] = akTemplate.GetAngleX()
+	fObjectAng[1] = akTemplate.GetAngleY()
+	fObjectAng[2] = akTemplate.GetAngleZ()
+	
+	_DisplayedObjects[idx] = PlaceAtMeRelative(TrophyOrigin, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, False, False, False, False)
+	_DisplayedObjects[idx].SetScale(Scale)
+	;RotateLocal(_DisplayedObjects[idx],0,0,akTarget.GetAngleZ())
+EndFunction
+
+Function _Remove()
+	DebugTrace("Hiding...")
+	Int iResult = Remove()
+	If iResult == 1
+		Enabled = False
+	Else
+		DebugTrace("Failed with error " + iResult + "!",1)
+	EndIf
+EndFunction
+
+Int Function _ActivateTrophy()
+	DebugTrace("Activating...")
+	Int iResult = ActivateTrophy()
+	
+	Return 1
+EndFunction
+
+
+
+
 
 
 ;=== The following functions are blatantly stolen from Chesko. Thanks bud! ===--
@@ -471,6 +531,7 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 										   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
 										   bool abIsHanging = false)
 
+
 	ObjectReference myObject
     ObjectReference myTempMarker = akOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
 	myTempMarker.MoveTo(myTempMarker, fRelativePos[0], fRelativePos[1], fRelativePos[2])
@@ -489,9 +550,20 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 		myTempMarker.MoveTo(myTempMarker, afZOffset = fZHangingOffset)
 		myTempMarker.SetAngle(0.0, 0.0, myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
 	else
-		myTempMarker.SetAngle(myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
-							  myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
-							  myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
+		;Float fSumAngleX = myTempMarker.GetAngleX() + fRelativePos[3] 
+		;Float fSumAngleY = myTempMarker.GetAngleY() + fRelativePos[4]
+		;Float fSumAngleZ = myTempMarker.GetAngleZ() + fRelativePos[5]
+	    ;
+		;Float fLocAngleX = fSumAngleX * Math.Cos(fSumAngleZ) + fSumAngleY * Math.Sin(fSumAngleZ)
+		;Float fLocAngleY = fSumAngleY * Math.Cos(fSumAngleZ) - fSumAngleX * Math.Sin(fSumAngleZ)
+		;Float fLocAngleZ = akObject.SetAngle(fAngleX, fAngleY,fSumAngleZ)
+	
+		SetLocalAngle(myTempMarker,myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
+						myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
+						myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
+		;myTempMarker.SetAngle(myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
+		;					  myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
+		;					  myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
 	endif
 	
 	if abInitiallyDisabled
@@ -504,3 +576,24 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 
     return myObject
 endFunction
+
+Function SetLocalAngle(ObjectReference MyObject, Float afLocalX, Float afLocalY, Float afLocalZ) Global
+	float fAngleX = afLocalX * Math.Cos(afLocalZ) + afLocalY * Math.Sin(afLocalZ)
+	float fAngleY = afLocalY * Math.Cos(afLocalZ) - afLocalX * Math.Sin(afLocalZ)
+	MyObject.SetAngle(fAngleX, fAngleY, afLocalZ)
+EndFunction
+
+Int[] Function RotateLocal(ObjectReference akObject, Float afAngleX, Float afAngleY, Float afAngleZ) Global
+	Float fOAngleX = akObject.GetAngleX()
+	Float fOAngleY = akObject.GetAngleY()
+	Float fOAngleZ = akObject.GetAngleZ()
+	
+	afAngleX += fOAngleX
+	afAngleY += fOAngleY
+	afAngleZ += fOAngleZ
+	
+	Float fAngleX = afAngleX * Math.Cos(afAngleZ) + afAngleY * Math.Sin(afAngleZ)
+	Float fAngleY = afAngleY * Math.Cos(afAngleZ) - afAngleX * Math.Sin(afAngleZ)
+	akObject.SetAngle(fAngleX, fAngleY,afAngleZ)
+EndFunction
+
