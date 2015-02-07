@@ -14,7 +14,7 @@ Import Game
 
 ;--=== Events/Functions ===--
 
-Function CheckVars()
+Event OnTrophyInit()
 
 	TrophyName  	= "Bard"
 	TrophyFullName  = "Bard"
@@ -25,7 +25,7 @@ Function CheckVars()
 	TrophyLoc		= TROPHY_LOC_PLINTHBASE
 	;TrophyExtras	= 0
 	
-EndFunction
+EndEvent
 
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
@@ -36,11 +36,10 @@ Int Function IsAvailable()
 	Return 0
 EndFunction
 
-Int Function Display(Int aiDisplayFlags = 0)
+Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
 	
-	Return 1
-EndFunction
+EndEvent
 
 Int Function Remove()
 {User code for hide}

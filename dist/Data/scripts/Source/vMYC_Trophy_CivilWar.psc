@@ -25,7 +25,7 @@ GlobalVariable	Property	CWPlayerAllegiance						Auto
 
 ;--=== Events/Functions ===--
 
-Function CheckVars()
+Event OnTrophyInit()
 
 	TrophyName  	= "CivilWar"
 	TrophyFullName  = "Civil War"
@@ -36,7 +36,7 @@ Function CheckVars()
 	TrophyLoc		= TROPHY_LOC_WALLBACK
 	;TrophyExtras	= 0
 	
-EndFunction
+EndEvent
 
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
@@ -70,7 +70,7 @@ Int Function IsAvailable()
 	Return iTrophyFlags
 EndFunction
 
-Int Function Display(Int aiDisplayFlags = 0)
+Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
 	
 	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
@@ -79,8 +79,7 @@ Int Function Display(Int aiDisplayFlags = 0)
 	;Otherwise, display the usual trophy
 	
 	
-	Return 1
-EndFunction
+EndEvent
 
 Int Function Remove()
 {User code for hide}

@@ -14,7 +14,7 @@ Import Game
 
 ;--=== Events/Functions ===--
 
-Function CheckVars()
+Event OnTrophyInit()
 
 	TrophyName  	= "DarkBrotherhood"
 	TrophyFullName  = "Dark Brotherhood"
@@ -25,7 +25,7 @@ Function CheckVars()
 	TrophyLoc		= TROPHY_LOC_PLINTH
 	;TrophyExtras	= 0
 	
-EndFunction
+EndEvent
 
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
@@ -47,7 +47,7 @@ Int Function IsAvailable()
 	Return 0
 EndFunction
 
-Int Function Display(Int aiDisplayFlags = 0)
+Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
 	
 	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
@@ -56,8 +56,7 @@ Int Function Display(Int aiDisplayFlags = 0)
 	;Otherwise, display the usual trophy
 	
 	
-	Return 1
-EndFunction
+EndEvent
 
 Int Function Remove()
 {User code for hide}

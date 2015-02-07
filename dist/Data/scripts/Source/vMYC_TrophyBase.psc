@@ -89,6 +89,9 @@ Float			Property	AngleY			= 0.0		Auto
 Float			Property	AngleZ			= 0.0		Auto
 Float			Property	Scale			= 1.0		Auto
 
+Bool			Property	LocalRotation	= False		Auto 
+{Use this if your object isn't getting rotated correctly!}
+
 Activator 		Property	vMYC_TrophyEmptyBase		Auto
 {Base Activator to be placed as a base object if none other is defined.}
 
@@ -198,7 +201,22 @@ Function SendRegisterEvent()
 		While i < 360
 			newOrigin.SetAngle(0,0,i)
 			_DisplayedObjects = New ObjectReference[128]
-			_Display(newOrigin,1)
+			_Display(newOrigin,7)
+			i += 30
+		EndWhile
+	EndIf
+	If TrophyName == "DLC01" || TrophyName == "DLC02"
+		ObjectReference newOrigin = TrophyManager.GetTrophyOffsetOrigin()
+		_DisplayedObjects = New ObjectReference[128]
+		_Display(newOrigin,7)
+	EndIf
+	If TrophyName == "DLC01"
+		ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
+		Int i = 0
+		While i < 360
+			newOrigin.SetAngle(0,0,i)
+			_DisplayedObjects = New ObjectReference[128]
+			_Display(newOrigin,7)
 			i += 30
 		EndWhile
 	EndIf
@@ -229,8 +247,12 @@ Event OnUpdate()
 	
 EndEvent
 
+Event OnTrophyInit()
+
+EndEvent
+
 Function DoInit()
-	
+	OnTrophyInit()
 EndFunction
 
 Int Function _IsAvailable()
@@ -282,9 +304,9 @@ EndEvent
 
 Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
 	Int idx = _TemplateObjects.Find(None)
-	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm)
+	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm,abInitiallyDisabled = True)
 	If afOffsetX || afOffsetY || afOffsetZ
-		_TemplateObjects[idx].MoveTo(TrophyBaseObject)
+		_TemplateObjects[idx].MoveTo(TrophyBaseObject,afOffsetX,afOffsetY,afOffsetZ)
 	EndIf
 	If afAngleX || afAngleY || afAngleZ
 		_TemplateObjects[idx].SetAngle(AngleX + afAngleX, AngleY + afAngleY, AngleZ + afAngleZ)
@@ -294,12 +316,14 @@ Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY 
 	ElseIf Scale != 1
 		_TemplateObjects[idx].SetScale(Scale)
 	EndIf
+	_TemplateObjects[idx].EnableNoWait(False)
 	Return idx
 EndFunction
 
 Int Function SetTemplate(ObjectReference akTargetObject)
 	Int idx = _TemplateObjects.Find(None)
 	_TemplateObjects[idx] = akTargetObject
+	akTargetObject.EnableNoWait(False)
 	Return idx
 EndFunction
 
@@ -386,7 +410,7 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	;									   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
 	;									   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
 	;									   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
-	;									   bool abIsHanging = false)
+	;									   bool abIsHanging = false, bool abUseLocalRotation = false)
 	
 	DebugTrace("_DisplayObject(" + akTarget + ", " + akTemplate + ")")
 	
@@ -394,18 +418,22 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	
 	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,akTemplate)
 	Float[] fOriginAng = New Float[3]
-	Float[] fObjectAng = New Float[3]
+	;Float[] fObjectAng = New Float[3]
 
 	fOriginAng[0] = 0 ;akTarget.GetAngleX()
 	fOriginAng[1] = 0 ;akTarget.GetAngleY()
 	fOriginAng[2] = akTarget.GetAngleZ() ;akTarget.GetAngleZ()
 
-	fObjectAng[0] = akTemplate.GetAngleX()
-	fObjectAng[1] = akTemplate.GetAngleY()
-	fObjectAng[2] = akTemplate.GetAngleZ()
-	
-	_DisplayedObjects[idx] = PlaceAtMeRelative(TrophyOrigin, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, False, False, False, False)
-	_DisplayedObjects[idx].SetScale(Scale)
+	;fObjectAng[0] = akTemplate.GetAngleX()
+	;fObjectAng[1] = akTemplate.GetAngleY()
+	;fObjectAng[2] = akTemplate.GetAngleZ()
+
+	If LocalRotation
+		_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, false, false, false, LocalRotation)
+	Else
+		_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
+	EndIf
+	_DisplayedObjects[idx].SetScale(akTemplate.GetScale())
 	;RotateLocal(_DisplayedObjects[idx],0,0,akTarget.GetAngleZ())
 EndFunction
 
@@ -529,7 +557,7 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 										   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
 										   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
 										   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
-										   bool abIsHanging = false)
+										   bool abIsHanging = false, bool abUseSetLocal = false)
 
 
 	ObjectReference myObject
@@ -550,20 +578,33 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 		myTempMarker.MoveTo(myTempMarker, afZOffset = fZHangingOffset)
 		myTempMarker.SetAngle(0.0, 0.0, myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
 	else
-		;Float fSumAngleX = myTempMarker.GetAngleX() + fRelativePos[3] 
-		;Float fSumAngleY = myTempMarker.GetAngleY() + fRelativePos[4]
-		;Float fSumAngleZ = myTempMarker.GetAngleZ() + fRelativePos[5]
-	    ;
-		;Float fLocAngleX = fSumAngleX * Math.Cos(fSumAngleZ) + fSumAngleY * Math.Sin(fSumAngleZ)
-		;Float fLocAngleY = fSumAngleY * Math.Cos(fSumAngleZ) - fSumAngleX * Math.Sin(fSumAngleZ)
-		;Float fLocAngleZ = akObject.SetAngle(fAngleX, fAngleY,fSumAngleZ)
-	
-		SetLocalAngle(myTempMarker,myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
-						myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
-						myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
-		;myTempMarker.SetAngle(myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
-		;					  myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
-		;					  myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
+		if abUseSetLocal
+			;Float fOAngleX = fRelativePos[3]
+			;Float fOAngleY = fRelativePos[4]
+			;Float fOAngleZ = fRelativePos[5]
+
+			fXLocalAngAdjust += fRelativePos[3]
+			fYLocalAngAdjust += fRelativePos[4]
+			
+			DebugTrace("akObject is at AngleX:\t" + fRelativePos[3] + ", AngleY:\t" + fRelativePos[4] + ", AngleZ:\t" + fRelativePos[5] + "!")
+			DebugTrace("akObject will be rotated by: X:\t" + fRelativePos[3] + ", Y:\t" + fYLocalAngAdjust + ", Z:\t" + fZLocalAngAdjust + "!")
+			float fAngleX = fRelativePos[3] * Math.Cos(fZLocalAngAdjust) + fYLocalAngAdjust * Math.Sin(fZLocalAngAdjust)
+			float fAngleY = fYLocalAngAdjust * Math.Cos(fZLocalAngAdjust) - fRelativePos[3] * Math.Sin(fZLocalAngAdjust)
+			DebugTrace("akObject's new angle will be: X:\t" + fAngleX + ", Y:\t" + fAngleY + ", Z:\t" + (fRelativePos[5] + fZLocalAngAdjust) + "!")
+			myTempMarker.SetAngle(fAngleX, fAngleY, fRelativePos[5] + fZLocalAngAdjust)
+		
+			;myTempMarker.SetAngle(fRelativePos[3], \
+			;					fRelativePos[4], \
+			;					fRelativePos[5])
+			;SetLocalAngle(myTempMarker,fRelativePos[3] + fXLocalAngAdjust, \
+			;					fRelativePos[4] + fYLocalAngAdjust, \
+			;					fRelativePos[5] + fZLocalAngAdjust)
+			;RotateLocal(myTempMarker, fXLocalAngAdjust, fYLocalAngAdjust, fZLocalAngAdjust)
+		else
+			myTempMarker.SetAngle(myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
+								myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \
+								myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
+		endif
 	endif
 	
 	if abInitiallyDisabled
@@ -577,23 +618,35 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
     return myObject
 endFunction
 
-Function SetLocalAngle(ObjectReference MyObject, Float afLocalX, Float afLocalY, Float afLocalZ) Global
-	float fAngleX = afLocalX * Math.Cos(afLocalZ) + afLocalY * Math.Sin(afLocalZ)
-	float fAngleY = afLocalY * Math.Cos(afLocalZ) - afLocalX * Math.Sin(afLocalZ)
-	MyObject.SetAngle(fAngleX, fAngleY, afLocalZ)
-EndFunction
-
-Int[] Function RotateLocal(ObjectReference akObject, Float afAngleX, Float afAngleY, Float afAngleZ) Global
+Function SetLocalAngle(ObjectReference akObject, Float afLocalX, Float afLocalY, Float afLocalZ)
 	Float fOAngleX = akObject.GetAngleX()
 	Float fOAngleY = akObject.GetAngleY()
 	Float fOAngleZ = akObject.GetAngleZ()
-	
+
+	DebugTrace("akObject is at AngleX:\t" + fOAngleX + ", AngleY:\t" + fOAngleY + ", AngleZ:\t" + fOAngleZ + "!")
+	DebugTrace("akObject will be rotated by: X:\t" + afLocalX + ", Y:\t" + afLocalY + ", Z:\t" + afLocalZ + "!")
+	float fAngleX = afLocalX * Math.Cos(afLocalZ) + afLocalY * Math.Sin(afLocalZ)
+	float fAngleY = afLocalY * Math.Cos(afLocalZ) - afLocalX * Math.Sin(afLocalZ)
+	DebugTrace("akObject's new angle will be: X:\t" + fAngleX + ", Y:\t" + fAngleY + ", Z:\t" + (afLocalZ) + "!")
+	akObject.SetAngle(fAngleX, fAngleY, afLocalZ)
+EndFunction
+
+Int[] Function RotateLocal(ObjectReference akObject, Float afAngleX, Float afAngleY, Float afAngleZ) 
+	Float fOAngleX = akObject.GetAngleX()
+	Float fOAngleY = akObject.GetAngleY()
+	Float fOAngleZ = akObject.GetAngleZ()
+
+	DebugTrace("akObject is at AngleX:\t" + fOAngleX + ", AngleY:\t" + fOAngleY + ", AngleZ:\t" + fOAngleZ + "!")
+	DebugTrace("akObject will be rotated by: X:\t" + afAngleX + ", Y:\t" + afAngleY + ", Z:\t" + afAngleZ + "!")
 	afAngleX += fOAngleX
 	afAngleY += fOAngleY
-	afAngleZ += fOAngleZ
+	;afAngleZ += fOAngleZ
+	
+	DebugTrace("akObject's angle sum is: X:\t" + afAngleX + ", Y:\t" + afAngleY + ", Z:\t" + afAngleZ + "!")
 	
 	Float fAngleX = afAngleX * Math.Cos(afAngleZ) + afAngleY * Math.Sin(afAngleZ)
 	Float fAngleY = afAngleY * Math.Cos(afAngleZ) - afAngleX * Math.Sin(afAngleZ)
-	akObject.SetAngle(fAngleX, fAngleY,afAngleZ)
+	DebugTrace("akObject's new angle will be: X:\t" + fAngleX + ", Y:\t" + fAngleY + ", Z:\t" + (fOAngleZ + afAngleZ) + "!")
+	akObject.SetAngle(fAngleX, fAngleY, fOAngleZ + afAngleZ)
 EndFunction
 

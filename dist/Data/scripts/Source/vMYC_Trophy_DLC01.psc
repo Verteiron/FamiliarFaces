@@ -29,10 +29,14 @@ ObjectReference		Property	TemplateSunPedestal		Auto
 
 ;--=== Variables ===--
 
+Int		_iChoseDawnguardTrophyID
+Int		_iChoseVampiresTrophyID
+Int		_iCompletionTrophyID
+
 ;--=== Events/Functions ===--
 
-Function CheckVars()
-
+Event OnTrophyInit()
+{Set properties, do anything else that needs doing at startup.}
 	TrophyName  	= "DLC01"
 	TrophyFullName  = "Dawnguard DLC"
 	TrophyPriority 	= 2
@@ -49,17 +53,30 @@ Function CheckVars()
 		DebugTrace("DLC1VQ02 is " + DLC1VQ02 + "!")
 		DebugTrace("DLC1VQ08 is " + DLC1VQ08 + "!")
 	EndIf
+EndEvent
+
+Event OnSetTemplate()
+	_iChoseDawnguardTrophyID = SetTemplate(TemplateCrossbow)
+	_iChoseVampiresTrophyID = SetTemplate(TemplateChalice)
+	_iCompletionTrophyID = SetTemplate(TemplateSunPedestal)
+EndEvent
+
+Event OnDisplayTrophy(Int aiDisplayFlags)
+{User code for display}
+	If !aiDisplayFlags
+		Return
+	EndIf
 	
-	;If !vMYC_ShrineDLC1ChaliceBlood
-	;	vMYC_ShrineDLC1ChaliceBlood = ChaliceObj.GetBaseObject() as Static
-	;EndIf
-	;If !vMYC_ShrineDLC1Crossbow
-	;	vMYC_ShrineDLC1Crossbow = CrossbowObj.GetBaseObject() as Static
-	;EndIf
-	;If !vMYC_ShrineDLC1SunPedestal
-	;	vMYC_ShrineDLC1SunPedestal = SunPedestalObj.GetBaseObject() as Static
-	;EndIf
-EndFunction
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_CHOSEVAMPIRES)
+		DisplayForm(_iChoseVampiresTrophyID)
+	EndIf
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_CHOSEDAWNGUARD)
+		DisplayForm(_iChoseDawnguardTrophyID)
+	EndIf
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_COMPLETED)
+		DisplayForm(_iCompletionTrophyID)
+	EndIf
+EndEvent
 
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
@@ -78,31 +95,4 @@ Int Function IsAvailable()
 		EndIf
 	EndIf
 	Return iTrophyFlags
-EndFunction
-
-Int Function Display(Int aiDisplayFlags = 0)
-{User code for display}
-	If !aiDisplayFlags
-		Return 0
-	EndIf
-	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_CHOSEVAMPIRES)
-		PlaceTemplate(TemplateChalice)
-	EndIf
-	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_CHOSEDAWNGUARD)
-		PlaceTemplate(TemplateCrossbow)
-	EndIf
-	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_COMPLETED)
-		PlaceTemplate(TemplateSunPedestal)
-	EndIf
-	Return 1
-EndFunction
-
-Int Function Remove()
-{User code for hide}
-	Return 1
-EndFunction
-
-Int Function ActivateTrophy()
-{User code for activation}
-	Return 1
 EndFunction

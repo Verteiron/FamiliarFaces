@@ -18,33 +18,8 @@ Int		iMaskID
 
 ;--=== Events/Functions ===--
 
-Function CheckVars()
-
-	BaseX 		= 	-77.0
-	BaseY 		= 	 21.0
-	BaseZ 		= 	  6.2352
-	;AngleX 		= 	-53.7840
-	;AngleY 		= 	 18.8350
-	;AngleZ 		= 	 13.3018
-	AngleX 		= 	-55.7451
-	AngleY 		= 	  6.5581
-	AngleZ 		= 	  6.0
-	Scale 		= 	  1.24
-	
-	;AngleX0	=	-56.4590    
-	;AngleY0	=	 0
-	;AngleZ0	=	 0
-	
-	;+15
-	;AngleX1	=	-55.5382
-	;AngleY1	=	 12.4580
-	;AngleZ1	=	 8
-	
-	;+30
-	;AngleX2	=	-52.5671
-	;AngleY2	=	 24.6293
-	;AngleZ2	=	 17.0 
-	
+Event OnTrophyInit()
+{Set properties, do anything else that needs doing at startup.}
 	TrophyName  	= "DLC02"
 	TrophyFullName  = "Miraak's Mask"
 	TrophyPriority 	= 2
@@ -53,11 +28,12 @@ Function CheckVars()
 	TrophySize		= TROPHY_SIZE_SMALL
 	TrophyLoc		= TROPHY_LOC_PLINTH
 	;TrophyExtras	= 0
-	
-EndFunction
+	LocalRotation	= True ; The mask spins about its local Z without this
+EndEvent
 
 Event OnSetTemplate()
-	iMaskID = CreateTemplate(vMYC_ShrineDLC2MiraakHelm)
+{Create or set objects to be used as trophies.}
+	iMaskID = CreateTemplate(vMYC_ShrineDLC2MiraakHelm, -77.0, 21.0, 6.2352, -55.7451, 6.5581, 6.0, 1.24)
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
