@@ -10,7 +10,13 @@ Import Game
 
 ;--=== Properties ===--
 
+ObjectReference		Property	TemplateHelmet			Auto
+ObjectReference		Property	TemplateBanner			Auto
+
 ;--=== Variables ===--
+
+Int		_iHelmetID
+Int		_iBannerID
 
 ;--=== Events/Functions ===--
 
@@ -22,9 +28,22 @@ Event OnTrophyInit()
 	
 	TrophyType 		= TROPHY_TYPE_BANNER
 	TrophySize		= TROPHY_SIZE_MEDIUM
-	TrophyLoc		= TROPHY_LOC_PLINTHBASE
+	TrophyLoc		= TROPHY_LOC_PLINTH
 	;TrophyExtras	= 0
 	
+EndEvent
+
+Event OnSetTemplate()
+	_iHelmetID = SetTemplate(TemplateHelmet)
+	_iBannerID = SetTemplate(TemplateBanner)
+EndEvent
+
+Event OnDisplayTrophy(Int aiDisplayFlags)
+{User code for display}
+	If aiDisplayFlags
+		DisplayForm(_iHelmetID)
+		DisplayForm(_iBannerID)
+	EndIf
 EndEvent
 
 Int Function IsAvailable()
@@ -35,11 +54,6 @@ Int Function IsAvailable()
 	EndIf
 	Return 0
 EndFunction
-
-Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
-	
-EndEvent
 
 Int Function Remove()
 {User code for hide}

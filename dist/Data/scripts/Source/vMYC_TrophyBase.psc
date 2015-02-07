@@ -195,31 +195,21 @@ Function SendRegisterEvent()
 	EndIf
 	Wait(1)
 	_CreateTemplates()
-	If TrophyName == "DLC02"
-		ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
-		Int i = 0
-		While i < 360
-			newOrigin.SetAngle(0,0,i)
-			_DisplayedObjects = New ObjectReference[128]
-			_Display(newOrigin,7)
-			i += 30
-		EndWhile
-	EndIf
-	If TrophyName == "DLC01" || TrophyName == "DLC02"
-		ObjectReference newOrigin = TrophyManager.GetTrophyOffsetOrigin()
+	ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
+	If TrophyName
 		_DisplayedObjects = New ObjectReference[128]
-		_Display(newOrigin,7)
+		_Display(kOffsetOrigin,7)
 	EndIf
-	If TrophyName == "DLC01"
-		ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
-		Int i = 0
-		While i < 360
-			newOrigin.SetAngle(0,0,i)
-			_DisplayedObjects = New ObjectReference[128]
-			_Display(newOrigin,7)
-			i += 30
-		EndWhile
-	EndIf
+	;If TrophyName == "DLC02"
+	;	ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
+	;	Int i = 0
+	;	While i < 360
+	;		newOrigin.SetAngle(0,0,i)
+	;		_DisplayedObjects = New ObjectReference[128]
+	;		_Display(newOrigin,7)
+	;		i += 30
+	;	EndWhile
+	;EndIf
 EndFunction
 
 Event OnTrophyCheckAvailable(Form akSender)
@@ -434,6 +424,9 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 		_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
 	EndIf
 	_DisplayedObjects[idx].SetScale(akTemplate.GetScale())
+	
+	DebugTrace("Template is " + akTemplate + ", Position is X:\t" + akTemplate.GetAngleX() + ", Y:\t" + akTemplate.GetAngleY() + ", Z:\t" + akTemplate.GetAngleZ())
+	DebugTrace("  Target is " + _DisplayedObjects[idx] + ", Position is X:\t" + _DisplayedObjects[idx].GetAngleX() + ", Y:\t" + _DisplayedObjects[idx].GetAngleY() + ", Z:\t" + _DisplayedObjects[idx].GetAngleZ())
 	;RotateLocal(_DisplayedObjects[idx],0,0,akTarget.GetAngleZ())
 EndFunction
 
@@ -559,7 +552,6 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 										   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
 										   bool abIsHanging = false, bool abUseSetLocal = false)
 
-
 	ObjectReference myObject
     ObjectReference myTempMarker = akOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
 	myTempMarker.MoveTo(myTempMarker, fRelativePos[0], fRelativePos[1], fRelativePos[2])
@@ -567,7 +559,6 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 	float[] myNewPos = new float[3]
     myNewPos = GetPosXYZRotateAroundRef(akOrigin, myTempMarker, fOriginAng[0], fOriginAng[1], fOriginAng[2] + fZGlobalAngAdjust)
     myTempMarker.MoveTo(akOrigin, myNewPos[0], myNewPos[1], myNewPos[2])
-	
 	if abIsPropped
 		if abInvertedLocalY
 			myTempMarker.SetAngle(fXLocalAngAdjust, -(fOriginAng[2] + fYLocalAngAdjust), fZLocalAngAdjust)
@@ -579,9 +570,6 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 		myTempMarker.SetAngle(0.0, 0.0, myTempMarker.GetAngleZ() + fRelativePos[5] + fZLocalAngAdjust)
 	else
 		if abUseSetLocal
-			;Float fOAngleX = fRelativePos[3]
-			;Float fOAngleY = fRelativePos[4]
-			;Float fOAngleZ = fRelativePos[5]
 
 			fXLocalAngAdjust += fRelativePos[3]
 			fYLocalAngAdjust += fRelativePos[4]
@@ -593,13 +581,6 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 			DebugTrace("akObject's new angle will be: X:\t" + fAngleX + ", Y:\t" + fAngleY + ", Z:\t" + (fRelativePos[5] + fZLocalAngAdjust) + "!")
 			myTempMarker.SetAngle(fAngleX, fAngleY, fRelativePos[5] + fZLocalAngAdjust)
 		
-			;myTempMarker.SetAngle(fRelativePos[3], \
-			;					fRelativePos[4], \
-			;					fRelativePos[5])
-			;SetLocalAngle(myTempMarker,fRelativePos[3] + fXLocalAngAdjust, \
-			;					fRelativePos[4] + fYLocalAngAdjust, \
-			;					fRelativePos[5] + fZLocalAngAdjust)
-			;RotateLocal(myTempMarker, fXLocalAngAdjust, fYLocalAngAdjust, fZLocalAngAdjust)
 		else
 			myTempMarker.SetAngle(myTempMarker.GetAngleX() + fRelativePos[3] + fXLocalAngAdjust, \
 								myTempMarker.GetAngleY() + fRelativePos[4] + fYLocalAngAdjust, \

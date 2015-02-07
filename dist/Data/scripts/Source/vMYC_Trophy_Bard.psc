@@ -10,14 +10,18 @@ Import Game
 
 ;--=== Properties ===--
 
+ObjectReference		Property	BardStatic		Auto
+
 ;--=== Variables ===--
+
+Int		_iTrophyID
 
 ;--=== Events/Functions ===--
 
 Event OnTrophyInit()
 
 	TrophyName  	= "Bard"
-	TrophyFullName  = "Bard"
+	TrophyFullName  = "Graduate of the Bard College"
 	TrophyPriority 	= 4
 	
 	TrophyType 		= TROPHY_TYPE_OBJECT
@@ -25,6 +29,10 @@ Event OnTrophyInit()
 	TrophyLoc		= TROPHY_LOC_PLINTHBASE
 	;TrophyExtras	= 0
 	
+EndEvent
+
+Event OnSetTemplate()
+	_iTrophyID = SetTemplate(BardStatic)
 EndEvent
 
 Int Function IsAvailable()
@@ -38,7 +46,9 @@ EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
-	
+	If aiDisplayFlags
+		DisplayForm(_iTrophyID)
+	EndIf
 EndEvent
 
 Int Function Remove()
