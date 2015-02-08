@@ -17,6 +17,11 @@ Actor 				Property PlayerRef 								Auto
 
 Static				Property vMYC_AlcoveTrophyPlacementMarker		Auto
 
+Form				Property vMYC_TrophyBannerHangingMarker			Auto
+Form				Property vMYC_TrophyBannerStandingMarker		Auto
+
+FormList			Property vMYC_BannerAnchors						Auto
+
 ;=== Achievement test Properties ===--
 
 ;=== Variables ===--
@@ -145,4 +150,12 @@ EndFunction
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	Debug.Trace("MYC/TrophyManager: " + sDebugString,iSeverity)
+EndFunction
+
+Form Function GetHangingBannerMarker()
+	Return vMYC_TrophyBannerHangingMarker
+EndFunction
+
+Form Function GetStandingBannerMarker()
+	Return vMYC_TrophyBannerStandingMarker
 EndFunction

@@ -107,6 +107,8 @@ Int					_TrophyVersion
 
 Int[]				_TemplatesToDisplay
 
+Form[]				_BannersToDisplay
+
 ObjectReference[]	_DisplayedObjects
 
 ObjectReference[]	_TemplateObjects
@@ -139,6 +141,10 @@ Event OnInit()
 
 	If !_TemplatesToDisplay
 		_TemplatesToDisplay = New Int[16]
+	EndIf
+
+	If !_BannersToDisplay
+		_BannersToDisplay = New Form[128]
 	EndIf
 	
 	CheckVars()
@@ -198,7 +204,18 @@ Function SendRegisterEvent()
 	ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
 	If TrophyName
 		_DisplayedObjects = New ObjectReference[128]
-		_Display(kOffsetOrigin,0xFFFFFFFF)
+		_Display(kOffsetOrigin,0x0000FFFF)
+	EndIf
+	If TrophyName == "DarkBrotherhood"
+		_DisplayedObjects = New ObjectReference[128]
+		_BannersToDisplay = New Form[128]
+		_Display(kOffsetOrigin,1)
+		_DisplayedObjects = New ObjectReference[128]
+		_BannersToDisplay = New Form[128]
+		_Display(kOffsetOrigin,1)
+		_DisplayedObjects = New ObjectReference[128]
+		_BannersToDisplay = New Form[128]
+		_Display(kOffsetOrigin,2)
 	EndIf
 	;If TrophyName == "DLC02"
 	;	ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
@@ -349,6 +366,11 @@ Function SetTrophyFlags(Int aiTrophyType, Int aiTrophySize, Int aiTrophyLocation
 	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyExtras,24))
 EndFunction
 
+Function DisplayBanner(Form akBannerForm)
+	Int idx = _BannersToDisplay.Find(None)
+	_BannersToDisplay[idx] = akBannerForm
+EndFunction
+
 Function DisplayForm(Int aiTemplateID)
 	Int idx = _TemplatesToDisplay.Find(0)
 	_TemplatesToDisplay[idx] = aiTemplateID
@@ -395,8 +417,9 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 	If !TrophyFadeInFXS
 		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
 	EndIf
+	
 	Int i = 0
-	Int iLen = _TemplatesToDisplay.Length
+	Int iLen = _TemplatesToDisplay.Find(0)
 	DebugTrace("TemplatesToDisplay: " + iLen)
 	While i < iLen && _TemplatesToDisplay[i]
 		Int idx = _TemplatesToDisplay[i]
@@ -404,6 +427,16 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 			If _TemplateObjects[idx].GetBaseObject()
 				_DisplayObject(akTarget,_TemplateObjects[idx])
 			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	
+	i = 0
+	iLen = _BannersToDisplay.Find(None)
+	DebugTrace("BannersToDisplay: " + iLen)
+	While i < iLen && _BannersToDisplay[i]
+		If _BannersToDisplay[i]
+			_DisplayBanner(akTarget,_BannersToDisplay[i])
 		EndIf
 		i += 1
 	EndWhile
@@ -418,6 +451,7 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 		EndIf
 		i += 1
 	EndWhile
+	
 EndFunction
 
 Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
@@ -453,6 +487,24 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	DebugTrace("Template is " + akTemplate + ", Position is X:\t" + akTemplate.GetAngleX() + ", Y:\t" + akTemplate.GetAngleY() + ", Z:\t" + akTemplate.GetAngleZ())
 	DebugTrace("  Target is " + _DisplayedObjects[idx] + ", Position is X:\t" + _DisplayedObjects[idx].GetAngleX() + ", Y:\t" + _DisplayedObjects[idx].GetAngleY() + ", Z:\t" + _DisplayedObjects[idx].GetAngleZ())
 	;RotateLocal(_DisplayedObjects[idx],0,0,akTarget.GetAngleZ())
+EndFunction
+
+Function _DisplayBanner(ObjectReference akTarget, Form akBannerForm)
+	Form kBannerMarker = TrophyManager.GetStandingBannerMarker()
+	ObjectReference kBannerTarget = FindClosestReferenceOfTypeFromRef(kBannerMarker,TrophyOrigin,450)
+	If !kBannerTarget
+		DebugTrace("WARNING, could not find an available BannerTarget!",1)
+		Return 
+	EndIf
+	ObjectReference kBanner = kBannerTarget.PlaceAtMe(akBannerForm, abInitiallyDisabled = True)
+	ObjectReference kAnchor = FindClosestReferenceOfAnyTypeInListFromRef(TrophyManager.vMYC_BannerAnchors,kBannerTarget,250)
+	DebugTrace("Banner is " + kBanner + ", Anchor is " + kAnchor)
+	kBannerTarget.MoveTo(kBannerTarget,0,0,kBannerTarget.GetPositionZ() + 1000)
+	If kAnchor
+		_DisplayObject(akTarget,kAnchor)
+	EndIf
+	_DisplayObject(akTarget,kBanner)
+	kBanner.Delete()
 EndFunction
 
 Function _Remove()

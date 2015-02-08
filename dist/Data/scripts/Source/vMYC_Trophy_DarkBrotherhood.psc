@@ -10,6 +10,10 @@ Import Game
 
 ;--=== Properties ===--
 
+Form		Property	DBBannerAnim01				Auto
+Form		Property	vMYC_DBBannerBurnt01		Auto
+
+
 ;--=== Variables ===--
 
 ;--=== Events/Functions ===--
@@ -51,10 +55,12 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
 	
 	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
-	
-	
+	If aiDisplayFlags > 1
+		DisplayBanner(vMYC_DBBannerBurnt01)
+	ElseIf aiDisplayFlags
 	;Otherwise, display the usual trophy
-	
+		DisplayBanner(DBBannerAnim01)
+	EndIf	
 	
 EndEvent
 
