@@ -198,7 +198,7 @@ Function SendRegisterEvent()
 	ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
 	If TrophyName
 		_DisplayedObjects = New ObjectReference[128]
-		_Display(kOffsetOrigin,7)
+		_Display(kOffsetOrigin,0xFFFFFFFF)
 	EndIf
 	;If TrophyName == "DLC02"
 	;	ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
@@ -317,6 +317,20 @@ Int Function SetTemplate(ObjectReference akTargetObject)
 	Return idx
 EndFunction
 
+Int[] Function SetTemplateArray(ObjectReference[] akTargetObjects)
+	Int idx = 0
+	Int i = 0
+	Int iCount = akTargetObjects.Length
+	Int[] iResult = New Int[128]
+	While i < iCount
+		If akTargetObjects[i]
+			iResult[i] = SetTemplate(akTargetObjects[i])
+		EndIf
+		i += 1
+	EndWhile
+	Return iResult
+EndFunction
+
 Function SendSelfMessage(String asMessage)
 	Int iHandle = ModEvent.Create("vMYC_TrophySelfMessage" + TrophyName)
 	If iHandle
@@ -338,6 +352,17 @@ EndFunction
 Function DisplayForm(Int aiTemplateID)
 	Int idx = _TemplatesToDisplay.Find(0)
 	_TemplatesToDisplay[idx] = aiTemplateID
+EndFunction
+
+Function DisplayFormArray(Int[] aiTemplateIDs)
+	Int i = 0
+	Int iCount = aiTemplateIDs.Length
+	While i < iCount
+		If aiTemplateIDs[i]
+			DisplayForm(aiTemplateIDs[i])
+		EndIf
+		i += 1
+	EndWhile
 EndFunction
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
