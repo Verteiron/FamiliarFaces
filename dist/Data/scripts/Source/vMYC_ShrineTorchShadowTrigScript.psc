@@ -32,6 +32,9 @@ Event OnLoad()
 EndEvent
 
 Event OnCellAttach()
+	If !TorchNS
+		Return
+	EndIf
 	TorchNS.EnableNoWait()
 	TorchS.DisableNoWait()
 EndEvent
