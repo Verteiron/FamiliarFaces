@@ -38,8 +38,8 @@ Int				Property	TROPHY_EXTRAS_NOSPACE	= 0x00000008		AutoReadOnly Hidden
 
 ;--=== Properties ===--
 
-Activator		Property	TrophyActivator		= None		Auto
-{The trophy activator object. More items can be added by creating additional properties but custom code will be needed in the Display function.}
+Activator		Property	TrophyActivator		= None		Auto Hidden
+{The trophy activator object. More items can be added by creating additional properties but custom code will be needed in the Display Function.}
 
 String			Property	TrophyName			= "Trophy"	Auto
 {Name of the trophy to be used by scripts. Same rules as a Papyrus variable name.}
@@ -53,18 +53,18 @@ EffectShader	Property	TrophyFadeInFXS		= None		Auto
 Int				Property	TrophyPriority		= 100		Auto
 {How great/unique of an achievement is this? LOWER IS BETTER! DLC (or large mod such as Falskaar) completion is 2, Faction completion is 4. See docs for more info!}
 
-Int				Property	TrophyType			= 0			Auto
-Int				Property	TrophySize			= 0			Auto
-Int				Property	TrophyLoc			= 0			Auto
-Int				Property	TrophyExtras		= 0			Auto
+Int				Property	TrophyType			= 0			Auto Hidden
+Int				Property	TrophySize			= 0			Auto Hidden
+Int				Property	TrophyLoc			= 0			Auto Hidden
+Int				Property	TrophyExtras		= 0			Auto Hidden
 
-Int				Property	TrophyFlags			= 0			Auto
+Int				Property	TrophyFlags			= 0			Auto Hidden
 {See TROPHY enums above}
 
-Int				Property	TrophyVersion					Auto
+Int				Property	TrophyVersion					Auto Hidden
 {Increment this if the trophy's requirements or mesh have changed.}
 
-String[]		Property	TrophyExclusionList				Auto
+String[]		Property	TrophyExclusionList				Auto Hidden
 {If this trophy is displayed, prevent these trophies from being displayed. Use with caution!}
 
 Int				Property	Available			= 0			Auto Hidden
@@ -72,24 +72,24 @@ Bool			Property	Enabled				= True		Auto Hidden
 
 Bool			Property	DoNotRegister		= False		Auto
 
-ObjectReference	Property	TrophyBaseObject	= None 		Auto
+ObjectReference	Property	TrophyBaseObject	= None 		Auto Hidden
 {The base object that defines the trophy's location in the alcove. If missing, it will be placed at the coordinates defined in the Base value below.}
 
 ;The following are used to place the object in absolute terms if a preset position is not being used. The origin is the base of the player statue
-Float			Property	BaseX					= 0.0		Auto
-Float			Property	BaseY					= 0.0		Auto
-Float			Property	BaseZ					= 0.0		Auto
+Float			Property	BaseX					= 0.0		Auto Hidden
+Float			Property	BaseY					= 0.0		Auto Hidden
+Float			Property	BaseZ					= 0.0		Auto Hidden
 
 ;The following are used to place the object relative to its "base", that is the origin of its position
-Float			Property	OffsetX			= 0.0		Auto
-Float			Property	OffsetY			= 0.0		Auto
-Float			Property	OffsetZ			= 0.0		Auto
-Float			Property	AngleX			= 0.0		Auto
-Float			Property	AngleY			= 0.0		Auto
-Float			Property	AngleZ			= 0.0		Auto
-Float			Property	Scale			= 1.0		Auto
+Float			Property	OffsetX			= 0.0		Auto Hidden
+Float			Property	OffsetY			= 0.0		Auto Hidden
+Float			Property	OffsetZ			= 0.0		Auto Hidden
+Float			Property	AngleX			= 0.0		Auto Hidden
+Float			Property	AngleY			= 0.0		Auto Hidden
+Float			Property	AngleZ			= 0.0		Auto Hidden
+Float			Property	Scale			= 1.0		Auto Hidden
 
-Bool			Property	LocalRotation	= False		Auto 
+Bool			Property	LocalRotation	= False		Auto Hidden
 {Use this if your object isn't getting rotated correctly!}
 
 Activator 		Property	vMYC_TrophyEmptyBase		Auto
@@ -201,22 +201,22 @@ Function SendRegisterEvent()
 	EndIf
 	Wait(1)
 	_CreateTemplates()
-	ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
-	If TrophyName
-		_DisplayedObjects = New ObjectReference[128]
-		_Display(kOffsetOrigin,0x0000FFFF)
-	EndIf
-	If TrophyName == "DarkBrotherhood"
-		_DisplayedObjects = New ObjectReference[128]
-		_BannersToDisplay = New Form[128]
-		_Display(kOffsetOrigin,1)
-		_DisplayedObjects = New ObjectReference[128]
-		_BannersToDisplay = New Form[128]
-		_Display(kOffsetOrigin,1)
-		_DisplayedObjects = New ObjectReference[128]
-		_BannersToDisplay = New Form[128]
-		_Display(kOffsetOrigin,2)
-	EndIf
+	;ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
+	;If TrophyName
+	;	_DisplayedObjects = New ObjectReference[128]
+	;	_Display(kOffsetOrigin,0x0000FFFF)
+	;EndIf
+	;If TrophyName == "DarkBrotherhood"
+	;	_DisplayedObjects = New ObjectReference[128]
+	;	_BannersToDisplay = New Form[128]
+	;	_Display(kOffsetOrigin,1)
+	;	_DisplayedObjects = New ObjectReference[128]
+	;	_BannersToDisplay = New Form[128]
+	;	_Display(kOffsetOrigin,1)
+	;	_DisplayedObjects = New ObjectReference[128]
+	;	_BannersToDisplay = New Form[128]
+	;	_Display(kOffsetOrigin,2)
+	;EndIf
 	;If TrophyName == "DLC02"
 	;	ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
 	;	Int i = 0
@@ -455,11 +455,11 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 EndFunction
 
 Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
-	;ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, float[] fOriginAng, \
-	;									   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
-	;									   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
-	;									   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
-	;									   bool abIsHanging = false, bool abUseLocalRotation = false)
+	;ObjectReference Function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, Float[] fOriginAng, \
+	;									   Float[] fRelativePos, Float fZGlobalAngAdjust = 0.0, Float fXLocalAngAdjust = 0.0,  \
+	;									   Float fYLocalAngAdjust = 0.0, Float fZLocalAngAdjust = 0.0, Float fZHangingOffset = 0.0, \
+	;									   Bool abInvertedLocalY = false, Bool abInitiallyDisabled = false, Bool abIsPropped = false, \
+	;									   Bool abIsHanging = false, Bool abUseLocalRotation = false)
 	
 	DebugTrace("_DisplayObject(" + akTarget + ", " + akTemplate + ")")
 	
@@ -484,8 +484,8 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	EndIf
 	_DisplayedObjects[idx].SetScale(akTemplate.GetScale())
 	
-	DebugTrace("Template is " + akTemplate + ", Position is X:\t" + akTemplate.GetAngleX() + ", Y:\t" + akTemplate.GetAngleY() + ", Z:\t" + akTemplate.GetAngleZ())
-	DebugTrace("  Target is " + _DisplayedObjects[idx] + ", Position is X:\t" + _DisplayedObjects[idx].GetAngleX() + ", Y:\t" + _DisplayedObjects[idx].GetAngleY() + ", Z:\t" + _DisplayedObjects[idx].GetAngleZ())
+	;DebugTrace("Template is " + akTemplate + ", Position is X:\t" + akTemplate.GetAngleX() + ", Y:\t" + akTemplate.GetAngleY() + ", Z:\t" + akTemplate.GetAngleZ())
+	;DebugTrace("  Target is " + _DisplayedObjects[idx] + ", Position is X:\t" + _DisplayedObjects[idx].GetAngleX() + ", Y:\t" + _DisplayedObjects[idx].GetAngleY() + ", Z:\t" + _DisplayedObjects[idx].GetAngleZ())
 	;RotateLocal(_DisplayedObjects[idx],0,0,akTarget.GetAngleZ())
 EndFunction
 
@@ -529,9 +529,9 @@ EndFunction
 
 
 
-;=== The following functions are blatantly stolen from Chesko. Thanks bud! ===--
+;=== The following Functions are blatantly stolen from Chesko. Thanks bud! ===--
 
-float[] function GetPosXYZRotateAroundRef(ObjectReference akOrigin, ObjectReference akObject, float fAngleX, float fAngleY, float fAngleZ)
+Float[] Function GetPosXYZRotateAroundRef(ObjectReference akOrigin, ObjectReference akObject, Float fAngleX, Float fAngleY, Float fAngleZ)
 
 	;-----------\
 	;Description \ 
@@ -565,24 +565,24 @@ float[] function GetPosXYZRotateAroundRef(ObjectReference akOrigin, ObjectRefere
 	fAngleY = -(fAngleY)
 	fAngleZ = -(fAngleZ)
 	
-	float myOriginPosX = akOrigin.GetPositionX()
-	float myOriginPosY = akOrigin.GetPositionY()
-	float myOriginPosZ = akOrigin.GetPositionZ()
+	Float myOriginPosX = akOrigin.GetPositionX()
+	Float myOriginPosY = akOrigin.GetPositionY()
+	Float myOriginPosZ = akOrigin.GetPositionZ()
 	
-	float fInitialX = akObject.GetPositionX() - myOriginPosX
-	float fInitialY = akObject.GetPositionY() - myOriginPosY
-	float fInitialZ = akObject.GetPositionZ() - myOriginPosZ
+	Float fInitialX = akObject.GetPositionX() - myOriginPosX
+	Float fInitialY = akObject.GetPositionY() - myOriginPosY
+	Float fInitialZ = akObject.GetPositionZ() - myOriginPosZ
 	
-	float fNewX
-	float fNewY
-	float fNewZ
+	Float fNewX
+	Float fNewY
+	Float fNewZ
 	
 	;Objects in Skyrim are rotated in order of Z, Y, X, so we will do that here as well.
 	
 	;Z-axis rotation matrix
-	float fVectorX = fInitialX
-	float fVectorY = fInitialY
-	float fVectorZ = fInitialZ
+	Float fVectorX = fInitialX
+	Float fVectorY = fInitialY
+	Float fVectorZ = fInitialZ
 	fNewX = (fVectorX * cos(fAngleZ)) + (fVectorY * sin(-fAngleZ)) + (fVectorZ * 0)
 	fNewY = (fVectorX * sin(fAngleZ)) + (fVectorY * cos(fAngleZ)) + (fVectorZ * 0)
 	fNewZ = (fVectorX * 0) + (fVectorY * 0) + (fVectorZ * 1)	
@@ -604,15 +604,15 @@ float[] function GetPosXYZRotateAroundRef(ObjectReference akOrigin, ObjectRefere
 	fNewZ = (fVectorX * 0) + (fVectorY * sin(fAngleX)) + (fVectorZ * cos(fAngleX))
 	
 	;Return result
-	float[] fNewPos = new float[3]
+	Float[] fNewPos = new Float[3]
 	fNewPos[0] = fNewX
 	fNewPos[1] = fNewY
 	fNewPos[2] = fNewZ
 	return fNewPos 
-endFunction
+EndFunction
 
-float[] function GetRelativePosition(ObjectReference akOrigin, ObjectReference akObject)
-	float[] myRelativePosition = new float[6]
+Float[] Function GetRelativePosition(ObjectReference akOrigin, ObjectReference akObject)
+	Float[] myRelativePosition = new Float[6]
 	myRelativePosition[0] = akObject.GetPositionX() - akOrigin.GetPositionX()
 	myRelativePosition[1] = akObject.GetPositionY() - akOrigin.GetPositionY()
 	myRelativePosition[2] = akObject.GetPositionZ() - akOrigin.GetPositionZ()
@@ -621,19 +621,19 @@ float[] function GetRelativePosition(ObjectReference akOrigin, ObjectReference a
 	myRelativePosition[5] = akObject.GetAngleZ()
 	
 	return myRelativePosition
-endFunction
+EndFunction
 
-ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, float[] fOriginAng, \
-										   float[] fRelativePos, float fZGlobalAngAdjust = 0.0, float fXLocalAngAdjust = 0.0,  \
-										   float fYLocalAngAdjust = 0.0, float fZLocalAngAdjust = 0.0, float fZHangingOffset = 0.0, \
-										   bool abInvertedLocalY = false, bool abInitiallyDisabled = false, bool abIsPropped = false, \
-										   bool abIsHanging = false, bool abUseSetLocal = false)
+ObjectReference Function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, Float[] fOriginAng, \
+										   Float[] fRelativePos, Float fZGlobalAngAdjust = 0.0, Float fXLocalAngAdjust = 0.0,  \
+										   Float fYLocalAngAdjust = 0.0, Float fZLocalAngAdjust = 0.0, Float fZHangingOffset = 0.0, \
+										   Bool abInvertedLocalY = false, Bool abInitiallyDisabled = false, Bool abIsPropped = false, \
+										   Bool abIsHanging = false, Bool abUseSetLocal = false)
 
 	ObjectReference myObject
     ObjectReference myTempMarker = akOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
 	myTempMarker.MoveTo(myTempMarker, fRelativePos[0], fRelativePos[1], fRelativePos[2])
     
-	float[] myNewPos = new float[3]
+	Float[] myNewPos = new Float[3]
     myNewPos = GetPosXYZRotateAroundRef(akOrigin, myTempMarker, fOriginAng[0], fOriginAng[1], fOriginAng[2] + fZGlobalAngAdjust)
     myTempMarker.MoveTo(akOrigin, myNewPos[0], myNewPos[1], myNewPos[2])
 	if abIsPropped
@@ -653,8 +653,8 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 			
 			DebugTrace("akObject is at AngleX:\t" + fRelativePos[3] + ", AngleY:\t" + fRelativePos[4] + ", AngleZ:\t" + fRelativePos[5] + "!")
 			DebugTrace("akObject will be rotated by: X:\t" + fRelativePos[3] + ", Y:\t" + fYLocalAngAdjust + ", Z:\t" + fZLocalAngAdjust + "!")
-			float fAngleX = fRelativePos[3] * Math.Cos(fZLocalAngAdjust) + fYLocalAngAdjust * Math.Sin(fZLocalAngAdjust)
-			float fAngleY = fYLocalAngAdjust * Math.Cos(fZLocalAngAdjust) - fRelativePos[3] * Math.Sin(fZLocalAngAdjust)
+			Float fAngleX = fRelativePos[3] * Math.Cos(fZLocalAngAdjust) + fYLocalAngAdjust * Math.Sin(fZLocalAngAdjust)
+			Float fAngleY = fYLocalAngAdjust * Math.Cos(fZLocalAngAdjust) - fRelativePos[3] * Math.Sin(fZLocalAngAdjust)
 			DebugTrace("akObject's new angle will be: X:\t" + fAngleX + ", Y:\t" + fAngleY + ", Z:\t" + (fRelativePos[5] + fZLocalAngAdjust) + "!")
 			myTempMarker.SetAngle(fAngleX, fAngleY, fRelativePos[5] + fZLocalAngAdjust)
 		
@@ -674,7 +674,7 @@ ObjectReference function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
     myTempMarker.Delete()
 
     return myObject
-endFunction
+EndFunction
 
 Function SetLocalAngle(ObjectReference akObject, Float afLocalX, Float afLocalY, Float afLocalZ)
 	Float fOAngleX = akObject.GetAngleX()
@@ -683,8 +683,8 @@ Function SetLocalAngle(ObjectReference akObject, Float afLocalX, Float afLocalY,
 
 	DebugTrace("akObject is at AngleX:\t" + fOAngleX + ", AngleY:\t" + fOAngleY + ", AngleZ:\t" + fOAngleZ + "!")
 	DebugTrace("akObject will be rotated by: X:\t" + afLocalX + ", Y:\t" + afLocalY + ", Z:\t" + afLocalZ + "!")
-	float fAngleX = afLocalX * Math.Cos(afLocalZ) + afLocalY * Math.Sin(afLocalZ)
-	float fAngleY = afLocalY * Math.Cos(afLocalZ) - afLocalX * Math.Sin(afLocalZ)
+	Float fAngleX = afLocalX * Math.Cos(afLocalZ) + afLocalY * Math.Sin(afLocalZ)
+	Float fAngleY = afLocalY * Math.Cos(afLocalZ) - afLocalX * Math.Sin(afLocalZ)
 	DebugTrace("akObject's new angle will be: X:\t" + fAngleX + ", Y:\t" + fAngleY + ", Z:\t" + (afLocalZ) + "!")
 	akObject.SetAngle(fAngleX, fAngleY, afLocalZ)
 EndFunction
