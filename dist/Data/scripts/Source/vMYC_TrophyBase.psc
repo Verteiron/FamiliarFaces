@@ -75,6 +75,9 @@ Bool			Property	DoNotRegister		= False		Auto
 ObjectReference	Property	TrophyBaseObject	= None 		Auto Hidden
 {The base object that defines the trophy's location in the alcove. If missing, it will be placed at the coordinates defined in the Base value below.}
 
+ObjectReference	Property	TrophyTemplate		= None		Auto Hidden
+{An empty property used to force a new template into high memory long enough for it to be rotated and scaled.}
+
 ;The following are used to place the object in absolute terms if a preset position is not being used. The origin is the base of the player statue
 Float			Property	BaseX					= 0.0		Auto Hidden
 Float			Property	BaseY					= 0.0		Auto Hidden
@@ -94,6 +97,9 @@ Bool			Property	LocalRotation	= False		Auto Hidden
 
 Activator 		Property	vMYC_TrophyEmptyBase		Auto
 {Base Activator to be placed as a base object if none other is defined.}
+
+Activator 		Property	vMYC_TrophyObjectBase		Auto
+{Activator to be placed as a Template, since unloaded objects don't get rotated.}
 
 Float			Property	AngleDelta		= 0.0		Auto Hidden
 
@@ -199,13 +205,19 @@ Function SendRegisterEvent()
 	If !vMYC_TrophyEmptyBase
 		vMYC_TrophyEmptyBase = GetFormFromFile(0x0203055F,"vMYC_MeetYourCharacters.esp") as Activator
 	EndIf
+	If !vMYC_TrophyObjectBase
+		vMYC_TrophyObjectBase = GetFormFromFile(0x02033e5c,"vMYC_MeetYourCharacters.esp") as Activator
+	EndIf
+	If !TrophyFadeInFXS
+		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
+	EndIf
 	Wait(1)
 	_CreateTemplates()
-	;ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
-	;If TrophyName
-	;	_DisplayedObjects = New ObjectReference[128]
-	;	_Display(kOffsetOrigin,0x0000FFFF)
-	;EndIf
+	ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
+	If TrophyName
+		_DisplayedObjects = New ObjectReference[128]
+		_Display(kOffsetOrigin,0x0000FFFF)
+	EndIf
 	;If TrophyName == "DarkBrotherhood"
 	;	_DisplayedObjects = New ObjectReference[128]
 	;	_BannersToDisplay = New Form[128]
@@ -310,28 +322,24 @@ Event OnSetTemplate()
 EndEvent
 
 Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
+	DebugTrace("Creating template from " + akForm + ", X:\t" + afOffsetX + ", Y:\t" + afOffsetY + ", Z:\t" + afOffsetZ + ", aX:\t" + afAngleX + ", aY:\t" + afAngleY + ", aZ:\t" + afAngleZ + ", S:\t" + afScale)
 	Int idx = _TemplateObjects.Find(None)
-	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(akForm,abInitiallyDisabled = True)
-	If afOffsetX || afOffsetY || afOffsetZ
-		_TemplateObjects[idx].MoveTo(TrophyBaseObject,afOffsetX,afOffsetY,afOffsetZ)
-	EndIf
-	If afAngleX || afAngleY || afAngleZ
-		_TemplateObjects[idx].SetAngle(AngleX + afAngleX, AngleY + afAngleY, AngleZ + afAngleZ)
-	EndIf
-	If afScale
-		_TemplateObjects[idx].SetScale(afScale)
-	ElseIf Scale != 1
-		_TemplateObjects[idx].SetScale(Scale)
-	EndIf
-	_TemplateObjects[idx].EnableNoWait(False)
+	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(vMYC_TrophyObjectBase, abInitiallyDisabled = True)
+	vMYC_TrophyObject TrophyObject = _TemplateObjects[idx] as vMYC_TrophyObject
+	TrophyObject.SetParentObject(Self)
+	TrophyObject.SetFormData(akForm, afOffsetX, afOffsetY, afOffsetZ, afAngleX, afAngleY, afAngleZ, afScale)
+	TrophyObject.UpdatePosition()
+	DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
 	Return idx
 EndFunction
 
 Int Function SetTemplate(ObjectReference akTargetObject)
-	Int idx = _TemplateObjects.Find(None)
-	_TemplateObjects[idx] = akTargetObject
 	akTargetObject.EnableNoWait(False)
-	Return idx
+	Return CreateTemplate(akTargetObject.GetBaseObject(), akTargetObject.GetPositionX(), akTargetObject.GetPositionY(), akTargetObject.GetPositionZ(), akTargetObject.GetAngleX(), akTargetObject.GetAngleY(), akTargetObject.GetAngleZ(), akTargetObject.GetScale())
+	;Int idx = _TemplateObjects.Find(None)
+	;_TemplateObjects[idx] = akTargetObject
+	;DebugTrace("Setting template " + akTargetObject + ", X:\t" + akTargetObject.GetPositionX() + ", Y:\t" + akTargetObject.GetPositionY() + ", Z:\t" + akTargetObject.GetPositionZ() + ", aX:\t" + akTargetObject.GetAngleX() + ", aY:\t" + akTargetObject.GetAngleY() + ", aZ:\t" + akTargetObject.GetAngleZ() + ", S:\t" + akTargetObject.GetScale())
+	;Return idx
 EndFunction
 
 Int[] Function SetTemplateArray(ObjectReference[] akTargetObjects)
@@ -414,22 +422,27 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 		DebugTrace("WARNING! TrophyBaseObject not set, terrible things are about to happen :(",1)
 	EndIf
 	OnDisplayTrophy(aiTrophyFlags)
-	If !TrophyFadeInFXS
-		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
-	EndIf
 	
 	Int i = 0
 	Int iLen = _TemplatesToDisplay.Find(0)
 	DebugTrace("TemplatesToDisplay: " + iLen)
-	While i < iLen && _TemplatesToDisplay[i]
-		Int idx = _TemplatesToDisplay[i]
-		If _TemplateObjects[idx]
-			If _TemplateObjects[idx].GetBaseObject()
-				_DisplayObject(akTarget,_TemplateObjects[idx])
-			EndIf
-		EndIf
-		i += 1
-	EndWhile
+	;While i < iLen && _TemplatesToDisplay[i]
+	;	Int idx = _TemplatesToDisplay[i]
+	;	If _TemplateObjects[idx]
+	;		If _TemplateObjects[idx].GetBaseObject()
+	;			_DisplayObject(akTarget,_TemplateObjects[idx])
+	;		EndIf
+	;	EndIf
+	;	i += 1
+	;EndWhile
+	Int iHandle = ModEvent.Create("vMYC_TrophyDisplay" + TrophyName)
+	If iHandle
+		ModEvent.PushForm(iHandle,akTarget)
+		ModEvent.PushBool(iHandle,False)
+		ModEvent.Send(iHandle)
+	Else
+		DebugTrace("WARNING, couldn't send vMYC_TrophyDisplay" + TrophyName + " event!",1)
+	EndIf
 	
 	i = 0
 	iLen = _BannersToDisplay.Find(None)
@@ -463,26 +476,37 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	
 	DebugTrace("_DisplayObject(" + akTarget + ", " + akTemplate + ")")
 	
+	If akTemplate as vMYC_TrophyObject
+		(akTemplate as vMYC_TrophyObject).PlaceTrophyForm(akTarget,abInitiallyDisabled = False)
+		Return
+	EndIf
 	Int idx = _DisplayedObjects.Find(None)
 	
 	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,akTemplate)
 	Float[] fOriginAng = New Float[3]
 	;Float[] fObjectAng = New Float[3]
 
-	fOriginAng[0] = 0 ;akTarget.GetAngleX()
-	fOriginAng[1] = 0 ;akTarget.GetAngleY()
-	fOriginAng[2] = akTarget.GetAngleZ() ;akTarget.GetAngleZ()
+	fOriginAng[0] = akTarget.GetAngleX()
+	fOriginAng[1] = akTarget.GetAngleY()
+	fOriginAng[2] = akTarget.GetAngleZ()
 
 	;fObjectAng[0] = akTemplate.GetAngleX()
 	;fObjectAng[1] = akTemplate.GetAngleY()
 	;fObjectAng[2] = akTemplate.GetAngleZ()
 
-	If LocalRotation
-		_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, false, false, false, LocalRotation)
-	Else
-		_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
-	EndIf
+	;If LocalRotation
+		_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, false, false, false, True)
+	;Else
+		;_DisplayedObjects[idx] = PlaceAtMeRelative(akTarget, akTemplate.GetBaseObject(), fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
+	;EndIf
 	_DisplayedObjects[idx].SetScale(akTemplate.GetScale())
+
+	DebugTrace("Placed form " + akTemplate.GetBaseObject() + " relative to " + akTarget + "====--\n" + \
+		       " Template is at X:\t" + akTemplate.GetPositionX() + ", Y:\t" + akTemplate.GetPositionY() + ", Z:\t" + akTemplate.GetPositionZ() + ", aX:\t" + akTemplate.GetAngleX() + ", aY:\t" + akTemplate.GetAngleY() + ", aZ:\t" + akTemplate.GetAngleZ() + ", S:\t" + akTemplate.GetScale() + "\n" + \
+			   "   Origin is at X:\t" + akTarget.GetPositionX() + ", Y:\t" + akTarget.GetPositionY() + ", Z:\t" + akTarget.GetPositionZ() + ", aX:\t" + akTarget.GetAngleX() + ", aY:\t" + akTarget.GetAngleY() + ", aZ:\t" + akTarget.GetAngleZ() + ", S:\t" + akTarget.GetScale() + "\n" + \
+			   "PlacedObj is at X:\t" + _DisplayedObjects[idx].GetPositionX() + ", Y:\t" + _DisplayedObjects[idx].GetPositionY() + ", Z:\t" + _DisplayedObjects[idx].GetPositionZ() + ", aX:\t" + _DisplayedObjects[idx].GetAngleX() + ", aY:\t" + _DisplayedObjects[idx].GetAngleY() + ", aZ:\t" + _DisplayedObjects[idx].GetAngleZ() + ", S:\t" + _DisplayedObjects[idx].GetScale() + "\n" + \
+			   "   fRelativePos 0:\t" + fRelativePos[0] + ", 1:\t" + fRelativePos[1] + ", 2:\t" + fRelativePos[2] + ", 3:\t" + fRelativePos[3] + ", 4:\t" + fRelativePos[4] + ", 5:\t" + fRelativePos[5] + "\n" + \
+			   "=====---")
 	
 	;DebugTrace("Template is " + akTemplate + ", Position is X:\t" + akTemplate.GetAngleX() + ", Y:\t" + akTemplate.GetAngleY() + ", Z:\t" + akTemplate.GetAngleZ())
 	;DebugTrace("  Target is " + _DisplayedObjects[idx] + ", Position is X:\t" + _DisplayedObjects[idx].GetAngleX() + ", Y:\t" + _DisplayedObjects[idx].GetAngleY() + ", Z:\t" + _DisplayedObjects[idx].GetAngleZ())
@@ -630,7 +654,7 @@ ObjectReference Function PlaceAtMeRelative(ObjectReference akOrigin, Form akForm
 										   Bool abIsHanging = false, Bool abUseSetLocal = false)
 
 	ObjectReference myObject
-    ObjectReference myTempMarker = akOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
+    ObjectReference myTempMarker = akOrigin.PlaceAtMe(vMYC_TrophyEmptyBase, abInitiallyDisabled = True)
 	myTempMarker.MoveTo(myTempMarker, fRelativePos[0], fRelativePos[1], fRelativePos[2])
     
 	Float[] myNewPos = new Float[3]

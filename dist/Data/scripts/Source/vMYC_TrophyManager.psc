@@ -101,12 +101,14 @@ EndFunction
 
 ObjectReference Function GetTrophyOrigin()
 ;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
-	Return GetFormFromFile(0x0203051d,"vMYC_MeetYourCharacters.esp") as ObjectReference
+	;Return GetFormFromFile(0x0203051d,"vMYC_MeetYourCharacters.esp") as ObjectReference (Mannequin)
+	Return GetFormFromFile(0x02033e5b,"vMYC_MeetYourCharacters.esp") as ObjectReference ;(Actual origin marker)
 EndFunction
 
 ObjectReference Function GetTrophyOffsetOrigin()
 ;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
-	Return GetFormFromFile(0x02031C1E,"vMYC_MeetYourCharacters.esp") as ObjectReference
+	;Return GetFormFromFile(0x02031C1E,"vMYC_MeetYourCharacters.esp") as ObjectReference
+	Return GetFormFromFile(0x0202fed9,"vMYC_MeetYourCharacters.esp") as ObjectReference
 EndFunction
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
