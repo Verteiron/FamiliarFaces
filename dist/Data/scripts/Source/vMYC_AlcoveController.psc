@@ -12,14 +12,24 @@ Import vMYC_Registry
 ;=== Properties ===--
 
 Activator						Property	vMYC_AlcoveLightingControllerActivator	Auto
+Activator						Property	vMYC_AlcoveStatueMarker					Auto
+
 vMYC_AlcoveLightingController	Property	LightingController						Auto Hidden
 vMYC_ShrineManager				Property	ShrineManager							Auto Hidden
+vMYC_DataManager				Property 	DataManager								Auto
 
 Actor							Property	PlayerREF								Auto
 
+EffectShader					Property	vMYC_BlindingLightInwardParticles		Auto
+
 Int								Property 	AlcoveIndex 							Auto
 
+ActorBase						Property	AlcoveActorBase							Auto Hidden
 Actor							Property	AlcoveActor								Auto Hidden
+
+String							Property	AlcoveCharacterID						Auto Hidden
+
+ObjectReference					Property	AlcoveStatueMarker						Auto
 ;=== Variables ===--
 
 String _sFormID
@@ -46,6 +56,7 @@ EndEvent
 
 Event OnCellAttach()
 	DebugTrace("OnCellAttach!")
+	CheckObjects()
 EndEvent
 
 Event OnShrineManagerReady(Form akSender)
@@ -58,6 +69,9 @@ Event OnShrineManagerReady(Form akSender)
 		Else
 			DebugTrace("Already registered at index " + GetRegInt("Shrine.Alcove" + AlcoveIndex + ".Index") + "!")
 			SendSyncEvent()
+		EndIf
+		If !DataManager
+			DataManager = ShrineManager.DataManager
 		EndIf
 	EndIf
 EndEvent
@@ -89,19 +103,39 @@ Function RegisterForModEvents()
 EndFunction
 
 Function CheckObjects()
-	If !LightingController
+	If !LightingController || !AlcoveStatueMarker
 		FindObjects()
 	EndIf
 EndFunction
 
 Function FindObjects()
 	LightingController = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveLightingControllerActivator,Self,1500) as vMYC_AlcoveLightingController
-	
+	AlcoveStatueMarker = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveStatueMarker,Self,1500)
 	DebugTrace("LightingController is " + LightingController + "!")
+	DebugTrace("AlcoveStatueMarker is " + AlcoveStatueMarker + "!")
 EndFunction
 
 
-
+Function CheckForCharacterActor()
+	If !AlcoveActor
+		DebugTrace("AlcoveActor not found! We should create one!")
+		Int iSex = GetRegInt("Characters." + AlcoveCharacterID + ".Info.Sex")
+		If iSex ;Female
+			AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueF")) as Actor
+		Else ;Male
+			AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueM")) as Actor
+		EndIf
+		AlcoveActor.MoveTo(AlcoveStatueMarker)
+		AlcoveActorBase = AlcoveActor.GetActorBase()
+		vMYC_CharacterMannequin kStatueScript = AlcoveActor as vMYC_CharacterMannequin
+		kStatueScript.AssignCharacter(AlcoveCharacterID)	
+		kStatueScript.EnableNoWait(True)
+		While !kStatueScript.Is3DLoaded()
+			Wait(0.1)
+		EndWhile
+		vMYC_BlindingLightInwardParticles.Play(AlcoveActor,1)
+	EndIf
+EndFunction
 	
 ;=== Utility functions ===--
 

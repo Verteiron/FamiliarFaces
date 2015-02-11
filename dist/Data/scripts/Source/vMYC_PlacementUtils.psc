@@ -95,6 +95,7 @@ float[] function GetRelativePosition(ObjectReference akOrigin, ObjectReference a
 	return myRelativePosition
 endFunction
 
+;=== This has been modified to apply a local rotation because I never could get it to work on objects with Y rotation. ===--
 ObjectReference Function PlaceAtMeRelative(ObjectReference akOrigin, Form akFormToPlace, Float[] fOriginAng, \
 										   Float[] fRelativePos, Float fZGlobalAngAdjust = 0.0, Float fXLocalAngAdjust = 0.0,  \
 										   Float fYLocalAngAdjust = 0.0, Float fZLocalAngAdjust = 0.0, Float fZHangingOffset = 0.0, \

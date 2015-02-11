@@ -29,6 +29,8 @@ String Property ScriptState Hidden
 	EndFunction
 EndProperty
 
+ActorBase			Property MyActorBase							Auto Hidden
+
 vMYC_DataManager	Property DataManager							Auto
 
 Bool 				Property NeedAppearance	= False 				Auto Hidden
@@ -71,10 +73,10 @@ Formlist 			Property vMYC_ModCompatibility_PerkList_Unsafe 		Auto
 Message 			Property vMYC_VoiceTypeNoFollower 					Auto
 Message 			Property vMYC_VoiceTypeNoSpouse						Auto
 
+Int					Property _jCharacterData							Auto Hidden
+
 ;=== Variables ===--
 
-ActorBase 	_kActorBase 				= None
-		
 Bool 		_bFirstLoad 				= True
 				
 String[] 	_sSkillNames
@@ -91,7 +93,7 @@ CombatStyle _kLastCombatStyle
 
 Int 		_iCharGenVersion
 
-Int			_jCharacterData
+;Int			_jCharacterData
 
 String 		_sCharacterInfo
 
@@ -100,8 +102,8 @@ String		_sFormID
 ;=== Events ===--
 
 Event OnInit()
-	_kActorBase = GetActorBase()
-	_kActorBase.SetEssential(True)
+	MyActorBase = GetActorBase()
+	MyActorBase.SetEssential(True)
 EndEvent
 
 Event OnUpdate()
@@ -147,12 +149,12 @@ Auto State Available
 			Return
 		EndIf
 		DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, transforming into " + GetRegStr(_sCharacterInfo + "Name") + "!")
-		SetRegForm("Doppelgangers.Preferred." + sUUID + ".ActorBase",_kActorBase)
-		SetSessionForm("Doppelgangers." + sUUID + ".ActorBase",_kActorBase)
+		SetRegForm("Doppelgangers.Preferred." + sUUID + ".ActorBase",MyActorBase)
+		SetSessionForm("Doppelgangers." + sUUID + ".ActorBase",MyActorBase)
 		SetSessionForm("Doppelgangers." + sUUID + ".Actor",Self as Actor)
 		CharacterName = GetRegStr(_sCharacterInfo + "Name")
 		CharacterRace = GetRegForm(_sCharacterInfo + "Race") as Race
-		_kActorBase.SetName(CharacterName)
+		MyActorBase.SetName(CharacterName)
 		NeedAppearance	= True
 		NeedStats		= True
 		NeedPerks		= True
@@ -271,9 +273,9 @@ Function DoUpkeep(Bool bInBackground = True)
 EndFunction
 
 Function SetNameIfNeeded(Bool abForce = False)
-	If (CharacterName && _kActorBase.GetName() != CharacterName) || abForce
+	If (CharacterName && MyActorBase.GetName() != CharacterName) || abForce
 		DebugTrace("Setting actorbase name!")
-		_kActorBase.SetName(CharacterName)
+		MyActorBase.SetName(CharacterName)
 		SetName(CharacterName)
 		;FIXME: This will need to be reenabled, just disabling now to simply things
 		;Int i = GetNumReferenceAliases()
@@ -297,11 +299,11 @@ Int Function UpdateAppearance()
 		DebugTrace("UpdateAppearance called outside Assigned state!")
 		Return -2
 	EndIf
-	Bool _bInvulnerableState = _kActorBase.IsInvulnerable()
+	Bool _bInvulnerableState = MyActorBase.IsInvulnerable()
 	Bool _bCharGenSuccess = False
-	_kActorBase.SetInvulnerable(True)
+	MyActorBase.SetInvulnerable(True)
 	_bCharGenSuccess = CharGenLoadCharacter(Self,CharacterRace,CharacterName)
-	_kActorBase.SetInvulnerable(_bInvulnerableState)
+	MyActorBase.SetInvulnerable(_bInvulnerableState)
 	If _bCharGenSuccess
 		Return 0
 	Else
@@ -505,7 +507,7 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 			Int h = (kItem as Armor).GetSlotMask()
 			ObjectReference kObject = DataManager.LoadSerializedEquipment(jArmor)
 			If kObject
-				kObject.SetActorOwner(_kActorBase)
+				kObject.SetActorOwner(MyActorBase)
 				kCharacterActor.AddItem(kObject,1,True)
 				kCharacterActor.EquipItemEx(kItem,0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
 				;== Load NIO dye, if applicable ===--
@@ -561,7 +563,7 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 		Form kItem = JMap.GetForm(jItem,"Form")
 		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
 		If kObject
-			kObject.SetActorOwner(_kActorBase)
+			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 			kCharacterActor.EquipItemEx(kItem,iHand,False,True)
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
@@ -650,7 +652,7 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 		Form kItem = JMap.GetForm(jItem,"Form")
 		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
 		If kObject
-			kObject.SetActorOwner(_kActorBase)
+			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
 			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
@@ -813,7 +815,7 @@ Int Function UpdatePerks()
 	Else
 		DebugTrace("Loading " + iPerkCountTotal + " Perks...")
 	EndIf
-	FFUtils.LoadCharacterPerks(_kActorBase,kPerklist)
+	FFUtils.LoadCharacterPerks(MyActorBase,kPerklist)
 	DebugTrace("Perks loaded successfully!")
 	WaitMenuMode(0.1)
 	DataManager.UnlockFormlist(kPerklist)
@@ -896,7 +898,7 @@ Int Function UpdateShouts()
 	Else
 		DebugTrace("Loaded " + iShoutCount + " Shouts.")
 	EndIf
-	FFUtils.LoadCharacterShouts(_kActorBase,kShoutlist)
+	FFUtils.LoadCharacterShouts(MyActorBase,kShoutlist)
 	WaitMenuMode(0.1)
 	DataManager.UnlockFormlist(kShoutlist)
 	Return kShoutlist.GetSize()
@@ -909,7 +911,7 @@ Function RemoveCharacterShouts(String sCharacterName)
 	kShoutlist.Revert() ; Should already be empty, but just in case
 	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
 	kShoutlist.AddForm(vMYC_NullShout)
-	FFUtils.LoadCharacterShouts(_kActorBase,kShoutlist)
+	FFUtils.LoadCharacterShouts(MyActorBase,kShoutlist)
 	WaitMenuMode(0.1)
 EndFunction
 

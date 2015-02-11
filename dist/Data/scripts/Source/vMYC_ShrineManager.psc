@@ -15,6 +15,8 @@ Import vMYC_Registry
 Actor 				Property PlayerRef 								Auto
 {The Player, duh}
 
+vMYC_DataManager	Property DataManager							Auto
+
 ;=== Achievement test Properties ===--
 
 ;=== Variables ===--
@@ -23,11 +25,20 @@ Actor 				Property PlayerRef 								Auto
 
 Event OnInit()
 	If IsRunning()
-		RegisterForSingleUpdate(3)
+		RegisterForModEvents()
 	EndIf
 EndEvent
 
 Event OnGameReload()
+	RegisterForModEvents()
+EndEvent
+
+Function RegisterForModEvents()
+	RegisterForModEvent("vMYC_DataManagerReady","OnDataManagerReady")
+EndFunction
+
+Event OnDataManagerReady(string eventName, string strArg, float numArg, Form sender)
+	UnregisterForModEvent("vMYC_DataManagerReady")
 	RegisterForSingleUpdate(3)
 EndEvent
 
@@ -46,9 +57,18 @@ Event OnAlcoveRegister(Int aiAlcoveIndex, Form akAlcoveForm)
 	DebugTrace("Registered!")
 EndEvent
 
+Event OnAlcoveSync(Int aiAlcoveIndex, Form akAlcoveForm)
+	DebugTrace("Synchronizing Alcove " + aiAlcoveIndex + " " + akAlcoveform + "...")
+	vMYC_AlcoveController kAlcove = akAlcoveForm as vMYC_AlcoveController
+	String sScalesLikeFireID = "A68F7820-A7DD-4B5c-B8cB-47B2ccFe7492"
+	kAlcove.AlcoveCharacterID = sScalesLikeFireID
+	kAlcove.CheckForCharacterActor()
+EndEvent
+
 Function SendShrineManagerReady()
 	DebugTrace("Checking Alcoves!")
 	RegisterForModEvent("vMYC_AlcoveRegister","OnAlcoveRegister")
+	RegisterForModEvent("vMYC_AlcoveSync","OnAlcoveSync")
 	Int iHandle = ModEvent.Create("vMYC_ShrineManagerReady")
 	If iHandle
 		ModEvent.PushForm(iHandle,Self)

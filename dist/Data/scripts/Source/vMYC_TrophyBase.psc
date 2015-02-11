@@ -214,11 +214,11 @@ Function SendRegisterEvent()
 	EndIf
 	Wait(1)
 	_CreateTemplates()
-	ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
-	If TrophyName
-		_DisplayedObjects = New ObjectReference[128]
-		_Display(kOffsetOrigin,0x0000FFFF)
-	EndIf
+	;ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
+	;If TrophyName
+	;	_DisplayedObjects = New ObjectReference[128]
+	;	_Display(kOffsetOrigin,0x0000FFFF)
+	;EndIf
 	;If TrophyName == "DarkBrotherhood"
 	;	_DisplayedObjects = New ObjectReference[128]
 	;	_BannersToDisplay = New Form[128]
