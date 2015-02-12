@@ -6,6 +6,7 @@ Scriptname vMYC_AlcoveController extends ObjectReference
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_PlacementUtils
 
 ;=== Constants ===--  
 
@@ -30,6 +31,8 @@ Actor							Property	AlcoveActor								Auto Hidden
 String							Property	AlcoveCharacterID						Auto Hidden
 
 ObjectReference					Property	AlcoveStatueMarker						Auto
+
+Form							Property	vMYC_CharacterGlow							Auto
 ;=== Variables ===--
 
 String _sFormID
@@ -118,6 +121,7 @@ EndFunction
 
 Function CheckForCharacterActor()
 	If !AlcoveActor
+		LightingController.DesiredLightState = 2
 		DebugTrace("AlcoveActor not found! We should create one!")
 		Int iSex = GetRegInt("Characters." + AlcoveCharacterID + ".Info.Sex")
 		If iSex ;Female
@@ -125,15 +129,43 @@ Function CheckForCharacterActor()
 		Else ;Male
 			AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueM")) as Actor
 		EndIf
+		
+		
 		AlcoveActor.MoveTo(AlcoveStatueMarker)
 		AlcoveActorBase = AlcoveActor.GetActorBase()
 		vMYC_CharacterMannequin kStatueScript = AlcoveActor as vMYC_CharacterMannequin
+
+		Float fMultX = Math.sin(AlcoveStatueMarker.GetAngleZ())
+		Float fMultY = -Math.cos(AlcoveStatueMarker.GetAngleZ())
+		
+		ObjectReference[] kGlows = New ObjectReference[8]
+		Int i = 0
+		While i < kGlows.Length
+			kGlows[i] = AlcoveStatueMarker.PlaceAtMe(vMYC_CharacterGlow,AbInitiallyDisabled = True)
+			kGlows[i].MoveTo(AlcoveStatueMarker,fMultX * -25,fMultY * -25,100 - (i*2.5))
+			;kGlows[i].SetAngle(0,0,AlcoveStatueMarker.GetAngleZ())
+			kGlows[i].SetScale(0.1 * i)
+			kGlows[i].EnableNoWait(True)
+			i += 1
+		EndWhile
+
 		kStatueScript.AssignCharacter(AlcoveCharacterID)	
 		kStatueScript.EnableNoWait(True)
+
 		While !kStatueScript.Is3DLoaded()
 			Wait(0.1)
 		EndWhile
+		kStatueScript.SetAlpha(0.01,False)
 		vMYC_BlindingLightInwardParticles.Play(AlcoveActor,1)
+		Wait(1)
+		kStatueScript.SetAlpha(1,True)
+		kStatueScript.EnableAI(False)
+		i = kGlows.Length
+		While i > 0
+			i -= 1
+			kGlows[i].DisableNoWait(True)
+			Wait(0.88)
+		EndWhile
 	EndIf
 EndFunction
 	
