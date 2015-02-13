@@ -81,13 +81,16 @@ ObjectReference Property AlcoveTorchTriggerBox	Auto
 
 String _sFormID
 
-Int _iAlcoveLightState = 0
-Int _iDesiredLightState = 0
+Int _iAlcoveLightState = -1
+Int _iDesiredLightState = -1
 
 ;=== Events and Functions ===--
 
 Function CheckVars()
 	CheckObjects()
+	If GetParentCell().IsAttached() && ( _iAlcoveLightState < 0 || _iDesiredLightState < 0 )
+		DesiredLightState = 0
+	EndIf
 EndFunction
 
 Event OnInit()
@@ -170,6 +173,19 @@ Event OnUpdate()
 		If AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.DisableNoWait(True)
 		EndIf
+	ElseIf _iDesiredLightState == ALCOVE_LIGHTS_BUSY
+		AlcoveTorchTriggerBox.DisableNoWait(False)
+		If !AlcoveLightTorchNSPar.IsEnabled()
+			AlcoveLightTorchNSPar.EnableNoWait()
+		EndIf
+		If AlcoveLightTorchSPar.IsEnabled()
+			AlcoveLightTorchSPar.DisableNoWait()
+		EndIf
+		AlcoveLightTorchAmb.EnableNoWait(True)
+		If AlcoveFogLit.IsEnabled()
+			AlcoveFogLit.DisableNoWait(True)
+		EndIf
+		ShowFog(True)
 	ElseIf _iDesiredLightState == ALCOVE_LIGHTS_ON
 		AlcoveTorchTriggerBox.EnableNoWait(False)
 		If !AlcoveLightTorchAmb.IsEnabled()
