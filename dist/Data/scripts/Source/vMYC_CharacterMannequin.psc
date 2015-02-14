@@ -14,7 +14,7 @@ Import vMYC_Registry
 ;=== Variables ===--
 		
 Bool 		_bFirstLoad 				= True
-				
+
 String[] 	_sSkillNames
 
 Float 		_fDecapitationChance
@@ -124,6 +124,10 @@ State Assigned
 			If bResultArmor >= 0 && bResultWeapons >= 0 ; No error
 				NeedEquipment = False
 			EndIf
+			EquipDefaultGear() 
+		EndIf
+		If !NeedAppearance && !NeedEquipment
+			SendModEvent("vMYC_CharacterReadyDisplay")
 		EndIf
 		If NeedStats
 			If UpdateStats() >= 0
@@ -185,10 +189,6 @@ EndFunction
 ;=== Appearance functions ===--
 ; Unchanged
 ;=== Equipment and inventory functions ===--
-
-Int Function EquipDefaultGear(Bool abLockEquip = False)
-	Return 1
-EndFunction
 
 Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = False)
 	Return 1

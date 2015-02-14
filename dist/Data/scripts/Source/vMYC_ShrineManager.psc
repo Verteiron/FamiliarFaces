@@ -61,6 +61,7 @@ Event OnAlcoveSync(Int aiAlcoveIndex, Form akAlcoveForm)
 	DebugTrace("Synchronizing Alcove " + aiAlcoveIndex + " " + akAlcoveform + "...")
 	vMYC_AlcoveController kAlcove = akAlcoveForm as vMYC_AlcoveController
 	String sScalesLikeFireID = "A68F7820-A7DD-4B5c-B8cB-47B2ccFe7492"
+	String sKmiruID = "09D1DF7A-4c77-4c77-9e39-351eA4407B3A"
 	kAlcove.AlcoveCharacterID = sScalesLikeFireID
 	kAlcove.CheckForCharacterActor()
 EndEvent

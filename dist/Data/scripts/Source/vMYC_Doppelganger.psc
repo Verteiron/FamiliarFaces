@@ -471,6 +471,9 @@ Int Function EquipDefaultGear(Bool abLockEquip = False)
 	EndIf
 	Form kAmmo = JValue.SolveForm(_jCharacterData,".Equipment.Ammo")
 	If kAmmo
+		If !kCharacterActor.GetItemCount(kAmmo)
+			kCharacterActor.AddItem(kAmmo,1,True)
+		EndIf
 		kCharacterActor.EquipItemEx(kAmmo,0,abLockEquip,True)
 		iCount += 1
 	EndIf

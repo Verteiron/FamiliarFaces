@@ -32,7 +32,7 @@ String							Property	AlcoveCharacterID						Auto Hidden
 
 ObjectReference					Property	AlcoveStatueMarker						Auto
 
-Sound							Property	vMYC_AlcoveStatueAppearSM				Auto
+Sound							Property	vMYC_AlcoveStatueHarmonicLPSM			Auto
 Sound							Property	vMYC_AlcoveStatueAppearLPSM				Auto
 Sound							Property	QSTMG07MagnusStormCollegeMediumLPM		Auto
 Sound							Property	QSTMG07MagnusStormCollegeMediumRelease	Auto
@@ -126,8 +126,9 @@ EndFunction
 
 
 Function CheckForCharacterActor()
-	Wait(5)
+	Wait(2)
 	If !AlcoveActor
+		
 		Int iStatueSound = vMYC_AlcoveStatueAppearLPSM.Play(AlcoveStatueMarker)
 		LightingController.DesiredLightState = 1
 		DebugTrace("AlcoveActor not found! We should create one!")
@@ -147,8 +148,11 @@ Function CheckForCharacterActor()
 		Float fMultX = Math.sin(AlcoveStatueMarker.GetAngleZ())
 		Float fMultY = -Math.cos(AlcoveStatueMarker.GetAngleZ())
 		
-		vMYC_AlcoveStatueAppearSM.Play(Self)
+		Int iHarmonicSound = vMYC_AlcoveStatueHarmonicLPSM.Play(Self)
 		
+		ObjectReference kGlowSuper = AlcoveStatueMarker.PlaceAtMe(vMYC_CharacterGlow,AbInitiallyDisabled = True)
+		kGlowSuper.SetScale(10)
+		kGlowSuper.MoveTo(AlcoveStatueMarker,fMultX * -80, fMultY * -80, 100)
 		ObjectReference[] kGlows = New ObjectReference[8]
 		Int i = 0
 		While i < kGlows.Length
@@ -169,22 +173,28 @@ Function CheckForCharacterActor()
 		EndWhile
 		kStatueScript.SetAlpha(0.01,False)
 		vMYC_BlindingLightInwardParticles.Play(AlcoveActor,1)
-		Wait(2)
-		kStatueScript.SetAlpha(1,True)
-		kStatueScript.EnableAI(False)
+		While kStatueScript.NeedAppearance && kStatueScript.NeedEquipment
+			DebugTrace("Waiting for statue to be ready...")
+			Wait(0.5)
+		EndWhile
+		LightingController.DesiredLightState = 2
 		If iStatueSound
+			kGlowSuper.EnableNoWait(True)
 			Sound.StopInstance(iStatueSound)
 			iStatueSound = 0
 		EndIf
-		LightingController.DesiredLightState = 2
+		kStatueScript.SetAlpha(1,True)
+		kStatueScript.EnableAI(False)
+		If iHarmonicSound
+			Sound.StopInstance(iHarmonicSound)
+			iHarmonicSound = 0
+		EndIf
 		i = kGlows.Length
+		kGlowSuper.DisableNoWait(True)
 		While i > 0
 			i -= 1
 			kGlows[i].DisableNoWait(True)
-			Wait(0.5)
-			If i < 4
-				Wait(0.25)
-			EndIf
+			Wait(0.88)
 		EndWhile
 		;QSTMG07MagnusStormCollegeMediumRelease.Play(Self)
 		;Sound.StopInstance(iAlcoveSound)
