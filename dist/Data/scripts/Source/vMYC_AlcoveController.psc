@@ -127,80 +127,82 @@ EndFunction
 
 Function CheckForCharacterActor()
 	Wait(2)
-	If !AlcoveActor
-		
-		Int iStatueSound = vMYC_AlcoveStatueAppearLPSM.Play(AlcoveStatueMarker)
-		LightingController.DesiredLightState = 1
-		DebugTrace("AlcoveActor not found! We should create one!")
-		Int iSex = GetRegInt("Characters." + AlcoveCharacterID + ".Info.Sex")
-		If iSex ;Female
-			AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueF")) as Actor
-		Else ;Male
-			AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueM")) as Actor
-		EndIf
-		
-		;Int iAlcoveSound = QSTMG07MagnusStormCollegeMediumLPM.Play(Self)		
-		
-		AlcoveActor.MoveTo(AlcoveStatueMarker)
-		AlcoveActorBase = AlcoveActor.GetActorBase()
-		vMYC_CharacterMannequin kStatueScript = AlcoveActor as vMYC_CharacterMannequin
-
-		Float fMultX = Math.sin(AlcoveStatueMarker.GetAngleZ())
-		Float fMultY = -Math.cos(AlcoveStatueMarker.GetAngleZ())
-		
-		Int iHarmonicSound = vMYC_AlcoveStatueHarmonicLPSM.Play(Self)
-		
-		ObjectReference kGlowSuper = AlcoveStatueMarker.PlaceAtMe(vMYC_CharacterGlow,AbInitiallyDisabled = True)
-		kGlowSuper.SetScale(10)
-		kGlowSuper.MoveTo(AlcoveStatueMarker,fMultX * -80, fMultY * -80, 100)
-		ObjectReference[] kGlows = New ObjectReference[8]
-		Int i = 0
-		While i < kGlows.Length
-			kGlows[i] = AlcoveStatueMarker.PlaceAtMe(vMYC_CharacterGlow,AbInitiallyDisabled = True)
-			If i % 2
-				kGlows[i].MoveTo(AlcoveStatueMarker,fMultX * -25,fMultY * -25,130 - (i*12))
-			Else
-				kGlows[i].MoveTo(AlcoveStatueMarker,fMultX * -25,fMultY * -25,100 - (i*6))
-			EndIf
-			kGlows[i].SetScale(0.1 * i)
-			kGlows[i].EnableNoWait(True)
-			i += 1
-		EndWhile
-		kStatueScript.AssignCharacter(AlcoveCharacterID)	
-		kStatueScript.EnableNoWait(True)
-		While !kStatueScript.Is3DLoaded()
-			Wait(0.1)
-		EndWhile
-		kStatueScript.SetAlpha(0.01,False)
-		vMYC_BlindingLightInwardParticles.Play(AlcoveActor,1)
-		While kStatueScript.NeedAppearance && kStatueScript.NeedEquipment
-			DebugTrace("Waiting for statue to be ready...")
-			Wait(0.5)
-		EndWhile
-		LightingController.DesiredLightState = 2
-		If iStatueSound
-			kGlowSuper.EnableNoWait(True)
-			Sound.StopInstance(iStatueSound)
-			iStatueSound = 0
-		EndIf
-		kStatueScript.SetAlpha(1,True)
-		kStatueScript.EnableAI(False)
-		If iHarmonicSound
-			Sound.StopInstance(iHarmonicSound)
-			iHarmonicSound = 0
-		EndIf
-		i = kGlows.Length
-		kGlowSuper.DisableNoWait(True)
-		While i > 0
-			i -= 1
-			kGlows[i].DisableNoWait(True)
-			Wait(0.88)
-		EndWhile
-		;QSTMG07MagnusStormCollegeMediumRelease.Play(Self)
-		;Sound.StopInstance(iAlcoveSound)
+	If !AlcoveActor && AlcoveCharacterID
+		ShowCharacterStatue(True)
 	EndIf
 EndFunction
 	
+Function ShowCharacterStatue(Bool abFullEffects = True)
+	Int iStatueSound = vMYC_AlcoveStatueAppearLPSM.Play(AlcoveStatueMarker)
+	LightingController.DesiredLightState = 1
+	DebugTrace("AlcoveActor not found! We should create one!")
+	Int iSex = GetRegInt("Characters." + AlcoveCharacterID + ".Info.Sex")
+	If iSex ;Female
+		AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueF")) as Actor
+	Else ;Male
+		AlcoveActor = GetLinkedRef(Keyword.GetKeyword("vMYC_AlcoveStatueM")) as Actor
+	EndIf
+	
+	;Int iAlcoveSound = QSTMG07MagnusStormCollegeMediumLPM.Play(Self)		
+	
+	AlcoveActor.MoveTo(AlcoveStatueMarker)
+	AlcoveActorBase = AlcoveActor.GetActorBase()
+	vMYC_CharacterMannequin kStatueScript = AlcoveActor as vMYC_CharacterMannequin
+
+	Float fMultX = Math.sin(AlcoveStatueMarker.GetAngleZ())
+	Float fMultY = -Math.cos(AlcoveStatueMarker.GetAngleZ())
+	
+	Int iHarmonicSound = vMYC_AlcoveStatueHarmonicLPSM.Play(Self)
+	
+	ObjectReference kGlowSuper = AlcoveStatueMarker.PlaceAtMe(vMYC_CharacterGlow,AbInitiallyDisabled = True)
+	kGlowSuper.SetScale(10)
+	kGlowSuper.MoveTo(AlcoveStatueMarker,fMultX * -80, fMultY * -80, 100)
+	ObjectReference[] kGlows = New ObjectReference[8]
+	Int i = 0
+	While i < kGlows.Length
+		kGlows[i] = AlcoveStatueMarker.PlaceAtMe(vMYC_CharacterGlow,AbInitiallyDisabled = True)
+		If i % 2
+			kGlows[i].MoveTo(AlcoveStatueMarker,fMultX * -25,fMultY * -25,130 - (i*12))
+		Else
+			kGlows[i].MoveTo(AlcoveStatueMarker,fMultX * -25,fMultY * -25,100 - (i*6))
+		EndIf
+		kGlows[i].SetScale(0.1 * i)
+		kGlows[i].EnableNoWait(True)
+		i += 1
+	EndWhile
+	kStatueScript.AssignCharacter(AlcoveCharacterID)	
+	kStatueScript.EnableNoWait(True)
+	While !kStatueScript.Is3DLoaded()
+		Wait(0.1)
+	EndWhile
+	kStatueScript.SetAlpha(0.01,False)
+	vMYC_BlindingLightInwardParticles.Play(AlcoveActor,1)
+	While kStatueScript.NeedAppearance && kStatueScript.NeedEquipment
+		DebugTrace("Waiting for statue to be ready...")
+		Wait(0.5)
+	EndWhile
+	LightingController.DesiredLightState = 2
+	If iStatueSound
+		Sound.StopInstance(iStatueSound)
+		iStatueSound = 0
+	EndIf
+	kGlowSuper.EnableNoWait(False)
+	kStatueScript.SetAlpha(1,True)
+	kStatueScript.EnableAI(False)
+	If iHarmonicSound
+		Sound.StopInstance(iHarmonicSound)
+		iHarmonicSound = 0
+	EndIf
+	i = kGlows.Length
+	kGlowSuper.DisableNoWait(True)
+	While i > 0
+		i -= 1
+		kGlows[i].DisableNoWait(True)
+		Wait(0.88)
+	EndWhile
+	;QSTMG07MagnusStormCollegeMediumRelease.Play(Self)
+	;Sound.StopInstance(iAlcoveSound)
+EndFunction
 ;=== Utility functions ===--
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)

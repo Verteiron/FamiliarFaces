@@ -17,6 +17,10 @@ Actor			Property PlayerREF	Auto
 ObjectReference	Property TorchNS Auto
 ObjectReference	Property TorchS  Auto
 
+Keyword 		Property vMYC_AlcoveTorchesNS		Auto
+Keyword 		Property vMYC_AlcoveTorchesS		Auto
+Keyword			Property vMYC_LightingControllerKW	Auto
+
 vMYC_AlcoveLightingController	Property AlcoveLightingController	Auto
 
 ;--=== Variables ===--
@@ -27,16 +31,18 @@ Bool	_bShadowsEnabled = False
 
 Event OnLoad()
 	CheckObjects()
-	TorchNS.EnableNoWait()
-	TorchS.DisableNoWait()
-EndEvent
-
-Event OnCellAttach()
-	If !TorchNS
+	If !AlcoveLightingController
+		TorchS.DisableNoWait(False)
+		TorchNS.DisableNoWait(False)
 		Return
 	EndIf
-	TorchNS.EnableNoWait()
-	TorchS.DisableNoWait()
+	If AlcoveLightingController.AlcoveLightState > 0
+		TorchS.DisableNoWait(False)
+		TorchNS.EnableNoWait(False)
+	Else
+		TorchS.DisableNoWait(False)
+		TorchNS.DisableNoWait(False)
+	EndIf
 EndEvent
 
 Event OnTriggerEnter(ObjectReference akActionRef)
@@ -76,10 +82,12 @@ Function CheckObjects()
 EndFunction
 
 Function FindObjects()
-	TorchNS = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchNShadowEnableParent,Self,500)
-	TorchS = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchShadowEnableParent,Self,500)
-	AlcoveLightingController = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveLightingControllerActivator,Self,500) as vMYC_AlcoveLightingController
-	AlcoveLightingController.AlcoveTorchTriggerBox = Self
+	TorchNS 				 = GetLinkedRef(vMYC_AlcoveTorchesNS)
+	TorchS 					 = GetLinkedRef(vMYC_AlcoveTorchesS)
+	AlcoveLightingController = GetLinkedRef(vMYC_LightingControllerKW) as vMYC_AlcoveLightingController
+	;If !AlcoveLightingController.AlcoveTorchTriggerBox
+	;	AlcoveLightingController.AlcoveTorchTriggerBox = Self
+	;EndIf
 	DebugTrace("TorchNS is " + TorchNS + ", TorchS is " + TorchS + ", LightingController is " + AlcoveLightingController)
 EndFunction
 

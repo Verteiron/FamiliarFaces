@@ -16,6 +16,8 @@ Int Property ALCOVE_LIGHTS_ON	 	= 2 AutoReadOnly Hidden
 
 Bool Property TorchShadows = False	Auto
 
+Bool Property FogEnabled	= False			Auto
+
 Int Property AlcoveLightState Hidden
 	Int Function Get()
 		Return _iAlcoveLightState
@@ -33,6 +35,18 @@ Int Property DesiredLightState Hidden
 		SetLightState(aiAlcoveLightState)
 	EndFunction
 EndProperty
+
+;=== Keywords ===--
+
+Keyword Property vMYC_AlcoveAmbientBlue		Auto
+Keyword Property vMYC_AlcoveAmbientTorch	Auto
+Keyword Property vMYC_AlcoveFogFill			Auto
+Keyword Property vMYC_AlcoveFogLow			Auto
+Keyword Property vMYC_AlcoveFogWall			Auto
+Keyword Property vMYC_AlcoveFogLit			Auto
+Keyword Property vMYC_AlcoveTorchesNS		Auto
+Keyword Property vMYC_AlcoveTorchesS		Auto
+Keyword Property vMYC_AlcoveTorchesTrig		Auto
 
 ;=== Base forms to find objects with ===--
 
@@ -89,17 +103,21 @@ Int _iDesiredLightState = -1
 Function CheckVars()
 	CheckObjects()
 	If GetParentCell().IsAttached() && ( _iAlcoveLightState < 0 || _iDesiredLightState < 0 )
-		DesiredLightState = 0
+		SetLightState(ALCOVE_LIGHTS_OFF,True)
 	EndIf
 EndFunction
 
 Event OnInit()
 	DebugTrace("OnInit!")
-	CheckVars()
 EndEvent
 
 Event OnLoad()
 	DebugTrace("OnLoad!")
+	CheckVars()
+EndEvent
+
+Event OnCellAttach()
+	DebugTrace("OnCellAttach!")
 	CheckVars()
 EndEvent
 
@@ -114,25 +132,7 @@ Function SetLightState(Int aiDesiredLightState, Bool abForce = False)
 	EndIf
 	If abForce
 		DebugTrace("FORCING Lightstate to " + _iDesiredLightState + "!")
-		If _iDesiredLightState == ALCOVE_LIGHTS_OFF
-			AlcoveTorchTriggerBox.Disable(False)
-			AlcoveLightTorchNSPar.DisableNoWait()
-			AlcoveLightTorchSPar.DisableNoWait()
-			AlcoveLightTorchAmb.DisableNoWait()
-			;AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,1000)
-			ShowFog(True)
-		Else
-			AlcoveTorchTriggerBox.EnableNoWait(False)
-			AlcoveLightTorchNSPar.EnableNoWait()
-			;AlcoveLightTorchAmb.SetPosition(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-448)
-			AlcoveLightTorchAmb.EnableNoWait()
-			ShowFog(True)
-		EndIf
-		If _iDesiredLightState == ALCOVE_LIGHTS_ON
-			AlcoveLightTorchNSPar.EnableNoWait()
-			ShowFog(False)
-		EndIf
-		_iAlcoveLightState = _iDesiredLightState
+		OnUpdate()
 		Return ; No need to continue, everything is set.
 	EndIf
 	
@@ -141,7 +141,6 @@ Function SetLightState(Int aiDesiredLightState, Bool abForce = False)
 	EndIf
 	
 	RegisterForSingleUpdate(0.1)
-			
 EndFunction
 
 Event OnUpdate()
@@ -160,64 +159,57 @@ Event OnUpdate()
 			AlcoveLightTorchNSPar.DisableNoWait()
 		EndIf
 		AlcoveLightTorchAmb.DisableNoWait(True)
-		;DebugTrace("Want lights OFF! Diff: " + Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 250))
-		;If Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 250) > 10 && AlcoveLightTorchAmb.IsEnabled()
-			;AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-250,0,0,0,500)
-			;RegisterForSingleUpdate(0.5)
-		;Else
-			;AlcoveLightTorchAmb.StopTranslation()
-			;AlcoveLightTorchAmb.DisableNoWait()
-			_iAlcoveLightState = ALCOVE_LIGHTS_OFF
-			DebugTrace("Lights are now OFF!")
-		;EndIf
+		_iAlcoveLightState = ALCOVE_LIGHTS_OFF
+		DebugTrace("Lights are now OFF!")
 		If AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.DisableNoWait(True)
 		EndIf
 	ElseIf _iDesiredLightState == ALCOVE_LIGHTS_BUSY
-		AlcoveTorchTriggerBox.DisableNoWait(False)
+		If !FogEnabled
+			ShowFog(True)
+		EndIf
 		If !AlcoveLightTorchNSPar.IsEnabled()
 			AlcoveLightTorchNSPar.EnableNoWait()
 		EndIf
 		If AlcoveLightTorchSPar.IsEnabled()
 			AlcoveLightTorchSPar.DisableNoWait()
 		EndIf
-		AlcoveLightTorchAmb.EnableNoWait(True)
+		AlcoveTorchTriggerBox.DisableNoWait(False)
+		If !AlcoveLightTorchAmb.IsEnabled()
+			AlcoveLightTorchAmb.EnableNoWait(True)
+		EndIf
 		If AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.DisableNoWait(True)
 		EndIf
-		ShowFog(True)
+		_iAlcoveLightState = ALCOVE_LIGHTS_BUSY
+		DebugTrace("Lights are now BUSY!")
 	ElseIf _iDesiredLightState == ALCOVE_LIGHTS_ON
-		AlcoveTorchTriggerBox.EnableNoWait(False)
-		If !AlcoveLightTorchAmb.IsEnabled()
-			AlcoveLightTorchAmb.EnableNoWait()
-			WaitFor3DLoad(AlcoveLightTorchAmb)
-		EndIf
 		AlcoveLightTorchAmb.EnableNoWait(True)
-		;DebugTrace("Want lights ON! Diff: " + Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 448))
-		;If Math.Abs(AlcoveLightTorchAmb.GetPositionZ() + 448) > 10
-		;	AlcoveLightTorchAmb.TranslateTo(AlcoveLightTorchAmb.X,AlcoveLightTorchAmb.Y,-448,0,0,0,500)
-		;	RegisterForSingleUpdate(0.5)
-		;Else
-			If !AlcoveLightTorchNSPar.IsEnabled() && !AlcoveLightTorchSPar.IsEnabled() 
-				AlcoveLightTorchNSPar.EnableNoWait()
-			EndIf
-			AlcoveFogCurtain.DisableNoWait(True)
-			ShowFog(False)
-			_iAlcoveLightState = ALCOVE_LIGHTS_ON
-			DebugTrace("Lights are now ON!")
-		;EndIf
+		If !AlcoveLightTorchNSPar.IsEnabled()
+			AlcoveLightTorchNSPar.EnableNoWait()
+		EndIf
+		If AlcoveLightTorchSPar.IsEnabled()
+			AlcoveLightTorchSPar.DisableNoWait()
+		EndIf
+		AlcoveFogCurtain.DisableNoWait(True)
+		ShowFog(False)
 		If !AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.EnableNoWait(True)
 		EndIf
+		AlcoveTorchTriggerBox.EnableNoWait(False)
+		_iAlcoveLightState = ALCOVE_LIGHTS_ON
+		DebugTrace("Lights are now ON!")
 	EndIf
 EndEvent
 
 Function ShowFog(Bool abShowFog = True)
 	If abShowFog
+		FogEnabled = True
 		AlcoveFogDense.EnableNoWait(True)
 		WaitMenuMode(0.25)
 		AlcoveFogFloor.EnableNoWait(True)
 	Else
+		FogEnabled = False
 		AlcoveFogDense.DisableNoWait(True)
 		WaitMenuMode(0.25)
 		AlcoveFogFloor.DisableNoWait(True)
@@ -231,21 +223,49 @@ Function CheckObjects()
 EndFunction
 
 Function FindObjects()
-	AlcoveLightTorchNSPar = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchNShadowEnableParent,Self,800)
-	AlcoveLightTorchSPar = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchShadowEnableParent,Self,800)
-	AlcoveLightTorchAmb =  FindClosestReferenceOfTypeFromRef(vMYC_ShrineActiveLight,Self,800)
-	AlcoveLightShrineAmb =  FindClosestReferenceOfTypeFromRef(vMYC_ShrineAmbientLight,Self,800)
-	AlcoveFogDense =  FindClosestReferenceOfTypeFromRef(vMYC_EmptyShrineFog,Self,800)
+	;AlcoveLightTorchNSPar = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchNShadowEnableParent,Self,800)
+	;AlcoveLightTorchSPar = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchShadowEnableParent,Self,800)
+	;AlcoveLightTorchAmb =  FindClosestReferenceOfTypeFromRef(vMYC_ShrineActiveLight,Self,800)
+	;AlcoveLightShrineAmb =  FindClosestReferenceOfTypeFromRef(vMYC_ShrineAmbientLight,Self,800)
+	;AlcoveFogDense =  FindClosestReferenceOfTypeFromRef(vMYC_EmptyShrineFog,Self,800)
+	;
+	;FXAmbBlowingFog01 = GetFormFromFile(0x00035267,"Skyrim.esm")
+	;FXFogRollingFacing01 = GetFormFromFile(0x00034DB6,"Skyrim.esm")
+	;FXAmbBeamSlowFogBig_Dim03 = GetFormFromFile(0x000A6C4D,"Skyrim.esm")
+	;
+	;AlcoveFogFloor =  FindClosestReferenceOfTypeFromRef(FXAmbBlowingFog01,Self,800)
+	;AlcoveFogCurtain =  FindClosestReferenceOfTypeFromRef(FXFogRollingFacing01,Self,800)
+	;AlcoveFogLit =  FindClosestReferenceOfTypeFromRef(FXAmbBeamSlowFogBig_Dim03,Self,800)
+	;
+	;While !AlcoveTorchTriggerBox
+	;	DebugTrace("Waiting for AlcoveTorchTriggerBox...")
+	;	Wait(1)
+	;EndWhile
+
+;Keyword Property vMYC_AlcoveAmbientBlue		Auto
+;Keyword Property vMYC_AlcoveAmbientTorch	Auto
+;Keyword Property vMYC_AlcoveFogFill			Auto
+;Keyword Property vMYC_AlcoveFogLow			Auto
+;Keyword Property vMYC_AlcoveFogWall			Auto
+;Keyword Property vMYC_AlcoveFogLit			Auto
+;Keyword Property vMYC_AlcoveTorchesNS		Auto
+;Keyword Property vMYC_AlcoveTorchesS		Auto
+;Keyword Property vMYC_AlcoveTorchesTrig		Auto
+
+	GetLinkedRef(vMYC_AlcoveAmbientBlue)
+
 	
-	FXAmbBlowingFog01 = GetFormFromFile(0x00035267,"Skyrim.esm")
-	FXFogRollingFacing01 = GetFormFromFile(0x00034DB6,"Skyrim.esm")
-	FXAmbBeamSlowFogBig_Dim03 = GetFormFromFile(0x000A6C4D,"Skyrim.esm")
+	AlcoveLightTorchNSPar 	= GetLinkedRef(vMYC_AlcoveTorchesNS)
+	AlcoveLightTorchSPar 	= GetLinkedRef(vMYC_AlcoveTorchesS)
+	AlcoveLightTorchAmb 	= GetLinkedRef(vMYC_AlcoveAmbientTorch)
+	AlcoveLightShrineAmb 	= GetLinkedRef(vMYC_AlcoveAmbientBlue)
+	AlcoveFogDense 			= GetLinkedRef(vMYC_AlcoveFogFill)
+	AlcoveFogFloor 			= GetLinkedRef(vMYC_AlcoveFogLow)
+	AlcoveFogCurtain 		= GetLinkedRef(vMYC_AlcoveFogWall)
+	AlcoveFogLit 			= GetLinkedRef(vMYC_AlcoveFogLit)
+	AlcoveTorchTriggerBox	= GetLinkedRef(vMYC_AlcoveTorchesTrig)
 	
-	AlcoveFogFloor =  FindClosestReferenceOfTypeFromRef(FXAmbBlowingFog01,Self,800)
-	AlcoveFogCurtain =  FindClosestReferenceOfTypeFromRef(FXFogRollingFacing01,Self,800)
-	AlcoveFogLit =  FindClosestReferenceOfTypeFromRef(FXAmbBeamSlowFogBig_Dim03,Self,800)
-	
-	DebugTrace("AlcoveFogCurtain is " + AlcoveFogCurtain + ", AlcoveLightTorchSPar is " + AlcoveLightTorchSPar)
+	DebugTrace("AlcoveFogCurtain is " + AlcoveFogCurtain + ", AlcoveLightTorchSPar is " + AlcoveLightTorchSPar + ", AlcoveTorchTriggerBox is " + AlcoveTorchTriggerBox)
 EndFunction
 
 ;=== Utility functions ===--
