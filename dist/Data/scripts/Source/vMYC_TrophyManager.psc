@@ -22,6 +22,8 @@ Form				Property vMYC_TrophyBannerStandingMarker		Auto
 
 FormList			Property vMYC_BannerAnchors						Auto
 
+ObjectReference[]	Property HangingBannerTemplates					Auto
+
 ;=== Achievement test Properties ===--
 
 ;=== Variables ===--
@@ -89,17 +91,47 @@ Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID
 		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
 		If kTrophyBase ;&& iTrophyFlags
 			DebugTrace("(" + i + "/" + iCount + "): Displaying trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
-			kTrophyBase._Display(akTargetObject,0x0000ffff)
+			kTrophyBase._Display(akTargetObject,iTrophyFlags)
 		EndIf
 		i += 1
 	EndWhile
 	Return iCount
 EndFunction
 
+Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBannerType = "Standing")
+	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	If !jDisplayTarget
+		jDisplayTarget = JMap.Object()
+		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayTarget)
+	EndIf
+	Int jBannerCount = JValue.SolveInt(jDisplayTarget,".BannerCount." + asBannerType)
+	JValue.SolveIntSetter(jDisplayTarget,".BannerCount." + asBannerType,jBannerCount + 1,True)
+	Return jBannerCount
+EndFunction
+
+Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
+	DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
+	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	If !jDisplayTarget
+		jDisplayTarget = JMap.Object()
+		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayTarget)
+	EndIf
+	Int jDisplayedObjects = JMap.GetObj(jDisplayTarget,"Objects")
+	If !jDisplayedObjects
+		jDisplayedObjects = JArray.Object()
+		JMap.SetObj(jDisplayTarget,"Objects",jDisplayedObjects)
+	EndIf
+	JArray.AddForm(jDisplayedObjects,akTrophyObject)
+	SaveSession()
+EndFunction
+
 Function DeleteTrophies(ObjectReference akTargetObject)
 	DebugTrace("DeleteTrophies(" + akTargetObject + ")")
 	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
-	Int jDisplayedObjects = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	Int jDisplayedObjects = JMap.GetObj(jDisplayTarget,"Objects")
 	If jDisplayedObjects
 		Int iCount = JArray.Count(jDisplayedObjects)
 		Int i = 0
@@ -115,18 +147,6 @@ Function DeleteTrophies(ObjectReference akTargetObject)
 		EndWhile
 	EndIf
 	JFormMap.RemoveKey(jDisplayTargets,akTargetObject)
-	SaveSession()
-EndFunction
-
-Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
-	DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
-	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
-	Int jDisplayedObjects = JFormMap.GetObj(jDisplayTargets,akTargetObject)
-	If !jDisplayedObjects
-		jDisplayedObjects = JArray.Object()
-		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayedObjects)
-	EndIf
-	JArray.AddForm(jDisplayedObjects,akTrophyObject)
 	SaveSession()
 EndFunction
 

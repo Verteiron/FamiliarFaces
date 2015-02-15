@@ -131,8 +131,8 @@ Function CheckForCharacterActor()
 	If !AlcoveActor && AlcoveCharacterID
 		ShowCharacterStatue(True)
 	EndIf
-	Wait(5)
-	TrophyManager.DeleteTrophies(AlcoveStatueMarker)
+;	Wait(15)
+;	TrophyManager.DeleteTrophies(AlcoveStatueMarker)
 EndFunction
 	
 Function ShowCharacterStatue(Bool abFullEffects = True)

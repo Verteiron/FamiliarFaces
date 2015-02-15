@@ -121,10 +121,10 @@ State Assigned
 		If NeedEquipment
 			Int bResultArmor = UpdateArmor()
 			Int bResultWeapons = UpdateWeapons()
+			EquipDefaultGear() 
 			If bResultArmor >= 0 && bResultWeapons >= 0 ; No error
 				NeedEquipment = False
 			EndIf
-			EquipDefaultGear() 
 		EndIf
 		If !NeedAppearance && !NeedEquipment
 			SendModEvent("vMYC_CharacterReadyDisplay")

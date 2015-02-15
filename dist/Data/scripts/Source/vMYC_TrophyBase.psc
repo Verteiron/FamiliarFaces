@@ -423,30 +423,9 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 		DebugTrace("WARNING! TrophyBaseObject not set, terrible things are about to happen :(",1)
 	EndIf
 	OnDisplayTrophy(aiTrophyFlags)
-	
+
 	Int i = 0
-	Int iLen = _TemplatesToDisplay.Find(0)
-	DebugTrace("TemplatesToDisplay: " + iLen)
-	;While i < iLen && _TemplatesToDisplay[i]
-	;	Int idx = _TemplatesToDisplay[i]
-	;	If _TemplateObjects[idx]
-	;		If _TemplateObjects[idx].GetBaseObject()
-	;			_DisplayObject(akTarget,_TemplateObjects[idx])
-	;		EndIf
-	;	EndIf
-	;	i += 1
-	;EndWhile
-	Int iHandle = ModEvent.Create("vMYC_TrophyDisplay" + TrophyName)
-	If iHandle
-		ModEvent.PushForm(iHandle,akTarget)
-		ModEvent.PushBool(iHandle,False)
-		ModEvent.Send(iHandle)
-	Else
-		DebugTrace("WARNING, couldn't send vMYC_TrophyDisplay" + TrophyName + " event!",1)
-	EndIf
-	
-	i = 0
-	iLen = _BannersToDisplay.Find(None)
+	Int iLen = _BannersToDisplay.Find(None)
 	DebugTrace("BannersToDisplay: " + iLen)
 	While i < iLen && _BannersToDisplay[i]
 		If _BannersToDisplay[i]
@@ -456,16 +435,42 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 	EndWhile
 	
 	i = 0
-	iLen = _DisplayedObjects.Length
-	DebugTrace("DisplayedObjects: " + iLen)
-	While i < iLen && _DisplayedObjects[i]
-		If !_DisplayedObjects[i].IsEnabled()
-			DebugTrace("Enabling " + _DisplayedObjects[i] + "!")
-			_DisplayedObjects[i].EnableNoWait(True)
-		EndIf
-		i += 1
-	EndWhile
+	iLen = _TemplatesToDisplay.Find(0)
+	DebugTrace("TemplatesToDisplay: " + iLen)
+	SendDisplayEvent(akTarget)
+	;While i < iLen && _TemplatesToDisplay[i]
+	;	Int idx = _TemplatesToDisplay[i]
+	;	If _TemplateObjects[idx]
+	;		If _TemplateObjects[idx].GetBaseObject()
+	;			_DisplayObject(akTarget,_TemplateObjects[idx])
+	;		EndIf
+	;	EndIf
+	;	i += 1
+	;EndWhile
 	
+	
+	;i = 0
+	;iLen = _DisplayedObjects.Length
+	;DebugTrace("DisplayedObjects: " + iLen)
+	;While i < iLen && _DisplayedObjects[i]
+	;	If !_DisplayedObjects[i].IsEnabled()
+	;		DebugTrace("Enabling " + _DisplayedObjects[i] + "!")
+	;		_DisplayedObjects[i].EnableNoWait(True)
+	;	EndIf
+	;	i += 1
+	;EndWhile
+	
+EndFunction
+
+Function SendDisplayEvent(ObjectReference akTarget)
+	Int iHandle = ModEvent.Create("vMYC_TrophyDisplay" + TrophyName)
+	If iHandle
+		ModEvent.PushForm(iHandle,akTarget)
+		ModEvent.PushBool(iHandle,False)
+		ModEvent.Send(iHandle)
+	Else
+		DebugTrace("WARNING, couldn't send vMYC_TrophyDisplay" + TrophyName + " event!",1)
+	EndIf
 EndFunction
 
 Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
@@ -514,21 +519,30 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	;RotateLocal(_DisplayedObjects[idx],0,0,akTarget.GetAngleZ())
 EndFunction
 
-Function _DisplayBanner(ObjectReference akTarget, Form akBannerForm)
-	Form kBannerMarker = TrophyManager.GetStandingBannerMarker()
-	ObjectReference kBannerTarget = FindClosestReferenceOfTypeFromRef(kBannerMarker,TrophyOrigin,450)
+ObjectReference Function _GetBannerTemplate(ObjectReference akTarget, String asBannerType = "Standing")
+	Int iBannerIndex = TrophyManager.GetFreeBannerForTarget(akTarget,asBannerType)
+	Keyword kBannerKeyword = Keyword.GetKeyword("vMYC_Banner" + asBannerType + iBannerIndex)
+	Return TrophyOrigin.GetLinkedRef(kBannerKeyword)
+EndFunction
+
+Function _DisplayBanner(ObjectReference akTarget, Form akBannerForm, String asBannerType = "Standing")
+	ObjectReference kBannerTarget = _GetBannerTemplate(akTarget,asBannerType)
+	If !kBannerTarget && asBannerType == "Standing"
+		; Standing banners are smaller than wall banners so if we run out of space, try to hang it instead
+		asBannerType = "Hanging" 
+		kBannerTarget = _GetBannerTemplate(akTarget,asBannerType)
+	EndIf
 	If !kBannerTarget
-		DebugTrace("WARNING, could not find an available BannerTarget!",1)
+		DebugTrace("WARNING, 404 BannerTarget not found. Even tried multi.",1)
 		Return 
 	EndIf
 	ObjectReference kBanner = kBannerTarget.PlaceAtMe(akBannerForm, abInitiallyDisabled = True)
-	ObjectReference kAnchor = FindClosestReferenceOfAnyTypeInListFromRef(TrophyManager.vMYC_BannerAnchors,kBannerTarget,250)
+	ObjectReference kAnchor = kBannerTarget.GetLinkedRef()
 	DebugTrace("Banner is " + kBanner + ", Anchor is " + kAnchor)
-	kBannerTarget.MoveTo(kBannerTarget,0,0,kBannerTarget.GetPositionZ() + 1000)
 	If kAnchor
-		_DisplayObject(akTarget,kAnchor)
+		DisplayForm(SetTemplate(kAnchor))
 	EndIf
-	_DisplayObject(akTarget,kBanner)
+	DisplayForm(SetTemplate(kBanner))
 	kBanner.Delete()
 EndFunction
 
