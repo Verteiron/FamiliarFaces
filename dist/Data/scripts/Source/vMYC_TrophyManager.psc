@@ -33,6 +33,7 @@ ObjectReference	TrophyPlacementMarker
 Event OnInit()
 	If IsRunning()
 		SetRegObj("Trophies",0)
+		SetSessionObj("Trophies.DisplayTargets",JFormMap.Object())
 		RegisterForSingleUpdate(5)
 	EndIf
 EndEvent
@@ -73,6 +74,60 @@ Function SendTrophyManagerReady()
 	Else
 		DebugTrace("WARNING! Could not send vMYC_TrophyRegister event!",1)
 	EndIf
+EndFunction
+
+Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID)
+	Int jCharacterTrophies = GetRegObj("Characters." + sCharacterID + ".Trophies")
+	JValue.WriteToFile(jCharacterTrophies,JContainers.userDirectory() + "vMYC/displaytrophies.json")
+	Int jTrophyNames = JMap.AllKeys(jCharacterTrophies)
+	Int iCount = JArray.Count(jTrophyNames)
+	Int i = 0
+	While i < iCount
+		String sTrophyName = JArray.GetStr(jTrophyNames,i)
+		DebugTrace("(" + i + "/" + iCount + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
+		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
+		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
+		If kTrophyBase ;&& iTrophyFlags
+			DebugTrace("(" + i + "/" + iCount + "): Displaying trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
+			kTrophyBase._Display(akTargetObject,0x0000ffff)
+		EndIf
+		i += 1
+	EndWhile
+	Return iCount
+EndFunction
+
+Function DeleteTrophies(ObjectReference akTargetObject)
+	DebugTrace("DeleteTrophies(" + akTargetObject + ")")
+	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayedObjects = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	If jDisplayedObjects
+		Int iCount = JArray.Count(jDisplayedObjects)
+		Int i = 0
+		While i < iCount
+			ObjectReference kTrophyObject = JArray.GetForm(jDisplayedObjects,i) as ObjectReference
+			If kTrophyObject
+				If kTrophyObject as vMYC_TrophyObject
+					(kTrophyObject as vMYC_TrophyObject).DeleteTrophyForm()
+				EndIf
+				(kTrophyObject as ObjectReference).Delete()
+			EndIf
+			i += 1
+		EndWhile
+	EndIf
+	JFormMap.RemoveKey(jDisplayTargets,akTargetObject)
+	SaveSession()
+EndFunction
+
+Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
+	DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
+	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayedObjects = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	If !jDisplayedObjects
+		jDisplayedObjects = JArray.Object()
+		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayedObjects)
+	EndIf
+	JArray.AddForm(jDisplayedObjects,akTrophyObject)
+	SaveSession()
 EndFunction
 
 Function UpdateAvailabilityList()

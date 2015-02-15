@@ -82,7 +82,10 @@ Function UpdatePosition()
 EndFunction
 
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
-	PlaceTrophyForm(akTarget as ObjectReference, abInitiallyDisabled)
+	ObjectReference kTrophyObject = PlaceTrophyForm(akTarget as ObjectReference, abInitiallyDisabled)
+	If kTrophyObject
+		TrophyBase.TrophyManager.RegisterTrophyObject(kTrophyObject,akTarget as ObjectReference)
+	EndIf
 EndEvent
 
 ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitiallyDisabled = False)
@@ -97,7 +100,6 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	fOriginAng[0] = akTarget.GetAngleX()
 	fOriginAng[1] = akTarget.GetAngleY()
 	fOriginAng[2] = akTarget.GetAngleZ() 
-
 
 	;If LocalRotation
 	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, abInitiallyDisabled, false, false, LocalRotation)
@@ -121,6 +123,10 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	;DebugTrace(" Target set to X:\t" + TrophyObject.GetAngleX() + ", Y:\t" + TrophyObject.GetAngleY() + ", Z:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
 	;RotateLocal(TrophyObject,0,0,akTarget.GetAngleZ())	
 	Return TrophyObject
+EndFunction
+
+Function DeleteTrophyForm()
+	TrophyObject.Delete()
 EndFunction
 
 Function SetParentObject(vMYC_TrophyBase kTrophyBase)

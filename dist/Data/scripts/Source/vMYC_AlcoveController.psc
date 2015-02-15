@@ -18,6 +18,7 @@ Activator						Property	vMYC_AlcoveStatueMarker					Auto
 vMYC_AlcoveLightingController	Property	LightingController						Auto Hidden
 vMYC_ShrineManager				Property	ShrineManager							Auto Hidden
 vMYC_DataManager				Property 	DataManager								Auto
+vMYC_TrophyManager				Property	TrophyManager							Auto
 
 Actor							Property	PlayerREF								Auto
 
@@ -126,10 +127,12 @@ EndFunction
 
 
 Function CheckForCharacterActor()
-	Wait(2)
+	Wait(8)
 	If !AlcoveActor && AlcoveCharacterID
 		ShowCharacterStatue(True)
 	EndIf
+	Wait(5)
+	TrophyManager.DeleteTrophies(AlcoveStatueMarker)
 EndFunction
 	
 Function ShowCharacterStatue(Bool abFullEffects = True)
@@ -193,13 +196,14 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 		Sound.StopInstance(iHarmonicSound)
 		iHarmonicSound = 0
 	EndIf
+	TrophyManager.DisplayTrophies(AlcoveStatueMarker,AlcoveCharacterID)
 	i = kGlows.Length
-	kGlowSuper.DisableNoWait(True)
 	While i > 0
 		i -= 1
 		kGlows[i].DisableNoWait(True)
-		Wait(0.88)
+		;Wait(0.88)
 	EndWhile
+	kGlowSuper.DisableNoWait(True)
 	;QSTMG07MagnusStormCollegeMediumRelease.Play(Self)
 	;Sound.StopInstance(iAlcoveSound)
 EndFunction
