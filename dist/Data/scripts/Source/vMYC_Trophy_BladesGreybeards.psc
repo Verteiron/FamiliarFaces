@@ -19,6 +19,14 @@ Actor		Property	PlayerREF			Auto
 Faction 	Property	BladesFaction		Auto
 Faction 	Property	GreybeardFaction	Auto
 
+ObjectReference		Property	TemplateBladesSword		Auto
+ObjectReference		Property	TemplateBladesShield	Auto
+ObjectReference		Property	TemplateBladesHelmet	Auto
+ObjectReference		Property	TemplateBladesPillar	Auto
+ObjectReference		Property	TemplateGreybeardBanner	Auto
+ObjectReference		Property	TemplateGreybeardTablet	Auto
+ObjectReference		Property	TemplateGreybeardShrine	Auto
+
 ;--=== Variables ===--
 
 ;--=== Events/Functions ===--
