@@ -38,7 +38,7 @@ Sound							Property	vMYC_AlcoveStatueAppearLPSM				Auto
 Sound							Property	QSTMG07MagnusStormCollegeMediumLPM		Auto
 Sound							Property	QSTMG07MagnusStormCollegeMediumRelease	Auto
 
-Form							Property	vMYC_CharacterGlow						Auto
+Activator						Property	vMYC_CharacterGlow						Auto
 ;=== Variables ===--
 
 String _sFormID
@@ -175,6 +175,7 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 	EndWhile
 	kStatueScript.AssignCharacter(AlcoveCharacterID)	
 	kStatueScript.EnableNoWait(True)
+	TrophyManager.DisplayTrophies(AlcoveStatueMarker,AlcoveCharacterID,True)
 	While !kStatueScript.Is3DLoaded()
 		Wait(0.1)
 	EndWhile
@@ -190,13 +191,13 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 		iStatueSound = 0
 	EndIf
 	kGlowSuper.EnableNoWait(False)
+	TrophyManager.SendDisplayAllEvent(AlcoveStatueMarker)
 	kStatueScript.SetAlpha(1,True)
 	kStatueScript.EnableAI(False)
 	If iHarmonicSound
 		Sound.StopInstance(iHarmonicSound)
 		iHarmonicSound = 0
 	EndIf
-	TrophyManager.DisplayTrophies(AlcoveStatueMarker,AlcoveCharacterID)
 	i = kGlows.Length
 	While i > 0
 		i -= 1

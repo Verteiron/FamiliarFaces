@@ -15,6 +15,9 @@ Import vMYC_PlacementUtils
 EffectShader	Property	TrophyFadeInFXS		= None		Auto
 {Shader that should play when the trophy first appears.}
 
+Activator		Property	vMYC_BrightGlow					Auto 
+{Glowy!}
+
 Form			Property	TrophyForm			= None		Auto Hidden
 ObjectReference	Property	TrophyObject		= None		Auto Hidden
 
@@ -102,7 +105,7 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	fOriginAng[2] = akTarget.GetAngleZ() 
 
 	;If LocalRotation
-	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, abInitiallyDisabled, false, false, LocalRotation)
+	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, True, false, false, LocalRotation)
 	;Else
 	;	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
 	;EndIf
@@ -111,14 +114,37 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	ElseIf Scale != 1
 		TrophyObject.SetScale(Scale)
 	EndIf
+	Float fScale = TrophyObject.GetScale()
+	
+	ObjectReference kGlow = TrophyObject.PlaceAtMe(vMYC_BrightGlow,abInitiallyDisabled = True)
+	kGlow.SetScale(TrophyObject.GetScale() * 3)
+	kGlow.Enable(True)
+		;ObjectReference[] kGlows = New ObjectReference[4]
+	;Int i = 0
+	;While i < kGlows.Length
+	;	kGlows[i] = TrophyObject.PlaceAtMe(FXDA09MeridiaSwordGlow,abInitiallyDisabled = True)
+	;	kGlows[i].SetScale(TrophyObject.GetScale() + (i * 0.1))
+	;	kGlows[i].EnableNoWait(False)
+	;	DebugTrace("Enabled glow " + i)
+	;	i += 1
+	;EndWhile
 	
 	If !abInitiallyDisabled
+		TrophyObject.EnableNoWait(True)
 		While !TrophyObject.Is3DLoaded()
 			Wait(0.1)
 		EndWhile
 		TrophyFadeInFXS.Play(TrophyObject,0)
 	EndIf
+	
+	kGlow.DisableNoWait(True)
 
+	;i = kGlows.Length
+	;While i > 0
+	;	i -= 1
+	;	kGlows[i].DisableNoWait(True)
+	;	DebugTrace("Disabled glow " + i)
+	;EndWhile
 	;DebugTrace("Original is at X:\t" + (AngleX + FormAngleX) + ", Y:\t" + (AngleY + FormAngleY) + ", Z:\t" + (AngleZ + FormAngleZ) + ", S:\t" + Scale)
 	;DebugTrace(" Target set to X:\t" + TrophyObject.GetAngleX() + ", Y:\t" + TrophyObject.GetAngleY() + ", Z:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
 	;RotateLocal(TrophyObject,0,0,akTarget.GetAngleZ())	

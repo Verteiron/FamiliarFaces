@@ -55,7 +55,6 @@ EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
-	return 
 	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
 	If aiDisplayFlags 
 		DisplayBanner(CityBannerDawnstar01)

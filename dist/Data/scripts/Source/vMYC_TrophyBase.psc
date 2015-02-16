@@ -323,14 +323,14 @@ Event OnSetTemplate()
 EndEvent
 
 Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
-	DebugTrace("Creating template from " + akForm + ", X:\t" + afOffsetX + ", Y:\t" + afOffsetY + ", Z:\t" + afOffsetZ + ", aX:\t" + afAngleX + ", aY:\t" + afAngleY + ", aZ:\t" + afAngleZ + ", S:\t" + afScale)
+	;DebugTrace("Creating template from " + akForm + ", X:\t" + afOffsetX + ", Y:\t" + afOffsetY + ", Z:\t" + afOffsetZ + ", aX:\t" + afAngleX + ", aY:\t" + afAngleY + ", aZ:\t" + afAngleZ + ", S:\t" + afScale)
 	Int idx = _TemplateObjects.Find(None)
 	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(vMYC_TrophyObjectBase, abInitiallyDisabled = True)
 	vMYC_TrophyObject TrophyObject = _TemplateObjects[idx] as vMYC_TrophyObject
 	TrophyObject.SetParentObject(Self)
 	TrophyObject.SetFormData(akForm, afOffsetX, afOffsetY, afOffsetZ, afAngleX, afAngleY, afAngleZ, afScale)
 	TrophyObject.UpdatePosition()
-	DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
+	;DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
 	Return idx
 EndFunction
 
@@ -413,12 +413,12 @@ Function _CreateTemplates()
 	OnSetTemplate()
 EndFunction
 
-Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
+Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool abPlaceOnly = False)
 	If !akTarget
 		akTarget = TrophyManager.GetTrophyOrigin()
 	EndIf
 	_TemplatesToDisplay = New Int[16]
-	DebugTrace("Displaying...")
+	;DebugTrace("Displaying...")
 	If !TrophyBaseObject
 		DebugTrace("WARNING! TrophyBaseObject not set, terrible things are about to happen :(",1)
 	EndIf
@@ -426,7 +426,9 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 
 	Int i = 0
 	Int iLen = _BannersToDisplay.Find(None)
-	DebugTrace("BannersToDisplay: " + iLen)
+	If iLen
+		DebugTrace("BannersToDisplay: " + iLen)
+	EndIf
 	While i < iLen && _BannersToDisplay[i]
 		If _BannersToDisplay[i]
 			_DisplayBanner(akTarget,_BannersToDisplay[i])
@@ -436,8 +438,12 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0)
 	
 	i = 0
 	iLen = _TemplatesToDisplay.Find(0)
-	DebugTrace("TemplatesToDisplay: " + iLen)
-	SendDisplayEvent(akTarget)
+	If iLen
+		DebugTrace("TemplatesToDisplay: " + iLen)
+	EndIf
+	If !abPlaceOnly
+		SendDisplayEvent(akTarget)
+	EndIf
 	;While i < iLen && _TemplatesToDisplay[i]
 	;	Int idx = _TemplatesToDisplay[i]
 	;	If _TemplateObjects[idx]
@@ -538,7 +544,7 @@ Function _DisplayBanner(ObjectReference akTarget, Form akBannerForm, String asBa
 	EndIf
 	ObjectReference kBanner = kBannerTarget.PlaceAtMe(akBannerForm, abInitiallyDisabled = True)
 	ObjectReference kAnchor = kBannerTarget.GetLinkedRef()
-	DebugTrace("Banner is " + kBanner + ", Anchor is " + kAnchor)
+	;DebugTrace("Banner is " + kBanner + ", Anchor is " + kAnchor)
 	If kAnchor
 		DisplayForm(SetTemplate(kAnchor))
 	EndIf

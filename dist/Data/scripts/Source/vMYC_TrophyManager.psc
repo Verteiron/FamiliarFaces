@@ -78,7 +78,7 @@ Function SendTrophyManagerReady()
 	EndIf
 EndFunction
 
-Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID)
+Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID, Bool abPlaceOnly = False)
 	Int jCharacterTrophies = GetRegObj("Characters." + sCharacterID + ".Trophies")
 	JValue.WriteToFile(jCharacterTrophies,JContainers.userDirectory() + "vMYC/displaytrophies.json")
 	Int jTrophyNames = JMap.AllKeys(jCharacterTrophies)
@@ -86,16 +86,28 @@ Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID
 	Int i = 0
 	While i < iCount
 		String sTrophyName = JArray.GetStr(jTrophyNames,i)
-		DebugTrace("(" + i + "/" + iCount + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
+		DebugTrace("(" + i + "/" + (iCount - 1) + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
 		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
 		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
 		If kTrophyBase ;&& iTrophyFlags
 			DebugTrace("(" + i + "/" + iCount + "): Displaying trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
-			kTrophyBase._Display(akTargetObject,iTrophyFlags)
+			kTrophyBase._Display(akTargetObject,iTrophyFlags,abPlaceOnly)
 		EndIf
 		i += 1
 	EndWhile
 	Return iCount
+EndFunction
+
+Function SendDisplayAllEvent(ObjectReference akTargetObject)
+	Int jTrophyNames = JMap.AllKeys(GetRegObj("Trophies"))
+	Int iCount = JArray.Count(jTrophyNames)
+	Int i = 0
+	While i < iCount
+		String sTrophyName = JArray.GetStr(jTrophyNames,i)
+		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
+		kTrophyBase.SendDisplayEvent(akTargetObject)
+		i += 1
+	EndWhile
 EndFunction
 
 Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBannerType = "Standing")
@@ -111,7 +123,7 @@ Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBan
 EndFunction
 
 Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
-	DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
+	;DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
 	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	If !jDisplayTarget
@@ -124,7 +136,7 @@ Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference ak
 		JMap.SetObj(jDisplayTarget,"Objects",jDisplayedObjects)
 	EndIf
 	JArray.AddForm(jDisplayedObjects,akTrophyObject)
-	SaveSession()
+	;SaveSession()
 EndFunction
 
 Function DeleteTrophies(ObjectReference akTargetObject)
