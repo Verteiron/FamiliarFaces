@@ -7,6 +7,7 @@ Import Utility
 Import Game
 Import Math
 Import vMYC_PlacementUtils
+Import vMYC_Registry
 
 ;=== Constants ===--
 
@@ -107,6 +108,9 @@ Float			Property	AngleDelta		= 0.0		Auto Hidden
 ObjectReference	Property	TrophyOrigin				Auto Hidden
 
 vMYC_TrophyManager	Property	TrophyManager			Auto Hidden
+
+String			Property	CharacterID					Auto Hidden
+{Set during display, unset afterward. NOT THREAD SAFE!}
 
 ;--=== Variables ===--
 
@@ -275,6 +279,81 @@ Function DoInit()
 	OnTrophyInit()
 EndFunction
 
+;=== Functions for the user to store custom data in ===--
+Int Function LoadIntValue(String asDataName = "CustomInt")
+	Return GetSessionInt("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+EndFunction
+
+Int[] Function LoadIntArray(Int[] aiArray,String asDataName = "CustomIntArr")
+	Int jIntArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+	Int i = 0
+	Int iCount = JArray.Count(jIntArray)
+	Int[] iResult = CreateIntArray(iCount)
+	While i < 0
+		iResult[i] = JArray.GetInt(jIntArray,i)
+		i += 1
+	EndWhile
+	Return iResult
+EndFunction
+
+Float Function LoadFloatValue(String asDataName = "CustomFloat")
+	Return GetSessionFlt("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+EndFunction
+
+Float[] Function LoadFloatArray(String asDataName = "CustomFloatArr")
+	Int jFloatArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+	Int i = 0
+	Int iCount = JArray.Count(jFloatArray)
+	Float[] fResult = CreateFloatArray(iCount)
+	While i < 0
+		fResult[i] = JArray.GetFlt(jFloatArray,i)
+		i += 1
+	EndWhile
+	Return fResult
+EndFunction
+
+String Function LoadStringValue(String asDataName = "CustomString")
+	Return GetSessionStr("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+EndFunction
+
+String[] Function LoadStringArray(String asDataName = "CustomStringArr")
+	Int jStringArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+	Int i = 0
+	Int iCount = JArray.Count(jStringArray)
+	String[] sResult = CreateStringArray(iCount)
+	While i < 0
+		sResult[i] = JArray.GetStr(jStringArray,i)
+		i += 1
+	EndWhile
+EndFunction
+
+Function SaveIntValue(Int aiValue,String asDataName = "CustomInt")
+	SetSessionInt("TrophyData." + TrophyName + "." + asDataName,aiValue)
+EndFunction
+
+Function SaveIntArray(Int[] aiArray,String asDataName = "CustomIntArr")
+	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithInts(aiArray))
+EndFunction
+
+Function SaveFloatValue(Float afValue,String asDataName = "CustomFloat")
+	SetSessionFlt("TrophyData." + TrophyName + "." + asDataName,afValue)
+EndFunction
+
+Function SaveFloatArray(Float[] afArray,String asDataName = "CustomFloatArr")
+	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithFloats(afArray))
+EndFunction
+
+Function SaveStringValue(String asValue,String asDataName = "CustomString")
+	SetSessionStr("TrophyData." + TrophyName + "." + asDataName,asValue)
+EndFunction
+
+Function SaveStringArray(String[] asArray,String asDataName = "CustomStringArr")
+	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithStrings(asArray))
+EndFunction
+
+;===============================--
+
+
 Int Function _IsAvailable()
 	Int iAvailable = IsAvailable()
 	;FIXME - Always return >0 for testing!
@@ -375,6 +454,10 @@ Function SetTrophyFlags(Int aiTrophyType, Int aiTrophySize, Int aiTrophyLocation
 	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyExtras,24))
 EndFunction
 
+Bool Function SetCustomData(Int[] aiData)
+
+EndFunction
+
 Function DisplayBanner(Form akBannerForm)
 	Int idx = _BannersToDisplay.Find(None)
 	_BannersToDisplay[idx] = akBannerForm
@@ -413,7 +496,7 @@ Function _CreateTemplates()
 	OnSetTemplate()
 EndFunction
 
-Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool abPlaceOnly = False)
+Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool abPlaceOnly = False, String asCharacterID = "")
 	If !akTarget
 		akTarget = TrophyManager.GetTrophyOrigin()
 	EndIf
@@ -422,8 +505,11 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 	If !TrophyBaseObject
 		DebugTrace("WARNING! TrophyBaseObject not set, terrible things are about to happen :(",1)
 	EndIf
-	OnDisplayTrophy(aiTrophyFlags)
 
+	CharacterID = asCharacterID	
+	OnDisplayTrophy(aiTrophyFlags)
+	CharacterID = ""
+	
 	Int i = 0
 	Int iLen = _BannersToDisplay.Find(None)
 	If iLen

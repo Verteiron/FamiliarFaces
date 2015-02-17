@@ -1094,6 +1094,7 @@ Int Function SavePlayerData()
 	TrophyManager.UpdateAvailabilityList()
 	StopTimer("TrophyManagerUpdate")
 	SetRegObj(sRegKey + ".Trophies",GetSessionObj("Trophies"))
+	SetRegObj(sRegKey + ".TrophyData",GetSessionObj("TrophyData"))
 	
 	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) 
 		WaitMenuMode(0.5)

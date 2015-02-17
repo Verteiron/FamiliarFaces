@@ -54,6 +54,7 @@ Activator 		Property	vMYC_TrophyObjectBase		Auto
 vMYC_TrophyBase Property	TrophyBase					Auto
 
 Bool			Property	LocalRotation				Auto
+
 ;--=== Variables ===--
 
 Int					_TrophyVersion
@@ -115,6 +116,11 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 		TrophyObject.SetScale(Scale)
 	EndIf
 	Float fScale = TrophyObject.GetScale()
+	
+	If TrophyObject as vMYC_TrophyObject
+		;This object needs to know its parents!
+		(TrophyObject as vMYC_TrophyObject).SetParentObject(TrophyBase)
+	EndIf
 	
 	ObjectReference kGlow = TrophyObject.PlaceAtMe(vMYC_BrightGlow,abInitiallyDisabled = True)
 	kGlow.SetScale(TrophyObject.GetScale() * 3)

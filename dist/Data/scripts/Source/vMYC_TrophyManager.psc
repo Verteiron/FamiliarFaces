@@ -35,7 +35,7 @@ ObjectReference	TrophyPlacementMarker
 Event OnInit()
 	If IsRunning()
 		SetRegObj("Trophies",0)
-		SetSessionObj("Trophies.DisplayTargets",JFormMap.Object())
+		SetSessionObj("TrophyDisplayTargets",JFormMap.Object())
 		RegisterForSingleUpdate(5)
 	EndIf
 EndEvent
@@ -91,7 +91,7 @@ Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID
 		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
 		If kTrophyBase ;&& iTrophyFlags
 			DebugTrace("(" + i + "/" + iCount + "): Displaying trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
-			kTrophyBase._Display(akTargetObject,iTrophyFlags,abPlaceOnly)
+			kTrophyBase._Display(akTargetObject,iTrophyFlags,abPlaceOnly,sCharacterID)
 		EndIf
 		i += 1
 	EndWhile
@@ -111,7 +111,7 @@ Function SendDisplayAllEvent(ObjectReference akTargetObject)
 EndFunction
 
 Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBannerType = "Standing")
-	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	If !jDisplayTarget
 		jDisplayTarget = JMap.Object()
@@ -124,7 +124,7 @@ EndFunction
 
 Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
 	;DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
-	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	If !jDisplayTarget
 		jDisplayTarget = JMap.Object()
@@ -141,7 +141,7 @@ EndFunction
 
 Function DeleteTrophies(ObjectReference akTargetObject)
 	DebugTrace("DeleteTrophies(" + akTargetObject + ")")
-	Int jDisplayTargets = GetSessionObj("Trophies.DisplayTargets")
+	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	Int jDisplayedObjects = JMap.GetObj(jDisplayTarget,"Objects")
 	If jDisplayedObjects
