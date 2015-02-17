@@ -29,6 +29,9 @@ ObjectReference		Property	TemplateGreybeardShrine	Auto
 
 ;--=== Variables ===--
 
+Int[] _iBladeIDs
+Int[] _iGreybeardIDs
+
 ;--=== Events/Functions ===--
 
 Event OnTrophyInit()
@@ -42,6 +45,22 @@ Event OnTrophyInit()
 	TrophyLoc		= TROPHY_LOC_WALLBACK
 	;TrophyExtras	= 0
 	
+EndEvent
+
+Event OnSetTemplate()
+	_iBladeIDs = New Int[4]
+	
+	_iBladeIDs[0] = SetTemplate(TemplateBladesPillar)
+	_iBladeIDs[1] = SetTemplate(TemplateBladesShield)
+	_iBladeIDs[2] = SetTemplate(TemplateBladesSword)
+	_iBladeIDs[3] = SetTemplate(TemplateBladesHelmet)
+	
+	_iGreybeardIDs = New Int[3]
+	
+	_iGreybeardIDs[0] = SetTemplate(TemplateGreybeardShrine)
+	_iGreybeardIDs[1] = SetTemplate(TemplateGreybeardTablet)
+	_iGreybeardIDs[2] = SetTemplate(TemplateGreybeardBanner)
+
 EndEvent
 
 Int Function IsAvailable()
@@ -58,7 +77,8 @@ Int Function IsAvailable()
 	If PlayerREF.IsInFaction(BladesFaction)
 		iTrophyFlags += TROPHY_GB_BLADES
 		DebugTrace("Player is in Blades faction! iTrophyFlags = " + iTrophyFlags)
-	ElseIf PlayerREF.IsInFaction(GreybeardFaction)
+	EndIf
+	If PlayerREF.IsInFaction(GreybeardFaction)
 		iTrophyFlags += TROPHY_GB_GREYBEARDS
 		DebugTrace("Player is in Greybeards faction! iTrophyFlags = " + iTrophyFlags)
 	EndIf
@@ -80,11 +100,18 @@ EndFunction
 Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
 	
-	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_GREYBEARDS)
+		DebugTrace("Character is friends with the Greybeards!")
+		DisplayFormArray(_iGreybeardIDs)
+	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_KILLEDPAARTH)
+		DebugTrace("Character has killed Paarthurnax, what a jerk!")
+		;Player killed Paarthurnax, we should probably show that somehow. Monsters.
+	EndIf
 	
-	
-	;Otherwise, display the usual trophy
-	
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_BLADES)
+		DebugTrace("Character is friends with the Blades!")
+		DisplayFormArray(_iBladeIDs)
+	EndIf
 	
 EndEvent
 
