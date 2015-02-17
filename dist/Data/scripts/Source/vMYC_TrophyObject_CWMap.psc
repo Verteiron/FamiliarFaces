@@ -127,6 +127,7 @@ Int						Property	LocationIndex					Auto Hidden
 
 
 Event OnLoad()
+	Wait(5)
 	If !AlcoveController
 		AlcoveController = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveControllerActivator,Self,1500) as vMYC_AlcoveController
 	EndIf
@@ -248,6 +249,7 @@ objectReference Function TryToPlaceFlag(ObjectReference RefOfFlag, Activator Act
 		RefOfFlag.MoveToNode(self, NodeOfFlag)
 	endif
 	If RefOfFlag
+		RefOfFlag.SetScale(GetScale())
 		RefOfFlag.EnableNoWait(True)
 	EndIf
 	return RefOfFlag
