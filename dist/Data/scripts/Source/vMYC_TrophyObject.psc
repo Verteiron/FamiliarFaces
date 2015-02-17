@@ -93,7 +93,9 @@ Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 EndEvent
 
 ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitiallyDisabled = False)
-
+	If !akTarget || !TrophyForm
+		Return None
+	EndIf
 	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,Self)
 	Float[] fOriginAng = New Float[3]
 
