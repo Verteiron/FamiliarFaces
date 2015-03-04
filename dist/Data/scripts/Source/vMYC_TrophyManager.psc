@@ -117,9 +117,32 @@ Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBan
 		jDisplayTarget = JMap.Object()
 		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayTarget)
 	EndIf
+	Int jBannersDisabled = JValue.SolveObj(jDisplayTarget,".BannersDisabled." + asBannerType)
 	Int jBannerCount = JValue.SolveInt(jDisplayTarget,".BannerCount." + asBannerType)
+	Int iSafety = 15
+	While JArray.FindInt(jBannersDisabled,jBannerCount) > -1 && iSafety
+		jBannerCount += 1
+		iSafety -= 1
+	EndWhile
 	JValue.SolveIntSetter(jDisplayTarget,".BannerCount." + asBannerType,jBannerCount + 1,True)
+	SaveSession()
 	Return jBannerCount
+EndFunction
+
+Function DisableBannerPosition(ObjectReference akTargetObject, Int aiPosition, String asBannerType = "Standing")
+	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
+	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
+	If !jDisplayTarget
+		jDisplayTarget = JMap.Object()
+		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayTarget)
+	EndIf
+	Int jBannersDisabled = JValue.SolveObj(jDisplayTarget,".BannersDisabled." + asBannerType)
+	If !jBannersDisabled
+		jBannersDisabled = JArray.Object()
+		JValue.SolveObjSetter(jDisplayTarget,".BannersDisabled." + asBannerType,jBannersDisabled,True)
+	EndIf
+	JArray.AddInt(jBannersDisabled,aiPosition)
+	SaveSession()
 EndFunction
 
 Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)

@@ -99,6 +99,9 @@ EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
+	If aiDisplayFlags
+		ReserveBanner(1) ; Prevent banner from being placed directly right of the statue
+	EndIf
 	
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_GREYBEARDS)
 		DebugTrace("Character is friends with the Greybeards!")

@@ -118,6 +118,8 @@ Int					_TrophyVersion
 
 Int[]				_TemplatesToDisplay
 
+Int[]				_BannersToDisable
+
 Form[]				_BannersToDisplay
 
 ObjectReference[]	_DisplayedObjects
@@ -156,6 +158,11 @@ Event OnInit()
 
 	If !_BannersToDisplay
 		_BannersToDisplay = New Form[128]
+	EndIf
+	
+	If !_BannersToDisable
+		_BannersToDisable = New Int[16]
+		_BannersToDisable[0] = -1
 	EndIf
 	
 	CheckVars()
@@ -414,6 +421,9 @@ Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY 
 EndFunction
 
 Int Function SetTemplate(ObjectReference akTargetObject)
+	If !akTargetObject 
+		Return 0
+	EndIf
 	akTargetObject.EnableNoWait(False)
 	Return CreateTemplate(akTargetObject.GetBaseObject(), akTargetObject.GetPositionX(), akTargetObject.GetPositionY(), akTargetObject.GetPositionZ(), akTargetObject.GetAngleX(), akTargetObject.GetAngleY(), akTargetObject.GetAngleZ(), akTargetObject.GetScale())
 	;Int idx = _TemplateObjects.Find(None)
@@ -456,6 +466,14 @@ EndFunction
 
 Bool Function SetCustomData(Int[] aiData)
 
+EndFunction
+
+Function ReserveBanner(Int aiBannerPosition, String asBannerType = "Standing")
+	Int idx = _BannersToDisable.Find(-1)
+	_BannersToDisable[idx] = aiBannerPosition
+	If idx + 1 < _BannersToDisable.Length
+		_BannersToDisable[idx + 1] = -1
+	EndIf
 EndFunction
 
 Function DisplayBanner(Form akBannerForm)
@@ -511,7 +529,17 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 	CharacterID = ""
 	
 	Int i = 0
-	Int iLen = _BannersToDisplay.Find(None)
+	Int iLen = _BannersToDisable.Find(-1)
+	If iLen
+		DebugTrace("BannersToDisable: " + iLen)
+	endIf
+	While i < iLen 
+		TrophyManager.DisableBannerPosition(akTarget,_BannersToDisable[i])
+		i += 1
+	EndWhile
+	
+	i = 0
+	iLen = _BannersToDisplay.Find(None)
 	If iLen
 		DebugTrace("BannersToDisplay: " + iLen)
 	EndIf

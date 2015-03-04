@@ -158,6 +158,7 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display}
 	
 	If aiDisplayFlags
+		ReserveBanner(0) ; Prevent banner from being placed directly left of the statue
 		DisplayForm(_iCWMapBoardID)
 		DisplayForm(_iCWMapID)
 	EndIf
