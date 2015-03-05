@@ -525,6 +525,7 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 	EndIf
 
 	CharacterID = asCharacterID	
+	DebugTrace("Calling OnDisplayTrophy with aiTrophyFlags: " + aiTrophyFlags + "...")
 	OnDisplayTrophy(aiTrophyFlags)
 	CharacterID = ""
 	
@@ -555,18 +556,20 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 	If iLen
 		DebugTrace("TemplatesToDisplay: " + iLen)
 	EndIf
+	String sTargetFormID = GetFormIDString(akTarget)
+	While i < iLen && _TemplatesToDisplay[i]
+		Int idx = _TemplatesToDisplay[i]
+		If _TemplateObjects[idx]
+			If _TemplateObjects[idx].GetBaseObject()
+				DebugTrace("Registering " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
+				_TemplateObjects[idx].RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName + sTargetFormID,"OnTrophyDisplay")	
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
 	If !abPlaceOnly
 		SendDisplayEvent(akTarget)
 	EndIf
-	;While i < iLen && _TemplatesToDisplay[i]
-	;	Int idx = _TemplatesToDisplay[i]
-	;	If _TemplateObjects[idx]
-	;		If _TemplateObjects[idx].GetBaseObject()
-	;			_DisplayObject(akTarget,_TemplateObjects[idx])
-	;		EndIf
-	;	EndIf
-	;	i += 1
-	;EndWhile
 	
 	
 	;i = 0
@@ -583,13 +586,14 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 EndFunction
 
 Function SendDisplayEvent(ObjectReference akTarget)
-	Int iHandle = ModEvent.Create("vMYC_TrophyDisplay" + TrophyName)
+	String sTargetFormID = GetFormIDString(akTarget)
+	Int iHandle = ModEvent.Create("vMYC_TrophyDisplay" + TrophyName + sTargetFormID)
 	If iHandle
 		ModEvent.PushForm(iHandle,akTarget)
 		ModEvent.PushBool(iHandle,False)
 		ModEvent.Send(iHandle)
 	Else
-		DebugTrace("WARNING, couldn't send vMYC_TrophyDisplay" + TrophyName + " event!",1)
+		DebugTrace("WARNING, couldn't send vMYC_TrophyDisplay" + TrophyName + sTargetFormID + " event!",1)
 	EndIf
 EndFunction
 
@@ -683,3 +687,9 @@ Int Function _ActivateTrophy()
 	Return 1
 EndFunction
 
+String Function GetFormIDString(Form kForm)
+	String sResult
+	sResult = kForm as String ; [FormName < (FF000000)>]
+	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
+	Return sResult
+EndFunction

@@ -86,6 +86,8 @@ Function UpdatePosition()
 EndFunction
 
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
+	UnregisterForModEvent("vMYC_TrophyDisplayObject" + TrophyName + GetFormIDString(akTarget))
+	DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
 	ObjectReference kTrophyObject = PlaceTrophyForm(akTarget as ObjectReference, abInitiallyDisabled)
 	If kTrophyObject
 		TrophyBase.TrophyManager.RegisterTrophyObject(kTrophyObject,akTarget as ObjectReference)
@@ -172,7 +174,7 @@ Function SetParentObject(vMYC_TrophyBase kTrophyBase)
 	;TrophyIndex = idx
 	TrophyOrigin = TrophyBase.TrophyOrigin
 	LocalRotation = True ; LocalRotation method is now used for EVERYTHING
-	RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName,"OnTrophyDisplay")	
+	;RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName,"OnTrophyDisplay")	
 EndFunction
 
 Function SetPositionData(Float afBaseX = 0.0, Float afBaseY = 0.0, Float afBaseZ = 0.0, \
@@ -208,3 +210,9 @@ Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	Debug.Trace("MYC/TrophyObject/" + TrophyName + "/" + TrophyIndex + ": " + sDebugString,iSeverity)
 EndFunction
 
+String Function GetFormIDString(Form kForm)
+	String sResult
+	sResult = kForm as String ; [FormName < (FF000000)>]
+	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
+	Return sResult
+EndFunction

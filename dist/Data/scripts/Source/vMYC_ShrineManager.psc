@@ -63,7 +63,7 @@ Event OnAlcoveSync(Int aiAlcoveIndex, Form akAlcoveForm)
 	String sScalesLikeFireID = "A68F7820-A7DD-4B5c-B8cB-47B2ccFe7492"
 	String sKmiruID = "09D1DF7A-4c77-4c77-9e39-351eA4407B3A"
 	String sMagrazID = "c1c644e7-61e0-44DB-A0c7-A5D15DF3B1e6"  ;"A348AA31-33AF-45D5-8736-BBD9AB120EE3"
-	kAlcove.AlcoveCharacterID = sMagrazID
+	kAlcove.AlcoveCharacterID = sKmiruID
 	kAlcove.CheckForCharacterActor()
 EndEvent
 
