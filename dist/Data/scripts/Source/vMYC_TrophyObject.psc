@@ -58,6 +58,8 @@ Bool			Property	LocalRotation				Auto
 Bool			Property	OnLoadQueued				Auto
 ObjectReference Property	OnLoadTarget				Auto
 
+Sound			Property	vMYC_TrophyAppearSM			Auto
+
 ;--=== Variables ===--
 
 Int					_TrophyVersion
@@ -143,7 +145,11 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	
 	ObjectReference kGlow = TrophyObject.PlaceAtMe(vMYC_BrightGlow,abInitiallyDisabled = True)
 	kGlow.SetScale(TrophyObject.GetScale() * 3)
-	kGlow.Enable(True)
+	kGlow.EnableNoWait(True)
+	While !kGlow.Is3DLoaded()
+		Wait(0.1)
+	EndWhile
+	vMYC_TrophyAppearSM.Play(kGlow)	
 	;ObjectReference[] kGlows = New ObjectReference[4]
 	;Int i = 0
 	;While i < kGlows.Length
