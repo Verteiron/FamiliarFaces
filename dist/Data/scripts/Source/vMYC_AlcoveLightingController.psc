@@ -98,12 +98,18 @@ String _sFormID
 Int _iAlcoveLightState = -1
 Int _iDesiredLightState = -1
 
+Bool _bForceLightState = False
+
 ;=== Events and Functions ===--
 
 Function CheckVars()
 	CheckObjects()
 	If GetParentCell().IsAttached() && ( _iAlcoveLightState < 0 || _iDesiredLightState < 0 )
 		SetLightState(ALCOVE_LIGHTS_OFF,True)
+	EndIf
+	If !ValidateLightState()
+		_bForceLightState = True
+		RegisterForSingleUpdate(1)
 	EndIf
 EndFunction
 
@@ -113,7 +119,6 @@ EndEvent
 
 Event OnLoad()
 	DebugTrace("OnLoad!")
-	CheckVars()
 EndEvent
 
 Event OnCellAttach()
@@ -127,30 +132,30 @@ Function SetLightState(Int aiDesiredLightState, Bool abForce = False)
 	DebugTrace("SetLightState(" + aiDesiredLightState + "," + abForce + ")")
 	DebugTrace("AlcoveTorchTriggerBox is " + AlcoveTorchTriggerBox)
 	_iDesiredLightState = aiDesiredLightState
+	_bForceLightState = abForce
 	If !Is3DLoaded()
 		abForce = True ; Always skip transition if we're not loaded
 	EndIf
 	If abForce
 		DebugTrace("FORCING Lightstate to " + _iDesiredLightState + "!")
-		OnUpdate()
+		_bForceLightState = True
+		SetupLightsAndFog(abForce)
 		Return ; No need to continue, everything is set.
 	EndIf
-	
-	If _iDesiredLightState == _iAlcoveLightState
-		Return ; Nothing to do
-	EndIf
-	
 	RegisterForSingleUpdate(0.1)
 EndFunction
 
-Event OnUpdate()
-	DebugTrace("OnUpdate - _iDesiredLightState:" + _iDesiredLightState + " _iAlcoveLightState" + _iAlcoveLightState + "!")
-	If _iDesiredLightState == _iAlcoveLightState
+Function SetupLightsAndFog(Bool abForce = False)
+	DebugTrace("SetupLightsAndFog - _iDesiredLightState:" + _iDesiredLightState + " _iAlcoveLightState" + _iAlcoveLightState + "!")
+	If _iDesiredLightState == _iAlcoveLightState && !abForce
 		Return ; Nothing to do
+	EndIf
+	If abForce
+		_bForceLightState = False
+		DebugTrace("SetupLightsAndFog will FORCE the lighting setup!")
 	EndIf
 	If _iDesiredLightState == ALCOVE_LIGHTS_OFF
 		ShowFog(True)
-		AlcoveFogCurtain.EnableNoWait(True)
 		AlcoveTorchTriggerBox.DisableNoWait()
 		If AlcoveLightTorchSPar.IsEnabled()
 			AlcoveLightTorchSPar.DisableNoWait()
@@ -191,7 +196,6 @@ Event OnUpdate()
 		If AlcoveLightTorchSPar.IsEnabled()
 			AlcoveLightTorchSPar.DisableNoWait()
 		EndIf
-		AlcoveFogCurtain.DisableNoWait(True)
 		ShowFog(False)
 		If !AlcoveFogLit.IsEnabled()
 			AlcoveFogLit.EnableNoWait(True)
@@ -200,11 +204,94 @@ Event OnUpdate()
 		_iAlcoveLightState = ALCOVE_LIGHTS_ON
 		DebugTrace("Lights are now ON!")
 	EndIf
+EndFunction
+
+Bool Function ValidateLightState()
+	If AlcoveLightState == ALCOVE_LIGHTS_OFF
+		If !AlcoveFogCurtain.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveFogDense.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveFogFloor.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveTorchTriggerBox.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveLightTorchSPar.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveLightTorchNSPar.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveLightTorchAmb.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveFogLit.IsEnabled()
+			Return False
+		EndIf
+	ElseIf _iDesiredLightState == ALCOVE_LIGHTS_BUSY
+		If !AlcoveFogCurtain.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveFogDense.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveFogFloor.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveTorchTriggerBox.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveLightTorchSPar.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveLightTorchNSPar.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveLightTorchAmb.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveFogLit.IsEnabled()
+			Return False
+		EndIf
+	ElseIf _iDesiredLightState == ALCOVE_LIGHTS_ON
+		If AlcoveFogCurtain.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveFogDense.IsEnabled()
+			Return False
+		EndIf
+		If AlcoveFogFloor.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveTorchTriggerBox.IsEnabled()
+			Return False
+		EndIf
+		If !(AlcoveLightTorchNSPar.IsEnabled() || AlcoveLightTorchSPar.IsEnabled()) ; either shadow or no-shadow lights should be on
+			Return False
+		EndIf
+		If !AlcoveLightTorchAmb.IsEnabled()
+			Return False
+		EndIf
+		If !AlcoveFogLit.IsEnabled()
+			Return False
+		EndIf
+	EndIf
+	Return True
+EndFunction
+
+Event OnUpdate()
+	DebugTrace("OnUpdate - _iDesiredLightState:" + _iDesiredLightState + " _iAlcoveLightState" + _iAlcoveLightState + "!")
+	SetupLightsAndFog(_bForceLightState)
 EndEvent
 
 Function ShowFog(Bool abShowFog = True)
 	If abShowFog
 		FogEnabled = True
+		AlcoveFogCurtain.EnableNoWait(True)
 		AlcoveFogDense.EnableNoWait(True)
 		WaitMenuMode(0.25)
 		AlcoveFogFloor.EnableNoWait(True)
@@ -212,6 +299,7 @@ Function ShowFog(Bool abShowFog = True)
 		FogEnabled = False
 		AlcoveFogDense.DisableNoWait(True)
 		WaitMenuMode(0.25)
+		AlcoveFogCurtain.DisableNoWait(True)
 		AlcoveFogFloor.DisableNoWait(True)
 	EndIf
 EndFunction

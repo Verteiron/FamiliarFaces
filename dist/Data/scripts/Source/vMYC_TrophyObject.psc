@@ -55,6 +55,9 @@ vMYC_TrophyBase Property	TrophyBase					Auto
 
 Bool			Property	LocalRotation				Auto
 
+Bool			Property	OnLoadQueued				Auto
+ObjectReference Property	OnLoadTarget				Auto
+
 ;--=== Variables ===--
 
 Int					_TrophyVersion
@@ -75,6 +78,13 @@ Event OnInit()
 	RegisterForModEvents()
 EndEvent
 
+Event OnCellAttach()
+	If OnLoadQueued
+		OnLoadQueued = False
+		OnTrophyDisplay(OnLoadTarget, False)
+	EndIf
+EndEvent
+
 Function RegisterForModEvents()
 	;RegisterForModEvent("vMYC_TrophyDisplayObject","OnTrophyDisplayObject")
 EndFunction
@@ -88,6 +98,11 @@ EndFunction
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 	UnregisterForModEvent("vMYC_TrophyDisplayObject" + TrophyName + GetFormIDString(akTarget))
 	DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
+	If !(akTarget as ObjectReference).Is3DLoaded()
+		OnLoadQueued = True
+		OnLoadTarget = akTarget as ObjectReference
+		Return
+	EndIf
 	ObjectReference kTrophyObject = PlaceTrophyForm(akTarget as ObjectReference, abInitiallyDisabled)
 	If kTrophyObject
 		TrophyBase.TrophyManager.RegisterTrophyObject(kTrophyObject,akTarget as ObjectReference)
@@ -129,7 +144,7 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	ObjectReference kGlow = TrophyObject.PlaceAtMe(vMYC_BrightGlow,abInitiallyDisabled = True)
 	kGlow.SetScale(TrophyObject.GetScale() * 3)
 	kGlow.Enable(True)
-		;ObjectReference[] kGlows = New ObjectReference[4]
+	;ObjectReference[] kGlows = New ObjectReference[4]
 	;Int i = 0
 	;While i < kGlows.Length
 	;	kGlows[i] = TrophyObject.PlaceAtMe(FXDA09MeridiaSwordGlow,abInitiallyDisabled = True)
@@ -146,7 +161,6 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 		EndWhile
 		TrophyFadeInFXS.Play(TrophyObject,0)
 	EndIf
-	
 	kGlow.DisableNoWait(True)
 
 	;i = kGlows.Length
