@@ -1,13 +1,13 @@
 Scriptname vMYC_MetaQuestScript extends vMYC_BaseQuest
-{Do initialization and track variables for scripts}
+{Do initialization and track variables for scripts.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Registry
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Actor Property PlayerRef Auto
 
@@ -30,13 +30,13 @@ vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 vMYC_HangoutManager Property HangoutManager Auto
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
 GlobalVariable Property vMYC_CFG_Changed Auto
 GlobalVariable Property vMYC_CFG_Shutdown Auto
 GlobalVariable Property vMYC_WaitForMQ Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Float _CurrentVersion
 Int _iCurrentVersion
@@ -58,7 +58,7 @@ Float _EndTime
 Int _iUpkeepsExpected
 Int _iUpkeepsCompleted
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	DebugTrace("Metaquest event: OnGameReloaded")
@@ -97,7 +97,7 @@ Event OnShutdown(string eventName, string strArg, float numArg, Form sender)
 	DoShutdown()
 EndEvent
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function DoUpkeep(Bool DelayedStart = True)
 	DebugTrace("Metaquest event: DoUpkeep(" + DelayedStart + ")")

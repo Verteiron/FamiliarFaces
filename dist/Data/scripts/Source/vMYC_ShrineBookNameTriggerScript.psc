@@ -1,12 +1,12 @@
 Scriptname vMYC_ShrineBookNameTriggerScript extends ObjectReference
 {Cheat the system by renaming the book when the player gets close.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Actor			Property PlayerREF	Auto
 
@@ -16,12 +16,12 @@ ReferenceAlias	Property ShrineBook 	Auto
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
 vMYC_ShrineOfHeroesQuestScript 	Property ShrineOfHeroes 	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 ObjectReference					_Book
 vMYC_CharacterBookActiScript	_BookScript
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	RegisterForModEvent("vMYC_ForceBookUpdate","OnForceBookUpdate")

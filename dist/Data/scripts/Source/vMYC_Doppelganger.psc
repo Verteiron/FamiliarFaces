@@ -439,7 +439,7 @@ EndFunction
 ;=== Equipment and inventory functions ===--
 
 Int Function EquipDefaultGear(Bool abLockEquip = False)
-{Re-equip the gear this character was saved with, optionally locking it in place}
+{Re-equip the gear this character was saved with, optionally locking it in place.}
 ;FIXME: This may fail to equip the correct item if character has both the base 
 ;and a customized version of the same item in their inventory
 
@@ -740,7 +740,7 @@ Int Function UpdateStats(Bool abForceValues = False)
 EndFunction
 
 Function ReportStats()
-{Just log all stats to the logfile, for testing purposes}
+{Just log all stats to the logfile, for testing purposes.}
 	Actor kCharacterActor = Self
 
 	Int jStats = JValue.SolveObj(_jCharacterData,".Stats")
@@ -908,7 +908,7 @@ Int Function UpdateShouts()
 EndFunction
 
 Function RemoveCharacterShouts(String sCharacterName)
-{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
+{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. .}
 	DebugTrace("Character is not allowed to use shouts, removing them!")
 	Formlist kShoutlist = DataManager.LockFormList()
 	kShoutlist.Revert() ; Should already be empty, but just in case

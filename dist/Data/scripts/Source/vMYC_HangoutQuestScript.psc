@@ -1,12 +1,12 @@
 Scriptname vMYC_HangoutQuestScript extends Quest  
-{Manage custom hangouts and player locations}
+{Manage custom hangouts and player locations.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 String Property HangoutName Auto
 
@@ -20,7 +20,7 @@ Bool Property Registered = False Auto Hidden
 
 Bool Property TrackingEnabled	Auto Hidden
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")
@@ -69,7 +69,7 @@ Event OnShutdownHangouts(string eventName, string strArg, float numArg, Form sen
 	DoShutdown()
 EndEvent
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function DoUpkeep()
 	RegisterForModEvent("vMYC_HangoutPing","OnHangoutPing")

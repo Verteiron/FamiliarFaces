@@ -1,15 +1,15 @@
 Scriptname vMYC_ShrinePortalScript extends ObjectReference
-{Handle portal activation/deactivation effects}
+{Handle portal activation/deactivation effects.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Bool Property IsOpen Hidden
-{0 = Close, 1 = Open}
+{0 = Close, 1 = Open.}
 	Bool Function Get()
 		If _bPortalOpen || _bPortalOpening || _bPortalClosing
 			Return True
@@ -27,7 +27,7 @@ Bool Property IsOpen Hidden
 EndProperty
 
 Int Property PortalState Hidden
-{0 = Closed, 1 = Opening, 2 = Open, 3 = Closing}
+{0 = Closed, 1 = Opening, 2 = Open, 3 = Closing.}
 	Int Function Get()
 		If _bPortalOpening
 			Return 1
@@ -65,9 +65,9 @@ Sound Property QSTSovengardePortalClose auto
 
 VisualEffect	Property	vMYC_ValorFX				Auto
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool	_bPortalWantsOpen
 
@@ -81,7 +81,7 @@ Float 	_fWaterFogZ
 
 Int		_iPortalSound1
 Int		_iPortalSound2
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	_fWaterZ = Water.GetPositionZ()
@@ -122,7 +122,7 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function PortalOpen(Bool abQuickOpen = False)
 	While _bPortalBusy

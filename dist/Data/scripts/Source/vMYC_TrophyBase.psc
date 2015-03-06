@@ -1,7 +1,14 @@
 Scriptname vMYC_TrophyBase extends vMYC_BaseQuest  
 {Base for trophy plugins. Don't modify this script! Extend it and modify that.}
 
-;--=== Imports ===--
+;=== [ vMYC_TrophyBase.psc ] ==============================================---
+; Base for Trophy plugin files. Extend this into your own file.
+; Handles:
+;  Creation and registration of Trophy templates
+;  Placement and display of Trophy forms
+;========================================================---
+
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -38,7 +45,7 @@ Int				Property	TROPHY_EXTRAS_HASHAVOK	= 0x00000002		AutoReadOnly Hidden
 Int				Property	TROPHY_EXTRAS_HASLIGHT	= 0x00000004		AutoReadOnly Hidden
 Int				Property	TROPHY_EXTRAS_NOSPACE	= 0x00000008		AutoReadOnly Hidden
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Activator		Property	TrophyActivator		= None		Auto Hidden
 {The trophy activator object. More items can be added by creating additional properties but custom code will be needed in the Display Function.}
@@ -53,7 +60,7 @@ EffectShader	Property	TrophyFadeInFXS		= None		Auto
 {Shader that should play when the trophy first appears.}
 
 Int				Property	TrophyPriority		= 100		Auto
-{How great/unique of an achievement is this? LOWER IS BETTER! DLC (or large mod such as Falskaar) completion is 2, Faction completion is 4. See docs for more info!}
+{How great/unique of an achievement is this? LOWER IS BETTER! DLC (or large mod such as Falskaar) completion is 2, Faction completion is 4. See docs for more info!.}
 
 Int				Property	TrophyType			= 0			Auto Hidden
 Int				Property	TrophySize			= 0			Auto Hidden
@@ -61,13 +68,13 @@ Int				Property	TrophyLoc			= 0			Auto Hidden
 Int				Property	TrophyExtras		= 0			Auto Hidden
 
 Int				Property	TrophyFlags			= 0			Auto Hidden
-{See TROPHY enums above}
+{See TROPHY enums above.}
 
 Int				Property	TrophyVersion					Auto Hidden
 {Increment this if the trophy's requirements or mesh have changed.}
 
 String[]		Property	TrophyExclusionList				Auto Hidden
-{If this trophy is displayed, prevent these trophies from being displayed. Use with caution!}
+{If this trophy is displayed, prevent these trophies from being displayed. Use with caution!.}
 
 Int				Property	Available			= 0			Auto Hidden
 Bool			Property	Enabled				= True		Auto Hidden
@@ -95,7 +102,7 @@ Float			Property	AngleZ			= 0.0		Auto Hidden
 Float			Property	Scale			= 1.0		Auto Hidden
 
 Bool			Property	LocalRotation	= False		Auto Hidden
-{Use this if your object isn't getting rotated correctly!}
+{Use this if your object isn't getting rotated correctly!.}
 
 Activator 		Property	vMYC_TrophyEmptyBase		Auto
 {Base Activator to be placed as a base object if none other is defined.}
@@ -110,9 +117,9 @@ ObjectReference	Property	TrophyOrigin				Auto Hidden
 vMYC_TrophyManager	Property	TrophyManager			Auto Hidden
 
 String			Property	CharacterID					Auto Hidden
-{Set during display, unset afterward. NOT THREAD SAFE!}
+{FIXME: Set during display, unset afterward. NOT THREAD SAFE!.}
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int					_TrophyVersion
 
@@ -126,7 +133,216 @@ ObjectReference[]	_DisplayedObjects
 
 ObjectReference[]	_TemplateObjects
 
-;--=== Events/Functions ===--
+;=== Public/user functions ===--
+
+;=== These should be overridden by the user's script
+
+Int Function IsAvailable()
+{Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
+
+	Return 0
+EndFunction
+
+Event OnDisplayTrophy(Int aiDisplayFlags)
+{User code for display.}
+	
+EndEvent
+
+Int Function Remove()
+{User code for hide.}
+	Return 1
+EndFunction
+
+Int Function RefreshTrophy()
+{User code for refresh.}
+	Return 1
+EndFunction
+
+Int Function ActivateTrophy()
+{User code for activation.}
+	Return 1
+EndFunction
+
+Function CheckVars()
+
+EndFunction
+
+Function DoShutdown()
+	UnregisterForUpdate()
+EndFunction
+
+Event OnSetTemplate()
+	;User event
+EndEvent
+
+Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
+{Create a new Trophy template from akForm, with the specified offset, angle and scale.
+ Returns: Index of the new template to be used with other functions.}
+
+	;DebugTrace("Creating template from " + akForm + ", X:\t" + afOffsetX + ", Y:\t" + afOffsetY + ", Z:\t" + afOffsetZ + ", aX:\t" + afAngleX + ", aY:\t" + afAngleY + ", aZ:\t" + afAngleZ + ", S:\t" + afScale)
+	Int idx = _TemplateObjects.Find(None)
+	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(vMYC_TrophyObjectBase, abInitiallyDisabled = True)
+	vMYC_TrophyObject TrophyObject = _TemplateObjects[idx] as vMYC_TrophyObject
+	TrophyObject.SetParentObject(Self)
+	TrophyObject.SetFormData(akForm, afOffsetX, afOffsetY, afOffsetZ, afAngleX, afAngleY, afAngleZ, afScale)
+	TrophyObject.UpdatePosition()
+	;DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
+	Return idx
+EndFunction
+
+Int Function SetTemplate(ObjectReference akTargetObject)
+{Create a Trophy template from an existing objects placed in the AlcoveLayout cell.
+ Returns: Index of the template to be used with other functions.}
+	If !akTargetObject 
+		Return 0
+	EndIf
+	akTargetObject.EnableNoWait(False)
+	Return CreateTemplate(akTargetObject.GetBaseObject(), akTargetObject.GetPositionX(), akTargetObject.GetPositionY(), akTargetObject.GetPositionZ(), akTargetObject.GetAngleX(), akTargetObject.GetAngleY(), akTargetObject.GetAngleZ(), akTargetObject.GetScale())
+EndFunction
+
+Int[] Function SetTemplateArray(ObjectReference[] akTargetObjects)
+{An array version of SetTemplate. 
+ Returns: Int array of template indexes to be used with other functions.}
+	Int idx = 0
+	Int i = 0
+	Int iCount = akTargetObjects.Length
+	Int[] iResult = New Int[128]
+	While i < iCount
+		If akTargetObjects[i]
+			iResult[i] = SetTemplate(akTargetObjects[i])
+		EndIf
+		i += 1
+	EndWhile
+	Return iResult
+EndFunction
+
+Function SendSelfMessage(String asMessage)
+	Int iHandle = ModEvent.Create("vMYC_TrophySelfMessage" + TrophyName)
+	If iHandle
+		ModEvent.PushString(iHandle,asMessage)
+		ModEvent.Send(iHandle)
+	Else
+		DebugTrace("WARNING: Couldn't send self message!",1)
+	EndIf
+EndFunction
+
+Function SetTrophyFlags(Int aiTrophyType, Int aiTrophySize, Int aiTrophyLocation, Int aiTrophyExtras)
+{Set flags for this trophy based on enums at the top of the file.}
+	TrophyFlags = 0
+	TrophyFlags = Math.LogicalOr(TrophyFlags, aiTrophyType)
+	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophySize,8))
+	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyLocation,16))
+	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyExtras,24))
+EndFunction
+
+Function ReserveBanner(Int aiBannerPosition, String asBannerType = "Standing")
+{Prevent any banners being placed at aiBannerPosition.
+ Used to prevent trophy from clipping or blocking a dynamicly placed banner.}
+	Int idx = _BannersToDisable.Find(-1)
+	_BannersToDisable[idx] = aiBannerPosition
+	If idx + 1 < _BannersToDisable.Length
+		_BannersToDisable[idx + 1] = -1
+	EndIf
+EndFunction
+
+Function DisplayBanner(Form akBannerForm)
+{Display akBannerForm as a banner at the first available banner position.}
+	Int idx = _BannersToDisplay.Find(None)
+	_BannersToDisplay[idx] = akBannerForm
+EndFunction
+
+Function DisplayForm(Int aiTemplateID)
+{Display the specified form template.}
+	Int idx = _TemplatesToDisplay.Find(0)
+	_TemplatesToDisplay[idx] = aiTemplateID
+EndFunction
+
+Function DisplayFormArray(Int[] aiTemplateIDs)
+{Array version of DisplayForm.}
+	Int i = 0
+	Int iCount = aiTemplateIDs.Length
+	While i < iCount
+		If aiTemplateIDs[i]
+			DisplayForm(aiTemplateIDs[i])
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+;=== Functions for the user to store custom trophy-related data ===--
+
+Int Function LoadIntValue(String asDataName = "CustomInt")
+	Return GetSessionInt("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+EndFunction
+
+Int[] Function LoadIntArray(Int[] aiArray,String asDataName = "CustomIntArr")
+	Int jIntArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+	Int i = 0
+	Int iCount = JArray.Count(jIntArray)
+	Int[] iResult = CreateIntArray(iCount)
+	While i < 0
+		iResult[i] = JArray.GetInt(jIntArray,i)
+		i += 1
+	EndWhile
+	Return iResult
+EndFunction
+
+Float Function LoadFloatValue(String asDataName = "CustomFloat")
+	Return GetSessionFlt("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+EndFunction
+
+Float[] Function LoadFloatArray(String asDataName = "CustomFloatArr")
+	Int jFloatArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+	Int i = 0
+	Int iCount = JArray.Count(jFloatArray)
+	Float[] fResult = CreateFloatArray(iCount)
+	While i < 0
+		fResult[i] = JArray.GetFlt(jFloatArray,i)
+		i += 1
+	EndWhile
+	Return fResult
+EndFunction
+
+String Function LoadStringValue(String asDataName = "CustomString")
+	Return GetSessionStr("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+EndFunction
+
+String[] Function LoadStringArray(String asDataName = "CustomStringArr")
+	Int jStringArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+	Int i = 0
+	Int iCount = JArray.Count(jStringArray)
+	String[] sResult = CreateStringArray(iCount)
+	While i < 0
+		sResult[i] = JArray.GetStr(jStringArray,i)
+		i += 1
+	EndWhile
+EndFunction
+
+Function SaveIntValue(Int aiValue,String asDataName = "CustomInt")
+	SetSessionInt("TrophyData." + TrophyName + "." + asDataName,aiValue)
+EndFunction
+
+Function SaveIntArray(Int[] aiArray,String asDataName = "CustomIntArr")
+	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithInts(aiArray))
+EndFunction
+
+Function SaveFloatValue(Float afValue,String asDataName = "CustomFloat")
+	SetSessionFlt("TrophyData." + TrophyName + "." + asDataName,afValue)
+EndFunction
+
+Function SaveFloatArray(Float[] afArray,String asDataName = "CustomFloatArr")
+	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithFloats(afArray))
+EndFunction
+
+Function SaveStringValue(String asValue,String asDataName = "CustomString")
+	SetSessionStr("TrophyData." + TrophyName + "." + asDataName,asValue)
+EndFunction
+
+Function SaveStringArray(String[] asArray,String asDataName = "CustomStringArr")
+	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithStrings(asArray))
+EndFunction
+
+;=== Events/Functions ===--
 
 Event OnGameReload()
 	CheckVars()
@@ -225,32 +441,6 @@ Function SendRegisterEvent()
 	EndIf
 	Wait(1)
 	_CreateTemplates()
-	;ObjectReference kOffsetOrigin = TrophyManager.GetTrophyOffsetOrigin()
-	;If TrophyName
-	;	_DisplayedObjects = New ObjectReference[128]
-	;	_Display(kOffsetOrigin,0x0000FFFF)
-	;EndIf
-	;If TrophyName == "DarkBrotherhood"
-	;	_DisplayedObjects = New ObjectReference[128]
-	;	_BannersToDisplay = New Form[128]
-	;	_Display(kOffsetOrigin,1)
-	;	_DisplayedObjects = New ObjectReference[128]
-	;	_BannersToDisplay = New Form[128]
-	;	_Display(kOffsetOrigin,1)
-	;	_DisplayedObjects = New ObjectReference[128]
-	;	_BannersToDisplay = New Form[128]
-	;	_Display(kOffsetOrigin,2)
-	;EndIf
-	;If TrophyName == "DLC02"
-	;	ObjectReference newOrigin = TrophyOrigin.PlaceAtMe(vMYC_TrophyEmptyBase)
-	;	Int i = 0
-	;	While i < 360
-	;		newOrigin.SetAngle(0,0,i)
-	;		_DisplayedObjects = New ObjectReference[128]
-	;		_Display(newOrigin,7)
-	;		i += 30
-	;	EndWhile
-	;EndIf
 EndFunction
 
 Event OnTrophyCheckAvailable(Form akSender)
@@ -286,80 +476,9 @@ Function DoInit()
 	OnTrophyInit()
 EndFunction
 
-;=== Functions for the user to store custom data in ===--
-Int Function LoadIntValue(String asDataName = "CustomInt")
-	Return GetSessionInt("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
+Function DebugTrace(String sDebugString, Int iSeverity = 0)
+	Debug.Trace("MYC/Trophy/" + TrophyName + ": " + sDebugString,iSeverity)
 EndFunction
-
-Int[] Function LoadIntArray(Int[] aiArray,String asDataName = "CustomIntArr")
-	Int jIntArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
-	Int i = 0
-	Int iCount = JArray.Count(jIntArray)
-	Int[] iResult = CreateIntArray(iCount)
-	While i < 0
-		iResult[i] = JArray.GetInt(jIntArray,i)
-		i += 1
-	EndWhile
-	Return iResult
-EndFunction
-
-Float Function LoadFloatValue(String asDataName = "CustomFloat")
-	Return GetSessionFlt("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
-EndFunction
-
-Float[] Function LoadFloatArray(String asDataName = "CustomFloatArr")
-	Int jFloatArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
-	Int i = 0
-	Int iCount = JArray.Count(jFloatArray)
-	Float[] fResult = CreateFloatArray(iCount)
-	While i < 0
-		fResult[i] = JArray.GetFlt(jFloatArray,i)
-		i += 1
-	EndWhile
-	Return fResult
-EndFunction
-
-String Function LoadStringValue(String asDataName = "CustomString")
-	Return GetSessionStr("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
-EndFunction
-
-String[] Function LoadStringArray(String asDataName = "CustomStringArr")
-	Int jStringArray = GetSessionObj("Characters." + CharacterID + ".TrophyData." + TrophyName + "." + asDataName)
-	Int i = 0
-	Int iCount = JArray.Count(jStringArray)
-	String[] sResult = CreateStringArray(iCount)
-	While i < 0
-		sResult[i] = JArray.GetStr(jStringArray,i)
-		i += 1
-	EndWhile
-EndFunction
-
-Function SaveIntValue(Int aiValue,String asDataName = "CustomInt")
-	SetSessionInt("TrophyData." + TrophyName + "." + asDataName,aiValue)
-EndFunction
-
-Function SaveIntArray(Int[] aiArray,String asDataName = "CustomIntArr")
-	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithInts(aiArray))
-EndFunction
-
-Function SaveFloatValue(Float afValue,String asDataName = "CustomFloat")
-	SetSessionFlt("TrophyData." + TrophyName + "." + asDataName,afValue)
-EndFunction
-
-Function SaveFloatArray(Float[] afArray,String asDataName = "CustomFloatArr")
-	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithFloats(afArray))
-EndFunction
-
-Function SaveStringValue(String asValue,String asDataName = "CustomString")
-	SetSessionStr("TrophyData." + TrophyName + "." + asDataName,asValue)
-EndFunction
-
-Function SaveStringArray(String[] asArray,String asDataName = "CustomStringArr")
-	SetSessionObj("TrophyData." + TrophyName + "." + asDataName,JArray.objectWithStrings(asArray))
-EndFunction
-
-;===============================--
-
 
 Int Function _IsAvailable()
 	Int iAvailable = IsAvailable()
@@ -368,137 +487,6 @@ Int Function _IsAvailable()
 	;	iAvailable = 1
 	;EndIf
 	Return iAvailable
-EndFunction
-
-Int Function IsAvailable()
-{Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
-
-	Return 0
-EndFunction
-
-Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
-	
-EndEvent
-
-Int Function Remove()
-{User code for hide}
-	Return 1
-EndFunction
-
-Int Function RefreshTrophy()
-{User code for refresh}
-	Return 1
-EndFunction
-
-Int Function ActivateTrophy()
-{User code for activation}
-	Return 1
-EndFunction
-
-Function CheckVars()
-
-EndFunction
-
-Function DoShutdown()
-	UnregisterForUpdate()
-EndFunction
-
-Event OnSetTemplate()
-	;User event
-EndEvent
-
-Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY = 0.0, Float afOffsetZ = 0.0, Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, Float afScale = 1.0)
-	;DebugTrace("Creating template from " + akForm + ", X:\t" + afOffsetX + ", Y:\t" + afOffsetY + ", Z:\t" + afOffsetZ + ", aX:\t" + afAngleX + ", aY:\t" + afAngleY + ", aZ:\t" + afAngleZ + ", S:\t" + afScale)
-	Int idx = _TemplateObjects.Find(None)
-	_TemplateObjects[idx] = TrophyBaseObject.PlaceAtMe(vMYC_TrophyObjectBase, abInitiallyDisabled = True)
-	vMYC_TrophyObject TrophyObject = _TemplateObjects[idx] as vMYC_TrophyObject
-	TrophyObject.SetParentObject(Self)
-	TrophyObject.SetFormData(akForm, afOffsetX, afOffsetY, afOffsetZ, afAngleX, afAngleY, afAngleZ, afScale)
-	TrophyObject.UpdatePosition()
-	;DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
-	Return idx
-EndFunction
-
-Int Function SetTemplate(ObjectReference akTargetObject)
-	If !akTargetObject 
-		Return 0
-	EndIf
-	akTargetObject.EnableNoWait(False)
-	Return CreateTemplate(akTargetObject.GetBaseObject(), akTargetObject.GetPositionX(), akTargetObject.GetPositionY(), akTargetObject.GetPositionZ(), akTargetObject.GetAngleX(), akTargetObject.GetAngleY(), akTargetObject.GetAngleZ(), akTargetObject.GetScale())
-	;Int idx = _TemplateObjects.Find(None)
-	;_TemplateObjects[idx] = akTargetObject
-	;DebugTrace("Setting template " + akTargetObject + ", X:\t" + akTargetObject.GetPositionX() + ", Y:\t" + akTargetObject.GetPositionY() + ", Z:\t" + akTargetObject.GetPositionZ() + ", aX:\t" + akTargetObject.GetAngleX() + ", aY:\t" + akTargetObject.GetAngleY() + ", aZ:\t" + akTargetObject.GetAngleZ() + ", S:\t" + akTargetObject.GetScale())
-	;Return idx
-EndFunction
-
-Int[] Function SetTemplateArray(ObjectReference[] akTargetObjects)
-	Int idx = 0
-	Int i = 0
-	Int iCount = akTargetObjects.Length
-	Int[] iResult = New Int[128]
-	While i < iCount
-		If akTargetObjects[i]
-			iResult[i] = SetTemplate(akTargetObjects[i])
-		EndIf
-		i += 1
-	EndWhile
-	Return iResult
-EndFunction
-
-Function SendSelfMessage(String asMessage)
-	Int iHandle = ModEvent.Create("vMYC_TrophySelfMessage" + TrophyName)
-	If iHandle
-		ModEvent.PushString(iHandle,asMessage)
-		ModEvent.Send(iHandle)
-	Else
-		DebugTrace("WARNING: Couldn't send self message!",1)
-	EndIf
-EndFunction
-
-Function SetTrophyFlags(Int aiTrophyType, Int aiTrophySize, Int aiTrophyLocation, Int aiTrophyExtras)
-	TrophyFlags = 0
-	TrophyFlags = Math.LogicalOr(TrophyFlags, aiTrophyType)
-	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophySize,8))
-	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyLocation,16))
-	TrophyFlags = Math.LogicalOr(TrophyFlags, Math.LeftShift(aiTrophyExtras,24))
-EndFunction
-
-Bool Function SetCustomData(Int[] aiData)
-
-EndFunction
-
-Function ReserveBanner(Int aiBannerPosition, String asBannerType = "Standing")
-	Int idx = _BannersToDisable.Find(-1)
-	_BannersToDisable[idx] = aiBannerPosition
-	If idx + 1 < _BannersToDisable.Length
-		_BannersToDisable[idx + 1] = -1
-	EndIf
-EndFunction
-
-Function DisplayBanner(Form akBannerForm)
-	Int idx = _BannersToDisplay.Find(None)
-	_BannersToDisplay[idx] = akBannerForm
-EndFunction
-
-Function DisplayForm(Int aiTemplateID)
-	Int idx = _TemplatesToDisplay.Find(0)
-	_TemplatesToDisplay[idx] = aiTemplateID
-EndFunction
-
-Function DisplayFormArray(Int[] aiTemplateIDs)
-	Int i = 0
-	Int iCount = aiTemplateIDs.Length
-	While i < iCount
-		If aiTemplateIDs[i]
-			DisplayForm(aiTemplateIDs[i])
-		EndIf
-		i += 1
-	EndWhile
-EndFunction
-
-Function DebugTrace(String sDebugString, Int iSeverity = 0)
-	Debug.Trace("MYC/Trophy/" + TrophyName + ": " + sDebugString,iSeverity)
 EndFunction
 
 Function _CreateTemplates()

@@ -1,22 +1,22 @@
 Scriptname vMYC_Trophy_DarkBrotherhood extends vMYC_TrophyBase
 {Player has completed the Dark Brotherhood quests, or destroyed the DB.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
 ;=== Constants ===--
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Form		Property	DBBannerAnim01				Auto
 Form		Property	vMYC_DBBannerBurnt01		Auto
 
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 
@@ -31,6 +31,7 @@ Event OnTrophyInit()
 	
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	
@@ -52,7 +53,7 @@ Int Function IsAvailable()
 EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	
 	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
 	If aiDisplayFlags > 1
@@ -65,11 +66,11 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 EndEvent
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction

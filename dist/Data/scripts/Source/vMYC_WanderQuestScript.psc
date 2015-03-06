@@ -1,12 +1,12 @@
 Scriptname vMYC_WanderQuestScript extends Quest  
 {Updates status of wander quest, stops it when necessary.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 GlobalVariable 		Property 	GameHour 					Auto
 
@@ -15,13 +15,13 @@ Keyword				Property	vMYC_Wanderer				Auto
 
 Bool				Property	TrackingEnabled				Auto Hidden
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Actor 	 _WanderActor
 Location _City
 Location _Inn
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	If IsRunning()
@@ -70,7 +70,7 @@ Event OnShutdownHangouts(string eventName, string strArg, float numArg, Form sen
 	DoShutdown()
 EndEvent
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function DoShutdown()
 	UnregisterForUpdate()

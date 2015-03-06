@@ -1,12 +1,12 @@
 Scriptname vMYC_PortalStoneScript extends ObjectReference
-{Warp player to the Shrine of Heroes}
+{Warp player to the Shrine of Heroes.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 vMYC_HangoutManager Property HangoutManager Auto
 
@@ -34,9 +34,9 @@ LocationAlias	Property	kLastPlayerLocation Auto
 
 Bool Property FirstUse = True Auto Hidden
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 

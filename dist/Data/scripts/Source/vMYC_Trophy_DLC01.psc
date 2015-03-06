@@ -1,7 +1,7 @@
 Scriptname vMYC_Trophy_DLC01 extends vMYC_TrophyBase
 {Various trophies for Dawnguard.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -12,7 +12,7 @@ Int		Property	TROPHY_DG_CHOSEDAWNGUARD 	= 0x00000001	AutoReadonly Hidden
 Int		Property	TROPHY_DG_CHOSEVAMPIRES 	= 0x00000002	AutoReadonly Hidden
 Int		Property	TROPHY_DG_COMPLETED		 	= 0x00000004	AutoReadonly Hidden
 
-;--=== Properties ===--
+;=== Properties ===--
 
 GlobalVariable Property DLC1PlayingVampireLine Auto ; 1 = Vampires, 0 = Dawnguard
 
@@ -27,13 +27,13 @@ ObjectReference		Property	TemplateSunPedestal		Auto
 ;Static				Property	vMYC_ShrineDLC1Crossbow		Auto
 ;Static				Property	vMYC_ShrineDLC1SunPedestal	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int		_iChoseDawnguardTrophyID
 Int		_iChoseVampiresTrophyID
 Int		_iCompletionTrophyID
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 {Set properties, do anything else that needs doing at startup.}
@@ -62,7 +62,7 @@ Event OnSetTemplate()
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	If !aiDisplayFlags
 		Return
 	EndIf
@@ -78,6 +78,7 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 	EndIf
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Int iTrophyFlags = 0

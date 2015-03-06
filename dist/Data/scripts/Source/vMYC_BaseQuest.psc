@@ -1,5 +1,9 @@
 Scriptname vMYC_BaseQuest extends Quest
-{Base script with a few events, to be extended by others}
+{Base script with a few events, to be extended by others.}
+
+; === [ vMYC_BaseQuest.psc ] ==============================================---
+; Base script with a few events, to be extended by others.
+; ========================================================---
 
 ;=== Imports ===--
 
@@ -12,6 +16,6 @@ Scriptname vMYC_BaseQuest extends Quest
 ;=== Events ===--
 
 Event OnGameReload()
-{Event that gets called when the game is loaded. Sent by vMYC_PlayerLoadGameAlias.psc}
+{Called when the game is loaded. Requires vMYC_PlayerLoadGameAlias.psc to be attached to a Player alias.}
 
 EndEvent

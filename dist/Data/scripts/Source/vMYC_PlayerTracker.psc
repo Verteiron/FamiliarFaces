@@ -1,12 +1,12 @@
 Scriptname vMYC_PlayerTracker extends ReferenceAlias
 {Tracks player's inventory, stats, etc in the background to save time while saving.}
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Registry
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Int					Property	MaxThreadCount = 8 	AutoReadOnly Hidden
 
@@ -17,7 +17,7 @@ Actor 				Property	PlayerREF			Auto
 Formlist 			Property	vMYC_InventoryList	Auto
 Formlist 			Property	vMYC_PerkList		Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool	_bRefreshed
 Bool	_bNeedEquipmentScan	=	False
@@ -30,7 +30,7 @@ Int		_jInventory
 Int		_jAVNames		= 0
 
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	If GetOwningQuest().IsRunning()

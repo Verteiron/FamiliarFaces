@@ -1,22 +1,22 @@
 Scriptname vMYC_Trophy_Bard extends vMYC_TrophyBase
 {Player has completed the bard quests.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
 ;=== Constants ===--
 
-;--=== Properties ===--
+;=== Properties ===--
 
 ObjectReference		Property	BardStatic		Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int		_iTrophyID
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 
@@ -35,6 +35,7 @@ Event OnSetTemplate()
 	_iTrophyID = SetTemplate(BardStatic)
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Quest kGoalQuest = Quest.GetQuest("MS05") 
@@ -45,18 +46,18 @@ Int Function IsAvailable()
 EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	If aiDisplayFlags
 		DisplayForm(_iTrophyID)
 	EndIf
 EndEvent
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction

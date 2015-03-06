@@ -1,16 +1,16 @@
 ScriptName vMYC_CharacterDummyActorScript Extends Actor
-{Store data about character and Apply transformation in OnLoad}
+{Store data about character and Apply transformation in OnLoad.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Config
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Bool Property NeedRefresh Hidden
-	{Force a refresh next time this character is loaded}
+	{Force a refresh next time this character is loaded.}
 	Bool Function get()
 		Return _bNeedRefresh
 	EndFunction
@@ -66,9 +66,9 @@ Armor Property	vMYC_DummyArmor	Auto
 
 Bool Property InCity Auto
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
 ActorBase _kActorBase
 
@@ -116,7 +116,7 @@ CombatStyle _kLastCombatStyle
 
 Int _iCharGenVersion
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	_kActorBase = GetActorBase()
@@ -558,7 +558,7 @@ Function CheckVars()
 EndFunction
 
 Function DoInit(Bool bInBackground = True)
-	{Run first time this character is loaded}
+	{Run first time this character is loaded.}
 	DoUpkeep(bInBackground)
 EndFunction
 

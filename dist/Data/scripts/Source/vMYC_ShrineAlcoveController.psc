@@ -1,13 +1,13 @@
 Scriptname vMYC_ShrineAlcoveController extends ObjectReference
-{Handle alcove activation/deactivation effects}
+{Handle alcove activation/deactivation effects.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Config
 
-;--=== Constants ===--
+;=== Constants ===--
 Int Property ALCOVE_STATE_EMPTY 	= 0 AutoReadOnly Hidden
 Int Property ALCOVE_STATE_BUSY 		= 1 AutoReadOnly Hidden
 Int Property ALCOVE_STATE_READY 	= 2 AutoReadOnly Hidden
@@ -41,10 +41,10 @@ Int Property VALIDATION_FAILURE_LIGHTSTATE_BAD	=   128 AutoReadOnly Hidden
 
 Int Property VALIDATION_FAILURE_INDEX_BAD		=  1024 AutoReadOnly Hidden
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Int	Property AlcoveIndex Hidden
-{Which alcove am I?}
+{Which alcove am I.}
 	Int Function Get()
 		Return _iAlcoveIndex
 	EndFunction
@@ -61,10 +61,10 @@ Int	Property AlcoveIndex Hidden
 EndProperty
 
 Actor Property AlcoveActor Auto Hidden
-{The actor that 'lives' in this alcove}
+{The actor that 'lives' in this alcove.}
 
 String	Property CharacterName Hidden
-{Which Character lives here?}
+{Which Character lives here.}
 	String Function Get()
 		Return _sCharacterName
 	EndFunction
@@ -91,7 +91,7 @@ String Property WantCharacterName Hidden
 EndProperty
 
 Int Property AlcoveState Hidden
-{0 = Empty, 1 = Busy, 2 = Ready, 3 = Summoned, 4 = Error}
+{0 = Empty, 1 = Busy, 2 = Ready, 3 = Summoned, 4 = Error.}
 	Int Function Get()
 		Return _iAlcoveState
 	EndFunction
@@ -109,10 +109,10 @@ Int Property AlcoveState Hidden
 EndProperty
 
 Int Property WantAlcoveState Auto Hidden
-{0 = Empty, 1 = Busy, 2 = Ready, 3 = Summoned, 4 = Error}
+{0 = Empty, 1 = Busy, 2 = Ready, 3 = Summoned, 4 = Error.}
 
 Int Property AlcoveStatueState Hidden
-{0 = None, 1 = Present, 2 = Summoned}
+{0 = None, 1 = Present, 2 = Summoned.}
 	Int Function Get()
 		Return _iAlcoveStatueState
 	EndFunction
@@ -122,7 +122,7 @@ Int Property AlcoveStatueState Hidden
 EndProperty
 
 Int Property AlcoveLightState Hidden
-{0 = Dark, 1 = FullLight, 2 = TorchLight}
+{0 = Dark, 1 = FullLight, 2 = TorchLight.}
 	Int Function Get()
 		Return _iAlcoveLightState
 	EndFunction
@@ -241,7 +241,7 @@ Sound			Property	vMYC_QSTTG09BeamAbilitiesColumnLPSM		Auto
 Sound			Property	vMYC_QSTTG09BeamAbilitiesColumnStartSM	Auto
 Sound			Property	QSTMQ206TimeTravel2DSound				Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Actor			_kInvisibleActor
 Actor[]			_kInvisibleActors
@@ -308,7 +308,7 @@ Int				_iAlcoveToggleEventIndex = 0
 
 Actor 			_kCharacter
 
-;--=== Events and Functions ===--
+;=== Events and Functions ===--
 
 
 Function CheckVars()
@@ -759,7 +759,7 @@ EndFunction
 
 
 Event OnAlcoveLightingPriority(string eventName, string strArg, float numArg, Form sender)
-{Disable the lights of all Alcoves except the event sender to try to give its lighting effects top priority}
+{Disable the lights of all Alcoves except the event sender to try to give its lighting effects top priority.}
 	;strArg = numArg = AlcoveIndex of sender
 	Int iRequestingIndex = numArg as Int
 	If iRequestingIndex != AlcoveIndex && strArg == "Request"
@@ -790,7 +790,7 @@ Event OnSetAlcoveCharacterName(string eventName, string strArg, float numArg, Fo
 EndEvent
 
 Function SetAlcoveCharacterName(string sCharacterName)
-{This (un)sets the Alcove's character name}
+{This (un)sets the Alcove's character name.}
 	_sCharacterName = sCharacterName
 EndFunction
 
@@ -825,7 +825,7 @@ Event OnUnload()
 EndEvent
 
 Function SetAlcoveLightState(Int iNewLightState)
-{iNewLightState: 0 = Dark, 1 = Full light, 2 = Torch light}
+{iNewLightState: 0 = Dark, 1 = Full light, 2 = Torch light.}
 	If iNewLightState == _iAlcoveLightState
 		Return
 	EndIf
@@ -916,7 +916,7 @@ Function SetAlcoveLightState(Int iNewLightState)
 EndFunction
 
 Event OnAlcoveLightStateChange(string eventName, string strArg, float numArg, Form sender)
-{numArg: 0 = Dark, 1 = Full light, 2 = Torch light}
+{numArg: 0 = Dark, 1 = Full light, 2 = Torch light.}
 	If sender != Self 
 		Return
 	EndIf
@@ -938,7 +938,7 @@ Event OnAlcoveLightStateComplete(string eventName, string strArg, float numArg, 
 EndEvent
 
 Event OnAlcoveStatueStateChange(string eventName, string strArg, float numArg, Form sender)
-{numArg: 0 = Dark, 1 = Full light, 2 = Torch light}
+{numArg: 0 = Dark, 1 = Full light, 2 = Torch light.}
 	If sender != Self || numArg as Int == _iAlcoveStatueState
 		Return
 	EndIf
@@ -1037,7 +1037,7 @@ EndEvent
 
 ;Last part of save process
 Function DoSaveAnimation()
-{Play VFX and actually save the player character}
+{Play VFX and actually save the player character.}
 	;We turn off collisions here.
 	Debug.ToggleCollisions() ; Keep the invisible actors from bouncing around during the next bit
 
@@ -1211,7 +1211,7 @@ Event OnSpellSaved(string eventName, string strArg, float numArg, Form sender)
 EndEvent
 
 Event OnItemSaved(string eventName, string strArg, float numArg, Form sender)
-{Could make an animation when an inventory item is saved but... sloooooooow.....}
+{Could make an animation when an inventory item is saved but... sloooooooow....}
 ;	If _bPlayerIsSaving ;&& (sender as Armor)
 ;		;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": OnItemSaved(" + eventName + "," + sender + ")")
 ;		ObjectReference PerkGlow = _StatueMarker.PlaceAtMe(sender,abInitiallyDisabled = True)
@@ -1248,7 +1248,7 @@ Event OnAlcoveToggleSummoned(Int aiAlcoveIndex, Bool abCharacterSummoned)
 EndEvent
 
 Function SummonCharacter()
-{Summon the character from Alcove into Tamriel}
+{Summon the character from Alcove into Tamriel.}
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": SummonCharacter!")
 	_bDeferValidation = True
 	AlcoveStatueState = ALCOVE_STATUE_SUMMONED
@@ -1301,7 +1301,7 @@ Function SummonCharacter()
 EndFunction
 
 Function BanishCharacter()
-{Banish the character from Tamriel back to the Alcove}
+{Banish the character from Tamriel back to the Alcove.}
 	;Debug.Trace("MYC/Shrine/Alcove" + _iAlcoveIndex + ": BanishCharacter!")
 	_Book.IsOpen = False
 	If Is3DLoaded()

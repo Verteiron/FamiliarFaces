@@ -1,6 +1,16 @@
 Scriptname vMYC_DataManager extends vMYC_ManagerBase
 {Save and restore character and other data using the registry.}
 
+; === [ vMYC_DataManager.psc ] ============================================---
+; Main interface for managing character-related data. 
+; Handles:
+;  Loading/saving character data
+;  Scanning of Player for various data
+;  Game session identification and matching
+;  Equipment serialization
+;  Population of certain lists, like AVNames
+; ========================================================---
+
 ;=== Imports ===--
 
 Import Utility
@@ -14,7 +24,7 @@ String				Property META			= ".Info"				Auto Hidden
 ;=== Properties ===--
 
 String 				Property SessionID 								Hidden
-{Return SID for this game.}
+{Return SessionID for this game session.}
 	String Function Get()
 		Return GetSessionStr("SessionID")
 	EndFunction
@@ -34,16 +44,16 @@ vMYC_PlayerTracker	Property PlayerTracker							Auto
 Int 				Property SerializationVersion = 4 				Auto Hidden
 
 Actor 				Property PlayerRef 								Auto
-{The Player, duh}
+{The Player, duh.}
 
 ActorBase 			Property vMYC_InvisibleMActor					Auto
-{Invisible actor for collecting custom weapons}
+{Invisible actor for collecting custom weapons.}
 
 Formlist 			Property vMYC_DummyActorsMList 					Auto
-{Formlist containing the male dummy actors}
+{Formlist containing the male dummy actors.}
 
 Formlist 			Property vMYC_DummyActorsFList					Auto
-{Formlist containing the female dummy actors}
+{Formlist containing the female dummy actors.}
 
 Formlist 			Property vMYC_PerkList 							Auto
 {A list of all perks as found by ActorValueInfo.}
@@ -63,13 +73,13 @@ Faction 			Property CWImperialFaction 						Auto
 Faction 			Property CWSonsFaction 							Auto
 
 Spell 				Property WerewolfChange 						Auto 
-{Beast form, if player has this then they're a worwelf}
+{Beast form, if player has this then they're a worwelf.}
 
 Spell 				Property DLC1VampireChange						Auto 
-{Vampire lord form, if player has this then they're a wampire}
+{Vampire lord form, if player has this then they're a wampire.}
 
 GlobalVariable 		Property DLC1PlayingVampireLine 				Auto 
-{1 = Vampires, 0 = Dawnguard}
+{1 = Vampires, 0 = Dawnguard.}
 
 ;=== Variables ===--
 
@@ -93,7 +103,7 @@ Event OnInit()
 		CreateAVNames()
 		InitNINodeList()
 
-		;== Init ActorBasePool forms in case they're not there already ===-- 
+		;Init ActorBasePool forms in case they're not there already
 		If !HasRegKey("ActorbasePool.F")
 			Int jABPool = JArray.Object()
 			JArray.AddFromFormlist(jABPool,vMYC_DummyActorsFList)
@@ -148,7 +158,7 @@ EndEvent
 ;=== Functions - Startup ===--
 
 Function DoUpkeep(Bool bInBackground = True)
-	{Run whenever the player loads up the Game.}
+{Run whenever the player loads up the Game.}
 	RegisterForModEvent("vMYC_SetCustomHangout","OnSetCustomHangout")
 	RegisterForModEvent("vMYC_TrackerReady","OnTrackerReady")
 	If bInBackground
@@ -186,7 +196,8 @@ Function DoUpkeep(Bool bInBackground = True)
 
 	ImportCharacterFiles()
 	ImportCharacterFiles(JContainers.userDirectory() + "/vMYC/")
-	;Don't register this until after we've init'd everything else
+	
+	;=== Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	RegisterForModEvent("vMYC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
 	IsBusy = False
@@ -215,7 +226,7 @@ EndFunction
 ;=== Functions - Character data ===--
 
 Function ScanPlayerStats()
-{Writes current player stats to the session}
+{Writes current player stats to the session.}
 	If GetSessionBool("Status.Stats.Busy")
 		Return
 	EndIf
@@ -273,7 +284,7 @@ Function ScanPlayerStats()
 EndFunction
 
 Function ScanPlayerPerks()
-{Writes current player perks to the session}
+{Writes current player perks to the session.}
 ;Slight redundancy with ScanPlayerStats but this will need to be called less often
 	If GetSessionBool("Status.Perks.Busy")
 		Return
@@ -345,7 +356,7 @@ Function SavePlayerPerks(Bool bSessionOnly = False)
 EndFunction
 
 Function ScanPlayerAchievements()
-{Writes current player achievements to the session}
+{Writes current player achievements to the session.}
 ;These were called Spawnpoints in 1.x
 	If GetSessionBool("Status.Achievements.Busy")
 		Return
@@ -1247,7 +1258,7 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 EndFunction
 
 Function UpgradeData(String sUUID)
-{Upgrade data from earlier version to match current version}
+{Upgrade data from earlier version to match current version.}
 	Int jCharacterData = GetRegObj("Characters." + sUUID)
 	If !jCharacterData
 		DebugTrace("UpgradeData - No data for " + sUUID + "!")
@@ -1282,7 +1293,7 @@ EndFunction
 ;=== Functions - Actorbase/Actor management ===--
 
 ActorBase Function GetAvailableActorBase(Int iSex, ActorBase kPreferredAB = None)
-{Returns the first available dummy actorbase of the right sex, optionally fetch the preferred one}
+{Returns the first available dummy actorbase of the right sex, optionally fetch the preferred one.}
 	ActorBase kDoppelgangerBase = None
 	Int jActorbaseMap = GetSessionObj("ActorbaseMap")
 	
@@ -1487,7 +1498,7 @@ EndFunction
 ;=== Functions - Utility ===--
 
 Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
-{Fills the JMap jEquipmentInfo with all info from Form kItem}
+{Fills the JMap jEquipmentInfo with all info from Form kItem.}
 	GotoState("SerializeBusy")
 	JMap.SetForm(jEquipmentInfo,"Form",kItem)
 
@@ -1621,7 +1632,7 @@ Event OnLoadSerializedEquipmentReq(Int jItem)
 EndEvent
 
 ObjectReference Function LoadSerializedEquipment(Int jItem)
-{Recreate a custom weapon or armor using jItem. }
+{Recreate a custom weapon or armor using jItem.}
 	Form kItem = JMap.getForm(jItem,"Form")
 	If !(kItem as Weapon) && !(kItem as Armor)
 		DebugTrace("Passed item is neither weapon nor armor!",1)
@@ -1674,7 +1685,7 @@ ObjectReference Function LoadSerializedEquipment(Int jItem)
 EndFunction
 
 Function SerializePotion(Form kItem, Int jPotionInfo)
-{Fills the JMap jPotionInfo with all info from Form kItem}
+{Fills the JMap jPotionInfo with all info from Form kItem.}
 	GotoState("SerializeBusy")
 	Potion kPotion = kItem as Potion
 	JMap.SetForm(jPotionInfo,"Form",kItem)
@@ -1712,7 +1723,7 @@ Function SerializePotion(Form kItem, Int jPotionInfo)
 EndFunction
 
 ObjectReference Function LoadSerializedPotion(Int jPotionInfo)
-{Recreate a custom potion using jPotionInfo. }
+{Recreate a custom potion using jPotionInfo.}
 ;FIXME: This won't work because there is no SetNthMagicEffect!
 	GotoState("SerializeBusy")
 	Potion kDefaultPotion = GetformFromFile(0x0005661f,"Skyrim.esm") as Potion

@@ -373,18 +373,18 @@ event OnPageReset(string a_page)
 		AddEmptyOption()
 		;===== Character skill options ======----
 		AddHeaderOption("$Skill settings")
-		OPTION_TOGGLE_SHOUTSALLOW_MASTER = AddToggleOption("{$Allow} {$Shouts}",CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool,OptionFlags)
+		OPTION_TOGGLE_SHOUTSALLOW_MASTER = AddToggleOption("{$Allow.} {$Shouts.}",CharacterManager.GetLocalInt(_sCharacterName,"ShoutsAllowMaster") as Bool,OptionFlags)
 		AddEmptyOption()
 		
 		If !CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
 			Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
 			OPTION_TOGGLE_MAGICALLOW_AUTOSELECT		= AddToggleOption("$Auto select spells by perks",bAutoMagic,OptionFlags)
-			OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow} {$Alteration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-			OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow} {$Conjuration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-			OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow} {$Destruction}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-			OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow} {$Illusion}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-			OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow} {$Restoration}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
-			;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+			OPTION_TOGGLE_MAGICALLOW_ALTERATION		= AddToggleOption(" {$Allow.} {$Alteration.}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowAlteration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_CONJURATION	= AddToggleOption(" {$Allow.} {$Conjuration.}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowConjuration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_DESTRUCTION	= AddToggleOption(" {$Allow.} {$Destruction.}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowDestruction") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_ILLUSION		= AddToggleOption(" {$Allow.} {$Illusion.}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowIllusion") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			OPTION_TOGGLE_MAGICALLOW_RESTORATION	= AddToggleOption(" {$Allow.} {$Restoration.}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowRestoration") as Bool,Math.LogicalOR(OptionFlags,bAutoMagic as Int))
+			;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow.} {$Other.}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
 
 			_iMagicSchoolOptions[0] = OPTION_TOGGLE_MAGICALLOW_ALTERATION
 			_iMagicSchoolOptions[1] = OPTION_TOGGLE_MAGICALLOW_CONJURATION
@@ -394,11 +394,11 @@ event OnPageReset(string a_page)
 			;_iMagicSchoolOptions[5] = OPTION_TOGGLE_MAGICALLOW_OTHER
 		Else
 			AddMenuOption("$Auto select spells by perks","$Using AFT",OPTION_FLAG_DISABLED)
-			AddMenuOption(" {$Allow} {$Alteration}","$Using AFT",OPTION_FLAG_DISABLED)
-			AddMenuOption(" {$Allow} {$Conjuration}","$Using AFT",OPTION_FLAG_DISABLED)
-			AddMenuOption(" {$Allow} {$Destruction}","$Using AFT",OPTION_FLAG_DISABLED)
-			AddMenuOption(" {$Allow} {$Illusion}","$Using AFT",OPTION_FLAG_DISABLED)
-			AddMenuOption(" {$Allow} {$Restoration}","$Using AFT",OPTION_FLAG_DISABLED)		
+			AddMenuOption(" {$Allow.} {$Alteration.}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow.} {$Conjuration.}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow.} {$Destruction.}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow.} {$Illusion.}","$Using AFT",OPTION_FLAG_DISABLED)
+			AddMenuOption(" {$Allow.} {$Restoration.}","$Using AFT",OPTION_FLAG_DISABLED)		
 		EndIf
 		If _bShowDebugOptions
 			AddEmptyOption()
@@ -439,16 +439,16 @@ event OnPageReset(string a_page)
 		Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
 		If MissingReqs == 3
 			AddEmptyOption()
-			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing.} {$critical.} {$mods.} !","$Report")
 		ElseIf MissingReqs == 2
 			AddEmptyOption()
-			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing.} {$equipment.} {$mods.} !","$Report")
 		ElseIf MissingReqs == 1
 			AddEmptyOption()
-			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing.} {$minor.} {$mods.} !","$Report")
 		Else
 			AddEmptyOption()
-			OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements}","$Report")
+			OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements.}","$Report")
 		EndIf
 		;===== END info column =============----
 
@@ -471,7 +471,7 @@ event OnPageReset(string a_page)
 			_iAlcoveIndices[iAlcoveIndex] = iAlcoveIndex
 			_iAlcoveStates[iAlcoveIndex] = kThisAlcove.AlcoveState
 			_sAlcoveCharacterNames[iAlcoveIndex] = ShrineOfHeroes.GetAlcoveStr(i,"CharacterName")
-			OPTION_MENU_ALCOVE_CHARACTER[iAlcoveIndex] = AddMenuOption("Alcove {" + (iAlcoveIndex + 1) + "}: {" + _sAlcoveStateEnum[_iAlcoveStates[iAlcoveIndex]] + "}",_sAlcoveCharacterNames[iAlcoveIndex])
+			OPTION_MENU_ALCOVE_CHARACTER[iAlcoveIndex] = AddMenuOption("Alcove {" + (iAlcoveIndex + 1) + ".}: {" + _sAlcoveStateEnum[_iAlcoveStates[iAlcoveIndex]] + ".}",_sAlcoveCharacterNames[iAlcoveIndex])
 			Int iSummonedOptionFlags = 0
 			If !_sAlcoveCharacterNames[iAlcoveIndex] || _sAlcoveCharacterNames[iAlcoveIndex] == "Empty"
 				iSummonedOptionFlags = OPTION_FLAG_DISABLED
@@ -516,8 +516,8 @@ event OnPageReset(string a_page)
 ;		AddHeaderOption("$Stats")
 ;		Int[] iHangoutStats = HangoutManager.GetHangoutStats()
 ;		;[iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable]
-;		AddTextOption("{$Hangouts}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
-;		AddTextOption("{$Running}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
+;		AddTextOption("{$Hangouts.}: " + iHangoutStats[1] + " presets and " + (iHangoutStats[0] - iHangoutStats[1]) + " custom.","",OPTION_FLAG_DISABLED)
+;		AddTextOption("{$Running.}: " + iHangoutStats[2] + "/" + (iHangoutStats[1] + iHangoutStats[3]) + ", " + iHangoutStats[3] + " remaining.","",OPTION_FLAG_DISABLED)
 
 		;====================================----
 		SetCursorPosition(8)
@@ -535,10 +535,10 @@ event OnPageReset(string a_page)
 		SetCursorPosition(9)
 
 		;===== Hangout selection menu =====----
-		OPTION_MENU_HANGOUT_SELECT = AddMenuOption("{$Settings for} ",_sHangoutName)
+		OPTION_MENU_HANGOUT_SELECT = AddMenuOption("{$Settings for.} ",_sHangoutName)
 		;====================================----
 
-		AddTextOption("{$Number of characters}: " + HangoutManager.GetNumActorsInHangout(_sHangoutName),"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Number of characters.}: " + HangoutManager.GetNumActorsInHangout(_sHangoutName),"",OPTION_FLAG_DISABLED)
 		AddEmptyOption()
 		Form kLocation = HangoutManager.GetHangoutForm(_sHangoutName,"Location")
 		String sLocationString = "N/A"
@@ -562,10 +562,10 @@ event OnPageReset(string a_page)
 		If kMarkerRef
 			sMarkerString = GetFormIDString(kMarkerRef)
 		EndIf
-		AddTextOption("{$Source}: " + sSourceString,"",OPTION_FLAG_DISABLED)
-		AddTextOption("{$Parent location}: " + sLocationString,"",OPTION_FLAG_DISABLED)
-		AddTextOption("{$Cell}: " + sCellString,"",OPTION_FLAG_DISABLED)
-		AddTextOption("{$Marker}: " + sMarkerString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Source.}: " + sSourceString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Parent location.}: " + sLocationString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Cell.}: " + sCellString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("{$Marker.}: " + sMarkerString,"",OPTION_FLAG_DISABLED)
 
 
 	
@@ -884,7 +884,7 @@ Event OnOptionMenuOpen(Int Option)
 			EndIf
 			i += 1
 		EndWhile
-		sCharacterNamesPlusEmpty[iAdded] = "*{$Reset}*"
+		sCharacterNamesPlusEmpty[iAdded] = "*{$Reset.}*"
 		SetMenuDialogOptions(sCharacterNamesPlusEmpty)
 		If _sAlcoveCharacterNames[iAlcove]
 			SetMenuDialogStartIndex(sCharacterNamesPlusEmpty.Find(_sAlcoveCharacterNames[iAlcove]))

@@ -1,20 +1,20 @@
 Scriptname vMYC_ShrineOfHeroesQuestScript extends Quest
 {Handle reservations of the various Alcoves, and assign characters to them. Data stored separately from characters.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Config
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Int	Property ShrineDataSerial Auto Hidden
 
 Bool Property Ready Auto Hidden
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
-{Character manager}
+{Character manager.}
 
 Quest 			 Property vMYC_PortalStoneQuest	Auto
 
@@ -26,16 +26,16 @@ ReferenceAlias	 Property ShrineBook Auto
 vMYC_ShrineAlcoveController[] Property AlcoveControllers Auto
 
 Int[]			 Property AlcoveState Auto
-{0 = Empty, 1 = Loading, 2 = Ready, 3 = Summoned, 4 = Error}
+{0 = Empty, 1 = Loading, 2 = Ready, 3 = Summoned, 4 = Error.}
 
 Actor Property PlayerRef Auto
-{The Player, duh}
+{The Player, duh.}
 
 String	Property	DataPath	Auto Hidden
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int		_jShrineData
 Int		_jMYC
@@ -53,7 +53,7 @@ Bool	_bShrineNeedsUpdate = False
 Bool	_bShrineNeedsReset = False
 
 Bool	_bNoTick = False
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	RegisterForModEvent("vMYC_AlcoveStatusUpdate","OnAlcoveStatusUpdate")
@@ -141,7 +141,7 @@ Event OnConfigUpdate(String asConfigPath)
 EndEvent
 
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function UpdateShrineStatus()
 	Bool bReady = True

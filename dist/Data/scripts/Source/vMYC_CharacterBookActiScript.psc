@@ -1,12 +1,12 @@
 Scriptname vMYC_CharacterBookActiScript extends ObjectReference
-{Linked to Shrine activator, handle player interaction}
+{Linked to Shrine activator, handle player interaction.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 vMYC_CharacterManagerScript 	Property CharacterManager 	Auto
 vMYC_ShrineOfHeroesQuestScript 	Property ShrineOfHeroes 	Auto
@@ -35,7 +35,7 @@ Sound 			Property 	vMYC_BookWhooshSM	Auto
 Static 			Property	HighPolySkyrimBook			Auto
 
 Int	Property AlcoveIndex Hidden
-{Which Alcove do I belong to?}
+{Which Alcove do I belong to.}
 	Int Function Get()
 		Return _iAlcoveIndex
 	EndFunction
@@ -46,7 +46,7 @@ Int	Property AlcoveIndex Hidden
 EndProperty
 
 Bool Property FlipPages Hidden
-{Start or stop flipping pages}
+{Start or stop flipping pages.}
 	Bool Function Get()
 		Return _bFlipPages
 	EndFunction
@@ -57,7 +57,7 @@ Bool Property FlipPages Hidden
 EndProperty
 
 Bool Property IsGlowing Hidden
-{Glow or unglow book}
+{Glow or unglow book.}
 	Bool Function Get()
 		Return _bIsGlowing
 	EndFunction
@@ -74,7 +74,7 @@ Bool Property IsGlowing Hidden
 EndProperty
 
 Bool Property IsOpen Hidden
-{Open or close book, with appropriate animations}
+{Open or close book, with appropriate animations.}
 	Bool Function Get()
 		Return _bIsOpen
 	EndFunction
@@ -90,7 +90,7 @@ Bool Property IsOpen Hidden
 	EndFunction
 EndProperty
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool	_bIsOpen
 Bool	_bWantOpen
@@ -104,7 +104,7 @@ Int		_iAlcoveIndex = -1
 ObjectReference		_BookShine
 ObjectReference		_BookStatic
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 EndEvent

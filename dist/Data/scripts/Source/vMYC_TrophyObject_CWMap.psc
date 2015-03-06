@@ -1,5 +1,5 @@
 Scriptname vMYC_TrophyObject_CWMap extends vMYC_TrophyObject
-{Largely lifted from vanilla code!}
+{Largely lifted from vanilla code!.}
 
 Import Game
 Import Utility
@@ -30,7 +30,7 @@ Activator Property CWMapFlagBlueFortAmol Auto
 Activator Property CWMapFlagBlueFortGreenwall Auto
 Activator Property CWMapFlagBlueFortNeugrad Auto
 Activator Property CWMapFlagBlueFortSnowhawk Auto
-{List of all the Stormcloak Flag Activators}
+{List of all the Stormcloak Flag Activators.}
 
 Activator Property CWMapFlagRedSolitude Auto
 Activator Property CWMapFlagRedWinterhold Auto
@@ -57,7 +57,7 @@ Activator Property CWMapFlagRedFortAmol Auto
 Activator Property CWMapFlagRedFortGreenwall Auto
 Activator Property CWMapFlagRedFortNeugrad Auto
 Activator Property CWMapFlagRedFortSnowhawk Auto
-{List of all the Imperial Flag Activators}
+{List of all the Imperial Flag Activators.}
 
 ObjectReference Property CWMapFlagSolitudeRef Auto Hidden
 ObjectReference Property CWMapFlagWinterholdRef Auto Hidden
@@ -84,7 +84,7 @@ ObjectReference Property CWMapFlagFortAmolRef Auto Hidden
 ObjectReference Property CWMapFlagFortGreenwallRef Auto Hidden
 ObjectReference Property CWMapFlagFortNeugradRef Auto Hidden
 ObjectReference Property CWMapFlagFortSnowhawkRef Auto Hidden
-{Pointers to all the flag references}
+{Pointers to all the flag references.}
 
 Location Property SolitudeLocation Auto
 Location Property WinterholdLocation Auto
@@ -111,13 +111,13 @@ Location Property FortAmolLocation Auto
 Location Property FortGreenwallLocation Auto
 Location Property FortNeugradLocation Auto
 Location Property FortSnowhawkLocation Auto
-{List of all the locations}
+{List of all the locations.}
 
 Keyword Property CWOwner Auto
 {Keyword to check on the location to figure out who owns it:
 1 = Imperials
 2 = Stormcloaks
--1 = nobody}
+-1 = nobody.}
 
 Activator 				Property 	vMYC_AlcoveControllerActivator 	Auto 
 vMYC_AlcoveController 	Property	AlcoveController				Auto Hidden

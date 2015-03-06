@@ -1,5 +1,12 @@
 Scriptname vMYC_TrophyManager extends vMYC_ManagerBase
-{Handle registration and tracking of trophies.}
+{Handles registration and tracking of trophies.}
+
+;=== [ vMYC_TrophyManager.psc ] ===========================================---
+; Manager for Trophies.
+; Handles:
+;  Tracking of Trophy forms, templates, and placed objects
+;  Placement and display of Trophy forms
+;========================================================---
 
 ;=== Imports ===--
 
@@ -13,7 +20,7 @@ Import vMYC_Registry
 ;=== Properties ===--
 
 Actor 				Property PlayerRef 								Auto
-{The Player, duh}
+{The Player, duh.}
 
 Static				Property vMYC_AlcoveTrophyPlacementMarker		Auto
 
@@ -49,6 +56,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
+{Register a new TrophyBase object.}
 	DebugTrace("Registering " + akTrophyform + " (" + asTrophyName + ")...")
 	vMYC_TrophyBase kTrophy = akTrophyForm as vMYC_TrophyBase
 	Int jTrophy = JMap.Object()
@@ -67,6 +75,7 @@ Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 EndEvent
 
 Function SendTrophyManagerReady()
+{Sent once initialization is done to let TrophyBases know they can register themselves.}
 	DebugTrace("Checking trophies!")
 	RegisterForModEvent("vMYC_TrophyRegister","OnTrophyRegister")
 	Int iHandle = ModEvent.Create("vMYC_TrophyManagerReady")
@@ -79,6 +88,8 @@ Function SendTrophyManagerReady()
 EndFunction
 
 Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID, Bool abPlaceOnly = False)
+{Display all Trophies earned by sCharacterID around akTargetObject. Optionally place without displaying.
+ Returns: Number of trophies processed.}
 	Int jCharacterTrophies = GetRegObj("Characters." + sCharacterID + ".Trophies")
 	JValue.WriteToFile(jCharacterTrophies,JContainers.userDirectory() + "vMYC/displaytrophies.json")
 	Int jTrophyNames = JMap.AllKeys(jCharacterTrophies)
@@ -99,6 +110,7 @@ Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID
 EndFunction
 
 Function SendDisplayAllEvent(ObjectReference akTargetObject)
+{Send a ModEvent to all Trophies associated with akTargetObject telling them to display themselves.}
 	Int jTrophyNames = JMap.AllKeys(GetRegObj("Trophies"))
 	Int iCount = JArray.Count(jTrophyNames)
 	Int i = 0
@@ -111,6 +123,8 @@ Function SendDisplayAllEvent(ObjectReference akTargetObject)
 EndFunction
 
 Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBannerType = "Standing")
+{Get the first available banner template of type asBannerType around akTargetObject.
+ Returns: Index of banner template.}
 	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	If !jDisplayTarget
@@ -130,6 +144,7 @@ Int Function GetFreeBannerForTarget(ObjectReference akTargetObject, String asBan
 EndFunction
 
 Function DisableBannerPosition(ObjectReference akTargetObject, Int aiPosition, String asBannerType = "Standing")
+{Disable the banner template at position aiPosition. Used by Trophies that would otherwise block or clip that banner.}
 	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	If !jDisplayTarget
@@ -146,6 +161,7 @@ Function DisableBannerPosition(ObjectReference akTargetObject, Int aiPosition, S
 EndFunction
 
 Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
+{Register a Trophy ObjectReference associated with akTargetObject.}
 	;DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
 	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
@@ -163,6 +179,7 @@ Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference ak
 EndFunction
 
 Function DeleteTrophies(ObjectReference akTargetObject)
+{Delete all registered Trophy objects associated with akTargetObject.}
 	DebugTrace("DeleteTrophies(" + akTargetObject + ")")
 	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
@@ -186,6 +203,7 @@ Function DeleteTrophies(ObjectReference akTargetObject)
 EndFunction
 
 Function UpdateAvailabilityList()
+{Update the Trophies available for the current player character. Relies on vMYC_TrophyBase@_IsAvailable.}
 	DebugTrace("Updating trophy availability...")
 	Int jTrophies = GetRegObj("Trophies")
 	If !jTrophies
@@ -210,13 +228,15 @@ Function UpdateAvailabilityList()
 EndFunction
 
 ObjectReference Function GetTrophyOrigin()
-;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
+{Returns: TrophyOrigin marker in Cell vMYC_AlcoveLayout.}
+	;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
 	;Return GetFormFromFile(0x0203051d,"vMYC_MeetYourCharacters.esp") as ObjectReference (Mannequin)
 	Return GetFormFromFile(0x02033e5b,"vMYC_MeetYourCharacters.esp") as ObjectReference ;(Actual origin marker)
 EndFunction
 
 ObjectReference Function GetTrophyOffsetOrigin()
-;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
+{Returns: TrophyOffset marker in Cell vMYC_AlcoveLayout (for debugging purposes).}
+	;FIXME - For now always returns statue marker in vMYC_AlcoveLayout
 	;Return GetFormFromFile(0x02031C1E,"vMYC_MeetYourCharacters.esp") as ObjectReference
 	Return GetFormFromFile(0x0202fed9,"vMYC_MeetYourCharacters.esp") as ObjectReference
 EndFunction
@@ -226,9 +246,11 @@ Function DebugTrace(String sDebugString, Int iSeverity = 0)
 EndFunction
 
 Form Function GetHangingBannerMarker()
+{Returns: Hanging banner base form.}
 	Return vMYC_TrophyBannerHangingMarker
 EndFunction
 
 Form Function GetStandingBannerMarker()
+{Returns: Standing banner base form.}
 	Return vMYC_TrophyBannerStandingMarker
 EndFunction

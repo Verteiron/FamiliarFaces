@@ -1,7 +1,7 @@
 Scriptname vMYC_Trophy_CivilWar extends vMYC_TrophyBase
 {Player has chosen a side in the civil war.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -12,7 +12,7 @@ Int				Property	TROPHY_CW_IMPERIALS 	= 0x00000001	AutoReadonly Hidden
 Int				Property	TROPHY_CW_STORMCLOAKS 	= 0x00000002	AutoReadonly Hidden
 Int				Property	TROPHY_CW_COMPLETED	 	= 0x00000004	AutoReadonly Hidden
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Actor		Property	PlayerREF			Auto
 
@@ -51,19 +51,19 @@ Keyword 		Property 	CWOwner 				Auto
 {Keyword to check on the location to figure out who owns it:
 1 = Imperials
 2 = Stormcloaks
--1 = nobody}
+-1 = nobody.}
 
 ObjectReference	Property	CWMapBoard				Auto
 ObjectReference	Property	CWMap					Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Location[] 	_kLocations
 
 Int			_iCWMapBoardID
 Int			_iCWMapID
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 
@@ -110,6 +110,7 @@ Event OnSetTemplate()
 	_iCWMapID 		= SetTemplate(CWMap)
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	
@@ -155,7 +156,7 @@ Int Function GetCWOwner(Location akLocation)
 EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	
 	If aiDisplayFlags
 		ReserveBanner(0) ; Prevent banner from being placed directly left of the statue
@@ -166,11 +167,11 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 EndEvent
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction

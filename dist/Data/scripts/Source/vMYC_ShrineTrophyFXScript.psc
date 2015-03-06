@@ -1,12 +1,12 @@
 Scriptname vMYC_ShrineTrophyFXScript extends ObjectReference
-{Enables and adds a glow to all linked references}
+{Enables and adds a glow to all linked references.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Int				Property	AlcoveIndex		Auto Hidden
 
@@ -20,7 +20,7 @@ Float 			Property	ShaderTime =  5.0	Auto
 Float 			Property	VFXTime    = 10.0	Auto
 Float 			Property	FXActiTime =  5.0	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool	_bCellAttached
 Bool	_bIsLight
@@ -30,7 +30,7 @@ ObjectReference _kFXActi
 
 Cell	_kMycell
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	_kMycell = GetParentCell()

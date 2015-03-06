@@ -1,7 +1,14 @@
 Scriptname vMYC_TrophyObject extends ObjectReference
 {Object that acts as a base point for a trophy.}
 
-;--=== Imports ===--
+; === [ vMYC_TrophyObject.psc ] ===============================================---
+; Special ObjectReference that positions and enables a Trophy form when it 
+; receives the right ModEvent. 
+; Handles:
+;  Placement and display of individual Trophy forms
+; ========================================================---
+
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -10,13 +17,12 @@ Import vMYC_PlacementUtils
 
 ;=== Constants ===--
 
-;--=== Properties ===--
-
+;=== Properties ===--
 EffectShader	Property	TrophyFadeInFXS		= None		Auto
 {Shader that should play when the trophy first appears.}
 
 Activator		Property	vMYC_BrightGlow					Auto 
-{Glowy!}
+{Glowy!.}
 
 Form			Property	TrophyForm			= None		Auto Hidden
 ObjectReference	Property	TrophyObject		= None		Auto Hidden
@@ -60,7 +66,7 @@ ObjectReference Property	OnLoadTarget				Auto
 
 Sound			Property	vMYC_TrophyAppearSM			Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int					_TrophyVersion
 
@@ -68,7 +74,7 @@ ObjectReference[]	_DisplayedObjects
 
 ObjectReference[]	_TemplateObjects
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnInit()
 	If !vMYC_TrophyEmptyBase
@@ -98,6 +104,7 @@ Function UpdatePosition()
 EndFunction
 
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
+{Event sent by TrophyManager or TrophyBase to tell TrophyObject to display itself at akTarget.}
 	UnregisterForModEvent("vMYC_TrophyDisplayObject" + TrophyName + GetFormIDString(akTarget))
 	DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
 	If !(akTarget as ObjectReference).Is3DLoaded()
@@ -112,6 +119,7 @@ Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 EndEvent
 
 ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitiallyDisabled = False)
+{Place an instance of TrophyForm at akTarget with the same offset and angle as the original.}
 	If !akTarget || !TrophyForm
 		Return None
 	EndIf
@@ -150,16 +158,7 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 		Wait(0.1)
 	EndWhile
 	vMYC_TrophyAppearSM.Play(kGlow)	
-	;ObjectReference[] kGlows = New ObjectReference[4]
-	;Int i = 0
-	;While i < kGlows.Length
-	;	kGlows[i] = TrophyObject.PlaceAtMe(FXDA09MeridiaSwordGlow,abInitiallyDisabled = True)
-	;	kGlows[i].SetScale(TrophyObject.GetScale() + (i * 0.1))
-	;	kGlows[i].EnableNoWait(False)
-	;	DebugTrace("Enabled glow " + i)
-	;	i += 1
-	;EndWhile
-	
+
 	If !abInitiallyDisabled
 		TrophyObject.EnableNoWait(True)
 		While !TrophyObject.Is3DLoaded()
@@ -169,23 +168,16 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	EndIf
 	kGlow.DisableNoWait(True)
 
-	;i = kGlows.Length
-	;While i > 0
-	;	i -= 1
-	;	kGlows[i].DisableNoWait(True)
-	;	DebugTrace("Disabled glow " + i)
-	;EndWhile
-	;DebugTrace("Original is at X:\t" + (AngleX + FormAngleX) + ", Y:\t" + (AngleY + FormAngleY) + ", Z:\t" + (AngleZ + FormAngleZ) + ", S:\t" + Scale)
-	;DebugTrace(" Target set to X:\t" + TrophyObject.GetAngleX() + ", Y:\t" + TrophyObject.GetAngleY() + ", Z:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
-	;RotateLocal(TrophyObject,0,0,akTarget.GetAngleZ())	
 	Return TrophyObject
 EndFunction
 
 Function DeleteTrophyForm()
+{Delete the placed Form (now an ObjectReference).}
 	TrophyObject.Delete()
 EndFunction
 
 Function SetParentObject(vMYC_TrophyBase kTrophyBase)
+{Set the TrophyBase that this TrophyObject belongs to, initializing most of the important data at the same time.}
 	TrophyBase = kTrophyBase
 	SetPositionData(TrophyBase.BaseX, TrophyBase.BaseY, TrophyBase.BaseZ, TrophyBase.AngleX, TrophyBase.AngleY, TrophyBase.AngleZ, TrophyBase.Scale)
 	;TrophyForm = TrophyBase.akForm
@@ -200,6 +192,7 @@ EndFunction
 Function SetPositionData(Float afBaseX = 0.0, Float afBaseY = 0.0, Float afBaseZ = 0.0, \
 							Float afAngleX = 0.0, Float afAngleY = 0.0, Float afAngleZ = 0.0, \
 							Float afScale = 1.0)
+{Set the basic position and angle data for this TrophyObject.}
 	BaseX =  afBaseX
 	BaseY =  afBaseY 
 	BaseZ =  afBaseZ 
@@ -212,6 +205,8 @@ EndFunction
 Function SetFormData(Form akForm, Float afFormBaseX = 0.0, Float afFormBaseY = 0.0, Float afFormBaseZ = 0.0, \
 					Float afFormAngleX = 0.0, Float afFormAngleY = 0.0, Float afFormAngleZ = 0.0, \
 					Float afFormScale = 0.0)
+{Set the basic position and angle data for the Form provided by this TrophyObject.
+ This will be offset from the TrophyObject's position data.}
 	TrophyForm = akForm
 	FormX =  afFormBaseX
 	FormY =  afFormBaseY 

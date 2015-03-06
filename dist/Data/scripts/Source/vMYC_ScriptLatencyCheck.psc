@@ -1,17 +1,17 @@
 Scriptname vMYC_ScriptLatencyCheck extends Quest  
-{Test for script latency, to help troubleshooting and blame the end user :D}
+{Test for script latency, to help troubleshooting and blame the end user :D.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Config
 
-;--=== Properties ===--
+;=== Properties ===--
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 Float _fTimeUpdMark
 Float[] _fTimeUpdDeltas
 
@@ -25,7 +25,7 @@ Int _UpdCount = 0
 Int _UpdSamples = 5
 
 Bool _bTesting
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	_fTimeUpdDeltas = New Float[30]

@@ -1,7 +1,7 @@
 Scriptname vMYC_Trophy_Gatherer extends vMYC_TrophyBase
 {Trophy for hunting/gathering lots of food.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -16,7 +16,7 @@ Int		Property	TROPHY_G_SHOWHERBS	= 0x00000016	AutoReadonly Hidden
 Int		Property	TROPHY_G_SHOWLOTS	= 0x00000032	AutoReadonly Hidden
 Int		Property	TROPHY_G_SHOWRABBIT	= 0x00000064	AutoReadonly Hidden
 
-;--=== Properties ===--
+;=== Properties ===--
 
 ObjectReference		Property	TemplateAnchor		Auto
 ObjectReference		Property	TemplateRack1		Auto
@@ -32,7 +32,7 @@ ObjectReference[]	Property	TemplateGame2		Auto
 ObjectReference[]	Property	TemplateHerbs3		Auto
 ObjectReference[]	Property	TemplateGame3		Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int		_iAnchorID
 Int[]	_iRackIDs
@@ -43,7 +43,7 @@ Int[]	_iGame2IDs
 Int[]	_iHerb3IDs
 Int[]	_iGame3IDs
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 {Set properties, do anything else that needs doing at startup.}
@@ -74,7 +74,7 @@ Event OnSetTemplate()
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	If !aiDisplayFlags
 		Return
 	EndIf
@@ -119,6 +119,7 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 	
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Int iTrophyFlags = 0

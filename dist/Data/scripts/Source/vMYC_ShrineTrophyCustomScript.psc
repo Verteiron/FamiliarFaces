@@ -1,12 +1,12 @@
 Scriptname vMYC_ShrineTrophyCustomScript extends ObjectReference  
 {Place objects at self apply effects to them.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Int				Property	AlcoveIndex		Auto Hidden
 
@@ -20,7 +20,7 @@ Float 			Property	ShaderTime =  5.0	Auto
 Float 			Property	VFXTime    = 10.0	Auto
 Float 			Property	FXActiTime =  5.0	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool	_bCellAttached
 Bool	_bIsLight
@@ -34,7 +34,7 @@ Cell	_kMycell
 
 Int 	_iNumObjects
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	_kMycell = GetParentCell()

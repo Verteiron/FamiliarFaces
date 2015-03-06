@@ -37,7 +37,7 @@ Sound 							Property 	vMYC_BookWhooshSM							Auto
 Static 							Property	HighPolySkyrimBook							Auto
 
 Bool Property FlipPages Hidden
-{Start or stop flipping pages}
+{Start or stop flipping pages.}
 	Bool Function Get()
 		Return _bFlipPages
 	EndFunction
@@ -48,7 +48,7 @@ Bool Property FlipPages Hidden
 EndProperty
 
 Bool Property IsGlowing Hidden
-{Glow or unglow book}
+{Glow or unglow book.}
 	Bool Function Get()
 		Return _bIsGlowing
 	EndFunction
@@ -65,7 +65,7 @@ Bool Property IsGlowing Hidden
 EndProperty
 
 Bool Property IsOpen Hidden
-{Open or close book, with appropriate animations}
+{Open or close book, with appropriate animations.}
 	Bool Function Get()
 		Return _bIsOpen
 	EndFunction

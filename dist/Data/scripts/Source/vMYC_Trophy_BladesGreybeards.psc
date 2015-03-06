@@ -1,7 +1,7 @@
 Scriptname vMYC_Trophy_BladesGreybeards extends vMYC_TrophyBase
-{Player has chosen the Greybeards or Blades (or both, thanks Arthmoor!)}
+{Player has chosen the Greybeards or Blades (or both, thanks Arthmoor!).}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -12,7 +12,7 @@ Int				Property	TROPHY_GB_GREYBEARDS 	= 0x00000001	AutoReadonly Hidden
 Int				Property	TROPHY_GB_BLADES	 	= 0x00000002	AutoReadonly Hidden
 Int				Property	TROPHY_GB_KILLEDPAARTH 	= 0x00000004	AutoReadonly Hidden
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Actor		Property	PlayerREF			Auto
 
@@ -27,12 +27,12 @@ ObjectReference		Property	TemplateGreybeardBanner	Auto
 ObjectReference		Property	TemplateGreybeardTablet	Auto
 ObjectReference		Property	TemplateGreybeardShrine	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int[] _iBladeIDs
 Int[] _iGreybeardIDs
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 
@@ -63,6 +63,7 @@ Event OnSetTemplate()
 
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	
@@ -98,7 +99,7 @@ Int Function IsAvailable()
 EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	If aiDisplayFlags
 		ReserveBanner(1) ; Prevent banner from being placed directly right of the statue
 	EndIf
@@ -119,11 +120,11 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 EndEvent
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction

@@ -1,20 +1,20 @@
 Scriptname vMYC_CharacterManagerScript extends Quest
-{Save and restore character data independently of save files. Requires SKSE and PapyrusUtils}
+{Save and restore character data independently of save files. Requires SKSE and PapyrusUtils.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Config
 
-;--=== Properties ===--
+;=== Properties ===--
 
 vMYC_HangoutManager Property HangoutManager Auto
 
 Int Property SerializationVersion = 3 Auto Hidden
 
 String[] Property CharacterNames Hidden
-{List of character names}
+{List of character names.}
 	String[] Function Get()
 		Int jCharacterNames = JMap.allKeys(JValue.solveObj(_jMYC,".CharacterList"))
 		String[] sCharacterNames = New String[32]
@@ -28,7 +28,7 @@ String[] Property CharacterNames Hidden
 EndProperty
 
 String[] Property AVNames Hidden
-{List of actor values}
+{List of actor values.}
 	String[] Function Get()
 		Return _sAVNames
 	EndFunction
@@ -119,67 +119,67 @@ Faction Property CWSonsFaction Auto
 Quest Property CWSiegeObj Auto ; Battle for Solitude/Windhelm
 
 ReferenceAlias Property alias_MageCharacter Auto
-{Hang around the College at Winterhold}
+{Hang around the College at Winterhold.}
 
 ReferenceAlias Property alias_ThiefCharacter Auto
-{Hang around Riften and the Ragged Flagon}
+{Hang around Riften and the Ragged Flagon.}
 
 ReferenceAlias Property alias_BardCharacter Auto
-{Hang around the Bard's college}
+{Hang around the Bard's college.}
 
 ReferenceAlias Property alias_StormcloakCharacter Auto
-{Hang around Windhelm and Ulfric's court}
+{Hang around Windhelm and Ulfric's court.}
 
 ReferenceAlias Property alias_ImperialCharacter Auto
-{Hang around the Blue Palace}
+{Hang around the Blue Palace.}
 
 ReferenceAlias Property alias_CompanionCharacter Auto
-{Hang around Jorrvaskr}
+{Hang around Jorrvaskr.}
 
 ReferenceAlias Property alias_GreybeardCharacter Auto
-{Hang around High Hrothgar}
+{Hang around High Hrothgar.}
 
 ReferenceAlias Property alias_BladeCharacter Auto
-{Hang around in the Sky Haven Temple}
+{Hang around in the Sky Haven Temple.}
 
 ReferenceAlias Property alias_DawnstarCharacter Auto
-{Hang around Dawnstar}
+{Hang around Dawnstar.}
 
 ReferenceAlias Property alias_FalkreathCharacter Auto
-{Hang around Falkreath}
+{Hang around Falkreath.}
 
 ReferenceAlias Property alias_MarkarthCharacter Auto
-{Hang around Markarth}
+{Hang around Markarth.}
 
 ReferenceAlias Property alias_MorthalCharacter Auto
-{Hang around Morthal}
+{Hang around Morthal.}
 
 ReferenceAlias Property alias_WhiterunCharacter Auto
-{Hang around Whiterun}
+{Hang around Whiterun.}
 
 ReferenceAlias Property alias_CaravanCharacter Auto
-{Travel with a caravan}
+{Travel with a caravan.}
 
 ReferenceAlias Property alias_OrcCharacter Auto
-{Hang around a stronghold}
+{Hang around a stronghold.}
 
 ReferenceAlias[] Property alias_CustomCharacters Auto
-{12 custom character slots, set to sandbox at a LocationAlias}
+{12 custom character slots, set to sandbox at a LocationAlias.}
 
 Actor Property PlayerRef Auto
-{The Player, duh}
+{The Player, duh.}
 
 ActorBase Property vMYC_InvisibleMActor	Auto
-{Invisible actor for collecting custom weapons}
+{Invisible actor for collecting custom weapons.}
 
 Formlist Property vMYC_PlayerFormlist Auto
 {An empty formlist that will be used to store all the player's spells, shouts, etc.}
 
 Formlist Property vMYC_DummyActorsMList Auto
-{Formlist containing the male dummy actors}
+{Formlist containing the male dummy actors.}
 
 Formlist Property vMYC_DummyActorsFList Auto
-{Formlist containing the female dummy actors}
+{Formlist containing the female dummy actors.}
 
 Formlist Property vMYC_PerkCheckList Auto
 {A list of all the perks we want to check for.}
@@ -218,9 +218,9 @@ Message Property vMYC_ReqMissingCharWarningMSG Auto
 Message Property vMYC_ReqMissingCharCriticalMSG Auto
 Message Property vMYC_ShrineInterruptSaveProcessMenu Auto
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool _bSavedPerks = False
 
@@ -264,7 +264,7 @@ Float		_fLastPlayerPosX
 Float		_fLastPlayerPosY
 Float		_fLastPlayerPosZ
 
-;--=== Events ===--
+;=== Events ===--
 
 
 Event OnInit()
@@ -480,7 +480,7 @@ Event OnSetLocationAnchor(string eventName, string strArg, float numArg, Form se
 	;Debug.Trace("MYC/CM: LocationAnchor: " + sender + " added!")
 EndEvent
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function RegisterForModEvents()
 	;Debug.Trace("MYC/CharacterManager: Registering for mod events...")
@@ -879,7 +879,7 @@ Function AddToReqList(Int jCharacterData, Form akForm, String asType)
 EndFunction
 
 Int Function CheckModReqs(String asCharacterName)
-{Return 0 for no missing reqs, 1 for missing non-appearance reqs, 2 for missing armor/weapons reqs, 3 for missing headparts or race}
+{Return 0 for no missing reqs, 1 for missing non-appearance reqs, 2 for missing armor/weapons reqs, 3 for missing headparts or race.}
 	;Debug.Trace("MYC/CM: Checking mod requirements for " + asCharacterName + "...")
 	If !GetCharacterForm(asCharacterName,"Race") as Race
 		Return 3
@@ -1024,7 +1024,7 @@ Bool Function IsCharacterFollower(String asCharacterName)
 EndFunction
 
 ActorBase Function GetFreeActorBase(Int iSex)
-{Returns the first available dummy actorbase of the right sex}
+{Returns the first available dummy actorbase of the right sex.}
 	While _bFreeActorBaseBusy
 		;Debug.Trace("MYC/CM: Waiting for GetFreeActorBase...")
 		Return None
@@ -1137,7 +1137,7 @@ EndFunction
 
 
 String Function GetCharacterEquipmentName(String asCharacterName, String asPath)
-{Returns custom name if available, otherwise the form name}
+{Returns custom name if available, otherwise the form name.}
 	Int jEquipment = JValue.solveObj(_jMYC,"." + asCharacterName + ".Data.Equipment." + asPath)
 	If JMap.getInt(jEquipment,"IsCustom") as Bool
 		Return JMap.getStr(jEquipment,"DisplayName")
@@ -1172,7 +1172,7 @@ EndEvent
 
 
 Int Function AddCustomLocation(Int jLocationData)
-{Legacy function: DO NOT USE!}
+{Legacy function: DO NOT USE!.}
 	Return -1
 EndFunction
 
@@ -1236,13 +1236,13 @@ Function SetCharacterClass(String asCharacterName, Class akClass)
 EndFunction
 
 Bool Function SetCharacterHangout(String asCharacterName, ReferenceAlias akHangoutRefAlias)
-{Legacy function, do not use!}
+{Legacy function, do not use!.}
 	
 	Return True
 EndFunction
 
 Function SetCharacterTracking(String asCharacterName, Bool abEnable, Bool abChangeSetting = True)
-{Tell HangoutManager to enable tracking for this character}
+{Tell HangoutManager to enable tracking for this character.}
 	If abChangeSetting
 		SetLocalInt(asCharacterName,"TrackingEnabled",abEnable as Int)
 	EndIf
@@ -1266,7 +1266,7 @@ Function SetAllCharacterTracking(Bool abEnable)
 EndFunction
 
 Function RepairSaves()
-{Update/Repair saved files, fixing all known bugs and setting them to the latest revision}
+{Update/Repair saved files, fixing all known bugs and setting them to the latest revision.}
 
 	Int jCharacterMap = JMap.Object()
 	If !JMap.hasKey(_jMYC,"CharacterList")
@@ -1589,7 +1589,7 @@ Int Function ApplyCharacterPerks(String sCharacterName)
 EndFunction
 
 Int Function ApplyCharacterShouts(String sCharacterName)
-{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption. }
+{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption. .}
 	If _bApplyShoutsBusy
 		Return -1
 	EndIf
@@ -1642,7 +1642,7 @@ Int Function ApplyCharacterShouts(String sCharacterName)
 EndFunction
 
 Function RemoveCharacterShouts(String sCharacterName)
-{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. }
+{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. .}
 	While _bApplyShoutsBusy
 		WaitMenuMode(0.1)
 	EndWhile
@@ -1977,7 +1977,7 @@ Function LoadWeapon(Actor kCharacterActor, Int jItem, Int iHand, Bool bLeaveEqui
 EndFunction
 
 Function PickHangout(String asCharacterName)
-{Legacy function, do not use!}
+{Legacy function, do not use!.}
 EndFunction
 
 Int Function CreateLocalDataIfMissing(String asCharacterName)
@@ -2043,7 +2043,7 @@ Int Function GetLocalObj(String asCharacterName, String asPath)
 EndFunction
 
 ReferenceAlias Function GetAvailableReference(String[] sSpawnPoints)
-{Legacy function, do not use!}
+{Legacy function, do not use!.}
 	Return None
 EndFunction
 
@@ -2055,7 +2055,7 @@ State SerializeBusy
 EndState
 
 Function SerializeEquipment(Form kItem, Int jEquipmentInfo, Int iHand = 1, Int h = 0, Actor kWornObjectActor = None)
-{Fills the JMap jEquipmentInfo with all info from Form kItem}
+{Fills the JMap jEquipmentInfo with all info from Form kItem.}
 	GotoState("SerializeBusy")
 	JMap.SetForm(jEquipmentInfo,"Form",kItem)
 
@@ -2747,7 +2747,7 @@ Function SaveCurrentPlayer(Bool bSaveEquipment = True, Bool SaveCustomEquipment 
 	JMap.SetForm(jPlayerAppearance,"Haircolor",kHairColor)
 	If kHairColor
 		JMap.SetStr(jPlayerAppearance,"HaircolorSource",GetModName(kHairColor.GetFormID() / 0x1000000))
-		Int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " }")
+		Int jHairColor = JValue.objectFromPrototype("{ \"r\": " + kHairColor.GetRed() + ", \"g\": " + kHairColor.GetGreen() + ", \"b\": " + kHairColor.GetBlue() + ", \"h\": " + kHairColor.GetHue() + ", \"s\": " + kHairColor.GetSaturation() + ", \"v\": " + kHairColor.GetValue() + " .}")
 		JMap.SetObj(jPlayerAppearance,"HaircolorDetails",jHairColor)
 	EndIf
 	JMap.SetForm(jPlayerAppearance,"Skin",PlayerBase.GetSkin())
@@ -2894,7 +2894,7 @@ Int Function GetNINodeInfo(Actor akActor)
 EndFunction
 
 String[] Function PickPlayerSpawnPoints()
-{Return an array of default spawn points based on accomplishments}
+{Return an array of default spawn points based on accomplishments.}
 	String[] sResult = New String[32]
 	Int idx = 0
 	If MQ305.IsCompleted()

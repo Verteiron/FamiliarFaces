@@ -1,21 +1,21 @@
 Scriptname vMYC_CompatBase extends vMYC_BaseQuest  
 {Base for compatibility modules. Don't modify this script! Extend it and modify that.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Registry
 
-;--=== Properties ===--
+;=== Properties ===--
 
 String			Property	ModuleName						Auto
 
 Bool			Property	Enabled							Auto Hidden
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnGameReload()
 	CheckVars()
@@ -80,17 +80,17 @@ Bool Function IsRequired()
 EndFunction
 
 Int Function StartModule()
-{User code for startup}
+{User code for startup.}
 	Return 1
 EndFunction
 
 Int Function StopModule()
-{User code for shutdown}
+{User code for shutdown.}
 	Return 1
 EndFunction
 
 Int Function UpkeepModule()
-{User code for upkeep}
+{User code for upkeep.}
 	Return 1
 EndFunction
 

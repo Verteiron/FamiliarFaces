@@ -1,19 +1,19 @@
 Scriptname vMYC_CompatSkyRe extends vMYC_CompatBase  
 {Module for SkyRE compatibility. Right now this just excludes a bunch of Perks.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Registry
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Formlist Property vMYC_ModCompatibility_PerkList_Unsafe Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Bool Function IsRequired()
 {Return true if the mod that this module supports is installed.}
@@ -24,18 +24,18 @@ Bool Function IsRequired()
 EndFunction
 
 Int Function StartModule()
-{User code for startup}
+{User code for startup.}
 	AddSkyRePerks()
 	Return 1
 EndFunction
 
 Int Function StopModule()
-{User code for shutdown}
+{User code for shutdown.}
 	Return 1
 EndFunction
 
 Int Function UpkeepModule()
-{User code for upkeep}
+{User code for upkeep.}
 	If !vMYC_ModCompatibility_PerkList_Unsafe.HasForm(GetFormFromFile(0x1D050DE9,"SkyRe_Main.esp"))
 		AddSkyRePerks()
 	EndIf
@@ -43,7 +43,7 @@ Int Function UpkeepModule()
 EndFunction
 
 Function CheckVars()
-{Any extra variables that might need setting up during OnInit. Will also be run OnGameLoad}
+{Any extra variables that might need setting up during OnInit. Will also be run OnGameLoad.}
 
 EndFunction
 

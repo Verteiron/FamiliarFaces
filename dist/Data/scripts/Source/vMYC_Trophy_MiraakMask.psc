@@ -1,22 +1,22 @@
 Scriptname vMYC_Trophy_MiraakMask extends vMYC_TrophyBase
-{Player has killed Miraak}
+{Player has killed Miraak.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
 ;=== Constants ===--
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Static	Property	vMYC_ShrineDLC2MiraakHelm	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int		iMaskID
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 {Set properties, do anything else that needs doing at startup.}
@@ -37,12 +37,13 @@ Event OnSetTemplate()
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	If aiDisplayFlags
 		DisplayForm(iMaskID)
 	EndIf
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Quest kGoalQuest = Quest.GetQuest("DLC2MQ06") ;Only filled if Dragonborn is loaded

@@ -1,5 +1,5 @@
 Scriptname vMYC_ShrineManager extends vMYC_ManagerBase
-{Handle registration and tracking of Shrine.Alcove}
+{Handle registration and tracking of Shrine.Alcove.}
 
 ;=== Imports ===--
 
@@ -13,7 +13,7 @@ Import vMYC_Registry
 ;=== Properties ===--
 
 Actor 				Property PlayerRef 								Auto
-{The Player, duh}
+{The Player, duh.}
 
 vMYC_DataManager	Property DataManager							Auto
 

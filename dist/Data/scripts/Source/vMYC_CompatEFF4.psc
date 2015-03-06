@@ -1,17 +1,17 @@
 Scriptname vMYC_CompatEFF4 extends vMYC_CompatBase
-{Compatibility module for ExtensibleFollowerFramework 4}
+{Compatibility module for ExtensibleFollowerFramework 4.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Registry
 
-;--=== Properties ===--
+;=== Properties ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Bool Function IsRequired()
 {Return true if the mod that this module supports is installed.}
@@ -22,7 +22,7 @@ Bool Function IsRequired()
 EndFunction
 
 Int Function StartModule()
-{User code for startup}
+{User code for startup.}
 	RegisterForModEvent("vMYC_UpdateXFLPanel","OnUpdateXFLPanel")
 	DebugTrace("MYC/CompatEFF: Registered for vMYC_UpdateXFLPanel!")
 	
@@ -30,7 +30,7 @@ Int Function StartModule()
 EndFunction
 
 Int Function UpkeepModule()
-{User code for upkeep}
+{User code for upkeep.}
 	RegisterForModEvent("vMYC_UpdateXFLPanel","OnUpdateXFLPanel")
 	DebugTrace("Registered for vMYC_UpdateXFLPanel!")
 
@@ -38,7 +38,7 @@ Int Function UpkeepModule()
 EndFunction
 
 Int Function StopModule()
-{User code for shutdown}
+{User code for shutdown.}
 	UnregisterForModEvent("vMYC_UpdateXFLPanel")
 	Return 1
 EndFunction

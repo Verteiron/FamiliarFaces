@@ -1,4 +1,11 @@
 Scriptname vMYC_Registry Hidden
+{Abstracted interface for JContainers that handles data synchronization between game saves.}
+
+; === [ vMYC_Registry.psc ] ===============================================---
+; Abstracted interface for JContainers that handles data synchronization 
+; between game saves. Automatically saves/loads file based on incrementing
+; serial number. Can also be used to link JContainer objects to forms.
+; ========================================================---
 
 Function SendRegEvent(String asPath) Global
 	Int iHandle = ModEvent.Create("vMYC_RegUpdate")
@@ -260,7 +267,7 @@ Int Function GetSessionObj(String asPath) Global
 EndFunction
 
 Function CreateRegFormLink(Form akForm1, Form akForm2, String asLinkName1 = "_links", String asLinkName2 = "_links") Global
-{Creates many2many links between two forms based on string keys}
+{Creates many2many links between two forms based on string keys.}
 	Int jReg = CreateRegDataIfMissing()
 	If !JMap.HasKey(jReg,"_FormLinks")
 		JMap.SetObj(jReg,"_FormLinks",JFormMap.Object())
@@ -358,7 +365,7 @@ Function ClearRegFormLinks(Form akForm) Global
 EndFunction
 
 Function CreateRegObjLink(Int ajObj1, Int ajObj2, String asLinkName1 = "_links", String asLinkName2 = "_links") Global
-{Creates many2many links between two JMaps based on string keys}
+{Creates many2many links between two JMaps based on string keys.}
 	If !JValue.IsMap(ajObj1) || !JValue.IsMap(ajObj2)
 		Return
 	EndIf
@@ -424,7 +431,7 @@ Function BreakRegObjLink(Int ajObj1, Int ajObj2, String asLinkName1 = "_links", 
 EndFunction
 
 Function CreateRegForm2ObjLink(Form akForm, Int ajObj, String asLinkName1 = "_links", String asLinkName2 = "_links") Global
-{Creates many2many links between a Form and a jObj based on string keys}
+{Creates many2many links between a Form and a jObj based on string keys.}
 	If !JValue.IsMap(ajObj)
 		Return
 	EndIf

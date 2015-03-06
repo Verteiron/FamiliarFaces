@@ -1,11 +1,11 @@
 Scriptname vMYC_PerkGlowScript extends ObjectReference
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Actor Property PlayerREF Auto
 
@@ -21,11 +21,11 @@ ObjectReference Property Target Hidden
 	EndFunction
 EndProperty
 
-;--=== Globals ===--
+;=== Globals ===--
 
 ObjectReference _kTarget
 
-;--=== Events/Function ===--
+;=== Events/Function ===--
 
 Event OnLoad()
 	RegisterForSingleUpdate(RandomFloat(1,3))

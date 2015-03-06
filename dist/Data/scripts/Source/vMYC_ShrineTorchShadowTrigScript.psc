@@ -1,12 +1,12 @@
 Scriptname vMYC_ShrineTorchShadowTrigScript extends ObjectReference
-{Handle shrine shadow torch activation when player gets close}
+{Handle shrine shadow torch activation when player gets close.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Activator		Property vMYC_AlcoveTorchShadowEnableParent		Auto
 Activator		Property vMYC_AlcoveTorchNShadowEnableParent	Auto
@@ -23,11 +23,11 @@ Keyword			Property vMYC_LightingControllerKW	Auto
 
 vMYC_AlcoveLightingController	Property AlcoveLightingController	Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Bool	_bShadowsEnabled = False
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnLoad()
 	CheckObjects()

@@ -1,12 +1,12 @@
 Scriptname vMYC_PortalStoneQuestScript extends Quest
 {Give the player the portal script. This will be a bit more elaborate later.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Actor Property PlayerRef Auto
 
@@ -19,14 +19,14 @@ ReferenceAlias	Property	alias_PortalStone	Auto
 vMYC_CharacterManagerScript Property CharacterManager Auto
 vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
 
-;--=== Variables ===--
+;=== Variables ===--
 
 ObjectReference _kPortalStone
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	;Debug.Trace("MYC/PortalStoneQuest: OnInit!")

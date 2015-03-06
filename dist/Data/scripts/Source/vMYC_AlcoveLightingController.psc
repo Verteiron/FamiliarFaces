@@ -1,5 +1,5 @@
 Scriptname vMYC_AlcoveLightingController extends ObjectReference
-{Handle alcove activation/deactivation effects}
+{Handle alcove activation/deactivation effects.}
 
 ;=== Imports ===--
 
@@ -73,23 +73,23 @@ Static			Property FXGlowFillRoundBrt						Auto
 ;=== Objects ===--
 
 ObjectReference Property AlcoveLightTorchNSPar	Auto 
-{Torch noshadowlight parent}
+{Torch noshadowlight parent.}
 ObjectReference Property AlcoveLightTorchSPar	Auto 
-{Torch shadowlight parent}
+{Torch shadowlight parent.}
 ObjectReference Property AlcoveLightTorchAmb	Auto
-{Torch ambiance (no shadow)}
+{Torch ambiance (no shadow).}
 ObjectReference Property AlcoveLightShrineAmb	Auto
-{Shrine ambient light (blue)}
+{Shrine ambient light (blue).}
 ObjectReference Property AlcoveFogDense			Auto
-{Dense fog for filling alcove}
+{Dense fog for filling alcove.}
 ObjectReference Property AlcoveFogFloor			Auto
-{Floor mist}
+{Floor mist.}
 ObjectReference Property AlcoveFogCurtain		Auto
-{Fog wall for blocking alcove}
+{Fog wall for blocking alcove.}
 ObjectReference Property AlcoveFogLit			Auto
-{Light rays shining from lit alcove}
+{Light rays shining from lit alcove.}
 ObjectReference Property AlcoveTorchTriggerBox	Auto
-{Triggerbox for torch shadows, will be filled by vMYC_ShrineTorchShadowTrigScript.psc}
+{Triggerbox for torch shadows, will be filled by vMYC_ShrineTorchShadowTrigScript.psc.}
 
 ;=== Variables ===--
 

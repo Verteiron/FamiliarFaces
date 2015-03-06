@@ -1,24 +1,24 @@
 Scriptname vMYC_Trophy_Companion extends vMYC_TrophyBase
 {Player has completed the Companions quests.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
 ;=== Constants ===--
 
-;--=== Properties ===--
+;=== Properties ===--
 
 ObjectReference		Property	TemplateHelmet			Auto
 ObjectReference		Property	TemplateBanner			Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int		_iHelmetID
 Int		_iBannerID
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Event OnTrophyInit()
 
@@ -39,13 +39,14 @@ Event OnSetTemplate()
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	If aiDisplayFlags
 		DisplayForm(_iHelmetID)
 		DisplayForm(_iBannerID)
 	EndIf
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Quest kGoalQuest = Quest.GetQuest("C06") 
@@ -56,11 +57,11 @@ Int Function IsAvailable()
 EndFunction
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction

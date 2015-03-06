@@ -1,16 +1,16 @@
 Scriptname vMYC_HangoutManager extends Quest  
-{Manage custom hangouts and player locations}
+{Manage custom hangouts and player locations.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Config
 
-;--=== Properties ===--
+;=== Properties ===--
 
 String[] Property HangoutNames Hidden
-{List of Hangout names}
+{List of Hangout names.}
 	String[] Function Get()
 		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
 		JValue.Retain(jHangoutNames,"vMYC_HOM")
@@ -33,7 +33,7 @@ String[] Property HangoutNames Hidden
 EndProperty
 
 String[] Property HangoutNamesPlusWanderer Hidden
-{List of Hangout names}
+{List of Hangout names.}
 	String[] Function Get()
 		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
 		JValue.Retain(jHangoutNames,"vMYC_HOM")
@@ -57,7 +57,7 @@ String[] Property HangoutNamesPlusWanderer Hidden
 EndProperty
 
 String[] Property HangoutNamesDisabled Hidden
-{List of Hangout names}
+{List of Hangout names.}
 	String[] Function Get()
 		Int jHangoutNames = JMap.allKeys(JMap.getObj(_jHangoutData,JKEY_HANGOUT_MAP))
 		String[] sHangoutNames = New String[128]
@@ -74,7 +74,7 @@ String[] Property HangoutNamesDisabled Hidden
 EndProperty
 
 vMYC_CharacterManagerScript Property CharacterManager Auto
-{Character manager}
+{Character manager.}
 
 ReferenceAlias[]	Property	HangoutActors		Auto
 ReferenceAlias[]	Property	HangoutAnchors		Auto
@@ -94,7 +94,7 @@ Keyword				Property	vMYC_Wanderer				Auto
 
 String				Property	DataPath					Auto Hidden
 
-;--=== Constants ===--
+;=== Constants ===--
 
 Int		Property	MAX_LOCATIONS = 24		AutoReadOnly
 
@@ -105,9 +105,9 @@ String	Property	JKEY_HANGOUTQUEST_FMAP 	= "HangoutQuestMap"				AutoReadOnly
 String	Property	JKEY_HANGOUT_MAP	 	= "Hangouts"					AutoReadOnly
 String 	Property	JKEY_HANGOUT_POOL		= "HangoutPool"					AutoReadOnly
 
-;--=== Config variables ===--
+;=== Config variables ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
 Int _jMYC 
 Int _jHangoutData
@@ -117,7 +117,7 @@ Bool _bNeedHangoutUpdate
 Bool _bNeedHangoutReset
 Bool _bNeedHangoutMassAssignment
 
-;--=== Events ===--
+;=== Events ===--
 
 Event OnInit()
 	;Debug.Trace("MYC/HOM: Initializing!")
@@ -141,7 +141,7 @@ Event OnSetCustomHangout(String sCharacterName, String sLocationName, Form kLoca
 	JArray.AddForm(jHangoutAnchors,kAnchor3)
 	JArray.AddForm(jHangoutAnchors,kAnchor4)
 	JArray.AddForm(jHangoutAnchors,kAnchor5)
-	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " }")
+	Int jPlayerPos = JValue.objectFromPrototype("{ \"x\": " + fPlayerX + ", \"y\": " + fPlayerY + ", \"z\": " + fPlayerZ + " .}")
 	JMap.setObj(jHangoutData,"Position",jPlayerPos)
 	JMap.setStr(jHangoutData,"Source",sCharacterName)
 	JMap.setStr(jHangoutData,"UUID",GetUUIDTrue())
@@ -261,7 +261,7 @@ Event OnConfigUpdate(String asConfigPath)
 	EndIf
 EndEvent
 
-;--=== Functions ===--
+;=== Functions ===--
 
 Function DoInit()
 	If !_jHangoutData
@@ -426,7 +426,7 @@ Function ImportCharacterHangout(Int ajLocationData, String asSourceActorName, St
 EndFunction
 
 Function ImportOldHangouts()
-{Import the old hangouts and custom locations from CharacterManager}
+{Import the old hangouts and custom locations from CharacterManager.}
 	;Debug.Trace("MYC/HOM: Importing Hangouts from previous versions...")
 	String[] sCharacterNames = CharacterManager.CharacterNames
 	String[] sHangoutNames = CharacterManager.sHangoutNames
@@ -822,7 +822,7 @@ Function EnableTracking(Actor akActor, Bool abTracking = True)
 EndFunction
 
 Int[] Function GetHangoutStats()
-{Return [iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable}
+{Return [iNumHangouts,iNumPresets,iNumQuestsRunning,iNumQuestsAvailable.}
 	String[] sHangoutNames = HangoutNames
 	Int i = 0
 	Int iNumHangouts = 0

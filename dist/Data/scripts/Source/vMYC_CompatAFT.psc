@@ -1,13 +1,13 @@
 Scriptname vMYC_CompatAFT extends vMYC_CompatBase
 {Base for compatibility modules.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 Import vMYC_Registry
 
-;--=== Properties ===--
+;=== Properties ===--
 
 Message 		Property	NotificationMessage				Auto
 
@@ -18,9 +18,9 @@ Faction 		Property 	TweakImportFaction				Auto
 Faction			Property	TweakDisableMagic				Auto
 Quest			Property	TweakFollower					Auto
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Bool Function IsRequired()
 {Return true if the mod that this module supports is installed.}
@@ -29,14 +29,14 @@ Bool Function IsRequired()
 EndFunction
 
 Int Function StartModule()
-{User code for startup}
+{User code for startup.}
 	RegisterForSingleUpdate(1)
 	NotificationMessage.Show()
 	Return 1
 EndFunction
 
 Int Function StopModule()
-{User code for shutdown}
+{User code for shutdown.}
 	UnregisterForUpdate()
 	WaitMenuMode(1)
 	UpdateAFTSettings(abForceRemove = True)
@@ -44,13 +44,13 @@ Int Function StopModule()
 EndFunction
 
 Int Function UpkeepModule()
-{User code for upkeep}
+{User code for upkeep.}
 	RegisterForSingleUpdate(5)
 	Return 1
 EndFunction
 
 Function CheckVars()
-{Any extra variables that might need setting up during OnInit. Will also be run OnGameLoad}
+{Any extra variables that might need setting up during OnInit. Will also be run OnGameLoad.}
 
 	TweakPotentialFollowerFaction 	= GetFormFromFile(0x02033cf9,"AmazingFollowerTweaks.esp") as Faction
 	TweakIgnoreFaction 				= GetFormFromFile(0x020229c3,"AmazingFollowerTweaks.esp") as Faction

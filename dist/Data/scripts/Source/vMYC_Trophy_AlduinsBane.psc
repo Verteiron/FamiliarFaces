@@ -1,18 +1,18 @@
 Scriptname vMYC_Trophy_AlduinsBane extends vMYC_TrophyBase
 {Player has killed Alduin.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
 
 ;=== Constants ===--
 
-;--=== Properties ===--
+;=== Properties ===--
 
-;--=== Variables ===--
+;=== Variables ===--
 
-;--=== Events/Functions ===--
+;=== Events/Functions ===--
 
 Function CheckVars()
 	TrophyName  	= "AlduinsBane"
@@ -26,6 +26,7 @@ Function CheckVars()
 	
 EndFunction
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	Quest kGoalQuest = Quest.GetQuest("MQ305")
@@ -36,16 +37,16 @@ Int Function IsAvailable()
 EndFunction
 
 Int Function Display(Int aiDisplayFlags = 0)
-{User code for display}
+{User code for display.}
 	Return 1
 EndFunction
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction

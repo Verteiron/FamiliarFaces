@@ -1,5 +1,5 @@
 Scriptname vMYC_PlayerInventoryTrackerScript extends ReferenceAlias
-{FIXME: Blanked for testing}
+{FIXME: Blanked for testing.}
 
 Int		Property	MaxThreadCount = 8 	AutoReadOnly Hidden
 

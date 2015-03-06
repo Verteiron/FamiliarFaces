@@ -1,7 +1,7 @@
 Scriptname vMYC_Trophy_ThaneBanners extends vMYC_TrophyBase
 {Display a banner for each city Player is a Thane of.}
 
-;--=== Imports ===--
+;=== Imports ===--
 
 Import Utility
 Import Game
@@ -46,6 +46,7 @@ Event OnTrophyInit()
 	
 EndEvent
 
+;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
 	
@@ -54,7 +55,7 @@ Int Function IsAvailable()
 EndFunction
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
-{User code for display}
+{User code for display.}
 	;If aiDisplayFlags == 2, then the Brotherhood was destroyed
 	If aiDisplayFlags 
 		DisplayBanner(CityBannerDawnstar01)
@@ -69,11 +70,11 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 EndEvent
 
 Int Function Remove()
-{User code for hide}
+{User code for hide.}
 	Return 1
 EndFunction
 
 Int Function ActivateTrophy()
-{User code for activation}
+{User code for activation.}
 	Return 1
 EndFunction
