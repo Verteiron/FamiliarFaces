@@ -24,6 +24,10 @@ Import vMYC_Registry
 
 ;=== Properties ===--
 
+Idle Property IdleStaticPoseA Auto
+Idle Property IdleStaticPoseB Auto
+Idle Property IdleStaticPoseC Auto
+
 ;=== Variables ===--
 		
 Bool 		_bFirstLoad 				= True
@@ -59,10 +63,10 @@ EndEvent
 ;Overrides vMYC_Doppelganger@OnAnimationEvent
 Event OnAnimationEvent(ObjectReference akSource, String asEventName)
 	DebugTrace("AnimationEvent:" + asEventName)
-	;If asEventName == "BeginCastVoice"
-	;	Wait(0.1)
-	;	InterruptCast()
-	;EndIf
+	If asEventName == "IdleReady"
+		Wait(0.1)
+		EnableAI(False)
+	EndIf
 EndEvent
 
 ;Overrides vMYC_Doppelganger@OnObjectEquipped
@@ -170,10 +174,17 @@ State Assigned
 				NeedSpells = False
 			EndIf
 		EndIf
+		RegisterForAnimationEvent(Self, "IdleReady")
+
 		;ReportStats()
 	EndEvent
 
 	Event OnLoad()
+		RegisterForAnimationEvent(Self, "IdleReady")
+	EndEvent
+
+	Event OnCellAttach()
+		RegisterForAnimationEvent(Self, "IdleReady")
 	EndEvent
 	
 EndState
@@ -206,8 +217,18 @@ Function DoUpkeep(Bool bInBackground = True)
 	RegisterForSingleUpdate(0.1)
 	If !PlayerREF.HasLos(Self)
 		RegisterForSingleLOSGain(PlayerREF,Self)
+	Else
+		EnableAI(True)
+		;PlayIdle(IdleStaticPoseC)
 	EndIf
 EndFunction
+
+Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
+	If akViewer == PlayerREF && akTarget == Self
+		EnableAI(True)
+		;PlayIdle(IdleStaticPoseC)
+	EndIf
+EndEvent
 
 ;=== Appearance functions ===--
 ; Unchanged

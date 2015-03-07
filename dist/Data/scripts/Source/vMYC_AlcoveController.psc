@@ -147,7 +147,7 @@ Function CheckObjects()
 	vMYC_CharacterMannequin kStatueScript = AlcoveActor as vMYC_CharacterMannequin
 	If kStatueScript
 		If kStatueScript.IsAIEnabled()
-			kStatueScript.EnableAI(False)
+			;kStatueScript.EnableAI(False)
 		EndIf
 	EndIf
 EndFunction
@@ -173,8 +173,8 @@ Function CheckForCharacterActor()
 			ShowCharacterStatue(False)
 		EndIf
 	EndIf
-;	Wait(15)
-;	TrophyManager.DeleteTrophies(AlcoveStatueMarker)
+	Wait(15)
+	TrophyManager.DeleteTrophies(AlcoveStatueMarker)
 EndFunction
 	
 Function ShowCharacterStatue(Bool abFullEffects = True)
@@ -257,7 +257,7 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 		kGlowSuper.EnableNoWait(False)
 		TrophyManager.SendDisplayAllEvent(AlcoveStatueMarker)
 		kStatueScript.SetAlpha(1,True)
-		kStatueScript.EnableAI(False)
+		;kStatueScript.EnableAI(False)
 		If iHarmonicSound
 			Sound.StopInstance(iHarmonicSound)
 			iHarmonicSound = 0
