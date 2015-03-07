@@ -1,6 +1,13 @@
 Scriptname vMYC_AlcoveController extends ObjectReference
 {Handle alcove data and appearance.}
 
+; === [ vMYC_AlcoveController.psc ] =======================================---
+; Handles:
+;   Alcove statue placement
+;   Commanding AlcoveLightingController
+;   Special effects for character saving and statue appearing
+; ========================================================---
+
 ;=== Imports ===--
 
 Import Utility
@@ -86,6 +93,7 @@ Event OnUpdate()
 EndEvent
 
 Event OnShrineManagerReady(Form akSender)
+{Event sent by ShrineManager when it's ready for Alcoves to register themselves.}
 	If !ShrineManager && akSender as vMYC_ShrineManager
 		ShrineManager = akSender as vMYC_ShrineManager
 		;DebugTrace("I am " + Self + ", registry reports Shrine.Alcove" + AlcoveIndex + ".UUID is " + GetRegStr("Shrine.Alcove" + AlcoveIndex + ".UUID") + "!")
@@ -103,6 +111,7 @@ Event OnShrineManagerReady(Form akSender)
 EndEvent
 
 Function SendRegisterEvent()
+{Send vMYC_AlcoveRegister event.}
 	Int iHandle = ModEvent.Create("vMYC_AlcoveRegister")
 	If iHandle
 		ModEvent.PushInt(iHandle,AlcoveIndex)
@@ -115,6 +124,7 @@ Function SendRegisterEvent()
 EndFunction
 
 Function SendSyncEvent()
+{Send vMYC_AlcoveSync event.}
 	Int iHandle = ModEvent.Create("vMYC_AlcoveSync")
 	If iHandle
 		ModEvent.PushInt(iHandle,AlcoveIndex)
@@ -130,6 +140,7 @@ Function RegisterForModEvents()
 EndFunction
 
 Function CheckObjects()
+{Make sure all objects we need are assigned to the right variables.}
 	If !LightingController || !AlcoveStatueMarker
 		FindObjects()
 	EndIf
@@ -142,6 +153,7 @@ Function CheckObjects()
 EndFunction
 
 Function FindObjects()
+{Find and assign the objects we control to the right variables.}
 	;LightingController = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveLightingControllerActivator,Self,1500) as vMYC_AlcoveLightingController
 	LightingController = GetLinkedRef(Keyword.GetKeyword("vMYC_LightingControllerKW")) as vMYC_AlcoveLightingController
 	;AlcoveStatueMarker = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveStatueMarker,Self,1500)
@@ -152,6 +164,7 @@ EndFunction
 
 
 Function CheckForCharacterActor()
+{Make sure that if we have been assigned a character, that the actor statue is present and set up correctly.}
 	Wait(8)
 	If !AlcoveActor && AlcoveCharacterID
 		If Is3DLoaded()
@@ -165,6 +178,7 @@ Function CheckForCharacterActor()
 EndFunction
 	
 Function ShowCharacterStatue(Bool abFullEffects = True)
+{Place the character statue, tell it to set itself up, and play special effects.}
 	DebugTrace("ShowCharacterStatue(abFullEffects = " + abFullEffects + ")")
 	Int iStatueSound = vMYC_AlcoveStatueAppearLPSM.Play(AlcoveStatueMarker)
 	LightingController.DesiredLightState = 1
@@ -273,6 +287,8 @@ String Function GetFormIDString(Form kForm)
 EndFunction
 
 Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
+{Wait for kObjectRef to load, timing out after iSafety/10 seconds.
+ Returns: True when object loads, or false if it timed out without loading.}
 	While !kObjectRef.Is3DLoaded() && iSafety > 0
 		iSafety -= 1
 		Wait(0.1)

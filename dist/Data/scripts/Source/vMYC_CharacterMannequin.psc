@@ -1,6 +1,19 @@
 Scriptname vMYC_CharacterMannequin extends vMYC_Doppelganger
 {Removes functions that Shrine mannequins will never need.}
 
+; === [ vMYC_CharacterMannequin.psc ] =====================================---
+; Specialized version of vMYC_Doppelganger for use with Alcove statues. 
+; Removes some unneeded functions and simplifies others. 
+; Handles:
+;   Setting up Actor appearance
+;   Setting up Actor's inventory and equipment (including custom equipment)
+;   Making sure Actor's AI is disabled once loaded, since it's a statue
+;   FIXME: Applying custom poses to the Actor 
+; Usage:
+;   When in the Available state, call AssignCharacter and the script will
+;   take care of everything else.
+; ========================================================---
+
 ;=== Imports ===--
 
 Import Utility
@@ -36,12 +49,14 @@ String 		_sCharacterInfo
 String		_sFormID
 ;=== Events ===--
 
+;Overrides vMYC_Doppelganger@OnUpdate
 Event OnUpdate()
 	If NeedUpkeep
 		DoUpkeep(False)
 	EndIf
 EndEvent
 
+;Overrides vMYC_Doppelganger@OnAnimationEvent
 Event OnAnimationEvent(ObjectReference akSource, String asEventName)
 	DebugTrace("AnimationEvent:" + asEventName)
 	;If asEventName == "BeginCastVoice"
@@ -50,19 +65,23 @@ Event OnAnimationEvent(ObjectReference akSource, String asEventName)
 	;EndIf
 EndEvent
 
+;Overrides vMYC_Doppelganger@OnObjectEquipped
 Event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
+;Overrides vMYC_Doppelganger@OnObjectUnequipped
 Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
 ;=== Function from vMYC_Doppelganger that are altered ===--
 
 Auto State Available
+	;Overrides vMYC_Doppelganger@OnLoad
 	Event OnLoad()
 		;Clear out because we shouldn't be loaded
 	EndEvent
 	
+	;Overrides vMYC_Doppelganger@AssignCharacter
 	Function AssignCharacter(String sUUID)
 	{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
 		GoToState("Busy")
@@ -95,12 +114,14 @@ Auto State Available
 EndState
 
 State Assigned
+	;Overrides vMYC_Doppelganger@OnBeginState
 	Event OnBeginState()
 		DebugTrace("Entered Assigned state! CharacterName is " + CharacterName + ". Will update appearance, etc in just a sec...")
 		RegisterForSingleUpdate(1)
 		SetNameIfNeeded()
 	EndEvent
 
+	;Overrides vMYC_Doppelganger@OnUpdate
 	Event OnUpdate()
 		If NeedAppearance
 			If UpdateAppearance() == 0 ; No error
@@ -161,11 +182,13 @@ State Busy
 
 EndState
 
+;Overrides vMYC_Doppelganger@AssignCharacter
 Function AssignCharacter(String sUUID)
 {This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
 	DebugTrace("AssignCharacter(" + sUUID + ") was called outside of Available state, doing nothing!",1)
 EndFunction
 
+;Overrides vMYC_Doppelganger@DoUpkeep
 Function DoUpkeep(Bool bInBackground = True)
 {Run whenever the player loads up the Game. Sets the name and such.}
 	If bInBackground
@@ -190,34 +213,40 @@ EndFunction
 ; Unchanged
 ;=== Equipment and inventory functions ===--
 
+;Overrides vMYC_Doppelganger@UpdateInventory
 Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = False)
 	Return 1
 EndFunction
 
 ;=== Stats ===--
 
+;Overrides vMYC_Doppelganger@UpdateStats
 Int Function UpdateStats(Bool abForceValues = False)
 	Return 1
 EndFunction
 
 ;=== Perks ===--
 
+;Overrides vMYC_Doppelganger@Perks
 Int Function UpdatePerks()
 	Return 1
 EndFunction
 
 ;=== Shouts ===--
 
+;Overrides vMYC_Doppelganger@UpdateShouts
 Int Function UpdateShouts()
 	Return 1
 EndFunction
 
+;Overrides vMYC_Doppelganger@RemoveCharacterShouts
 Function RemoveCharacterShouts(String sCharacterName)
 EndFunction
 
 
 ;=== Spell functions ===--
 
+;Overrides vMYC_Doppelganger@UpdateSpells
 Int Function UpdateSpells()
 	Return 1
 EndFunction

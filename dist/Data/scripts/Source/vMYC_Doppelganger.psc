@@ -1,6 +1,19 @@
 Scriptname vMYC_Doppelganger extends Actor
 {Apply character appearance, handle inventory import, etc.}
 
+; === [ vMYC_Doppelganger.psc ] ===========================================---
+; When assigned a character ID, set up this Actor's appearance, inventory, 
+; name, ActorValues, etc based on that character's stored data.
+; Handles:
+;   Setting up Actor appearance
+;   Setting up Actor's inventory and equipment (including custom equipment)
+;   Setting up Actor's spells, shouts, perks, and actorvalues
+;   Tracking the Actor adding/removing spells, items, etc as needed.
+; Usage:
+;   When in the Available state, call AssignCharacter and the script will
+;   take care of everything else.
+; ========================================================---
+
 ;=== Imports ===--
 
 Import Utility
@@ -439,7 +452,9 @@ EndFunction
 ;=== Equipment and inventory functions ===--
 
 Int Function EquipDefaultGear(Bool abLockEquip = False)
-{Re-equip the gear this character was saved with, optionally locking it in place.}
+{Re-equip the gear this character was saved with, optionally locking it in place.
+ abLockEquip: (Optional) Lock equipment in place, so AI cannot remove it automatically.
+ Returns: Number of items processed.}
 ;FIXME: This may fail to equip the correct item if character has both the base 
 ;and a customized version of the same item in their inventory
 
@@ -481,6 +496,7 @@ Int Function EquipDefaultGear(Bool abLockEquip = False)
 EndFunction
 
 Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
+{Setup equipped Armor based on the saved character data.}
 	Int i
 	Int iCount
 	
@@ -539,6 +555,10 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 EndFunction
 
 Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = False)
+{Setup equipped Weapons and Ammo based on the saved character data.
+ abReplaceMissing: (Optional) If an item has been removed, replace it. May lead to item duplication.
+ abFullReset: (Optional) Remove ALL items and replace with originals. May cause loss of inventory items.
+ Returns: Number of items processed.}
 	Int i
 	Int iCount
 	DebugTrace("Applying Weapons...")
@@ -629,6 +649,10 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 EndFunction
 
 Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = False)
+{Setup Inventory items based on the saved character data.
+ abReplaceMissing: (Optional) If an item has been removed, replace it. May lead to item duplication.
+ abFullReset: (Optional) Remove ALL items and replace with originals. May cause loss of inventory items.
+ Returns: Number of items processed.}
 	Int i
 	Int iCount
 	DebugTrace("Applying Inventory...")
@@ -699,7 +723,9 @@ EndFunction
 ;=== Stats ===--
 
 Int Function UpdateStats(Bool abForceValues = False)
-{Apply AVs and other stats like health. Return -1 for generic failure.}
+{Apply AVs and other stats like health. 
+ abForceValues: (Optional) Set values absolutely, ignoring any buffs or nerfs from enchantments/magiceffects.
+ Returns: -1 for generic failure.}
 	Int i
 	Int iCount
 	DebugTrace("Applying Perks...")
@@ -762,7 +788,8 @@ EndFunction
 ;=== Perks ===--
 
 Int Function UpdatePerks()
-{Apply perks. Return -1 for failure, or number of perks applied for success.}
+{Apply perks.
+ Returns:  for failure, or number of perks applied for success.}
 	Int i
 	Int iCount
 	DebugTrace("Applying Perks...")
@@ -828,8 +855,9 @@ EndFunction
 ;=== Shouts ===--
 
 Int Function UpdateShouts()
-{Apply shouts to named character. Return -1 for failure, or number of shouts applied for success. Needed because AddShout causes savegame corruption.}
-	
+{Apply shouts to named character. Needed because AddShout causes savegame corruption.
+ Returns: -1 for failure, or number of shouts applied for success.}
+;FIXME: I bet this could be done with FFUtils and avoid using the FormList.
 	Int jShouts = JValue.SolveObj(_jCharacterData,".Shouts")
 	
 	Formlist kShoutlist = DataManager.LockFormList()
@@ -908,7 +936,7 @@ Int Function UpdateShouts()
 EndFunction
 
 Function RemoveCharacterShouts(String sCharacterName)
-{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption. .}
+{Remove all shouts from named character. Needed because RemoveShout causes savegame corruption.}
 	DebugTrace("Character is not allowed to use shouts, removing them!")
 	Formlist kShoutlist = DataManager.LockFormList()
 	kShoutlist.Revert() ; Should already be empty, but just in case
@@ -922,7 +950,8 @@ EndFunction
 ;=== Spell functions ===--
 
 Int Function UpdateSpells()
-{Apply Spells. Return -1 for failure, or number of Spells applied for success.}
+{Apply Spells. 
+ Returns: -1 for failure, or number of Spells applied for success.}
 	Int i
 	Int iCount
 	Int iAdded = 0

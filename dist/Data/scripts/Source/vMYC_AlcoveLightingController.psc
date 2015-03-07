@@ -1,6 +1,12 @@
 Scriptname vMYC_AlcoveLightingController extends ObjectReference
 {Handle alcove activation/deactivation effects.}
 
+; === [ vMYC_AlcoveLightingController.psc ] ===============================---
+; Rearrange and enable/disable Alcove lights and fog. One per Alcove.
+; Handles:
+;   Alcove lighting and fog.
+; ========================================================---
+
 ;=== Imports ===--
 
 Import Utility
@@ -19,6 +25,7 @@ Bool Property TorchShadows = False	Auto
 Bool Property FogEnabled	= False			Auto
 
 Int Property AlcoveLightState Hidden
+{Set this to immediately force the Alcove into the target lighting state.}
 	Int Function Get()
 		Return _iAlcoveLightState
 	EndFunction
@@ -28,6 +35,7 @@ Int Property AlcoveLightState Hidden
 EndProperty
 
 Int Property DesiredLightState Hidden
+{Set this to start transitioning the Alcove into the target lighting state.}
 	Int Function Get()
 		Return _iDesiredLightState
 	EndFunction
@@ -146,7 +154,11 @@ Function SetLightState(Int aiDesiredLightState, Bool abForce = False)
 EndFunction
 
 Function SetupLightsAndFog(Bool abForce = False)
+{Function to handle the process of enabling/disabling lights and fog.}
 	DebugTrace("SetupLightsAndFog - _iDesiredLightState:" + _iDesiredLightState + " _iAlcoveLightState" + _iAlcoveLightState + "!")
+	If !AlcoveFogLit
+		CheckObjects()
+	EndIf
 	If _iDesiredLightState == _iAlcoveLightState && !abForce
 		Return ; Nothing to do
 	EndIf
@@ -207,6 +219,8 @@ Function SetupLightsAndFog(Bool abForce = False)
 EndFunction
 
 Bool Function ValidateLightState()
+{Make sure the lights and fog actually match the lighting state.
+ Returns: False if anything fails validation, otherwise True.}
 	If AlcoveLightState == ALCOVE_LIGHTS_OFF
 		If !AlcoveFogCurtain.IsEnabled()
 			Return False
@@ -289,6 +303,7 @@ Event OnUpdate()
 EndEvent
 
 Function ShowFog(Bool abShowFog = True)
+{Turns fog on or off.}
 	If abShowFog
 		FogEnabled = True
 		AlcoveFogCurtain.EnableNoWait(True)
@@ -311,6 +326,7 @@ Function CheckObjects()
 EndFunction
 
 Function FindObjects()
+{Sets up and assigns all the required objects.}
 	;AlcoveLightTorchNSPar = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchNShadowEnableParent,Self,800)
 	;AlcoveLightTorchSPar = FindClosestReferenceOfTypeFromRef(vMYC_AlcoveTorchShadowEnableParent,Self,800)
 	;AlcoveLightTorchAmb =  FindClosestReferenceOfTypeFromRef(vMYC_ShrineActiveLight,Self,800)

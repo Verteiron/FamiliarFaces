@@ -1,6 +1,12 @@
 Scriptname vMYC_ShrineManager extends vMYC_ManagerBase
 {Handle registration and tracking of Shrine.Alcove.}
 
+; === [ vMYC_ShrineManager.psc ] ==========================================---
+; Handles:
+;   Registering and tracking Alcoves
+;   Central command for AlcoveControllers
+; ========================================================---
+
 ;=== Imports ===--
 
 Import Utility
