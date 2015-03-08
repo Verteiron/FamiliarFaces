@@ -56,12 +56,25 @@ Keyword 		Property 	CWOwner 				Auto
 ObjectReference	Property	CWMapBoard				Auto
 ObjectReference	Property	CWMap					Auto
 
+ObjectReference Property 	CWImperialLight			Auto
+ObjectReference Property 	CWImperialHelm			Auto
+ObjectReference Property 	CWImperialShield		Auto
+ObjectReference Property 	CWImperialBanner		Auto
+
+ObjectReference Property 	CWStormcloakLight		Auto
+ObjectReference Property 	CWStormcloakHelm		Auto
+ObjectReference Property 	CWStormcloakShield		Auto
+ObjectReference Property 	CWStormcloakBanner		Auto
+
 ;=== Variables ===--
 
 Location[] 	_kLocations
 
 Int			_iCWMapBoardID
 Int			_iCWMapID
+
+Int[] 		_iCWImperialItems
+Int[] 		_iCWStormcloakItems
 
 ;=== Events/Functions ===--
 
@@ -108,6 +121,18 @@ EndEvent
 Event OnSetTemplate()
 	_iCWMapBoardID 	= SetTemplate(CWMapBoard)
 	_iCWMapID 		= SetTemplate(CWMap)
+
+	_iCWImperialItems 		= New Int[4]
+	_iCWImperialItems[0] 	= SetTemplate(CWImperialLight)
+	_iCWImperialItems[1] 	= SetTemplate(CWImperialHelm)
+	_iCWImperialItems[2] 	= SetTemplate(CWImperialShield)
+	_iCWImperialItems[3] 	= SetTemplate(CWImperialBanner)
+
+	_iCWStormcloakItems 	= New Int[4]
+	_iCWStormcloakItems[0] 	= SetTemplate(CWStormcloakLight)
+	_iCWStormcloakItems[1] 	= SetTemplate(CWStormcloakHelm)
+	_iCWStormcloakItems[2] 	= SetTemplate(CWStormcloakShield)
+	_iCWStormcloakItems[3] 	= SetTemplate(CWStormcloakBanner)
 EndEvent
 
 ;Overwrites vMYC_TrophyBase@IsAvailable
@@ -162,6 +187,11 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 		ReserveBanner(0) ; Prevent banner from being placed directly left of the statue
 		DisplayForm(_iCWMapBoardID)
 		DisplayForm(_iCWMapID)
+	EndIf
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_IMPERIALS)
+		DisplayFormArray(_iCWImperialItems)
+	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
+		DisplayFormArray(_iCWStormcloakItems)
 	EndIf
 	
 EndEvent
