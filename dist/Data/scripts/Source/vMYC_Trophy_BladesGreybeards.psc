@@ -19,21 +19,17 @@ Actor		Property	PlayerREF			Auto
 Faction 	Property	BladesFaction		Auto
 Faction 	Property	GreybeardFaction	Auto
 
-ObjectReference		Property	TemplateBladesSword		Auto
-ObjectReference		Property	TemplateBladesShield	Auto
-ObjectReference		Property	TemplateBladesHelmet	Auto
-ObjectReference		Property	TemplateBladesPillar	Auto
-ObjectReference		Property	TemplateBladesBrazier	Auto
-ObjectReference		Property	TemplateBladesSkull		Auto
-ObjectReference		Property	TemplateGreybeardBanner	Auto
-ObjectReference		Property	TemplateGreybeardTablet	Auto
-ObjectReference		Property	TemplateGreybeardShrine	Auto
+ObjectReference[]	Property	TemplatesGreybeardOnly	Auto
+ObjectReference[]	Property	TemplatesBladesOnly		Auto
+ObjectReference[]	Property	TemplatesPaarthurnax	Auto
+ObjectReference[]	Property	TemplatesMiddleWay		Auto
 
 ;=== Variables ===--
 
 Int[] _iBladeIDs
 Int[] _iGreybeardIDs
-Int	  _iDragonSkullID
+Int[] _iPaarthurnaxIDs
+Int[] _iMiddleIDs
 
 ;=== Events/Functions ===--
 
@@ -51,23 +47,10 @@ Event OnTrophyInit()
 EndEvent
 
 Event OnSetTemplate()
-	_iBladeIDs = New Int[5]
-	
-	_iBladeIDs[0] = SetTemplate(TemplateBladesPillar)
-	_iBladeIDs[1] = SetTemplate(TemplateBladesShield)
-	_iBladeIDs[2] = SetTemplate(TemplateBladesSword)
-	_iBladeIDs[3] = SetTemplate(TemplateBladesHelmet)
-	_iBladeIDs[4] = SetTemplate(TemplateBladesBrazier)
-	
-	_iGreybeardIDs = New Int[3]
-	
-	_iGreybeardIDs[0] = SetTemplate(TemplateGreybeardShrine)
-	_iGreybeardIDs[1] = SetTemplate(TemplateGreybeardTablet)
-	_iGreybeardIDs[2] = SetTemplate(TemplateGreybeardBanner)
-
-	;Skull is separate from Blades because it's possible to be a Blade with Paarth still alive
-	_iDragonSkullID = SetTemplate(TemplateBladesSkull) 
-	
+	_iGreybeardIDs 		= SetTemplateArray(TemplatesGreybeardOnly)
+	_iBladeIDs 			= SetTemplateArray(TemplatesBladesOnly)
+	_iPaarthurnaxIDs	= SetTemplateArray(TemplatesPaarthurnax)
+	_iMiddleIDs 		= SetTemplateArray(TemplatesMiddleWay)
 EndEvent
 
 ;Overwrites vMYC_TrophyBase@IsAvailable
@@ -111,20 +94,29 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 		ReserveBanner(1) ; Prevent banner from being placed directly right of the statue
 	EndIf
 	
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_KILLEDPAARTH)
+		DebugTrace("Character has killed Paarthurnax, what a jerk!")
+		;Player killed Paarthurnax, so we'll display his skull. You monster.
+		DisplayFormArray(_iPaarthurnaxIDs)
+		Return ;No need to continue on, Player can't be friends with the Greybeards after killing Paarth
+	EndIf
+
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_GREYBEARDS) && Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_BLADES)
+		DebugTrace("Character is friends BOTH sides!")
+		DisplayFormArray(_iMiddleIDs)
+		Return 
+	EndIf
+	
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_GREYBEARDS)
 		DebugTrace("Character is friends with the Greybeards!")
 		DisplayFormArray(_iGreybeardIDs)
-	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_KILLEDPAARTH)
-		DebugTrace("Character has killed Paarthurnax, what a jerk!")
-		;Player killed Paarthurnax, so we'll display his skull. You monster.
-		DisplayForm(_iDragonSkullID)
 	EndIf
-	
+
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_BLADES)
 		DebugTrace("Character is friends with the Blades!")
 		DisplayFormArray(_iBladeIDs)
 	EndIf
-	
+
 EndEvent
 
 Int Function Remove()
