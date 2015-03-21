@@ -23,6 +23,8 @@ ObjectReference		Property	TemplateBladesSword		Auto
 ObjectReference		Property	TemplateBladesShield	Auto
 ObjectReference		Property	TemplateBladesHelmet	Auto
 ObjectReference		Property	TemplateBladesPillar	Auto
+ObjectReference		Property	TemplateBladesBrazier	Auto
+ObjectReference		Property	TemplateBladesSkull		Auto
 ObjectReference		Property	TemplateGreybeardBanner	Auto
 ObjectReference		Property	TemplateGreybeardTablet	Auto
 ObjectReference		Property	TemplateGreybeardShrine	Auto
@@ -31,6 +33,7 @@ ObjectReference		Property	TemplateGreybeardShrine	Auto
 
 Int[] _iBladeIDs
 Int[] _iGreybeardIDs
+Int	  _iDragonSkullID
 
 ;=== Events/Functions ===--
 
@@ -48,12 +51,13 @@ Event OnTrophyInit()
 EndEvent
 
 Event OnSetTemplate()
-	_iBladeIDs = New Int[4]
+	_iBladeIDs = New Int[5]
 	
 	_iBladeIDs[0] = SetTemplate(TemplateBladesPillar)
 	_iBladeIDs[1] = SetTemplate(TemplateBladesShield)
 	_iBladeIDs[2] = SetTemplate(TemplateBladesSword)
 	_iBladeIDs[3] = SetTemplate(TemplateBladesHelmet)
+	_iBladeIDs[4] = SetTemplate(TemplateBladesBrazier)
 	
 	_iGreybeardIDs = New Int[3]
 	
@@ -61,6 +65,9 @@ Event OnSetTemplate()
 	_iGreybeardIDs[1] = SetTemplate(TemplateGreybeardTablet)
 	_iGreybeardIDs[2] = SetTemplate(TemplateGreybeardBanner)
 
+	;Skull is separate from Blades because it's possible to be a Blade with Paarth still alive
+	_iDragonSkullID = SetTemplate(TemplateBladesSkull) 
+	
 EndEvent
 
 ;Overwrites vMYC_TrophyBase@IsAvailable
@@ -109,7 +116,8 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 		DisplayFormArray(_iGreybeardIDs)
 	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_KILLEDPAARTH)
 		DebugTrace("Character has killed Paarthurnax, what a jerk!")
-		;Player killed Paarthurnax, we should probably show that somehow. Monsters.
+		;Player killed Paarthurnax, so we'll display his skull. You monster.
+		DisplayForm(_iDragonSkullID)
 	EndIf
 	
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_GB_BLADES)
