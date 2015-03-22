@@ -55,6 +55,7 @@ Keyword 		Property 	CWOwner 				Auto
 
 ObjectReference	Property	CWMapBoard				Auto
 ObjectReference	Property	CWMap					Auto
+ObjectReference	Property	CWCrown					Auto
 
 ObjectReference Property 	CWImperialLight			Auto
 ObjectReference Property 	CWImperialHelm			Auto
@@ -72,6 +73,7 @@ Location[] 	_kLocations
 
 Int			_iCWMapBoardID
 Int			_iCWMapID
+Int			_iCWCrownID
 
 Int[] 		_iCWImperialItems
 Int[] 		_iCWStormcloakItems
@@ -121,6 +123,7 @@ EndEvent
 Event OnSetTemplate()
 	_iCWMapBoardID 	= SetTemplate(CWMapBoard)
 	_iCWMapID 		= SetTemplate(CWMap)
+	_iCWCrownID		= SetTemplate(CWCrown)
 
 	_iCWImperialItems 		= New Int[4]
 	_iCWImperialItems[0] 	= SetTemplate(CWImperialLight)
@@ -193,7 +196,9 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
 		DisplayFormArray(_iCWStormcloakItems)
 	EndIf
-	
+	If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_COMPLETED)
+		DisplayForm(_iCWCrownID)
+	EndIf
 EndEvent
 
 Int Function Remove()
