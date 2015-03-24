@@ -57,15 +57,10 @@ ObjectReference	Property	CWMapBoard				Auto
 ObjectReference	Property	CWMap					Auto
 ObjectReference	Property	CWCrown					Auto
 
-ObjectReference Property 	CWImperialLight			Auto
-ObjectReference Property 	CWImperialHelm			Auto
-ObjectReference Property 	CWImperialShield		Auto
-ObjectReference Property 	CWImperialBanner		Auto
-
-ObjectReference Property 	CWStormcloakLight		Auto
-ObjectReference Property 	CWStormcloakHelm		Auto
-ObjectReference Property 	CWStormcloakShield		Auto
-ObjectReference Property 	CWStormcloakBanner		Auto
+ObjectReference[] Property 	CWImperialSide			Auto
+ObjectReference[] Property 	CWImperialComplete		Auto
+ObjectReference[] Property 	CWStormcloakSide		Auto
+ObjectReference[] Property 	CWStormcloakComplete	Auto
 
 ;=== Variables ===--
 
@@ -75,8 +70,10 @@ Int			_iCWMapBoardID
 Int			_iCWMapID
 Int			_iCWCrownID
 
-Int[] 		_iCWImperialItems
-Int[] 		_iCWStormcloakItems
+Int[] 		_iCWImperialSide
+Int[] 		_iCWImperialComplete
+Int[] 		_iCWStormcloakSide
+Int[] 		_iCWStormcloakComplete
 
 ;=== Events/Functions ===--
 
@@ -125,17 +122,12 @@ Event OnSetTemplate()
 	_iCWMapID 		= SetTemplate(CWMap)
 	_iCWCrownID		= SetTemplate(CWCrown)
 
-	_iCWImperialItems 		= New Int[4]
-	_iCWImperialItems[0] 	= SetTemplate(CWImperialLight)
-	_iCWImperialItems[1] 	= SetTemplate(CWImperialHelm)
-	_iCWImperialItems[2] 	= SetTemplate(CWImperialShield)
-	_iCWImperialItems[3] 	= SetTemplate(CWImperialBanner)
+	_iCWImperialSide 		= SetTemplateArray(CWImperialSide)
+	_iCWImperialComplete 	= SetTemplateArray(CWImperialComplete)
 
-	_iCWStormcloakItems 	= New Int[4]
-	_iCWStormcloakItems[0] 	= SetTemplate(CWStormcloakLight)
-	_iCWStormcloakItems[1] 	= SetTemplate(CWStormcloakHelm)
-	_iCWStormcloakItems[2] 	= SetTemplate(CWStormcloakShield)
-	_iCWStormcloakItems[3] 	= SetTemplate(CWStormcloakBanner)
+	_iCWStormcloakSide 		= SetTemplateArray(CWStormcloakSide)
+	_iCWStormcloakComplete 	= SetTemplateArray(CWStormcloakComplete)
+
 EndEvent
 
 ;Overwrites vMYC_TrophyBase@IsAvailable
@@ -192,11 +184,16 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 		DisplayForm(_iCWMapID)
 	EndIf
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_IMPERIALS)
-		DisplayFormArray(_iCWImperialItems)
+		DisplayFormArray(_iCWImperialSide)
 	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
-		DisplayFormArray(_iCWStormcloakItems)
+		DisplayFormArray(_iCWStormcloakSide)
 	EndIf
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_COMPLETED)
+		If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_IMPERIALS)
+			DisplayFormArray(_iCWImperialComplete)
+		ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
+			DisplayFormArray(_iCWStormcloakComplete)
+		EndIf
 		DisplayForm(_iCWCrownID)
 	EndIf
 EndEvent
