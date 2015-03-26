@@ -55,8 +55,8 @@ Keyword 		Property 	CWOwner 				Auto
 
 ObjectReference	Property	CWMapBoard				Auto
 ObjectReference	Property	CWMap					Auto
-ObjectReference	Property	CWCrown					Auto
 
+ObjectReference[] Property 	CWVictory 				Auto
 ObjectReference[] Property 	CWImperialSide			Auto
 ObjectReference[] Property 	CWImperialComplete		Auto
 ObjectReference[] Property 	CWStormcloakSide		Auto
@@ -68,8 +68,8 @@ Location[] 	_kLocations
 
 Int			_iCWMapBoardID
 Int			_iCWMapID
-Int			_iCWCrownID
 
+Int[]		_iCWVictory
 Int[] 		_iCWImperialSide
 Int[] 		_iCWImperialComplete
 Int[] 		_iCWStormcloakSide
@@ -120,7 +120,6 @@ EndEvent
 Event OnSetTemplate()
 	_iCWMapBoardID 	= SetTemplate(CWMapBoard)
 	_iCWMapID 		= SetTemplate(CWMap)
-	_iCWCrownID		= SetTemplate(CWCrown)
 
 	_iCWImperialSide 		= SetTemplateArray(CWImperialSide)
 	_iCWImperialComplete 	= SetTemplateArray(CWImperialComplete)
@@ -128,6 +127,7 @@ Event OnSetTemplate()
 	_iCWStormcloakSide 		= SetTemplateArray(CWStormcloakSide)
 	_iCWStormcloakComplete 	= SetTemplateArray(CWStormcloakComplete)
 
+	_iCWVictory				= SetTemplateArray(CWVictory)
 EndEvent
 
 ;Overwrites vMYC_TrophyBase@IsAvailable
@@ -182,19 +182,27 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 		ReserveBanner(0) ; Prevent banner from being placed directly left of the statue
 		DisplayForm(_iCWMapBoardID)
 		DisplayForm(_iCWMapID)
+	Else 
+		Return
 	EndIf
-	If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_IMPERIALS)
-		DisplayFormArray(_iCWImperialSide)
-	ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
-		DisplayFormArray(_iCWStormcloakSide)
-	EndIf
-	If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_COMPLETED)
-		If Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_IMPERIALS)
+
+	Bool bCWFinished	= Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_COMPLETED)
+	Bool bImperial 		= Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_IMPERIALS)
+	Bool bStormCloak 	= Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
+
+	If bCWFinished
+		DisplayFormArray(_iCWVictory)
+		If bImperial 
 			DisplayFormArray(_iCWImperialComplete)
-		ElseIf Math.LogicalAnd(aiDisplayFlags,TROPHY_CW_STORMCLOAKS)
+		ElseIf bStormCloak
 			DisplayFormArray(_iCWStormcloakComplete)
 		EndIf
-		DisplayForm(_iCWCrownID)
+	Else
+		If bImperial 
+			DisplayFormArray(_iCWImperialSide)
+		ElseIf bStormCloak
+			DisplayFormArray(_iCWStormcloakSide)
+		EndIf
 	EndIf
 EndEvent
 
