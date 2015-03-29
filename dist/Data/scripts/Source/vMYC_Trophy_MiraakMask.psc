@@ -10,11 +10,13 @@ Import Game
 
 ;=== Properties ===--
 
-Static	Property	vMYC_ShrineDLC2MiraakHelm	Auto
+Static				Property	vMYC_ShrineDLC2MiraakHelm	Auto
+ObjectReference[]	Property 	TemplateMiraakHelm	 		Auto
+
 
 ;=== Variables ===--
 
-Int		iMaskID
+Int[]		iMaskIDs
 
 ;=== Events/Functions ===--
 
@@ -33,13 +35,14 @@ EndEvent
 
 Event OnSetTemplate()
 {Create or set objects to be used as trophies.}
-	iMaskID = CreateTemplate(vMYC_ShrineDLC2MiraakHelm, -77.0, 21.0, 6.2352, -55.7451, 6.5581, 6.0, 1.24)
+	;iMaskIDs = CreateTemplate(vMYC_ShrineDLC2MiraakHelm, -77.0, 21.0, 6.2352, -55.7451, 6.5581, 6.0, 1.24)
+	iMaskIDs = SetTemplateArray(TemplateMiraakHelm)
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display.}
 	If aiDisplayFlags
-		DisplayForm(iMaskID)
+		DisplayFormArray(iMaskIDs)
 	EndIf
 EndEvent
 

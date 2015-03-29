@@ -21,17 +21,13 @@ Quest Property DLC1VQ08 Auto ; Last quest of Dawnguard
 
 ObjectReference		Property	TemplateCrossbow		Auto
 ObjectReference		Property	TemplateChalice			Auto
-ObjectReference		Property	TemplateSunPedestal		Auto
-
-;Static				Property	vMYC_ShrineDLC1ChaliceBlood	Auto
-;Static				Property	vMYC_ShrineDLC1Crossbow		Auto
-;Static				Property	vMYC_ShrineDLC1SunPedestal	Auto
+ObjectReference[]	Property 	TemplateCompletion 		Auto
 
 ;=== Variables ===--
 
 Int		_iChoseDawnguardTrophyID
 Int		_iChoseVampiresTrophyID
-Int		_iCompletionTrophyID
+Int[]	_iCompletionTrophyIDs
 
 ;=== Events/Functions ===--
 
@@ -56,9 +52,9 @@ Event OnTrophyInit()
 EndEvent
 
 Event OnSetTemplate()
-	_iChoseDawnguardTrophyID = SetTemplate(TemplateCrossbow)
-	_iChoseVampiresTrophyID = SetTemplate(TemplateChalice)
-	_iCompletionTrophyID = SetTemplate(TemplateSunPedestal)
+	_iChoseDawnguardTrophyID 	= SetTemplate(TemplateCrossbow)
+	_iChoseVampiresTrophyID 	= SetTemplate(TemplateChalice)
+	_iCompletionTrophyIDs 		= SetTemplateArray(TemplateCompletion)
 EndEvent
 
 Event OnDisplayTrophy(Int aiDisplayFlags)
@@ -74,7 +70,7 @@ Event OnDisplayTrophy(Int aiDisplayFlags)
 		DisplayForm(_iChoseDawnguardTrophyID)
 	EndIf
 	If Math.LogicalAnd(aiDisplayFlags,TROPHY_DG_COMPLETED)
-		DisplayForm(_iCompletionTrophyID)
+		DisplayFormArray(_iCompletionTrophyIDs)
 	EndIf
 EndEvent
 
