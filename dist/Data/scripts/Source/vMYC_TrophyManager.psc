@@ -58,7 +58,9 @@ Event OnGameReload()
 EndEvent
 
 Event OnUpdate()
-	SendTrophyManagerReady()
+	If !ReadyToDisplay
+		SendTrophyManagerReady()
+	EndIf
 	If GetCurrentRealTime() - fLastRegTime > 8
 		DebugTrace("All trophies appear to be registered!")
 		ReadyToDisplay = True
@@ -104,6 +106,28 @@ Function SendTrophyManagerReady()
 	EndIf
 EndFunction
 
+Int Function PlaceTrophies(ObjectReference akTargetObject, String sCharacterID)
+{Place all Trophies earned by sCharacterID around akTargetObject. Trophies will not be displayed until DisplayTrophies is called.
+ Returns: Number of trophies processed.}
+	Int jCharacterTrophies = GetRegObj("Characters." + sCharacterID + ".Trophies")
+	JValue.WriteToFile(jCharacterTrophies,JContainers.userDirectory() + "vMYC/displaytrophies.json")
+	Int jTrophyNames = JMap.AllKeys(jCharacterTrophies)
+	Int iCount = JArray.Count(jTrophyNames)
+	Int i = 0
+	While i < iCount
+		String sTrophyName = JArray.GetStr(jTrophyNames,i)
+		DebugTrace("(" + i + "/" + (iCount - 1) + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
+		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
+		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
+		If kTrophyBase && iTrophyFlags
+			DebugTrace("(" + i + "/" + (iCount - 1) + "): Placing trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
+			kTrophyBase._Place(akTargetObject,iTrophyFlags,sCharacterID)
+		EndIf
+		i += 1
+	EndWhile
+	Return iCount
+EndFunction
+
 Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID, Bool abPlaceOnly = False)
 {Display all Trophies earned by sCharacterID around akTargetObject. Optionally place without displaying.
  Returns: Number of trophies processed.}
@@ -116,10 +140,9 @@ Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID
 		String sTrophyName = JArray.GetStr(jTrophyNames,i)
 		DebugTrace("(" + i + "/" + (iCount - 1) + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
 		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
-		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
-		If kTrophyBase ;&& iTrophyFlags
-			DebugTrace("(" + i + "/" + iCount + "): Displaying trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
-			kTrophyBase._Display(akTargetObject,iTrophyFlags,abPlaceOnly,sCharacterID)
+		If kTrophyBase
+			DebugTrace("(" + i + "/" + (iCount - 1) + "): Displaying trophy " + sTrophyName + " for " + sCharacterID)
+			kTrophyBase._Display(akTargetObject)
 		EndIf
 		i += 1
 	EndWhile
@@ -128,13 +151,15 @@ EndFunction
 
 Function SendDisplayAllEvent(ObjectReference akTargetObject)
 {Send a ModEvent to all Trophies associated with akTargetObject telling them to display themselves.}
+	DebugTrace("SendDisplayAllEvent(" + akTargetObject + ")")
 	Int jTrophyNames = JMap.AllKeys(GetRegObj("Trophies"))
 	Int iCount = JArray.Count(jTrophyNames)
 	Int i = 0
 	While i < iCount
 		String sTrophyName = JArray.GetStr(jTrophyNames,i)
 		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
-		kTrophyBase.SendDisplayEvent(akTargetObject)
+		kTrophyBase._Display(akTargetObject)
+		Wait(0.25)
 		i += 1
 	EndWhile
 EndFunction
@@ -180,12 +205,14 @@ EndFunction
 Function RegisterTrophyObject(ObjectReference akTrophyObject, ObjectReference akTargetObject)
 {Register a Trophy ObjectReference associated with akTargetObject.}
 	;DebugTrace("RegisterTrophyObject(" + akTrophyObject + "," + akTargetObject + ")")
+	;SetSessionFlt("TrophyDisplayTargets.LastUpdated." + GetFormIDString(akTargetObject),GetCurrentRealTime())
 	Int jDisplayTargets = GetSessionObj("TrophyDisplayTargets")
 	Int jDisplayTarget = JFormMap.GetObj(jDisplayTargets,akTargetObject)
 	If !jDisplayTarget
 		jDisplayTarget = JMap.Object()
 		JFormMap.SetObj(jDisplayTargets,akTargetObject,jDisplayTarget)
 	EndIf
+	JMap.SetFlt(jDisplayTarget,"LastUpdated",GetCurrentRealTime())
 	Int jDisplayedObjects = JMap.GetObj(jDisplayTarget,"Objects")
 	If !jDisplayedObjects
 		jDisplayedObjects = JArray.Object()
@@ -270,4 +297,11 @@ EndFunction
 Form Function GetStandingBannerMarker()
 {Returns: Standing banner base form.}
 	Return vMYC_TrophyBannerStandingMarker
+EndFunction
+
+String Function GetFormIDString(Form kForm)
+	String sResult
+	sResult = kForm as String ; [FormName < (FF000000)>]
+	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
+	Return sResult
 EndFunction

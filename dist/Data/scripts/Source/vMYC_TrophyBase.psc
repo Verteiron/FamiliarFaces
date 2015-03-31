@@ -133,6 +133,8 @@ ObjectReference[]	_DisplayedObjects
 
 ObjectReference[]	_TemplateObjects
 
+Int 				_FIXMEImpBannerID
+
 ;=== Public/user functions ===--
 
 ;=== These should be overridden by the user's script
@@ -187,6 +189,10 @@ Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY 
 	TrophyObject.SetFormData(akForm, afOffsetX, afOffsetY, afOffsetZ, afAngleX, afAngleY, afAngleZ, afScale)
 	TrophyObject.UpdatePosition()
 	;DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
+	If akForm.GetFormID() == 0x000c5699
+		DebugTrace("THIS IS THE BANNER GUYS! " + idx)
+		_FIXMEImpBannerID = idx
+	EndIf
 	Return idx
 EndFunction
 
@@ -503,7 +509,7 @@ Function _CreateTemplates()
 	OnSetTemplate()
 EndFunction
 
-Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool abPlaceOnly = False, String asCharacterID = "")
+Function _Place(ObjectReference akTarget = None, Int aiTrophyFlags = 0, String asCharacterID = "")
 	If !akTarget
 		akTarget = TrophyManager.GetTrophyOrigin()
 	EndIf
@@ -515,18 +521,24 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 
 	CharacterID = asCharacterID	
 	DebugTrace("Calling OnDisplayTrophy with aiTrophyFlags: " + aiTrophyFlags + "...")
+	
+	;Despite its name, this merely fills _TemplatesToDisplay with the TemplateIDs that will be placed
 	OnDisplayTrophy(aiTrophyFlags)
 	CharacterID = ""
 	
-	Int i = 0
-	Int iLen = _BannersToDisable.Find(-1)
-	If iLen
-		DebugTrace("BannersToDisable: " + iLen)
-	endIf
-	While i < iLen 
-		TrophyManager.DisableBannerPosition(akTarget,_BannersToDisable[i])
-		i += 1
-	EndWhile
+	Int i
+	Int iLen
+
+	;FIXME: With the new Alcove layout, banners will probably not get blocked like they used to.
+	;i = 0
+	;iLen = _BannersToDisable.Find(-1)
+	;If iLen
+	;	DebugTrace("BannersToDisable: " + iLen)
+	;endIf
+	;While i < iLen 
+	;	TrophyManager.DisableBannerPosition(akTarget,_BannersToDisable[i])
+	;	i += 1
+	;EndWhile
 	
 	i = 0
 	iLen = _BannersToDisplay.Find(None)
@@ -549,21 +561,21 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 	While i < iLen && _TemplatesToDisplay[i]
 		Int idx = _TemplatesToDisplay[i]
 		If _TemplateObjects[idx]
-			If _TemplateObjects[idx].GetBaseObject()
-				;DebugTrace("Registering " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
-				_TemplateObjects[idx].RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName + sTargetFormID,"OnTrophyDisplay")	
+			If _TemplateObjects[idx].GetBaseObject().GetFormID() == 0x000c5699
+				DebugTrace("THIS IS THE BANNER GUYS! " + _TemplateObjects[idx])
 			EndIf
+			;If _TemplateObjects[idx].GetBaseObject()
+				DebugTrace("Registering template " + idx + " - " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
+				(_TemplateObjects[idx] as vMYC_TrophyObject).TrophyIndex = idx
+				_TemplateObjects[idx].RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName + sTargetFormID,"OnTrophyDisplay")	
+			;EndIf
 		EndIf
 		i += 1
 	EndWhile
-	If !abPlaceOnly
-		SendDisplayEvent(akTarget)
-	EndIf
-	
-	
+
 	;i = 0
 	;iLen = _DisplayedObjects.Length
-	;DebugTrace("DisplayedObjects: " + iLen)
+	DebugTrace("Placed " + iLen + " objects for target " + akTarget)
 	;While i < iLen && _DisplayedObjects[i]
 	;	If !_DisplayedObjects[i].IsEnabled()
 	;		DebugTrace("Enabling " + _DisplayedObjects[i] + "!")
@@ -572,6 +584,14 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 	;	i += 1
 	;EndWhile
 	
+EndFunction
+
+Function _Display(ObjectReference akTarget = None)
+	If !akTarget
+		akTarget = TrophyManager.GetTrophyOrigin()
+	EndIf
+	
+	SendDisplayEvent(akTarget)
 EndFunction
 
 Function SendDisplayEvent(ObjectReference akTarget)
@@ -596,7 +616,7 @@ Function _DisplayObject(ObjectReference akTarget, ObjectReference akTemplate)
 	DebugTrace("_DisplayObject(" + akTarget + ", " + akTemplate + ")")
 	
 	If akTemplate as vMYC_TrophyObject
-		(akTemplate as vMYC_TrophyObject).PlaceTrophyForm(akTarget,abInitiallyDisabled = False)
+		(akTemplate as vMYC_TrophyObject).PlaceTrophyForm(akTarget)
 		Return
 	EndIf
 	Int idx = _DisplayedObjects.Find(None)

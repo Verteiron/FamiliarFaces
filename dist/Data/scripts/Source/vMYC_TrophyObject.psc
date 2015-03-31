@@ -64,8 +64,12 @@ Bool			Property	LocalRotation				Auto
 Bool			Property	OnLoadQueued				Auto
 ObjectReference Property	OnLoadTarget				Auto
 
+ObjectReference	Property	GlowObject	 				Auto Hidden
+
 Sound			Property	vMYC_TrophyAppearSM			Auto
 
+Bool			Property 	Displaying 					Auto
+Bool			Property 	EnableOnPlacement			Auto
 ;=== Variables ===--
 
 Int					_TrophyVersion
@@ -103,26 +107,82 @@ Function UpdatePosition()
 	;SetAngle(AngleX,AngleY,AngleZ) 
 EndFunction
 
+Event OnUpdate()
+	If TrophyObject
+		If EnableOnPlacement && (!TrophyObject.Is3DLoaded()	|| TrophyObject.IsDisabled())
+			TrophyObject.EnableNoWait()
+		EndIf
+	EndIf
+EndEvent
+
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 {Event sent by TrophyManager or TrophyBase to tell TrophyObject to display itself at akTarget.}
 	UnregisterForModEvent("vMYC_TrophyDisplayObject" + TrophyName + GetFormIDString(akTarget))
-	;DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
+	DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
+	EnableOnPlacement = !abInitiallyDisabled
 	If !(akTarget as ObjectReference).Is3DLoaded()
 		OnLoadQueued = True
 		OnLoadTarget = akTarget as ObjectReference
 		Return
 	EndIf
-	ObjectReference kTrophyObject = PlaceTrophyForm(akTarget as ObjectReference, abInitiallyDisabled)
-	If kTrophyObject
-		TrophyBase.TrophyManager.RegisterTrophyObject(kTrophyObject,akTarget as ObjectReference)
+	If !TrophyObject
+		If Displaying
+			DebugTrace("Already placing this object!")
+			Return
+		Else
+			TrophyObject = PlaceTrophyForm(akTarget as ObjectReference)
+		EndIf
+		If TrophyObject
+			TrophyBase.TrophyManager.RegisterTrophyObject(TrophyObject,akTarget as ObjectReference)
+		Else
+			DebugTrace("WARNING! No ObjectReference returned by PlaceTrophyForm!")
+		EndIf
 	EndIf
+	If TrophyObject
+		If !TrophyObject.Is3DLoaded() && EnableOnPlacement
+			
+			;If !GlowObject
+			;	GlowObject = TrophyObject.PlaceAtMe(vMYC_BrightGlow,abInitiallyDisabled = True)
+			;Else
+			;	GlowObject.MoveTo(TrophyObject)
+			;EndIf
+			;DebugTrace("TrophyWidth: " + TrophyObject.GetWidth() + ", TrophyHeight: " + TrophyObject.GetHeight() + ", TrophyScale: " + TrophyObject.GetScale() +".")
+			;Float fGlowScale = ((TrophyObject.GetWidth() + TrophyObject.GetHeight()) * TrophyObject.GetScale()) / 100
+			;If fGlowScale > 0.5
+			;	GlowObject.SetScale(fGlowScale)
+			;	GlowObject.Enable(True)
+			;	While !GlowObject.Is3DLoaded()
+			;		Wait(0.25)
+			;	EndWhile
+			;	vMYC_TrophyAppearSM.Play(GlowObject)	
+			;EndIf		
+			TrophyObject.Enable(True)
+			While !TrophyObject.Is3DLoaded()
+				Wait(0.333)
+			EndWhile
+			;TrophyFadeInFXS.Play(TrophyObject,0)
+			vMYC_TrophyAppearSM.Play(TrophyObject)	
+			;GlowObject.DisableNoWait(True)
+		EndIf
+	EndIf
+	RegisterForSingleUpdate(2)
 EndEvent
 
-ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitiallyDisabled = False)
+ObjectReference Function PlaceTrophyForm(ObjectReference akTarget)
 {Place an instance of TrophyForm at akTarget with the same offset and angle as the original.}
-	If !akTarget || !TrophyForm
+	If !akTarget 
+		DebugTrace("WARNING! Target object is None!")
 		Return None
 	EndIf
+	If !TrophyForm
+		DebugTrace("WARNING! No TrophyForm is set for this TrophyObject!")
+		Return None
+	EndIf
+	If Displaying
+		DebugTrace("WARNING! Attempted to call PlaceTrophyForm while already displaying trophy, returning exisitng TrophyObject!")
+		Return TrophyObject
+	EndIf
+	Displaying = True
 	Float[] fRelativePos = GetRelativePosition(TrophyOrigin,Self)
 	Float[] fOriginAng = New Float[3]
 
@@ -135,40 +195,26 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget, Bool abInitia
 	fOriginAng[2] = akTarget.GetAngleZ() 
 
 	;If LocalRotation
-	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, True, false, false, LocalRotation)
+	DebugTrace("Placing " + TrophyForm + "...")
+	ObjectReference kTrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, True, false, false, LocalRotation)
+	DebugTrace("TrophyObject is " + kTrophyObject + "!")
 	;Else
 	;	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
 	;EndIf
 	If FormScale != 1
-		TrophyObject.SetScale(FormScale)
+		kTrophyObject.SetScale(FormScale)
 	ElseIf Scale != 1
-		TrophyObject.SetScale(Scale)
+		kTrophyObject.SetScale(Scale)
 	EndIf
-	Float fScale = TrophyObject.GetScale()
+	Float fScale = kTrophyObject.GetScale()
 	
-	If TrophyObject as vMYC_TrophyObject
+	If kTrophyObject as vMYC_TrophyObject
 		;This object needs to know its parents!
-		(TrophyObject as vMYC_TrophyObject).SetParentObject(TrophyBase)
+		(kTrophyObject as vMYC_TrophyObject).SetParentObject(TrophyBase)
 	EndIf
 	
-	ObjectReference kGlow = TrophyObject.PlaceAtMe(vMYC_BrightGlow,abInitiallyDisabled = True)
-	kGlow.SetScale(TrophyObject.GetScale() * 3)
-	kGlow.EnableNoWait(True)
-	While !kGlow.Is3DLoaded()
-		Wait(0.1)
-	EndWhile
-	vMYC_TrophyAppearSM.Play(kGlow)	
-
-	If !abInitiallyDisabled
-		TrophyObject.EnableNoWait(True)
-		While !TrophyObject.Is3DLoaded()
-			Wait(0.1)
-		EndWhile
-		TrophyFadeInFXS.Play(TrophyObject,0)
-	EndIf
-	kGlow.DisableNoWait(True)
-
-	Return TrophyObject
+	Displaying = False
+	Return kTrophyObject
 EndFunction
 
 Function DeleteTrophyForm()

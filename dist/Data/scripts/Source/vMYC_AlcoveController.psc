@@ -235,7 +235,7 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 	kStatueScript.EnableNoWait(True)
 	
 	If abFullEffects
-		TrophyManager.DisplayTrophies(AlcoveStatueMarker,AlcoveCharacterID,True)
+		TrophyManager.PlaceTrophies(AlcoveStatueMarker,AlcoveCharacterID)
 	Else
 		DisplayTrophiesOnLoad = True
 		LightingController.AlcoveLightState = 2
