@@ -31,11 +31,14 @@ FormList			Property vMYC_BannerAnchors						Auto
 
 ObjectReference[]	Property HangingBannerTemplates					Auto
 
+Bool				Property ReadyToDisplay 						Auto
+
 ;=== Achievement test Properties ===--
 
 ;=== Variables ===--
 
 ObjectReference	TrophyPlacementMarker
+Float			fLastRegTime
 
 ;=== Events ===--
 
@@ -43,20 +46,32 @@ Event OnInit()
 	If IsRunning()
 		SetRegObj("Trophies",0)
 		SetSessionObj("TrophyDisplayTargets",JFormMap.Object())
+		fLastRegTime = GetCurrentRealTime()
 		RegisterForSingleUpdate(5)
 	EndIf
 EndEvent
 
 Event OnGameReload()
+	ReadyToDisplay = False
+	fLastRegTime = GetCurrentRealTime()
 	RegisterForSingleUpdate(5)
 EndEvent
 
 Event OnUpdate()
 	SendTrophyManagerReady()
+	If GetCurrentRealTime() - fLastRegTime > 8
+		DebugTrace("All trophies appear to be registered!")
+		ReadyToDisplay = True
+	Else
+		ReadyToDisplay = False
+		RegisterForSingleUpdate(2)
+	EndIf
 EndEvent
 
 Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 {Register a new TrophyBase object.}
+	fLastRegTime = GetCurrentRealTime()
+	ReadyToDisplay = False
 	DebugTrace("Registering " + akTrophyform + " (" + asTrophyName + ")...")
 	vMYC_TrophyBase kTrophy = akTrophyForm as vMYC_TrophyBase
 	Int jTrophy = JMap.Object()
@@ -72,6 +87,8 @@ Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 	JMap.SetInt(jTrophy,"Flags",kTrophy.TrophyFlags)
 	JMap.SetInt(jTrophy,"Enabled",kTrophy.Enabled as Int)
 	SetRegObj("Trophies." + asTrophyName,jTrophy)
+
+	RegisterForSingleUpdate(2)
 EndEvent
 
 Function SendTrophyManagerReady()

@@ -165,7 +165,9 @@ EndFunction
 
 Function CheckForCharacterActor()
 {Make sure that if we have been assigned a character, that the actor statue is present and set up correctly.}
-	Wait(8)
+	While !TrophyManager.ReadyToDisplay
+		Wait(2)
+	EndWhile
 	If !AlcoveActor && AlcoveCharacterID
 		If Is3DLoaded()
 			ShowCharacterStatue(True)

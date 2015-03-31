@@ -76,7 +76,7 @@ Int				Property	TrophyVersion					Auto Hidden
 String[]		Property	TrophyExclusionList				Auto Hidden
 {If this trophy is displayed, prevent these trophies from being displayed. Use with caution!.}
 
-Int				Property	Available			= 0			Auto Hidden
+Int				Property	Available			= -1		Auto Hidden
 Bool			Property	Enabled				= True		Auto Hidden
 
 Bool			Property	DoNotRegister		= False		Auto
@@ -406,17 +406,18 @@ Function RegisterForModEvents()
 EndFunction
 
 Event OnTrophyManagerReady(Form akSender)
-	Int iAvailable = _IsAvailable()
 	If !TrophyManager && akSender as vMYC_TrophyManager
 		TrophyManager = akSender as vMYC_TrophyManager
 		SendRegisterEvent()
 	EndIf
-
 	If _TrophyVersion != TrophyVersion 
 		_TrophyVersion = TrophyVersion
 	EndIf
-	If iAvailable != Available
-		Available = iAvailable
+	If Available < 0
+		Int iAvailable = _IsAvailable()
+		If iAvailable != Available
+			Available = iAvailable
+		EndIf
 	EndIf
 EndEvent
 
@@ -549,7 +550,7 @@ Function _Display(ObjectReference akTarget = None, Int aiTrophyFlags = 0, Bool a
 		Int idx = _TemplatesToDisplay[i]
 		If _TemplateObjects[idx]
 			If _TemplateObjects[idx].GetBaseObject()
-				DebugTrace("Registering " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
+				;DebugTrace("Registering " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
 				_TemplateObjects[idx].RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName + sTargetFormID,"OnTrophyDisplay")	
 			EndIf
 		EndIf

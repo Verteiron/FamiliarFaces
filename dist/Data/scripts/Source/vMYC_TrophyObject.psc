@@ -106,7 +106,7 @@ EndFunction
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 {Event sent by TrophyManager or TrophyBase to tell TrophyObject to display itself at akTarget.}
 	UnregisterForModEvent("vMYC_TrophyDisplayObject" + TrophyName + GetFormIDString(akTarget))
-	DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
+	;DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
 	If !(akTarget as ObjectReference).Is3DLoaded()
 		OnLoadQueued = True
 		OnLoadTarget = akTarget as ObjectReference
