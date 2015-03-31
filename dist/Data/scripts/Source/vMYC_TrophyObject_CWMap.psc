@@ -157,6 +157,7 @@ Event OnUnload()
 EndEvent
 
 function RemoveFlags()
+	DebugTrace("Removing flags...")
 	LocationIndex = 0
 	; Delete all the currently placed flags on the map
 	TryToRemoveFlag(CWMapFlagsolitudeRef)
@@ -197,7 +198,7 @@ EndFunction
 
 
 function PlaceFlags()
-
+	DebugTrace("Placing flags...")
 	; Check which locations are held by who and place the correct flag there.
 	; Capitals
 	
@@ -239,7 +240,7 @@ objectReference Function TryToPlaceFlag(ObjectReference RefOfFlag, Activator Act
 		CharacterID = AlcoveController.AlcoveCharacterID
 	EndIf
 	Int iCWOwner = GetRegInt("Characters." + CharacterID + ".TrophyData.CivilWar.LocationOwners[" + LocationIndex + "]")
-	DebugTrace("Location: " + LocationOfFlag.GetName() + " is index " + LocationIndex + ", CWOwner is " + iCWOwner + "!")
+	;DebugTrace("Location: " + LocationOfFlag.GetName() + " is index " + LocationIndex + ", CWOwner is " + iCWOwner + "!")
 	LocationIndex += 1
 	if iCWOwner == 1
 		RefOfFlag = PlaceAtMe(ActivatorOfFlagRed,abInitiallyDisabled = True)
