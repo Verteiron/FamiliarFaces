@@ -131,21 +131,10 @@ EndFunction
 Int Function DisplayTrophies(ObjectReference akTargetObject, String sCharacterID, Bool abPlaceOnly = False)
 {Display all Trophies earned by sCharacterID around akTargetObject. Optionally place without displaying.
  Returns: Number of trophies processed.}
-	Int jCharacterTrophies = GetRegObj("Characters." + sCharacterID + ".Trophies")
-	JValue.WriteToFile(jCharacterTrophies,JContainers.userDirectory() + "vMYC/displaytrophies.json")
-	Int jTrophyNames = JMap.AllKeys(jCharacterTrophies)
-	Int iCount = JArray.Count(jTrophyNames)
-	Int i = 0
-	While i < iCount
-		String sTrophyName = JArray.GetStr(jTrophyNames,i)
-		DebugTrace("(" + i + "/" + (iCount - 1) + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
-		vMYC_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vMYC_TrophyBase
-		If kTrophyBase
-			DebugTrace("(" + i + "/" + (iCount - 1) + "): Displaying trophy " + sTrophyName + " for " + sCharacterID)
-			kTrophyBase._Display(akTargetObject)
-		EndIf
-		i += 1
-	EndWhile
+	Int iCount = PlaceTrophies(akTargetObject,sCharacterID)
+	If !abPlaceOnly
+		SendDisplayAllEvent(akTargetObject)
+	EndIf
 	Return iCount
 EndFunction
 

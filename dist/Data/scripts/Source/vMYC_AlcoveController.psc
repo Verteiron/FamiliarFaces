@@ -252,17 +252,12 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 			Wait(0.5)
 		EndWhile
 		LightingController.DesiredLightState = 2
+		kGlowSuper.EnableNoWait(False)
+		kStatueScript.SetAlpha(1,True)
+		;kStatueScript.EnableAI(False)
 		If iStatueSound
 			Sound.StopInstance(iStatueSound)
 			iStatueSound = 0
-		EndIf
-		kGlowSuper.EnableNoWait(False)
-		TrophyManager.SendDisplayAllEvent(AlcoveStatueMarker)
-		kStatueScript.SetAlpha(1,True)
-		;kStatueScript.EnableAI(False)
-		If iHarmonicSound
-			Sound.StopInstance(iHarmonicSound)
-			iHarmonicSound = 0
 		EndIf
 		i = kGlows.Length
 		While i > 0
@@ -271,6 +266,11 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 			;Wait(0.88)
 		EndWhile
 		kGlowSuper.DisableNoWait(True)
+		TrophyManager.SendDisplayAllEvent(AlcoveStatueMarker)
+		If iHarmonicSound
+			Sound.StopInstance(iHarmonicSound)
+			iHarmonicSound = 0
+		EndIf
 	EndIf
 
 EndFunction

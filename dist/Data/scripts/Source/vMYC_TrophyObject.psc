@@ -94,6 +94,14 @@ Event OnCellAttach()
 	If OnLoadQueued
 		OnLoadQueued = False
 		OnTrophyDisplay(OnLoadTarget, False)
+		Return
+	EndIf
+	If EnableOnPlacement && !TrophyObject
+		DebugTrace("OnCellAttach: Should be enabled, but TrophyObject is missing!")
+		OnTrophyDisplay(OnLoadTarget, False)
+	ElseIf EnableOnPlacement && !TrophyObject.Is3DLoaded()
+		DebugTrace("OnCellAttach: Should be enabled, but TrophyObject isn't loaded!")
+		TrophyObject.EnableNoWait(True)
 	EndIf
 EndEvent
 
@@ -118,7 +126,7 @@ EndEvent
 Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 {Event sent by TrophyManager or TrophyBase to tell TrophyObject to display itself at akTarget.}
 	UnregisterForModEvent("vMYC_TrophyDisplayObject" + TrophyName + GetFormIDString(akTarget))
-	DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
+	;DebugTrace("UNRegistering " + Self + " for event vMYC_TrophyDisplay" + TrophyName + GetFormIDString(akTarget) + "!")
 	EnableOnPlacement = !abInitiallyDisabled
 	If !(akTarget as ObjectReference).Is3DLoaded()
 		OnLoadQueued = True
@@ -160,12 +168,14 @@ Event OnTrophyDisplay(Form akTarget, Bool abInitiallyDisabled)
 			While !TrophyObject.Is3DLoaded()
 				Wait(0.333)
 			EndWhile
-			;TrophyFadeInFXS.Play(TrophyObject,0)
+			TrophyFadeInFXS.Play(TrophyObject,0)
 			vMYC_TrophyAppearSM.Play(TrophyObject)	
 			;GlowObject.DisableNoWait(True)
 		EndIf
 	EndIf
-	RegisterForSingleUpdate(2)
+	If (akTarget as ObjectReference).Is3DLoaded()
+		RegisterForSingleUpdate(2)
+	EndIf
 EndEvent
 
 ObjectReference Function PlaceTrophyForm(ObjectReference akTarget)
@@ -195,9 +205,9 @@ ObjectReference Function PlaceTrophyForm(ObjectReference akTarget)
 	fOriginAng[2] = akTarget.GetAngleZ() 
 
 	;If LocalRotation
-	DebugTrace("Placing " + TrophyForm + "...")
+	;DebugTrace("Placing " + TrophyForm + "...")
 	ObjectReference kTrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, fOriginAng[2], 0, false, True, false, false, LocalRotation)
-	DebugTrace("TrophyObject is " + kTrophyObject + "!")
+	;DebugTrace("TrophyObject is " + kTrophyObject + "!")
 	;Else
 	;	TrophyObject = PlaceAtMeRelative(akTarget, TrophyForm, fOriginAng, fRelativePos, 0, 0, 0, 0, 0, false, false, false, false, LocalRotation)
 	;EndIf

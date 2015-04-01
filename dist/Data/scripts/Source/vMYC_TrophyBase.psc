@@ -189,10 +189,10 @@ Int Function CreateTemplate(Form akForm, Float afOffsetX = 0.0, Float afOffsetY 
 	TrophyObject.SetFormData(akForm, afOffsetX, afOffsetY, afOffsetZ, afAngleX, afAngleY, afAngleZ, afScale)
 	TrophyObject.UpdatePosition()
 	;DebugTrace("Object is at X:\t" + TrophyObject.GetPositionX() + ", Y:\t" + TrophyObject.GetPositionY() + ", Z:\t" + TrophyObject.GetPositionZ() + ", aX:\t" + TrophyObject.GetAngleX() + ", aY:\t" + TrophyObject.GetAngleY() + ", aZ:\t" + TrophyObject.GetAngleZ() + ", S:\t" + TrophyObject.GetScale())
-	If akForm.GetFormID() == 0x000c5699
-		DebugTrace("THIS IS THE BANNER GUYS! " + idx)
-		_FIXMEImpBannerID = idx
-	EndIf
+	;If akForm.GetFormID() == 0x000c5699
+	;	DebugTrace("THIS IS THE BANNER GUYS! " + idx)
+	;	_FIXMEImpBannerID = idx
+	;EndIf
 	Return idx
 EndFunction
 
@@ -414,7 +414,13 @@ EndFunction
 Event OnTrophyManagerReady(Form akSender)
 	If !TrophyManager && akSender as vMYC_TrophyManager
 		TrophyManager = akSender as vMYC_TrophyManager
+	;	TrophyManager.ThreadCount += 1
+	;	While TrophyManager.ThreadCount > TrophyManager.ThreadMax 
+	;		DebugTrace("TrophyManager.ThreadCount is " + TrophyManager.ThreadCount + ", waiting for threadscount to drop...")
+	;		WaitMenuMode(RandomFloat(0.25,1))
+	;	EndWhile
 		SendRegisterEvent()
+	;	TrophyManager.ThreadCount -= 1
 	EndIf
 	If _TrophyVersion != TrophyVersion 
 		_TrophyVersion = TrophyVersion
@@ -424,6 +430,9 @@ Event OnTrophyManagerReady(Form akSender)
 		If iAvailable != Available
 			Available = iAvailable
 		EndIf
+	EndIf
+	If TrophyManager && !_TemplateObjects[0]
+		_CreateTemplates()
 	EndIf
 EndEvent
 
@@ -446,8 +455,6 @@ Function SendRegisterEvent()
 	If !TrophyFadeInFXS
 		TrophyFadeInFXS = GetFormFromFile(0x0200a2bd,"vMYC_MeetYourCharacters.esp") as EffectShader
 	EndIf
-	Wait(1)
-	_CreateTemplates()
 EndFunction
 
 Event OnTrophyCheckAvailable(Form akSender)
@@ -561,11 +568,11 @@ Function _Place(ObjectReference akTarget = None, Int aiTrophyFlags = 0, String a
 	While i < iLen && _TemplatesToDisplay[i]
 		Int idx = _TemplatesToDisplay[i]
 		If _TemplateObjects[idx]
-			If _TemplateObjects[idx].GetBaseObject().GetFormID() == 0x000c5699
-				DebugTrace("THIS IS THE BANNER GUYS! " + _TemplateObjects[idx])
-			EndIf
+			;If _TemplateObjects[idx].GetBaseObject().GetFormID() == 0x000c5699
+			;	DebugTrace("THIS IS THE BANNER GUYS! " + _TemplateObjects[idx])
+			;EndIf
 			;If _TemplateObjects[idx].GetBaseObject()
-				DebugTrace("Registering template " + idx + " - " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
+				;DebugTrace("Registering template " + idx + " - " + _TemplateObjects[idx] + " for event vMYC_TrophyDisplay" + TrophyName + sTargetFormID + "!")
 				(_TemplateObjects[idx] as vMYC_TrophyObject).TrophyIndex = idx
 				_TemplateObjects[idx].RegisterForModEvent("vMYC_TrophyDisplay" + TrophyName + sTargetFormID,"OnTrophyDisplay")	
 			;EndIf
