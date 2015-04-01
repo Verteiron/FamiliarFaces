@@ -58,6 +58,7 @@ Event OnGameReload()
 EndEvent
 
 Event OnUpdate()
+	Wait(0.01) ; Don't pile up while in menu mode!
 	If !ReadyToDisplay
 		SendTrophyManagerReady()
 	EndIf
