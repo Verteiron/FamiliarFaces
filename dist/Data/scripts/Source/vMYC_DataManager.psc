@@ -204,28 +204,6 @@ Function DoUpkeep(Bool bInBackground = True)
 	GotoState("")
 	DebugTrace("Finished upkeep!")
 	SendModEvent("vMYC_UpkeepEnd")
-
-
-	StartTimer("APITest")
-	String AlcoveCharacterID = "A3Ecc712-6F0A-40F0-B81F-B37c829B0E1A"
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterName(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterName(AlcoveCharacterID))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterSex(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterSex(AlcoveCharacterID))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterLevel(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterLevel(AlcoveCharacterID))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterArmor(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterArmor(AlcoveCharacterID))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterArmorIDs(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterArmorIDs(AlcoveCharacterID))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterEquippedForm(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterEquippedForm(AlcoveCharacterID,1))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterEquippedFormID(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterEquippedFormID(AlcoveCharacterID,1))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterEquippedForm(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterEquippedForm(AlcoveCharacterID,0))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterEquippedFormID(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterEquippedFormID(AlcoveCharacterID,0))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterEquippedForm(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterEquippedForm(AlcoveCharacterID,2))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterEquippedFormID(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterEquippedFormID(AlcoveCharacterID,2))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterInventory(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterInventory(AlcoveCharacterID,41))
-	DebugTrace("API TEST: vMYC_API_Character.GetCharacterInventoryCounts(AlcoveCharacterID) == " + vMYC_API_Character.GetCharacterInventoryCounts(AlcoveCharacterID,41))
-
-	DebugTrace("API TEST: vMYC_API_Character.SetCharacterArmor(AlcoveCharacterID) == " + vMYC_API_Character.SetCharacterArmor("BC15224A-B55F-44FA-9291-81E621115BFD",vMYC_API_Character.GetCharacterArmor(AlcoveCharacterID)))
-	SaveReg()
-	StopTimer("APITest")
-	Debug.MessageBox("FOO!")
 EndFunction
 
 Function SetConfigDefaults(Bool abForce = False)

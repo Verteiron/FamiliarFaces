@@ -1,5 +1,5 @@
 Scriptname vMYC_API_Character extends vMYC_APIBase Hidden
-{Save and restore character and other data using the registry.}
+{Save and restore character data.}
 
 ; === [ vMYC_API_Character.psc ] ==========================================---
 ; Main API for managing character-related data. 
@@ -14,7 +14,7 @@ Scriptname vMYC_API_Character extends vMYC_APIBase Hidden
 ; 
 ; The Character API deals strictly with the Character data that exists in the 
 ; Registry. For messing around with the character data after it has been applied 
-; to an Character, use either the usual Character/Characterbase functions or the Doppelganger API.
+; to an Character, use either the usual Actor/ActorBase functions or the Doppelganger API.
 ; ========================================================---
 
 ;=== Generic Functions ===--
@@ -151,6 +151,36 @@ Int Function SetCharacterForm(String asSID, String asKey, Form akValue) Global
 	Return iRet
 EndFunction
 
+;=== API Character/SessionID functions
+
+;Retrieve matching SIDs for asCharacterName.
+String[] Function GetSIDsByName(String asCharacterName) Global
+	Int jSIDList = JMap.AllKeys(vMYC_Registry.GetRegObj("Names." + asCharacterName))
+	String[] sResults = Utility.CreateStringArray(JArray.Count(jSidList))
+	Int i = JArray.Count(jSIDList)
+	While i > 0
+		i -= 1
+		sResults[i] = JArray.GetStr(jSIDList,i)
+	EndWhile
+	Return sResults
+EndFunction
+
+;Return the SID of a session that matches the passed name and playtime.
+String Function MatchSession(String asCharacterName, Float afPlayTime)
+	Int jSIDList = JMap.AllKeys(vMYC_Registry.GetRegObj("Names." + asCharacterName))
+	If jSIDList
+		Int iSID = JArray.Count(jSIDList)
+		While iSID > 0
+			iSID -= 1
+			String sSID = JArray.GetStr(jSIDList,iSID)
+			If Math.ABS(vMYC_Registry.GetRegFlt("Characters." + sSID + ".Info.PlayTime") - afPlayTime) < 0.1
+				Return sSID
+			EndIf
+		EndWhile
+	EndIf
+	Return ""
+EndFunction
+
 ;=== API Get Functions ===--
 
 ;Returns the level of the saved character
@@ -159,7 +189,7 @@ Float Function GetCharacterLevel(String asSID) Global
 	Return vMYC_API_Character.GetCharacterFlt(asSID,sKey)
 EndFunction
 
-;Returns the specified Character value for the character 
+;Returns the specified ActorValue for the character 
 Float Function GetCharacterAV(String asSID, String asValueName) Global
 	String sKey = ".Stats.AV." + asValueName
 	Return vMYC_API_Character.GetCharacterFlt(asSID,sKey)
@@ -464,3 +494,23 @@ EndFunction
 ;	String sKey = ".Equipment." + sLocation + ".Form"
 ;	Return vMYC_API_Character.SetCharacterForm(asSID,sKey,akValue)
 ;EndFunction
+
+
+;=============================---
+; API Advanced Functions 
+;=============================---
+
+;Delete a saved character from the registry. Use with caution!
+Int Function DeleteCharacter(String asSID)
+	Int iRet = -1 ; Default error if nothing is found
+	Int jCharacterData = vMYC_API_Character.GetCharacterJMap(asSID)
+	If jCharacterData <= 0
+		Return jCharacterData
+	Else
+		jCharacterData = 0
+		String sRegKey = "Characters." + asSID
+		vMYC_Registry.SetRegObj(sRegKey,0)
+		Return 1
+	EndIf
+	Return iRet
+EndFunction
