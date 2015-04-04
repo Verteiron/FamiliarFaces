@@ -663,7 +663,7 @@ Function ScanPlayerEquipment()
 					JArray.AddObj(jPlayerArmorInfoList,jPlayerArmorInfo)
 					AddToReqList(WornForm,"Equipment")
 					SerializeEquipment(WornForm,jPlayerArmorInfo,1,h)
-
+					DebugTrace("Serialized " + WornForm + " as " + vMYC_API_Item.SerializeEquippedObject(WornForm,1,h))
 				EndIf
 			EndIf
 		EndIf
