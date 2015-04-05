@@ -351,6 +351,18 @@ String Function SerializeEquippedObject(Form kItem, Int iHand = 1, Int h = 0, Ac
 	Return vMYC_API_Item.SaveItem(jEquipmentInfo)
 EndFunction
 
+ObjectReference Function CreateObject(String asItemID) Global
+{Recreate an item from its ItemID.}
+	Int jItem = GetItemJMap(asItemID)
+	Form kItem = JMap.getForm(jItem,"Form")
+	If (kItem as Weapon) || (kItem as Armor)
+		Return CreateEquipment(asItemID)
+	ElseIf (kItem as Potion)
+		Return CreatePotion(asItemID)
+	EndIf
+EndFunction
+
+
 ObjectReference Function CreateEquipment(String asItemID) Global
 {Recreate a custom weapon or armor from its saved version.}
 	Int jItem = GetItemJMap(asItemID)
