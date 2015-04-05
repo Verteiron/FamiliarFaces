@@ -94,10 +94,12 @@ String Function SaveItem(Int ajObjectInfo) Global
 		Return ""
 	EndIf
 
-	
-
 	String sItemID = AssignItemID(ajObjectInfo)
 	String sRegKey = "Items." + sItemID
+
+	If !JValue.HasPath(ajObjectInfo,".SID")
+		JValue.SolveStrSetter(ajObjectInfo,".SID",vMYC_Registry.GetSessionStr("SessionID"),True)
+	EndIf
 	
 	;FIXME: Ugleh, UGLEH!
 	Int jItemInfoMap = GetItemInfosForForm(JMap.GetForm(ajObjectInfo,"Form"))
