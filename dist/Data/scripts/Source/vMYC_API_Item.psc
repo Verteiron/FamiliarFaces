@@ -101,6 +101,10 @@ String Function SaveItem(Int ajObjectInfo) Global
 		JValue.SolveStrSetter(ajObjectInfo,".SID",vMYC_Registry.GetSessionStr("SessionID"),True)
 	EndIf
 	
+	If !JValue.HasPath(ajObjectInfo,".UUID")
+		JValue.SolveStrSetter(ajObjectInfo,".UUID",sItemID,True)
+	EndIf
+
 	;FIXME: Ugleh, UGLEH!
 	Int jItemInfoMap = GetItemInfosForForm(JMap.GetForm(ajObjectInfo,"Form"))
 	JMap.SetObj(jItemInfoMap,sItemID,ajObjectInfo)

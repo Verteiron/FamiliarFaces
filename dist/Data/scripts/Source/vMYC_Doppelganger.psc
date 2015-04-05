@@ -520,34 +520,32 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 	i = JArray.Count(jCharacterArmorInfo)
 	While i > 0
 		i -= 1
-		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
-		Form kItem = JMap.GetForm(jArmor,"Form")
-		If kItem
-			Int h = (kItem as Armor).GetSlotMask()
-			ObjectReference kObject = DataManager.LoadSerializedEquipment(jArmor)
-			If kObject
-				kObject.SetActorOwner(MyActorBase)
-				kCharacterActor.AddItem(kObject,1,True)
-				kCharacterActor.EquipItemEx(kItem,0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
-				;== Load NIO dye, if applicable ===--
-				If GetRegBool("Config.NIO.ArmorDye.Enabled")
-					Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
-					If JValue.isArray(jNIODyeColors)
-						Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
-						Int iMaskIndex = 0
-						Int iIndexMax = 15
-						While iMaskIndex < iIndexMax
-							Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
-							If Math.RightShift(iColor,24) > 0
-								NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
-							EndIf
-							iMaskIndex += 1
-						EndWhile
-					EndIf
+		String sItemID = JValue.SolveStr(JArray.GetObj(jCharacterArmorInfo,i),".UUID")
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+		If kObject
+			Int h = (kObject.GetBaseObject() as Armor).GetSlotMask()
+			kObject.SetActorOwner(MyActorBase)
+			kCharacterActor.AddItem(kObject,1,True)
+			kCharacterActor.EquipItemEx(kObject,0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
+			;== Load NIO dye, if applicable ===--
+			If GetRegBool("Config.NIO.ArmorDye.Enabled")
+				Int jArmor = vMYC_API_Item.GetItemJMap(sItemID)
+				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+				If JValue.isArray(jNIODyeColors)
+					Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
+					Int iMaskIndex = 0
+					Int iIndexMax = 15
+					While iMaskIndex < iIndexMax
+						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+						If Math.RightShift(iColor,24) > 0
+							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+						EndIf
+						iMaskIndex += 1
+					EndWhile
 				EndIf
-			Else ;kObject failed, armor didn't get loaded/created for some reason
-				DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
 			EndIf
+		Else ;kObject failed, armor didn't get loaded/created for some reason
+			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 	EndWhile
 
@@ -582,19 +580,18 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 		If iHand == 0
 			sHand = "Left"
 		EndIf
-		Int jItem = JValue.SolveObj(_jCharacterData,".Equipment." + sHand)
-		Form kItem = JMap.GetForm(jItem,"Form")
-		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
+		String sItemID = JValue.SolveStr(_jCharacterData,".Equipment." + sHand + ".UUID")
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
-			kCharacterActor.EquipItemEx(kItem,iHand,False,True)
+			kCharacterActor.EquipItemEx(kObject,iHand,False,True) ;FIXME: May need to use the Base form here?
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
 			If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
 				bTwoHanded = True
 			EndIf
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
+			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 		iHand -= 1
 		iCount += 1
@@ -675,14 +672,13 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	DebugTrace("Has " + i + " items to be customized!")
 	While i > 0
 		i -= 1
-		Int jItem = JArray.GetObj(jCustomItems,i)
-		Form kItem = JMap.GetForm(jItem,"Form")
-		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
+		String sItemID = JValue.SolveStr(JArray.GetObj(jCustomItems,i),".UUID")
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
+			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 		iCount += 1
 	EndWhile
