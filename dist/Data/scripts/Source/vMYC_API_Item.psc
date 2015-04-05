@@ -2,19 +2,14 @@ Scriptname vMYC_API_Item extends vMYC_APIBase Hidden
 {Save and restore item data, including custom items.}
 
 ; === [ vMYC_API_Item.psc ] ===============================================---
+; API for saving and loading customized items. 
 ; 
+; This will serialize and write to the Registry Weapons, Armor, and Potions
+; with all customizations included. Once serialized, the item is represented 
+; by a UUID. 
 ; 
-; 
-; 
-; 
-; 
-; 
-; 
-; 
-; 
-; 
-; 
-; 
+; This ID can then be used to recreate the item in any gaming session, with 
+; all customizations intact.
 ; ========================================================---
 
 ;=== Generic Functions ===--
