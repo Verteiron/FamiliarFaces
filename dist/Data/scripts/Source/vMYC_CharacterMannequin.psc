@@ -19,6 +19,7 @@ Scriptname vMYC_CharacterMannequin extends vMYC_Doppelganger
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 

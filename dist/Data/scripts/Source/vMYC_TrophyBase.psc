@@ -15,6 +15,7 @@ Import Game
 Import Math
 Import vMYC_PlacementUtils
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 

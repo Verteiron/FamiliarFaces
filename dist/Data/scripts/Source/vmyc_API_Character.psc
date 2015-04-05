@@ -17,12 +17,15 @@ Scriptname vMYC_API_Character extends vMYC_APIBase Hidden
 ; to an Character, use either the usual Actor/ActorBase functions or the Doppelganger API.
 ; ========================================================---
 
+Import vMYC_Registry
+Import vMYC_Session
+
 ;=== Generic Functions ===--
 
 Int Function GetCharacterJMap(String asSID) Global
 	Int iRet = -2 ; SID not present
 	String sRegKey = "Characters." + asSID
-	Int jCharacterData = vMYC_Registry.GetRegObj(sRegKey)
+	Int jCharacterData = GetRegObj(sRegKey)
 	If jCharacterData
 		Return jCharacterData
 	EndIf
@@ -155,7 +158,7 @@ EndFunction
 
 ;Retrieve matching SIDs for asCharacterName.
 String[] Function GetSIDsByName(String asCharacterName) Global
-	Int jSIDList = JMap.AllKeys(vMYC_Registry.GetRegObj("Names." + asCharacterName))
+	Int jSIDList = JMap.AllKeys(GetRegObj("Names." + asCharacterName))
 	String[] sResults = Utility.CreateStringArray(JArray.Count(jSidList))
 	Int i = JArray.Count(jSIDList)
 	While i > 0
@@ -167,13 +170,13 @@ EndFunction
 
 ;Return the SID of a session that matches the passed name and playtime.
 String Function MatchSession(String asCharacterName, Float afPlayTime)
-	Int jSIDList = JMap.AllKeys(vMYC_Registry.GetRegObj("Names." + asCharacterName))
+	Int jSIDList = JMap.AllKeys(GetRegObj("Names." + asCharacterName))
 	If jSIDList
 		Int iSID = JArray.Count(jSIDList)
 		While iSID > 0
 			iSID -= 1
 			String sSID = JArray.GetStr(jSIDList,iSID)
-			If Math.ABS(vMYC_Registry.GetRegFlt("Characters." + sSID + ".Info.PlayTime") - afPlayTime) < 0.1
+			If Math.ABS(GetRegFlt("Characters." + sSID + ".Info.PlayTime") - afPlayTime) < 0.1
 				Return sSID
 			EndIf
 		EndWhile
@@ -465,6 +468,14 @@ Int Function SetCharacterShouts(String asSID, Form[] akArray) Global
 	Return vMYC_API_Character.SetCharacterObj(asSID,sKey,jNewArray)
 EndFunction
 
+;=============================---
+; API Serialization Functions 
+;=============================---
+
+String Function SerializeActor(Actor akActor) Global
+
+
+EndFunction
 
 ; FIXME: These should probably never exist. Equipment should always be set from a real actor, otherwise it's too easy to lose data
 
@@ -509,7 +520,7 @@ Int Function DeleteCharacter(String asSID)
 	Else
 		jCharacterData = 0
 		String sRegKey = "Characters." + asSID
-		vMYC_Registry.SetRegObj(sRegKey,0)
+		SetRegObj(sRegKey,0)
 		Return 1
 	EndIf
 	Return iRet

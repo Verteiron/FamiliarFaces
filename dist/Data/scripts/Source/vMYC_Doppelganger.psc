@@ -19,6 +19,7 @@ Scriptname vMYC_Doppelganger extends Actor
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 

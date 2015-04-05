@@ -12,12 +12,15 @@ Scriptname vMYC_API_Item extends vMYC_APIBase Hidden
 ; all customizations intact.
 ; ========================================================---
 
+Import vMYC_Registry
+Import vMYC_Session
+
 ;=== Generic Functions ===--
 
 Int Function GetItemJMap(String asItemID) Global
 	Int iRet = -2 ; ItemID not present
 	String sRegKey = "Items." + asItemID
-	Int jItemData = vMYC_Registry.GetRegObj(sRegKey)
+	Int jItemData = GetRegObj(sRegKey)
 	If jItemData
 		Return jItemData
 	EndIf
@@ -26,10 +29,10 @@ EndFunction
 
 Int Function GetItemInfosForForm(Form akForm) Global
 ;Return a JMap of JItemInfos already saved for akForm
-	Int jItemFMap = vMYC_Registry.GetRegObj("ItemMap")
+	Int jItemFMap = GetRegObj("ItemMap")
 	If !JValue.IsFormMap(jItemFMap)
-		vMYC_Registry.SetRegObj("ItemMap",JFormMap.Object())
-		jItemFMap = vMYC_Registry.GetRegObj("ItemMap")
+		SetRegObj("ItemMap",JFormMap.Object())
+		jItemFMap = GetRegObj("ItemMap")
 	EndIf
 	Int jItemInfoMap = JFormMap.GetObj(jItemFMap,akForm)
 	If !jItemInfoMap
@@ -41,13 +44,13 @@ EndFunction
 
 Function SetItemInfosForForm(Form akForm, Int jItemInfoMap) Global
 ;Return a JMap of JItemInfos already saved for akForm
-	Int jItemFMap = vMYC_Registry.GetRegObj("ItemMap")
+	Int jItemFMap = GetRegObj("ItemMap")
 	If !JValue.IsFormMap(jItemFMap)
-		vMYC_Registry.SetRegObj("ItemMap",JFormMap.Object())
-		jItemFMap = vMYC_Registry.GetRegObj("ItemMap")
+		SetRegObj("ItemMap",JFormMap.Object())
+		jItemFMap = GetRegObj("ItemMap")
 	EndIf
 	JFormMap.SetObj(jItemFMap,akForm,jItemInfoMap)
-	vMYC_Registry.SetRegObj("ItemMap",jItemFMap)
+	SetRegObj("ItemMap",jItemFMap)
 EndFunction
 
 ;Retrieve or create an ItemID for ajObjectInfo. If it has been serialized before, it will return its current itemID.
@@ -98,7 +101,7 @@ String Function SaveItem(Int ajObjectInfo) Global
 	String sRegKey = "Items." + sItemID
 
 	If !JValue.HasPath(ajObjectInfo,".SID")
-		JValue.SolveStrSetter(ajObjectInfo,".SID",vMYC_Registry.GetSessionStr("SessionID"),True)
+		JValue.SolveStrSetter(ajObjectInfo,".SID",GetSessionStr("SessionID"),True)
 	EndIf
 	
 	If !JValue.HasPath(ajObjectInfo,".UUID")
@@ -109,7 +112,7 @@ String Function SaveItem(Int ajObjectInfo) Global
 	Int jItemInfoMap = GetItemInfosForForm(JMap.GetForm(ajObjectInfo,"Form"))
 	JMap.SetObj(jItemInfoMap,sItemID,ajObjectInfo)
 	;SetItemInfosForForm(JMap.GetForm(ajObjectInfo,"Form"),jItemInfoMap)
-	vMYC_Registry.SetRegObj(sRegKey,ajObjectInfo)
+	SetRegObj(sRegKey,ajObjectInfo)
 
 	Return sItemID
 EndFunction
@@ -205,7 +208,7 @@ String Function SerializeEquipment(ObjectReference akObject) Global
 	
 	;Save dye color, if applicable
 	;FIXME: Can dye color be saved when not equipped? There's no function for it...
-	;If vMYC_Registry.GetRegBool("Config.NIO.ArmorDye.Enabled") && kItem as Armor 
+	;If GetRegBool("Config.NIO.ArmorDye.Enabled") && kItem as Armor 
 	;	Bool bHasDye = False
 	;	Int iHandle = NiOverride.GetItemUniqueID(kWornObjectActor, 0, (kItem as Armor).GetSlotMask(), False)
 	;	Int[] iNIODyeColors = New Int[15]
@@ -322,7 +325,7 @@ String Function SerializeEquippedObject(Form kItem, Int iHand = 1, Int h = 0, Ac
 	EndIf
 	
 	;Save dye color, if applicable
-	If vMYC_Registry.GetRegBool("Config.NIO.ArmorDye.Enabled") && kItem as Armor 
+	If GetRegBool("Config.NIO.ArmorDye.Enabled") && kItem as Armor 
 		Bool bHasDye = False
 		Int iHandle = NiOverride.GetItemUniqueID(kWornObjectActor, 0, (kItem as Armor).GetSlotMask(), False)
 		Int[] iNIODyeColors = New Int[15]

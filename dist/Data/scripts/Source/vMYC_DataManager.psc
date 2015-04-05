@@ -16,6 +16,7 @@ Scriptname vMYC_DataManager extends vMYC_ManagerBase
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 
@@ -98,7 +99,6 @@ Int		_jAVNames		= 0
 Event OnInit()
 	If IsRunning() && !IsBusy
 		IsBusy = True
-		SetSessionID()
 		CreateMiscStatNames()
 		CreateAVNames()
 		InitNINodeList()
@@ -972,8 +972,7 @@ Int Function SavePlayerData()
 	GotoState("Busy")
 	DebugTrace("Saving player data...")
 	StartTimer("SavePlayerData")
-	SetSessionID()
-	String sSessionID = GetSessionStr("SessionID")
+	String sSessionID = SessionID
 	
 	ActorBase 	kPlayerBase 	= PlayerREF.GetActorBase()
 	String 		sPlayerName 	= kPlayerBase.GetName()
@@ -1562,17 +1561,17 @@ String Function MatchSession(String sCharacterName = "", Float fPlayTime = 0.0)
 	Return ""
 EndFunction
 
-Function SetSessionID(String sSessionID = "")
-	If !sSessionID && !GetSessionStr("SessionID")
-		SetSessionStr("SessionID",GetUUIDTrue())
-		DebugTrace("Set SessionID: " + GetSessionStr("SessionID"))
-	ElseIf !sSessionID && GetSessionStr("SessionID")
-		DebugTrace("SessionID already set!")
-	ElseIf sSessionID
-		SetSessionStr("SessionID",sSessionID)
-		DebugTrace("Forced SessionID: " + sSessionID)
-	EndIf
-EndFunction
+; Function SetSessionID(String sSessionID = "")
+; 	If !sSessionID && !GetSessionStr("SessionID")
+; 		SetSessionStr("SessionID",GetUUIDTrue())
+; 		DebugTrace("Set SessionID: " + GetSessionStr("SessionID"))
+; 	ElseIf !sSessionID && GetSessionStr("SessionID")
+; 		DebugTrace("SessionID already set!")
+; 	ElseIf sSessionID
+; 		SetSessionStr("SessionID",sSessionID)
+; 		DebugTrace("Forced SessionID: " + sSessionID)
+; 	EndIf
+; EndFunction
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	Debug.Trace("MYC/DataManager: " + sDebugString,iSeverity)

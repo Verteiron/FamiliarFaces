@@ -5,6 +5,7 @@ Scriptname vMYC_PlayerTracker extends ReferenceAlias
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Properties ===--
 

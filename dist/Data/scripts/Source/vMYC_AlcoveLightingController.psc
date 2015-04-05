@@ -12,6 +12,7 @@ Scriptname vMYC_AlcoveLightingController extends ObjectReference
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 Int Property ALCOVE_LIGHTS_OFF	 	= 0 AutoReadOnly Hidden
