@@ -61,8 +61,10 @@ Function SetSessionStr(String asPath, String asString, Bool abMakeDefault = Fals
 EndFunction
 
 String Function GetSessionStr(String asPath, Bool abUseDefault = False) Global
-	If abUseDefault && !JDB.HasPath(".vMYC.Session." + asPath)
-		Return GetRegStr(asPath)
+	If abUseDefault 
+		If !JDB.HasPath(".vMYC.Session." + asPath)
+			Return GetRegStr(asPath)
+		EndIf
 	EndIf
 	Return JDB.solveStr(".vMYC.Session." + asPath)
 EndFunction
@@ -77,10 +79,12 @@ Function SetSessionBool(String asPath, Bool abBool, Bool abMakeDefault = False) 
 EndFunction
 
 Bool Function GetSessionBool(String asPath, Bool abUseDefault = False) Global
-	If abUseDefault && !JDB.HasPath(".vMYC.Session." + asPath)
-		Return GetRegBool(asPath)
+	If abUseDefault 
+		If !JDB.HasPath(".vMYC.Session." + asPath)
+			Return GetRegBool(asPath)
+		EndIf
 	EndIf
-	Return JDB.solveStr(".vMYC.Session." + asPath) as Bool
+	Return JDB.solveInt(".vMYC.Session." + asPath) as Bool
 EndFunction
 
 Function SetSessionInt(String asPath, Int aiInt, Bool abMakeDefault = False) Global
@@ -93,8 +97,10 @@ Function SetSessionInt(String asPath, Int aiInt, Bool abMakeDefault = False) Glo
 EndFunction
 
 Int Function GetSessionInt(String asPath, Bool abUseDefault = False) Global
-	If abUseDefault && !JDB.HasPath(".vMYC.Session." + asPath)
-		Return GetRegInt(asPath)
+	If abUseDefault 
+		If !JDB.HasPath(".vMYC.Session." + asPath)
+			Return GetRegInt(asPath)
+		EndIf
 	EndIf
 	Return JDB.solveInt(".vMYC.Session." + asPath)
 EndFunction
@@ -109,8 +115,10 @@ Function SetSessionFlt(String asPath, Float afFloat, Bool abMakeDefault = False)
 EndFunction
 
 Float Function GetSessionFlt(String asPath, Bool abUseDefault = False) Global
-	If abUseDefault && !JDB.HasPath(".vMYC.Session." + asPath)
-		Return GetRegFlt(asPath)
+	If abUseDefault 
+		If !JDB.HasPath(".vMYC.Session." + asPath)
+			Return GetRegFlt(asPath)
+		EndIf
 	EndIf
 	Return JDB.solveFlt(".vMYC.Session." + asPath)
 EndFunction
@@ -125,8 +133,10 @@ Function SetSessionForm(String asPath, Form akForm, Bool abMakeDefault = False) 
 EndFunction
 
 Form Function GetSessionForm(String asPath, Bool abUseDefault = False) Global
-	If abUseDefault && !JDB.HasPath(".vMYC.Session." + asPath)
-		Return GetRegForm(asPath)
+	If abUseDefault 
+		If !JDB.HasPath(".vMYC.Session." + asPath)
+			Return GetRegForm(asPath)
+		EndIf
 	EndIf
 	Return JDB.solveForm(".vMYC.Session." + asPath)
 EndFunction
@@ -141,8 +151,10 @@ Function SetSessionObj(String asPath, Int ajObj, Bool abMakeDefault = False) Glo
 EndFunction
 
 Int Function GetSessionObj(String asPath, Bool abUseDefault = False) Global
-	If abUseDefault && !JDB.HasPath(".vMYC.Session." + asPath)
-		Return GetRegObj(asPath)
+	If abUseDefault 
+		If !JDB.HasPath(".vMYC.Session." + asPath)
+			Return GetRegObj(asPath)
+		EndIf
 	EndIf
 	Return JDB.solveObj(".vMYC.Session." + asPath)
 EndFunction
