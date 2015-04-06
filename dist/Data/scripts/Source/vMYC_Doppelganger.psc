@@ -65,6 +65,7 @@ Bool				Property IsRaceInvalid	= False					Auto Hidden
 
 String 				Property CharacterName	= ""					Auto Hidden
 String 				Property CharacterUUID	= ""					Auto Hidden
+String 				Property SID			= ""					Auto Hidden
 Race				Property CharacterRace	= None					Auto Hidden
 
 Actor 				Property PlayerREF 									Auto
@@ -151,24 +152,26 @@ Auto State Available
 		;Clear out because we shouldn't be loaded
 	EndEvent
 	
-	Function AssignCharacter(String sUUID)
-	{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
+	Function AssignCharacter(String asSID)
+	{This is the biggie, calling this in Available state will transform the character into the target in asSID.}
 		GoToState("Busy")
-		_jCharacterData = GetRegObj("Characters." + sUUID)
-		_sCharacterInfo = "Characters." + sUUID + ".Info."
+		_jCharacterData = GetRegObj("Characters." + asSID)
+		_sCharacterInfo = "Characters." + asSID + ".Info."
 		SaveSession()
 		If !_jCharacterData
-			DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, but there's no data for that UUID!")
+			DebugTrace("AssignCharacter(" + asSID + ") was called in Available state, but there's no data for that UUID!")
 			GotoState("Available")
 			Return
 		EndIf
-		DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, transforming into " + GetRegStr(_sCharacterInfo + "Name") + "!")
-		SetRegForm("Doppelgangers.Preferred." + sUUID + ".ActorBase",MyActorBase)
-		SetSessionForm("Doppelgangers." + sUUID + ".ActorBase",MyActorBase)
-		SetSessionForm("Doppelgangers." + sUUID + ".Actor",Self as Actor)
+		SID = asSID
+		DebugTrace("AssignCharacter(" + asSID + ") was called in Available state, transforming into " + GetRegStr(_sCharacterInfo + "Name") + "!")
 		CharacterName = GetRegStr(_sCharacterInfo + "Name")
 		CharacterRace = GetRegForm(_sCharacterInfo + "Race") as Race
+
+		vMYC_API_Doppelganger.RegisterActor(Self)
+
 		MyActorBase.SetName(CharacterName)
+
 		NeedAppearance	= True
 		NeedStats		= True
 		NeedPerks		= True
@@ -245,9 +248,15 @@ State Busy
 
 EndState
 
-Function AssignCharacter(String sUUID)
-{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
-	DebugTrace("AssignCharacter(" + sUUID + ") was called outside of Available state, doing nothing!",1)
+Function AssignCharacter(String asSID)
+{This is the biggie, calling this in Available state will transform the character into the target in asSID.}
+	DebugTrace("AssignCharacter(" + asSID + ") was called outside of Available state, doing nothing!",1)
+EndFunction
+
+Function EraseCharacter()
+{This will blank out this character, delete the Actor and release the Actorbase back into the pool.}
+	;FIXME: Do something!
+	SID = ""
 EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)

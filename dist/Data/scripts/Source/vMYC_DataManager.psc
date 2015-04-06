@@ -159,18 +159,24 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 	EndWhile
 	SavePlayerData()
 	Debug.MessageBox("Finished saving!")
-;	WaitMenuMode(5)
-;	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
-;	Int i = JArray.Count(jCharacters)
-;	While i > 0
-;		i -= 1
-;		String sUUID = JArray.GetStr(jCharacters,i)
-;		Int iSex = GetRegInt("Characters." + sUUID + META + ".Sex")
-;		ActorBase kDoppelganger = GetAvailableActorBase(iSex)
-;		Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
-;		vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
-;		kDoppelScript.AssignCharacter(sUUID)	
-;	EndWhile
+	WaitMenuMode(5)
+	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
+	Int i = JArray.Count(jCharacters)
+	While i > 0
+		i -= 1
+		String sUUID = JArray.GetStr(jCharacters,i)
+		;Int iSex = GetRegInt("Characters." + sUUID + META + ".Sex")
+		vMYC_Doppelganger kDoppelActor =vMYC_API_Doppelganger.CreateDoppelganger(sUUID) as vMYC_Doppelganger
+		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
+		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
+		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
+		;kDoppelScript.AssignCharacter(sUUID)
+		While kDoppelActor.NeedAppearance && kDoppelActor.NeedEquipment
+			DebugTrace("Waiting for actor to be ready...")
+			Wait(0.5)
+		EndWhile
+		kDoppelActor.MoveTo(PlayerREF)
+	EndWhile
 	
 EndEvent
 
