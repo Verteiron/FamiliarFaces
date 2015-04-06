@@ -536,7 +536,7 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 			Int h = (kObject.GetBaseObject() as Armor).GetSlotMask()
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
-			kCharacterActor.EquipItemEx(kObject,0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
+			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
 			;== Load NIO dye, if applicable ===--
 			If GetRegBool("Config.NIO.ArmorDye.Enabled")
 				Int jArmor = vMYC_API_Item.GetItemJMap(sItemID)
@@ -595,7 +595,7 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
-			kCharacterActor.EquipItemEx(kObject,iHand,False,True) ;FIXME: May need to use the Base form here?
+			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),iHand,False,True) ;FIXME: May need to use the Base form here?
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
 			If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
 				bTwoHanded = True
