@@ -50,11 +50,17 @@ Actor 				Property PlayerRef 								Auto
 ActorBase 			Property vMYC_InvisibleMActor					Auto
 {Invisible actor for collecting custom weapons.}
 
-Formlist 			Property vMYC_DummyActorsMList 					Auto
-{Formlist containing the male dummy actors.}
+Formlist 			Property vMYC_DoppelgangersMList				Auto
+{Formlist containing the auto-leveled male dummy actors.}
 
-Formlist 			Property vMYC_DummyActorsFList					Auto
-{Formlist containing the female dummy actors.}
+Formlist 			Property vMYC_DoppelgangersFList				Auto
+{Formlist containing the auto-leveled female dummy actors.}
+
+Formlist 			Property vMYC_DoppelgangersULMList				Auto
+{Formlist containing the unleveled male dummy actors.}
+
+Formlist 			Property vMYC_DoppelgangersULFList				Auto
+{Formlist containing the unleveled female dummy actors.}
 
 Formlist 			Property vMYC_PerkList 							Auto
 {A list of all perks as found by ActorValueInfo.}
@@ -106,13 +112,26 @@ Event OnInit()
 		;Init ActorBasePool forms in case they're not there already
 		If !HasRegKey("ActorbasePool.F")
 			Int jABPool = JArray.Object()
-			JArray.AddFromFormlist(jABPool,vMYC_DummyActorsFList)
+			JArray.AddFromFormlist(jABPool,vMYC_DoppelgangersFList)
 			SetRegObj("ActorbasePool.F",jABPool)
 		EndIf
+		
 		If !HasRegKey("ActorbasePool.M")
 			Int jABPool = JArray.Object()
-			JArray.AddFromFormlist(jABPool,vMYC_DummyActorsMList)
+			JArray.AddFromFormlist(jABPool,vMYC_DoppelgangersMList)
 			SetRegObj("ActorbasePool.M",jABPool)
+		EndIf
+
+		If !HasRegKey("ActorbasePool.UF")
+			Int jABPool = JArray.Object()
+			JArray.AddFromFormlist(jABPool,vMYC_DoppelgangersULFList)
+			SetRegObj("ActorbasePool.UF",jABPool)
+		EndIf
+
+		If !HasRegKey("ActorbasePool.UM")
+			Int jABPool = JArray.Object()
+			JArray.AddFromFormlist(jABPool,vMYC_DoppelgangersULMList)
+			SetRegObj("ActorbasePool.UM",jABPool)
 		EndIf
 
 		If !HasSessionKey("ActorbaseMap")
@@ -1278,51 +1297,6 @@ Function UpgradeData(String sUUID)
 	EndIf
 	StopTimer("UpgradeData")
 EndFunction
-
-;=== Functions - Actorbase/Actor management ===--
-
-ActorBase Function GetAvailableActorBase(Int iSex, ActorBase kPreferredAB = None)
-{Returns the first available dummy actorbase of the right sex, optionally fetch the preferred one.}
-	ActorBase kDoppelgangerBase = None
-	Int jActorbaseMap = GetSessionObj("ActorbaseMap")
-	
-	If kPreferredAB
-		If !JFormMap.GetStr(jActorbaseMap,kPreferredAB) ; If this AB is not already assigned in this session...
-			JFormMap.SetStr(jActorBaseMap,kPreferredAB,"Reserved")
-			SaveSession()
-			Return kPreferredAB
-		EndIf
-	EndIf
-	
-	;== If we got this far then the preferred base is either not set or is in use ===--
-
-	Int jActorbasePool = 0
-	
-	If iSex ; 0 = m, 1 = f
-		jActorbasePool = GetRegObj("ActorbasePool.F")
-	Else
-		jActorbasePool = GetRegObj("ActorbasePool.M")
-	EndIf
-	
-	Int i = JArray.Count(jActorbasePool)
-	While i > 0
-		i -= 1
-		kDoppelgangerBase = JArray.GetForm(jActorBasePool,i) as ActorBase
-		If kDoppelgangerBase
-			If !JFormMap.GetStr(jActorbaseMap,kDoppelgangerBase) ; If this AB is not already assigned in this session...
-				JFormMap.SetStr(jActorBaseMap,kDoppelgangerBase,"Reserved")
-				SaveSession()
-				Return kDoppelgangerBase
-			EndIf
-		EndIf
-	EndWhile
-
-	DebugTrace("Couldn't find an available ActorBase!",1)
-	;== Either no more are available, or something else went wrong ===--
-	Return None
-EndFunction
-
-
 
 ;=== Functions - Requirement list ===--
 
