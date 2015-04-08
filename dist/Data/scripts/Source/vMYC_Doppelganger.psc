@@ -530,8 +530,10 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 	i = JArray.Count(jCharacterArmorInfo)
 	While i > 0
 		i -= 1
+
+		ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCharacterArmorInfo,i))
 		String sItemID = JValue.SolveStr(JArray.GetObj(jCharacterArmorInfo,i),".UUID")
-		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+
 		If kObject
 			Int h = (kObject.GetBaseObject() as Armor).GetSlotMask()
 			kObject.SetActorOwner(MyActorBase)
@@ -591,7 +593,7 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 			sHand = "Left"
 		EndIf
 		String sItemID = JValue.SolveStr(_jCharacterData,".Equipment." + sHand + ".UUID")
-		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+		ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JValue.SolveObj(_jCharacterData,".Equipment." + sHand))
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
@@ -683,7 +685,8 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	While i > 0
 		i -= 1
 		String sItemID = JValue.SolveStr(JArray.GetObj(jCustomItems,i),".UUID")
-		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+		ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCustomItems,i))
+
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
@@ -995,9 +998,9 @@ Int Function UpdateSpells()
 			EndIf
 			
 			If iPerkCount > 1
-				SetSessionBool("Config.Magic.Allow" + sMagicSchool,True)
+				SetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool,True)
 			Else
-				SetSessionBool("Config.Magic.Allow" + sMagicSchool,False)
+				SetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool,False)
 			EndIf
 			i += 1
 		EndWhile
@@ -1012,14 +1015,14 @@ Int Function UpdateSpells()
 		Bool bSpellIsAllowed = False
 		
 		If sMagicSchool
-			bSpellIsAllowed = GetSessionBool("Config.Magic.Allow" + sMagicSchool)
+			bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool)
 		Else
-			bSpellIsAllowed = GetSessionBool("Config.Magic.AllowOther")
+			bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.AllowOther")
 		EndIf
 		
 		MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
 		
-		If GetSessionBool("Config.Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
+		If GetSessionBool("Config." + SID + ".Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
 			If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 				bSpellIsAllowed = True
 			ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
@@ -1027,7 +1030,7 @@ Int Function UpdateSpells()
 			EndIf
 		EndIf
 		
-		If GetSessionBool("Config.Magic.AllowDefensive")
+		If GetSessionBool("Config." + SID + ".Magic.AllowDefensive")
 			If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 				bSpellIsAllowed = True
 			ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
@@ -1044,7 +1047,7 @@ Int Function UpdateSpells()
 			iAllowedSources[3] = GetModByName("Dragonborn.esm")
 			iAllowedSources[4] = GetModByName("Hearthfires.esm")
 
-			If GetSessionBool("Config.Magic.AllowSelectMods") ; Select mods
+			If GetSessionBool("Config." + SID + ".Magic.AllowSelectMods") ; Select mods
 				iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
 				iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
 				iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
@@ -1087,7 +1090,7 @@ Int Function UpdateSpells()
 	If iAdded || iRemoved
 		DebugTrace("Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
-
+	SaveSession()
 	Return iAdded
 EndFunction
 

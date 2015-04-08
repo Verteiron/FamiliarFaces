@@ -41,6 +41,7 @@ EndFunction
 
 ActorBase Function GetAvailableActorBase(Int aiSex, ActorBase akPreferredAB = None, Bool abLeveled = True) Global
 {Returns the first available dummy actorbase of the right sex, optionally fetch the preferred one, optionally only choose unleveled ABs.}
+	
 	ActorBase kDoppelgangerBase = None
 	Int jActorbaseMap = GetSessionObj("ActorbaseMap")
 	
@@ -171,14 +172,17 @@ Actor Function CreateDoppelganger(String asSID) Global
 		Return None
 	EndIf
 
+	String sName = GetCharacterName(asSID)
 	Int iSex = GetCharacterSex(asSID)
+	Race kRace = GetCharacterRace(asSID)
 
-	ActorBase kDoppelgangerBase = GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase") as Actorbase
-	If !kDoppelgangerBase 
-		kDoppelgangerBase = GetAvailableActorBase(iSex)
-	;ElseIf GetSessionForm("Doppelgangers." + asSID + ".ActorBase") ;FIXME: It's possible the preferred AB is already in use.
-		;kDoppelgangerBase = GetAvailableActorBase()
+	If sName && iSex > -1 && kRace
+		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Going to assign a Doppelganger to " + sName + " (" + kRace.GetName() + ")")
+	Else
+		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Character is missing vital data, aborting!",1)
+		Return None
 	EndIf
+	ActorBase kDoppelgangerBase = GetAvailableActorBase(iSex,GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase") as Actorbase)
 ;	;GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase")
 ;	;SetSessionForm("Doppelgangers." + asSID + ".ActorBase",MyActorBase)
 	;SetSessionForm("Doppelgangers." + asSID + ".Actor",Self as Actor)

@@ -159,6 +159,9 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 	EndWhile
 	SavePlayerData()
 	Debug.MessageBox("Finished saving!")
+
+	Actor[] kDoppelgangers = New Actor[32]
+
 	WaitMenuMode(5)
 	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
 	Int i = JArray.Count(jCharacters)
@@ -166,16 +169,27 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
 		;Int iSex = GetRegInt("Characters." + sUUID + META + ".Sex")
-		vMYC_Doppelganger kDoppelActor =vMYC_API_Doppelganger.CreateDoppelganger(sUUID) as vMYC_Doppelganger
+		kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID) ;as vMYC_Doppelganger
 		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
 		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
 		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
 		;kDoppelScript.AssignCharacter(sUUID)
-		While kDoppelActor.NeedAppearance && kDoppelActor.NeedEquipment
-			DebugTrace("Waiting for actor to be ready...")
-			Wait(0.5)
-		EndWhile
-		kDoppelActor.MoveTo(PlayerREF)
+		;While kDoppelActor.NeedAppearance && kDoppelActor.NeedEquipment
+		;	DebugTrace("Waiting for actor to be ready...")
+		;	Wait(0.5)
+		;EndWhile
+	EndWhile
+
+	i = kDoppelgangers.Length
+	While i > 0
+		i -= 1
+		If kDoppelgangers[i]
+			While (kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance && (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment
+				DebugTrace("Waiting for actor to be ready...")
+				Wait(0.5)
+			EndWhile
+			kDoppelgangers[i].MoveTo(PlayerREF)
+		EndIf
 	EndWhile
 	
 EndEvent
@@ -221,7 +235,7 @@ Function DoUpkeep(Bool bInBackground = True)
 
 	ImportCharacterFiles()
 	ImportCharacterFiles(JContainers.userDirectory() + "/vMYC/")
-	
+	UpgradeRegistryData()
 	;=== Don't register this until after we've init'd everything else
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
 	;RegisterForModEvent("vMYC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")

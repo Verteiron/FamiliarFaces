@@ -92,7 +92,6 @@ String Function AssignItemID(Int ajObjectInfo) Global
 EndFunction
 
 String Function SaveItem(Int ajObjectInfo) Global
-;FIXME: This should check and see if the item already exists and return its current ItemID if it does
 	If !JValue.IsMap(ajObjectInfo)
 		Return ""
 	EndIf
@@ -356,29 +355,51 @@ String Function SerializeEquippedObject(Form kItem, Int iHand = 1, Int h = 0, Ac
 EndFunction
 
 ObjectReference Function CreateObject(String asItemID) Global
-{Recreate an item from its ItemID.}
+{Recreate an item from scratch using its ItemID.}
 	Int jItem = GetItemJMap(asItemID)
-	Form kItem = JMap.getForm(jItem,"Form")
-	If (kItem as Weapon) || (kItem as Armor)
-		Return CreateEquipment(asItemID)
-	ElseIf (kItem as Potion)
-		Return CreatePotion(asItemID)
-	EndIf
-EndFunction
-
-
-ObjectReference Function CreateEquipment(String asItemID) Global
-{Recreate a custom weapon or armor from its saved version.}
-	Int jItem = GetItemJMap(asItemID)
-	Form kItem = JMap.getForm(jItem,"Form")
-	If !(kItem as Weapon) && !(kItem as Armor)
+	If !jItem
+		DebugTraceAPIItem("CreateObject: " + asItemID + " is not a valid ItemID!",1)
 		Return None
 	EndIf
+	Return CreateObjectFromJObj(jItem)
+EndFunction
+
+ObjectReference Function CreateObjectFromJObj(Int ajObjectInfo) Global
+{Recreate an item from scratch using an appropriate JContainers object.}
+	Int jItem = ajObjectInfo
+	
+	Form kItem = JMap.getForm(jItem,"Form")
+	String sItemID = JMap.getStr(jItem,"UUID")
+	If !kItem
+		DebugTraceAPIItem("CreateObject: " + sItemID + " does not reference a valid base Form!!",1)
+		Return None
+	EndIf
+
 	ObjectReference kNowhere = Game.GetFormFromFile(0x00004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
 	ObjectReference kObject = kNowhere.PlaceAtMe(kItem)
 	If !kObject
-		;DebugTrace("Couldn't create ObjectReference for " + kItem + "!",1)
+		DebugTraceAPIItem("CreateObject: " + sItemID + " could not use base Form " + kItem + " to create an ObjectReference!",1)
 		Return None
+	EndIf
+
+
+
+	If (kItem as Weapon) || (kItem as Armor)
+		Return CustomizeEquipment(sItemID,kObject)
+	ElseIf (kItem as Potion)
+		Return CreatePotion(sItemID)
+	EndIf
+	Return kObject
+EndFunction
+
+ObjectReference Function CustomizeEquipment(String asItemID, ObjectReference akObject) Global
+{Recreate a custom weapon or armor from its saved version. If akObject is passed, attempt to apply the customization to it rather than creating a new one.}
+	ObjectReference kObject = akObject
+	Int jItem = GetItemJMap(asItemID)
+	Form kItem = JMap.getForm(jItem,"Form")
+	If !(kItem as Weapon) && !(kItem as Armor)
+		DebugTraceAPIItem("CustomizeEquipment: Item is not Weapon or Armor!",1)
+		Return kObject
 	EndIf
 	If JMap.getInt(jItem,"IsCustom")
 		String sDisplayName = JMap.getStr(jItem,"DisplayName")
@@ -490,4 +511,8 @@ ObjectReference Function CreatePotion(String asItemID) Global
 	EndWhile
 	
 	Return kNowhere.PlaceAtMe(kPotion,abForcePersist = True)
+EndFunction
+
+Function DebugTraceAPIItem(String sDebugString, Int iSeverity = 0) Global
+	Debug.Trace("MYC/API/Item: " + sDebugString,iSeverity)
 EndFunction
