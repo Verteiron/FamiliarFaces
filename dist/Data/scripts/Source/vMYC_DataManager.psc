@@ -42,7 +42,7 @@ vMYC_HangoutManager Property HangoutManager 						Auto
 
 vMYC_PlayerTracker	Property PlayerTracker							Auto
 
-Int 				Property SerializationVersion = 4 				Auto Hidden
+Int 				Property SerializationVersion = 5 				Auto Hidden
 
 Actor 				Property PlayerRef 								Auto
 {The Player, duh.}
@@ -1261,7 +1261,8 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
 				SetRegObj("Characters." + sUUID,jCharacterData)
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
-				If iDataVersion == 3
+				If iDataVersion < SerializationVersion
+					DebugTrace("ImportCharacters - Upgrading data for " + sCharacterName + "! (" + sUUID + ")")
 					UpgradeData(sUUID)
 				EndIf
 			Else  ; Data already exists for this SSID
@@ -1285,6 +1286,20 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 	StopTimer("ImportCharacterFiles")
 EndFunction
 
+Function UpgradeRegistryData()
+	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
+	Int i = JArray.Count(jCharacters)
+	While i > 0
+		i -= 1
+		String sUUID = JArray.GetStr(jCharacters,i)
+		If GetRegInt("Characters." + sUUID + META + ".SerializationVersion") < SerializationVersion
+			String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
+			DebugTrace("UpgradeRegistryData - Upgrading Registry data for " + sCharacterName + "! (" + sUUID + ")")
+			UpgradeData(sUUID)
+		EndIf
+	EndWhile
+EndFunction
+
 Function UpgradeData(String sUUID)
 {Upgrade data from earlier version to match current version.}
 	Int jCharacterData = GetRegObj("Characters." + sUUID)
@@ -1293,9 +1308,13 @@ Function UpgradeData(String sUUID)
 		Return
 	EndIf
 	StartTimer("UpgradeData")
+
+	;=== Upgrade Inventory section ===--
+
 	Int jOldInventory = GetRegObj("Characters." + sUUID + ".Inventory")
 	If JValue.IsFormMap(jOldInventory)
 		;Old inventory storage, upgrade it
+		DebugTrace("UpgradeData - Upgrading Inventory...")
 		Int jOldItems = JFormMap.AllKeys(jOldInventory)
 		Int jNewInventory = JMap.Object()
 		Int i = JArray.Count(jOldItems)
@@ -1315,6 +1334,70 @@ Function UpgradeData(String sUUID)
 		EndWhile
 		JMap.SetObj(jCharacterData,"Inventory",jNewInventory)
 	EndIf
+
+	;=== Upgrade Equipment section ===--
+
+	Int jOldArmorInfo = GetRegObj("Characters." + sUUID + ".Equipment.ArmorInfo")
+	If JValue.IsArray(jOldArmorInfo)
+		DebugTrace("UpgradeData - Upgrading ArmorInfo...")
+		Int jNewArmorInfos = JArray.Object()
+		Int i = JArray.Count(jOldArmorInfo)
+		While i > 0
+			i -= 1
+			Int ajItemInfo = JArray.GetObj(jOldArmorInfo,i)
+			If !JMap.GetStr(ajItemInfo,"SID")
+				JMap.SetStr(ajItemInfo,"SID",sUUID)
+			EndIf
+			String sItemID = vMYC_API_Item.SaveItem(ajItemInfo)
+			If sItemID
+				JArray.AddObj(jNewArmorInfos,vMYC_API_Item.GetItemJMap(sItemID))
+			EndIf
+		EndWhile
+		JMap.SetObj(jCharacterData,"ArmorInfo",jNewArmorInfos)
+	EndIf
+
+	String[] sHands = New String[2]
+	sHands[0] = "Left"
+	sHands[1] = "Right"
+
+	Int iHand = 0
+	While iHand < 2
+		Int jOldHandInfo = GetRegObj("Characters." + sUUID + ".Equipment." + sHands[iHand])
+		If !JMap.GetStr(jOldHandInfo,"SID")
+			JMap.SetStr(jOldHandInfo,"SID",sUUID)
+		EndIf
+		String sItemID = vMYC_API_Item.SaveItem(jOldHandInfo)
+		If sItemID
+			SetRegObj("Characters." + sUUID + ".Equipment." + sHands[iHand],vMYC_API_Item.GetItemJMap(sItemID))
+		EndIf
+		iHand += 1
+	EndWhile
+
+	;=== Upgrade InventoryCustomItems section ===--
+
+	Int jOldItemInfos = GetRegObj("Characters." + sUUID + ".InventoryCustomItems")
+	If JValue.IsArray(jOldItemInfos)
+		DebugTrace("UpgradeData - Upgrading ItemInfos...")
+		Int jNewItemInfos = JArray.Object()
+		Int i = JArray.Count(jOldItemInfos)
+		While i > 0
+			i -= 1
+			Int ajItemInfo = JArray.GetObj(jOldItemInfos,i)
+			If !JMap.GetStr(ajItemInfo,"SID")
+				JMap.SetStr(ajItemInfo,"SID",sUUID)
+			EndIf
+			String sItemID = vMYC_API_Item.SaveItem(ajItemInfo)
+			If sItemID
+				JArray.AddObj(jNewItemInfos,vMYC_API_Item.GetItemJMap(sItemID))
+			EndIf
+		EndWhile
+		JMap.SetObj(jCharacterData,"InventoryCustomItems",jNewItemInfos)
+	EndIf
+
+
+
+
+
 	StopTimer("UpgradeData")
 EndFunction
 
