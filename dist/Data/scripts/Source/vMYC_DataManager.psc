@@ -320,6 +320,7 @@ Function ScanPlayerStats()
 	StopTimer("SaveSkills")
 	StopTimer("ScanPlayerStats")
 	SetSessionBool("Status.Stats.Busy",False)
+	SetSessionBool("Status.Stats.Ready",True)
 EndFunction
 
 Function ScanPlayerPerks()
@@ -1087,7 +1088,7 @@ Int Function SavePlayerData()
 	EndWhile
 
 	RegisterForModEvent("vMYC_BackgroundFunction","OnBackgroundFunction")
-	SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
+	;SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
 	;SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
 	SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
@@ -1357,18 +1358,32 @@ Function UpgradeData(String sUUID)
 	EndIf
 
 	String[] sHands = New String[2]
-	sHands[0] = "Left"
-	sHands[1] = "Right"
+	sHands[0] = "Right"
+	sHands[1] = "Left"
+
+	Bool bTwoHanded = False
 
 	Int iHand = 0
 	While iHand < 2
 		Int jOldHandInfo = GetRegObj("Characters." + sUUID + ".Equipment." + sHands[iHand])
-		If !JMap.GetStr(jOldHandInfo,"SID")
-			JMap.SetStr(jOldHandInfo,"SID",sUUID)
+		Form kItem = JValue.SolveForm(jOldHandInfo,".Form")
+		If kItem as Weapon 
+			Weapon kWeapon = kItem as Weapon
+			If kWeapon
+				If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
+					bTwoHanded = True
+				EndIf
+			EndIf
 		EndIf
-		String sItemID = vMYC_API_Item.SaveItem(jOldHandInfo)
-		If sItemID
-			SetRegObj("Characters." + sUUID + ".Equipment." + sHands[iHand],vMYC_API_Item.GetItemJMap(sItemID))
+		If bTwoHanded && sHands[iHand] == "Left"
+			SetRegObj("Characters." + sUUID + ".Equipment.Left",JMap.Object())
+			If !JMap.GetStr(jOldHandInfo,"SID")
+				JMap.SetStr(jOldHandInfo,"SID",sUUID)
+			EndIf
+			String sItemID = vMYC_API_Item.SaveItem(jOldHandInfo)
+			If sItemID
+				SetRegObj("Characters." + sUUID + ".Equipment." + sHands[iHand],vMYC_API_Item.GetItemJMap(sItemID))
+			EndIf
 		EndIf
 		iHand += 1
 	EndWhile
