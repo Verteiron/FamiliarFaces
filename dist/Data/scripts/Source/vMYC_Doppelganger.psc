@@ -330,9 +330,9 @@ Int Function UpdateAppearance()
 	If _bCharGenSuccess
 		Return 0
 	Else
-		DebugTrace("Something went wrong during UpdateAppearance!",1)
-		;FIXME: Add more error handling like checking for missing files, etc
-		Return -1
+	DebugTrace("Something went wrong during UpdateAppearance!",1)
+	;FIXME: Add more error handling like checking for missing files, etc
+	Return -1
 	EndIf
 EndFunction
 
@@ -599,8 +599,10 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 			kCharacterActor.AddItem(kObject,1,True)
 			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),iHand,False,True) ;FIXME: May need to use the Base form here?
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
-			If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
-				bTwoHanded = True
+			If kWeapon
+				If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
+					bTwoHanded = True
+				EndIf
 			EndIf
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
 			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
@@ -717,11 +719,13 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	While i > 0
 		i -= 1
 		Form kItem = JArray.GetForm(jPotionList,i)
-		Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
 		If kItem
-			If !(kItem as Potion).IsFood() ;.HasKeywordString("VendorItemFood")
-				AddItem(kItem,iItemCount,True)
-				iCount += iItemCount
+			Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
+			If (kItem as Potion)
+				If !(kItem as Potion).IsFood() ;.HasKeywordString("VendorItemFood")
+					AddItem(kItem,iItemCount,True)
+					iCount += iItemCount
+				EndIf
 			EndIf
 		EndIf
 	EndWhile

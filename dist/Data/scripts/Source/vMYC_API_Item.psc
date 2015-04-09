@@ -270,6 +270,9 @@ String Function SerializeEquippedObject(Form kItem, Int iHand = 1, Int h = 0, Ac
 	ElseIf (kItem as Armor)
 		isEnchantable = True
 		kItemEnchantment = (kItem as Armor).GetEnchantment()
+	Else
+		;If the Item isn't a Weapon or Armor, it's a Spell, Light (torch), or None. It doesn't need to be serialized.
+		Return ""
 	EndIf
 
 	Int jEquipmentEnchantmentInfo = JMap.Object()

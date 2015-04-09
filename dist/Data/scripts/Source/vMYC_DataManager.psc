@@ -710,8 +710,16 @@ Function ScanPlayerEquipment()
 	String sLeftID = vMYC_API_Item.SerializeEquippedObject(PlayerREF.GetEquippedObject(0),0,0)
 	String sRightID = vMYC_API_Item.SerializeEquippedObject(PlayerREF.GetEquippedObject(1),1,0)
 
-	JMap.SetObj(jPlayerEquipment,"Left",vMYC_API_Item.GetItemJMap(sLeftID))
-	JMap.SetObj(jPlayerEquipment,"Right",vMYC_API_Item.GetItemJMap(sRightID))
+	If sLeftID 
+		JMap.SetObj(jPlayerEquipment,"Left",vMYC_API_Item.GetItemJMap(sLeftID))
+	Else
+		JValue.SolveFormSetter(jPlayerEquipment,".Left.Form",PlayerREF.GetEquippedObject(0),True)
+	EndIf
+	If sRightID 
+		JMap.SetObj(jPlayerEquipment,"Right",vMYC_API_Item.GetItemJMap(sRightID))
+	Else
+		JValue.SolveFormSetter(jPlayerEquipment,".Right.Form",PlayerREF.GetEquippedObject(1),True)
+	EndIf
 
 	Int jEquipVoice = JMap.Object()
 	JMap.SetForm(jEquipVoice,"Form",PlayerREF.GetEquippedObject(2))
@@ -1310,6 +1318,8 @@ Function UpgradeData(String sUUID)
 	EndIf
 	StartTimer("UpgradeData")
 
+	String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
+
 	;=== Upgrade Inventory section ===--
 
 	Int jOldInventory = GetRegObj("Characters." + sUUID + ".Inventory")
@@ -1377,6 +1387,7 @@ Function UpgradeData(String sUUID)
 		EndIf
 		If bTwoHanded && sHands[iHand] == "Left"
 			SetRegObj("Characters." + sUUID + ".Equipment.Left",JMap.Object())
+		Else
 			If !JMap.GetStr(jOldHandInfo,"SID")
 				JMap.SetStr(jOldHandInfo,"SID",sUUID)
 			EndIf
