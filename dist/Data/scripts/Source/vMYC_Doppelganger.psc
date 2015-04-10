@@ -240,6 +240,7 @@ State Assigned
 	EndEvent
 
 	Event OnLoad()
+		UpdateNINodes()
 	EndEvent
 	
 EndState
@@ -329,11 +330,10 @@ Int Function UpdateAppearance()
 	MyActorBase.SetInvulnerable(_bInvulnerableState)
 	If _bCharGenSuccess
 		Return 0
-	Else
+	EndIf
 	DebugTrace("Something went wrong during UpdateAppearance!",1)
 	;FIXME: Add more error handling like checking for missing files, etc
 	Return -1
-	EndIf
 EndFunction
 
 Int Function UpdateNINodes()
@@ -341,11 +341,67 @@ Int Function UpdateNINodes()
 		DebugTrace("UpdateAppearance called outside Assigned state!")
 		Return -2
 	EndIf
+
+	Int i
+
+	DebugTrace("Updating NINodes...")
+	Int jCharGenNodeTransforms = JValue.SolveObj(_jCharacterData,".CharGenData.Transforms")
+	If jCharGenNodeTransforms
+		i = JArray.Count(jCharGenNodeTransforms)
+		While i > 0
+			i -= 1
+			Int jNodeTransform = JArray.GetObj(jCharGenNodeTransforms,i)
+			String sNodeName = JValue.SolveStr(jNodeTransform,".node")
+			If sNodeName
+				; {
+		        ; "firstPerson": 0,
+		          ; "keys": [
+		            ; {
+		              ; "name": "RSMPlugin",
+		              ; "values": [
+		                ; {
+		                  ; "data": 2.5399999618530273,
+		                  ; "key": 30,
+		                  ; "index": 0,
+		                  ; "type": 4
+		                ; }
+		              ; ]
+		            ; }
+		          ; ],
+		          ; "node": "NPC Head [Head]"
+		        ; }
+		        Bool bFirstPerson = JValue.SolveInt(jNodeTransform,".firstPerson") as Bool
+				Int jNodeKeys = JValue.SolveObj(jNodeTransform,".keys")
+				Int iKey = JArray.Count(jNodeKeys)
+				While iKey > 0
+					iKey -= 1
+					Int jNodeKey = JArray.GetObj(jNodeKeys,iKey)
+					String sKeyName = JValue.SolveStr(jNodeKey,".name")
+					Int jNodeKeyValues = JValue.SolveObj(jNodeKey,".values")
+					Int iValue = JArray.Count(jNodeKeyValues)
+					While iValue > 0
+						iValue -= 1
+						Int jNodeKeyValue = JArray.GetObj(jNodeKeyValues,iValue)
+						Float fData = JValue.SolveFlt(jNodeKeyValue,".data")
+						Int iType = JValue.SolveInt(jNodeKeyValue,".type")
+						If iType == 4 && fData && fData != 1
+							Debug.Trace("Scaling NINode " + sNodeName + " to " + fData + "!")
+							NetImmerse.SetNodeScale(Self,sNodeName,fData,bFirstPerson)
+						EndIf
+					EndWhile
+				EndWhile
+			EndIf
+		EndWhile
+		Return 0
+	EndIf
+
+
+
 	Int jNINodeData = JValue.SolveObj(_jCharacterData,".NINodeData")
-	
+
 	Int jNiNodeNameList = JMap.AllKeys(jNINodeData)
 	Int jNiNodeValueList = JMap.AllValues(jNINodeData)
-	Int i = JArray.Count(jNiNodeNameList)
+	i = JArray.Count(jNiNodeNameList)
 	While i > 0
 		i -= 1
 		String sNodeName = JArray.GetStr(jNiNodeNameList,i)
@@ -357,6 +413,7 @@ Int Function UpdateNINodes()
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,True)
 		EndIf
 	EndWhile
+	Return 0
 EndFunction
 
 Int Function UpdateNIOverlays()

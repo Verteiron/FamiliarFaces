@@ -1087,7 +1087,7 @@ Int Function SavePlayerData()
 	_bSavedSpells 		= False
 	_bSavedEquipment 	= False
 	_bSavedInventory 	= False
-	_bSavedNINodeInfo	= False
+	;_bSavedNINodeInfo	= False
 
 	Int iSafety = 10
 	While PlayerTracker.Busy && iSafety > 0
@@ -1126,16 +1126,30 @@ Int Function SavePlayerData()
 	
 	StopTimer("SaveCharacter")
 	
-	;== Save NIOverride overlays ===--
-	StartTimer("NIOverrideData")
-	If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
-		Int jNIOData = JMap.Object()
-		SetRegObj(sRegKey + ".NIOverrideData.BodyOverlays",NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays()))
-		SetRegObj(sRegKey + ".NIOverrideData.HandOverlays",NIO_GetOverlayData("Hand [Ovl",NIOverride.GetNumBodyOverlays()))
-		SetRegObj(sRegKey + ".NIOverrideData.FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumBodyOverlays()))
-		SetRegObj(sRegKey + ".NIOverrideData.FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumBodyOverlays()))
+	;== Save NINode/Override overlays ===--
+	
+	;=== Import NINode data from .jslot, if available ===--
+	
+	String sCharGenPath = "Data/skse/Plugins/CharGen/Exported/" + sPlayerName + ".jslot"
+	Int jCharGenData = JValue.ReadFromFile(sCharGenPath)
+	If jCharGenData
+		SetRegObj(sRegKey + ".CharGenData", jCharGenData)
+	Else
+		;For whatever reason the jSlot couldn't be found or read, use legacy method
+		SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
+		StartTimer("NIOverrideData")
+		If SKSE.GetPluginVersion("NiOverride") >= 1 ; Check for NIO
+			Int jNIOData = JMap.Object()
+			SetRegObj(sRegKey + ".NIOverrideData.BodyOverlays",NIO_GetOverlayData("Body [Ovl",NIOverride.GetNumBodyOverlays()))
+			SetRegObj(sRegKey + ".NIOverrideData.HandOverlays",NIO_GetOverlayData("Hand [Ovl",NIOverride.GetNumBodyOverlays()))
+			SetRegObj(sRegKey + ".NIOverrideData.FeetOverlays",NIO_GetOverlayData("Feet [Ovl",NIOverride.GetNumBodyOverlays()))
+			SetRegObj(sRegKey + ".NIOverrideData.FaceOverlays",NIO_GetOverlayData("Face [Ovl",NIOverride.GetNumBodyOverlays()))
+		EndIf
+		StopTimer("NIOverrideData")
+		While !_bSavedNINodeInfo
+			WaitMenuMode(0.5)
+		EndWhile
 	EndIf
-	StopTimer("NIOverrideData")
 
 	StartTimer("TrophyManagerUpdate")
 	vMYC_TrophyManager TrophyManager = Quest.GetQuest("vMYC_TrophyManagerQuest") as vMYC_TrophyManager
@@ -1420,8 +1434,17 @@ Function UpgradeData(String sUUID)
 		JMap.SetObj(jCharacterData,"InventoryCustomItems",jNewItemInfos)
 	EndIf
 
+	;=== Import NINode/Overlay data from .jslot, if available ===--
 
-
+	String sCharGenPath = "Data/skse/Plugins/CharGen/Exported/" + sCharacterName + ".jslot"
+	If JContainers.fileExistsAtPath(sCharGenPath)
+		Int jCharGenInfo = JValue.ReadFromFile(sCharGenPath)
+		If jCharGenInfo
+			JMap.SetObj(jCharacterData,"CharGenData", jCharGenInfo)
+			JMap.RemoveKey(jCharacterData,"NINodeInfo")
+			JMap.RemoveKey(jCharacterData,"NIOverrideData")
+		EndIf
+	EndIf
 
 
 	StopTimer("UpgradeData")
