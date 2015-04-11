@@ -145,6 +145,14 @@ bool IsObjectFavorited(TESForm * form)
 
 namespace papyrusFFUtils
 {
+	void SetLevel(StaticFunctionTag*, TESNPC* actorBase, SInt32 newLevel)
+	{
+		if (actorBase) {
+			if (actorBase->actorData.level != 1000) 
+				actorBase->actorData.level = newLevel;
+		}
+	}
+	
 	void LoadCharacterPerks(StaticFunctionTag*, TESNPC* actorBase, BGSListForm* perkList)
 	{
 		if (actorBase && perkList) {
@@ -302,7 +310,6 @@ namespace papyrusFFUtils
 					}
 				}
 			}
-
 			if (character->addedSpells.Length())
 			{
 				// Add spells from the actor's own list
@@ -321,7 +328,7 @@ namespace papyrusFFUtils
 		if (actorBase && includeBase) {
 			TESSpellList * spellList = &actorBase->spellList;
 			TESSpellList::Data * spellData = spellList->unk04;
-
+			
 			if (spellData)
 			{
 				if (spellData->spells)
@@ -748,6 +755,9 @@ namespace papyrusFFUtils
 
 void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 {
+	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, void, TESNPC*, SInt32>("SetLevel", "FFUtils", papyrusFFUtils::SetLevel, registry));
+
 	registry->RegisterFunction(
 		new NativeFunction2<StaticFunctionTag, void, TESNPC*, BGSListForm*>("LoadCharacterPerks", "FFUtils", papyrusFFUtils::LoadCharacterPerks, registry));
 

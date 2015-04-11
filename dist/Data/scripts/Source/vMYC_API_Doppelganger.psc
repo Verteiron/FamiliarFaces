@@ -165,7 +165,7 @@ Function UnregisterActor(Actor akActor = None,String asSID = "") Global
 	ClearSessionKey("Doppelgangers." + asSID)
 EndFunction
 
-Actor Function CreateDoppelganger(String asSID) Global
+Actor Function CreateDoppelganger(String asSID, Bool abLeveled = True) Global
 	Int jCharacterData = GetCharacterJMap(asSID)
 	If !jCharacterData
 		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Invalid SID!",1)
@@ -179,10 +179,11 @@ Actor Function CreateDoppelganger(String asSID) Global
 	If sName && iSex > -1 && kRace
 		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Going to assign a Doppelganger to " + sName + " (" + kRace.GetName() + ")")
 	Else
-		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Character is missing vital data, aborting!",1)
+		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Character " + asSID + " (" + sName + ") is missing vital data, aborting!",1)
 		Return None
 	EndIf
-	ActorBase kDoppelgangerBase = GetAvailableActorBase(iSex,GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase") as Actorbase)
+	ActorBase kDoppelgangerBase = GetAvailableActorBase(iSex,GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase") as Actorbase,abLeveled)
+	Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Target ActorBase for " + sName + " will be " + kDoppelgangerBase + " (" + kDoppelgangerBase.GetName() + ")")
 ;	;GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase")
 ;	;SetSessionForm("Doppelgangers." + asSID + ".ActorBase",MyActorBase)
 	;SetSessionForm("Doppelgangers." + asSID + ".Actor",Self as Actor)
