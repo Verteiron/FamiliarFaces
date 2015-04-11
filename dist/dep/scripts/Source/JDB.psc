@@ -53,7 +53,6 @@ int function allValues() global native
 /;
 function writeToFile(string path) global native
 
-;/  reads information from a file at given path and fills storage with it's JSON content
-    NOTE: it will replace all existing JDB contents!
+;/  DEPRECATE. Reads information from a file at given path and fills storage with it's JSON content
 /;
 function readFromFile(string path) global native

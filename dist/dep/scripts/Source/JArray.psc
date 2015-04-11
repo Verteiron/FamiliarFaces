@@ -27,13 +27,13 @@ int function objectWithBooleans(bool[] values) global native
 int function subArray(int object, int startIndex, int endIndex) global native
 
 ;/  adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.
-    negative index accesses items from the end of array counting backwards.
+    negative index accesses items from the end of container counting backwards.
 /;
 function addFromArray(int object, int source, int insertAtIndex=-1) global native
 function addFromFormList(int object, FormList source, int insertAtIndex=-1) global native
 
 ;/  returns item at index. getObj function returns container.
-    negative index accesses items from the end of array counting backwards.
+    negative index accesses items from the end of container counting backwards.
 /;
 int function getInt(int object, int index, int default=0) global native
 float function getFlt(int object, int index, float default=0.0) global native
@@ -44,7 +44,7 @@ form function getForm(int object, int index, form default=None) global native
 ;/  returns index of the first found value/container that equals to given value/container (default behaviour if searchStartIndex is 0).
     if found nothing returns -1.
     searchStartIndex - array index where to start search
-    negative index accesses items from the end of array counting backwards.
+    negative index accesses items from the end of container counting backwards.
 /;
 int function findInt(int object, int value, int searchStartIndex=0) global native
 int function findFlt(int object, float value, int searchStartIndex=0) global native
@@ -53,7 +53,7 @@ int function findObj(int object, int container, int searchStartIndex=0) global n
 int function findForm(int object, form value, int searchStartIndex=0) global native
 
 ;/  replaces existing value/container at index with new value.
-    negative index accesses items from the end of array counting backwards.
+    negative index accesses items from the end of container counting backwards.
 /;
 function setInt(int object, int index, int value) global native
 function setFlt(int object, int index, float value) global native
@@ -62,7 +62,7 @@ function setObj(int object, int index, int container) global native
 function setForm(int object, int index, form value) global native
 
 ;/  appends value/container to the end of array.
-    if addToIndex >= 0 it inserts value at given index. negative index accesses items from the end of array counting backwards.
+    if addToIndex >= 0 it inserts value at given index. negative index accesses items from the end of container counting backwards.
 /;
 function addInt(int object, int value, int addToIndex=-1) global native
 function addFlt(int object, float value, int addToIndex=-1) global native
@@ -78,15 +78,23 @@ int function count(int object) global native
 /;
 function clear(int object) global native
 
-;/  erases item at index. negative index accesses items from the end of array counting backwards.
+;/  erases item at index. negative index accesses items from the end of container counting backwards.
 /;
 function eraseIndex(int object, int index) global native
 
-;/  returns type of the value at index. negative index accesses items from the end of array counting backwards.
+;/  returns type of the value at index. negative index accesses items from the end of container counting backwards.
     0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string
 /;
 int function valueType(int object, int index) global native
 
-;/  Exchanges the items at index1 and index2. negative index accesses items from the end of array counting backwards.
+;/  Exchanges the items at index1 and index2. negative index accesses items from the end of container counting backwards.
 /;
 function swapItems(int object, int index1, int index2) global native
+
+;/  Sorts the items into ascending order (none < int < float < object < form < string). Returns array itself
+/;
+int function sort(int object) global native
+
+;/  Sorts the items, removes duplicates. Returns array itself. You can treat it as JSet now
+/;
+int function unique(int object) global native

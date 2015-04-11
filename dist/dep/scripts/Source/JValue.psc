@@ -4,20 +4,18 @@
 Scriptname JValue Hidden
 
 
-;/  Retains and returns the object. Purpose - extend object lifetime.
-    Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.
-    Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.
-    Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.
-    It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost
+;/  --- Lifetime management functionality.
+    Read this https://github.com/SilverIce/JContainers/wiki/Lifetime-Management before using any of lifetime management functions
+    
+    Retains and returns the object. Purpose - extend object lifetime
 /;
 int function retain(int object, string tag="") global native
 
-;/  releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)
+;/  Releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)
 /;
 int function release(int object) global native
 
 ;/  Just a union of retain-release calls. Releases previousObject, retains and returns newObject.
-    It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.
 /;
 int function releaseAndRetain(int previousObject, int newObject, string tag="") global native
 
@@ -26,6 +24,11 @@ int function releaseAndRetain(int previousObject, int newObject, string tag="") 
     See 'object lifetime management' section for more information
 /;
 function releaseObjectsWithTag(string tag) global native
+
+;/  Reduces the time JC temporarily owns the object to a minimal value, returns the object.
+    By using this function a user helps JC to get rid of no-more-needed to the user object as soon as possible (ofc. the object won't be deleted if something retains or contains it)
+/;
+int function zeroLifetime(int object) global native
 
 ;/  Handly for temporary objects (objects with no owners) - pool 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.
     Do not forget to clean location later! Typical use:
@@ -36,9 +39,17 @@ function releaseObjectsWithTag(string tag) global native
 int function addToPool(int object, string poolName) global native
 function cleanPool(string poolName) global native
 
-;/  
+;/  --- Mics. functionality
     
-    tests whether given object identifier points to existing object
+    Returns shallow copy (doesn't copy child objects)
+/;
+int function shallowCopy(int object) global native
+
+;/  Returns deep copy
+/;
+int function deepCopy(int object) global native
+
+;/  ntests whether given object identifier points to existing object
 /;
 bool function isExists(int object) global native
 
@@ -47,6 +58,7 @@ bool function isExists(int object) global native
 bool function isArray(int object) global native
 bool function isMap(int object) global native
 bool function isFormMap(int object) global native
+bool function isIntegerMap(int object) global native
 
 ;/  returns true, if container is empty
 /;

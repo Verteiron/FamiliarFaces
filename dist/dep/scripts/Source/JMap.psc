@@ -58,3 +58,18 @@ function clear(int object) global native
 ;/  inserts key-value pairs from the source map
 /;
 function addPairs(int object, int source, bool overrideDuplicates) global native
+
+;/  Simplifies iteration over container's contents.
+    Increments and returns previous key, pass defaulf parameter to begin iteration. Usage:
+    string key = JMap.nextKey(map)
+    while key
+      <retrieve values here>
+      key = JMap.nextKey(map, key)
+    endwhile
+/;
+string function nextKey(int object, string previousKey="", string endKey="") global native
+
+;/  Retrieves N-th key. negative index accesses items from the end of container counting backwards.
+    Worst complexity is O(n/2)
+/;
+string function getNthKey(int object, int keyIndex) global native

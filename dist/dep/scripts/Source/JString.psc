@@ -4,7 +4,8 @@
 Scriptname JString Hidden
 
 
-;/  breaks source text onto set of lines of almost equal size.
-    returns JArray object containing lines
+;/  Breaks source text onto set of lines of almost equal size.
+    Returns JArray object containing lines.
+    Accepts ASCII and UTF-8 encoded strings only
 /;
 int function wrap(string sourceText, int charactersPerLine=60) global native

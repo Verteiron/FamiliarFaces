@@ -4,29 +4,44 @@
 Scriptname JContainers Hidden
 
 
-;/  returns true if JContainers plugin is installed
+;/  NOT part of public API
 /;
-bool function isInstalled() global native
+bool function __isInstalled() global native
 
-;/  returns API version. Incremented by 1 each time old API is not backward compatible with new one.
-    current API version is 3
+;/  Version information.
+    It's a good practice to validate installed JContainers version with the following code:
+        bool isJCValid = JContainers.APIVersion() == AV && JContainers.featureVersion() >= FV
+    where AV and FV are hardcoded API and feature version numbers.
+    Current API version is 3
+    Current feature version is 2
 /;
 int function APIVersion() global native
+int function featureVersion() global native
 
-;/  returns true if file at path exists
+;/  Returns true if file at a specified path exists
 /;
 bool function fileExistsAtPath(string path) global native
 
-;/  A path to user-specific directory - /My Games/Skyrim/JCUser/
+;/  Deletes the file or directory identified by a given path
+/;
+function removeFileAtPath(string path) global native
+
+;/  A path to user-specific directory - My Games/Skyrim/JCUser/
 /;
 string function userDirectory() global native
 
-;/  returns last occured error (error code):
+;/  DEPRECATE. Returns last occured error (error code):
     0 - JError_NoError
     1 - JError_ArrayOutOfBoundAccess
 /;
 int function lastError() global native
 
-;/  returns string that describes last error
+;/  DEPRECATE. Returns string that describes last error
 /;
 string function lastErrorString() global native
+
+; Returns true if JContainers plugin installed properly
+bool function isInstalled() global
+    return __isInstalled() && 3 == APIVersion() && 2 == featureVersion()
+endfunction
+
