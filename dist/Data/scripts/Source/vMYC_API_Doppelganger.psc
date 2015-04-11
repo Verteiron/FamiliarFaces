@@ -211,7 +211,7 @@ Int Function UpdateAppearance(String asSID, Actor akActor) Global
 			Return 0
 		EndIf
 	EndIf
-	DebugTraceAPIDopp(asSID,"Something went wrong during UpdateAppearance!",1)
+	;DebugTraceAPIDopp(asSID,"Something went wrong during UpdateAppearance!",1)
 	Return -1
 EndFunction
 
@@ -220,7 +220,7 @@ Int Function UpdateNINodes(String asSID, Actor akActor) Global
 
 	Int jCharacterData = vMYC_API_Character.GetCharacterJMap(asSID)
 
-	DebugTraceAPIDopp(asSID,"Updating NINodes...")
+	;DebugTraceAPIDopp(asSID,"Updating NINodes...")
 	Int jCharGenNodeTransforms = JValue.SolveObj(jCharacterData,".CharGenData.Transforms")
 	If jCharGenNodeTransforms
 		i = JArray.Count(jCharGenNodeTransforms)
@@ -244,7 +244,7 @@ Int Function UpdateNINodes(String asSID, Actor akActor) Global
 						Float fData = JValue.SolveFlt(jNodeKeyValue,".data")
 						Int iType = JValue.SolveInt(jNodeKeyValue,".type")
 						If iType == 4 && fData && fData != 1
-							DebugTraceAPIDopp(asSID,"Scaling NINode " + sNodeName + " to " + fData + "!")
+							;DebugTraceAPIDopp(asSID,"Scaling NINode " + sNodeName + " to " + fData + "!")
 							NetImmerse.SetNodeScale(akActor,sNodeName,fData,bFirstPerson)
 						EndIf
 					EndWhile
@@ -265,7 +265,7 @@ Int Function UpdateNINodes(String asSID, Actor akActor) Global
 		If sNodeName
 			Int jNINodeValues = JArray.GetObj(jNiNodeValueList,i)
 			Float fNINodeScale = JMap.GetFlt(jNINodeValues,"Scale")
-			DebugTraceAPIDopp(asSID,"Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
+			;DebugTraceAPIDopp(asSID,"Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
 			NetImmerse.SetNodeScale(akActor,sNodeName,fNINodeScale,False)
 			NetImmerse.SetNodeScale(akActor,sNodeName,fNINodeScale,True)
 		EndIf
@@ -327,7 +327,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 		Wait(1)
 	EndWhile
 	If !iDismountSafetyTimer
-		DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + " Dismount timer expired!",1)
+		;DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + " Dismount timer expired!",1)
 	EndIf
 	If akActor.IsOnMount()
 		;Debug.Trace("MYC: (" + asCharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
@@ -337,7 +337,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 	Bool bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
 	If CharGen.IsExternalEnabled()
 		If !bExternalHeadExists
-			DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + ": Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
+			;DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + ": Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
 			bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
 			Return bResult
 		EndIf
@@ -346,7 +346,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 		Return bResult
 	Else
 		If bExternalHeadExists
-			DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + ": Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
+			;DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + ": Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
 			bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
 			Return bResult
 		EndIf
@@ -420,10 +420,10 @@ Int Function UpdateArmor(String asSID, Actor akActor, Bool abReplaceMissing = Tr
 	ActorBase kActorBase = akActor.GetActorBase()
 	Int jCharacterData = vMYC_API_Character.GetCharacterJMap(asSID)
 
-	DebugTraceAPIDopp(asSID,"Applying Armor...")
+	;DebugTraceAPIDopp(asSID,"Applying Armor...")
 	
 	If !jCharacterData
-		DebugTraceAPIDopp(asSID,"UpdateArmor called but jCharacterData is missing!",1)
+		;DebugTraceAPIDopp(asSID,"UpdateArmor called but jCharacterData is missing!",1)
 		Return -3
 	EndIf
 	
@@ -462,7 +462,7 @@ Int Function UpdateArmor(String asSID, Actor akActor, Bool abReplaceMissing = Tr
 				EndIf
 			EndIf
 		Else ;kObject failed, armor didn't get loaded/created for some reason
-			DebugTraceAPIDopp(asSID,"Couldn't create an ObjectReference for " + sItemID + "!",1)
+			;DebugTraceAPIDopp(asSID,"Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 	EndWhile
 
@@ -478,10 +478,10 @@ Int Function UpdateWeapons(String asSID, Actor akActor, Bool abReplaceMissing = 
 	Int iCount
 	Int jCharacterData = vMYC_API_Character.GetCharacterJMap(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
-	DebugTraceAPIDopp(asSID,"Applying Weapons...")
+	;DebugTraceAPIDopp(asSID,"Applying Weapons...")
 	
 	If !jCharacterData
-		DebugTraceAPIDopp(asSID,"UpdateWeapons called but jCharacterData is missing!",1)
+		;DebugTraceAPIDopp(asSID,"UpdateWeapons called but jCharacterData is missing!",1)
 		Return -3
 	EndIf
 
@@ -511,7 +511,7 @@ Int Function UpdateWeapons(String asSID, Actor akActor, Bool abReplaceMissing = 
 				EndIf
 			EndIf
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTraceAPIDopp(asSID,"Couldn't create an ObjectReference for " + sItemID + "!",1)
+			;DebugTraceAPIDopp(asSID,"Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 		iHand -= 1
 		iCount += 1
@@ -550,7 +550,7 @@ Int Function UpdateWeapons(String asSID, Actor akActor, Bool abReplaceMissing = 
 							If fAmmoDamage > fBestAmmoDamage
 								fBestAmmoDamage = fAmmoDamage
 								kBestAmmo = kAmmo as Ammo
-								DebugTraceAPIDopp(asSID,"BestAmmo is now " + kBestAmmo.GetName())
+								;DebugTraceAPIDopp(asSID,"BestAmmo is now " + kBestAmmo.GetName())
 							EndIf
 						EndIf
 					EndIf
@@ -576,10 +576,10 @@ Int Function UpdateInventory(String asSID, Actor akActor, Bool abReplaceMissing 
 	Int jCharacterData = vMYC_API_Character.GetCharacterJMap(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
 
-	DebugTraceAPIDopp(asSID,"Applying Inventory...")
+	;DebugTraceAPIDopp(asSID,"Applying Inventory...")
 	
 	If !jCharacterData
-		DebugTraceAPIDopp(asSID,"UpdateInventory called but jCharacterData is missing!",1)
+		;DebugTraceAPIDopp(asSID,"UpdateInventory called but jCharacterData is missing!",1)
 		Return -3
 	EndIf
 
@@ -588,7 +588,7 @@ Int Function UpdateInventory(String asSID, Actor akActor, Bool abReplaceMissing 
 	Int jCustomItems = JValue.SolveObj(jCharacterData,".InventoryCustomItems")
 
 	i = JArray.Count(jCustomItems)
-	DebugTraceAPIDopp(asSID,"Has " + i + " items to be customized!")
+	;DebugTraceAPIDopp(asSID,"Has " + i + " items to be customized!")
 	While i > 0
 		i -= 1
 		String sItemID = JValue.SolveStr(JArray.GetObj(jCustomItems,i),".UUID")
@@ -599,7 +599,7 @@ Int Function UpdateInventory(String asSID, Actor akActor, Bool abReplaceMissing 
 			kObject.SetActorOwner(kActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTraceAPIDopp(asSID,"Couldn't create an ObjectReference for " + sItemID + "!",1)
+			;DebugTraceAPIDopp(asSID,"Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 		iCount += 1
 	EndWhile
@@ -651,10 +651,10 @@ Int Function UpdateStats(String asSID, Actor akActor, Bool abForceValues = False
 	Int jCharacterData = vMYC_API_Character.GetCharacterJMap(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
 
-	DebugTraceAPIDopp(asSID,"Applying Perks...")
+	;DebugTraceAPIDopp(asSID,"Applying Perks...")
 
 	If !jCharacterData
-		DebugTraceAPIDopp(asSID,"UpdatePerks called but jCharacterData is missing!",1)
+		;DebugTraceAPIDopp(asSID,"UpdatePerks called but jCharacterData is missing!",1)
 		Return -3
 	EndIf
 
@@ -672,10 +672,10 @@ Int Function UpdateStats(String asSID, Actor akActor, Bool abForceValues = False
 			Float fAV = JMap.GetFlt(jAVS,sAVName)
 			If abForceValues
 				akActor.ForceActorValue(sAVName,fAV)
-				;DebugTraceAPIDopp(asSID,"Force " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+				;;DebugTraceAPIDopp(asSID,"Force " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
 			Else
 				akActor.SetActorValue(sAVName,fAV) 
-				;DebugTraceAPIDopp(asSID,"Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+				;;DebugTraceAPIDopp(asSID,"Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
 			EndIf
 		EndIf
 	EndWhile
@@ -700,10 +700,10 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 
 
 
-	DebugTraceAPIDopp(asSID,"Applying Perks...")
+	;DebugTraceAPIDopp(asSID,"Applying Perks...")
 
 	If !jCharacterData
-		DebugTraceAPIDopp(asSID,"UpdatePerks called but jCharacterData is missing!",1)
+		;DebugTraceAPIDopp(asSID,"UpdatePerks called but jCharacterData is missing!",1)
 		Return -3
 	EndIf
 
@@ -715,7 +715,7 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 	kPerkList.Revert() ; Should already be empty, but just in case
 
 	i = JArray.Count(jPerks)
-	DebugTraceAPIDopp(asSID,"Has " + i + " perks to be checked!")
+	;DebugTraceAPIDopp(asSID,"Has " + i + " perks to be checked!")
 	Int iMissingCount = 0
 	While i > 0
 		i -= 1
@@ -730,7 +730,7 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Perk is from " + JArray.getStr(jPerks,i))
-		;DebugTraceAPIDopp(asSID,"Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
+		;;DebugTraceAPIDopp(asSID,"Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 	EndWhile
 	Int iPerkCountTotal = kPerklist.GetSize()
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + kPerklist.GetSize() + " perks to Actorbase...")
@@ -739,17 +739,17 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 		DataManager.UnlockFormlist(kPerklist)
 		Return -1
 	ElseIf iPerkCountTotal == 0
-		DebugTraceAPIDopp(asSID,"PerkList size is 0. Won't attempt to apply this.")
+		;DebugTraceAPIDopp(asSID,"PerkList size is 0. Won't attempt to apply this.")
 		DataManager.UnlockFormlist(kPerklist)
 		Return 0
 	EndIf
 	If iMissingCount
-		DebugTraceAPIDopp(asSID,"Loading " + iPerkCountTotal + " Perks with " + iMissingCount + " skipped...")
+		;DebugTraceAPIDopp(asSID,"Loading " + iPerkCountTotal + " Perks with " + iMissingCount + " skipped...")
 	Else
-		DebugTraceAPIDopp(asSID,"Loading " + iPerkCountTotal + " Perks...")
+		;DebugTraceAPIDopp(asSID,"Loading " + iPerkCountTotal + " Perks...")
 	EndIf
 	FFUtils.LoadCharacterPerks(kActorBase,kPerklist)
-	DebugTraceAPIDopp(asSID,"Perks loaded successfully!")
+	;DebugTraceAPIDopp(asSID,"Perks loaded successfully!")
 	WaitMenuMode(0.1)
 	DataManager.UnlockFormlist(kPerklist)
 	Return iPerkCountTotal
@@ -784,7 +784,12 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 			iMissingCount += 1
 		Else
 			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
+			Shout kCallDragonShout = GetFormFromFile(0x00046b8c,"Skyrim.esm") as Shout
 			Shout kDragonAspectShout
+			Shout kDLC1SummonDragonShout
+			If GetModByName("Dawnguard.esm")
+				kDLC1SummonDragonShout = GetFormFromFile(0x020030d2,"Dawnguard.esm") as Shout
+			EndIf
 			If GetModByName("Dragonborn.esm")
 				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
 			EndIf
@@ -792,6 +797,11 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 				;Don't add it
 			ElseIf kShout == kDragonAspectShout && GetRegBool("Config.Shouts.Disabled.DragonAspect") ;FIXME: Maybe use an array for disabled shouts, then test each one
 				;Don't add it
+			ElseIf kShout == kCallDragonShout
+				;Never add Summon Dragon, it screws up the main quest and generally doesn't behave right
+				;FIXME: Is there a way to fake these? It'd be cool to have imported characters use them.
+			ElseIf kShout == kDLC1SummonDragonShout 
+				;Never add Summon Duhrni-whatever, it screws up the quest order and causes crashes
 			ElseIf GetRegBool("Config.Shouts.BlockUnlearned")
 				If PlayerREF.HasSpell(kShout)
 					kShoutlist.AddForm(kShout)
@@ -803,16 +813,16 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 	EndWhile
 	Int iShoutCount = kShoutlist.GetSize()
-	DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts to Actorbase...")
+	;DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts to Actorbase...")
 	If iShoutCount == 0
-		DebugTraceAPIDopp(asSID,"ShoutList size is 0. Won't attempt to apply this.")
+		;DebugTraceAPIDopp(asSID,"ShoutList size is 0. Won't attempt to apply this.")
 		DataManager.UnlockFormlist(kShoutlist)
 		Return 0
 	EndIf
 	If iMissingCount
-		DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts with " + iMissingCount + " skipped.",1)
+		;DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts with " + iMissingCount + " skipped.",1)
 	Else
-		DebugTraceAPIDopp(asSID,"Loaded " + iShoutCount + " Shouts.")
+		;DebugTraceAPIDopp(asSID,"Loaded " + iShoutCount + " Shouts.")
 	EndIf
 	FFUtils.LoadCharacterShouts(kActorBase,kShoutlist)
 	WaitMenuMode(0.1)
@@ -828,7 +838,7 @@ Function RemoveCharacterShouts(String asSID,Actor akActor) Global
 
 	vMYC_DataManager DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 
-	DebugTraceAPIDopp(asSID,"Character is not allowed to use shouts, removing them!")
+	;DebugTraceAPIDopp(asSID,"Character is not allowed to use shouts, removing them!")
 	Formlist kShoutlist = DataManager.LockFormList()
 	kShoutlist.Revert() ; Should already be empty, but just in case
 	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
@@ -857,10 +867,10 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	Int iCount
 	Int iAdded = 0
 	Int iRemoved = 0
-	DebugTraceAPIDopp(asSID,"Applying Spells...")
+	;DebugTraceAPIDopp(asSID,"Applying Spells...")
 
 	If !jCharacterData
-		DebugTraceAPIDopp(asSID,"UpdateSpells called but jCharacterData is missing!",1)
+		;DebugTraceAPIDopp(asSID,"UpdateSpells called but jCharacterData is missing!",1)
 		Return -3
 	EndIf
 
@@ -880,10 +890,10 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 		i = 18
 		While i < 23
 			String sMagicSchool = JArray.GetStr(jSkillNames,i)
-			DebugTraceAPIDopp(asSID,"Checking perkCount for " + sMagicSchool + "...")
+			;DebugTraceAPIDopp(asSID,"Checking perkCount for " + sMagicSchool + "...")
 			Int iPerkCount = JValue.SolveInt(jCharacterData,".PerkCounts." + sMagicSchool)
 			If iPerkCount
-				DebugTraceAPIDopp(asSID,"PerkCount for " + sMagicSchool + " is " + iPerkCount)
+				;DebugTraceAPIDopp(asSID,"PerkCount for " + sMagicSchool + " is " + iPerkCount)
 			EndIf
 			
 			If iPerkCount > 1
@@ -928,6 +938,13 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				EndIf
 			EndIf
 
+			If GetModByName("Dawnguard.esm")
+				Spell kDLC01SummonSoulHorse = Game.GetFormFromFile(0x0200C600, "Dawnguard.esm") as Spell
+				If kSpell == kDLC01SummonSoulHorse
+					bSpellIsAllowed = False
+				EndIf
+			EndIf
+
 			If bSpellIsAllowed
 				Int[] iAllowedSources = New Int[128]
 				
@@ -964,24 +981,24 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			
 			If bSpellIsAllowed && !akActor.HasSpell(kSpell)
 				If akActor.AddSpell(kSpell,False)
-					DebugTraceAPIDopp(asSID,"Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
+					;DebugTraceAPIDopp(asSID,"Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
 					iAdded += 1
 				EndIf
 			ElseIf !bSpellIsAllowed && akActor.HasSpell(kSpell)
 				;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
 				If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
 					If akActor.RemoveSpell(kSpell)
-						DebugTraceAPIDopp(asSID,"Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+						;DebugTraceAPIDopp(asSID,"Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
 						iRemoved += 1
 					EndIf
 				EndIf
 			EndIf
 		Else
-			DebugTraceAPIDopp(asSID,"Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
+			;DebugTraceAPIDopp(asSID,"Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
 		EndIf
 	EndWhile
 	If iAdded || iRemoved
-		DebugTraceAPIDopp(asSID,"Added " + iAdded + " spells, removed " + iRemoved)
+		;DebugTraceAPIDopp(asSID,"Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
 	SaveSession()
 	JValue.Release(jSpells)
