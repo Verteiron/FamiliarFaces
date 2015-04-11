@@ -1,5 +1,9 @@
 Scriptname NiOverride Hidden
 
+int Function GetScriptVersion() global
+	return 3
+EndFunction
+
 ; Valid keys
 ; ID - TYPE - Name
 ; 0 - int - ShaderEmissiveColor
@@ -84,6 +88,44 @@ string Function GetNodePropertyString(ObjectReference ref, bool firstPerson, str
 Function ApplyNodeOverrides(ObjectReference ref) native global
 
 
+; Version 3 (Weapon Overrides)
+;-------------------------------------------------------
+; ObjectReference must be an Actor
+; If a weapon is templated it will inherit the properties of its parent first
+; Note that the player seems to be a special-case where they use the first person model for both first and third person
+;
+; Overrides will clean themselves if the Weapon no longer exists (i.e. you uninstalled the mod they were associated with)
+bool Function HasWeaponOverride(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+
+Function AddWeaponOverrideFloat(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index, float value, bool persist) native global
+Function AddWeaponOverrideInt(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index, int value, bool persist) native global
+Function AddWeaponOverrideBool(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index, bool value, bool persist) native global
+Function AddWeaponOverrideString(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index, string value, bool persist) native global
+Function AddWeaponOverrideTextureSet(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index, TextureSet value, bool persist) native global
+
+; Gets the saved override value
+float Function GetWeaponOverrideFloat(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+int Function GetWeaponOverrideInt(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+bool Function GetWeaponOverrideBool(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+string Function GetWeaponOverrideString(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+TextureSet Function GetWeaponOverrideTextureSet(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+
+; Gets the property straight from the node (Handy if you need the current value if an override D.N.E yet)
+float Function GetWeaponPropertyFloat(ObjectReference ref, bool firstPerson, Weapon weap, string node, int key, int index) native global
+int Function GetWeaponPropertyInt(ObjectReference ref, bool firstPerson, Weapon weap, string node, int key, int index) native global
+bool Function GetWeaponPropertyBool(ObjectReference ref, bool firstPerson, Weapon weap, string node, int key, int index) native global
+string Function GetWeaponPropertyString(ObjectReference ref, bool firstPerson, Weapon weap, string node, int key, int index) native global
+;TextureSet is not stored on the node, individual textures are, however.
+
+; Returns whether the specified node could be found for the given parameters
+; Debug will report errors to NiOverrides log file
+bool Function HasWeaponNode(ObjectReference ref, bool firstPerson, Weapon weap, string node, bool debug = false) native global
+
+; Applies all armor properties visually to the actor, this shouldn't be necessary under normal circumstances
+Function ApplyWeaponOverrides(ObjectReference ref) native global
+; ----------------------------------------------------
+
+
 ; Remove functions do not revert the modified state, only remove it from the save
 
 ; Removes ALL Armor based overrides from ALL actors (Global purge)
@@ -115,6 +157,23 @@ Function RemoveAllNodeNameOverrides(ObjectReference ref, bool isFemale, string n
 
 ; Removes one particular override from an actor, of a particular gender, nodeName, key, and index
 Function RemoveNodeOverride(ObjectReference ref, bool isFemale, string node, int key, int index) native global
+
+
+; Removes ALL weapon based overrides from ALL actors (Global purge)
+Function RemoveAllWeaponBasedOverrides() native global
+
+; Removes all weapon based overrides for a particular actor
+Function RemoveAllReferenceWeaponOverrides(ObjectReference ref) native global
+
+; Removes all weapon overrides for a particular actor, gender, view, and weapon
+Function RemoveAllWeaponOverrides(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap) native global
+
+; Removes all overrides for a particukar actor, gender, view, weapon, and nodeName
+Function RemoveAllWeaponNodeOverrides(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node) native global
+
+; Removes a particular weapon override
+Function RemoveWeaponOverride(ObjectReference ref, bool isFemale, bool firstPerson, Weapon weap, string node, int key, int index) native global
+
 
 ; Overlay Data
 int Function GetNumBodyOverlays() native global
@@ -171,3 +230,129 @@ Function ClearMorphs(ObjectReference ref) native global
 ; Updates the weight data post morph value
 ; only to be used on actors who have morph values set
 Function UpdateModelWeight(ObjectReference ref) native global
+
+; Call this function prior to frequent changes in dyes to prevent massive lag
+Function EnableTintTextureCache() native global
+; Call this when finished frequent dye edits
+Function ReleaseTintTextureCache() native global
+
+; Dye functions
+
+; Returns a number for a unique item, if the item is not unique it will be made unique, returns 0 when invalid
+int Function GetItemUniqueID(ObjectReference akActor, int weaponSlot, int slotMask, bool makeUnique = true) native global
+
+; Uses the uniqueId acquired from GetItemUniqueID
+Function SetItemDyeColor(int uniqueId, int maskIndex, int color) native global
+int Function GetItemDyeColor(int uniqueId, int maskIndex) native global
+Function ClearItemDyeColor(int uniqudId, int maskIndex) native global
+
+; Regenerates the tintmask of the dyed object, use after assigning/clearing dye colors
+Function UpdateItemDyeColor(ObjectReference akActor, int uniqueId) native global
+
+; ------ NON PERSISTENT FUNCTIONS --------------
+; These functions do not persist in game sessions but are instead 
+; very fast and are suitable to be used on a game load event
+
+; Returns true if the Form has been registered as a Dye
+bool Function IsFormDye(Form akForm) native global
+
+; Returns the dye color bound to this form
+int Function GetFormDyeColor(Form akForm) native global
+
+; Registers the Form as a Dye with a color, 0x00FFFFFF is the universal dye
+Function RegisterFormDyeColor(Form akForm, int color) native global
+
+; Removes this form as a 
+Function UnregisterFormDyeColor(Form akForm) native global
+; -------------------------------------------------
+
+
+
+; ----------------- Node manipulation functions --------------
+; These functions should only be used on nodes that either exist
+; directly on the skeleton, or are injected via armor templates
+; Armor Template injections are as follows:
+; NiStringsExtraData - Name: EXTN (Count divisible by 3)
+; [0] - TargetNode Name
+; [1] - SourceNode Name
+; [2] - Absolute nif path, relative to skyrim directory
+; Notes: Template will take only the first root node and all
+; its children, the Source Node should be the name of this
+; root node. The TargetNode will be the parent to Source
+; ------------------------------------------------------------
+
+; Checks whether there is a positon override for the particular parameters
+bool Function HasNodeTransformPosition(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+; Adds a position override for the particular key, pos[0-2] correspond to x,y,z
+Function AddNodeTransformPosition(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key, float[] pos) native global
+
+; Returns a position override for the particular key an array of size 3 corresponding to x,y,z
+float[] Function GetNodeTransformPosition(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+; Removes a particular position override, returns true if it removed, false if did not exist
+bool Function RemoveNodeTransformPosition(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+
+; Checks whether there is a scale override for the particular parameters
+bool Function HasNodeTransformScale(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+; Adds a scale override for the particular key, pos[0-2] correspond to x,y,z
+Function AddNodeTransformScale(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key, float scale) native global
+
+; Returns a scale value override for the particular key, 0.0 if did not exist or failed
+float Function GetNodeTransformScale(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+; Removes a particular scale override, returns true if it removed, false if did not exist
+bool Function RemoveNodeTransformScale(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+
+; Checks whether there is a rotation override for the particular parameters
+bool Function HasNodeTransformRotation(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+; Adds a rotation override for the particular key given either a size 3 or 9 array
+; rotation[0-8] corresponding to the linear indices of a 3x3 matrix in radians
+; rotation[0-2] corresponding to heading, attitude, and bank in degrees
+Function AddNodeTransformRotation(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key, float[] rotation) native global
+
+; Returns a rotation override for the particular key
+; type 0 - size 3 euler angles in degrees
+; type 1 - size 9 matrix
+float[] Function GetNodeTransformRotation(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key, int type = 0) native global
+
+; Returns the inverse scale, alters the in pos to the inverse out pos and the in rotation to the out inverse rotation
+; Accepts either a size 3 rotation of euler degrees, or a 9 radian matrix
+float Function GetInverseTransform(float[] in_out_pos, float[] in_out_rotation, float in_scale = 1.0) native global
+
+; Removes a particular scale override, returns true if it removed, false if did not exist
+bool Function RemoveNodeTransformRotation(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string key) native global
+
+; Updates and computes ALL resulting transformation overrides for the particular reference
+; This should not need to be called under normal circumstances
+Function UpdateAllReferenceTransforms(ObjectReference akRef) native global
+
+; Removes all transforms for a particular reference
+Function RemoveAllReferenceTransforms(ObjectReference akRef) native global
+
+; Removes all transforms from all references
+Function RemoveAllTransforms() native global
+
+; Updates and computes a particular node's transformation override
+; Use this after changing a particular override
+Function UpdateNodeTransform(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName) native global
+
+; These function parts move a node to be a child of the destination node
+; Moves a node from one the current parent to another, there can only be ONE of these overrides, call UpdateNodeTransform
+Function SetNodeDestination(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName, string destination) native global
+
+; Returns the node destination of the particular parameters
+string Function GetNodeDestination(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName) native global
+
+; These functions can be used to walk all of the current nodes if necessary
+; Returns an array of all the altered nodes for the particular reference, skeleton, and gender
+string[] Function GetNodeTransformNames(ObjectReference akRef, bool firstPerson, bool isFemale) native global
+
+; Returns an array of all the existing key'd transforms to the particular node
+; NodeDestination is a special key
+string[] Function GetNodeTransformKeys(ObjectReference akRef, bool firstPerson, bool isFemale, string nodeName) native global
+; --------------------------------------------------------------------
