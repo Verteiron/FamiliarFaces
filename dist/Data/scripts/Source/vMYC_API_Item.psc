@@ -91,19 +91,29 @@ String Function AssignItemID(Int ajObjectInfo) Global
 	Return FFUtils.UUID()
 EndFunction
 
-String Function SaveItem(Int ajObjectInfo) Global
+String Function SaveItem(Int ajObjectInfo, String asItemId = "") Global
 	If !JValue.IsMap(ajObjectInfo)
 		Return ""
 	EndIf
 
-	String sItemID = AssignItemID(ajObjectInfo)
+	String sItemID = asItemId
+	If !sItemID
+		;Attempt to use item's existing UUID if it has one
+		sItemID = JValue.SolveStr(ajObjectInfo,".UUID")
+	EndIf
+
+	If !sItemID || GetItemJMap(sItemID) <= 0
+	; ItemID not passed, or is already in use
+		sItemID = AssignItemID(ajObjectInfo)
+	EndIf
+
 	String sRegKey = "Items." + sItemID
 
 	If !JValue.HasPath(ajObjectInfo,".SID")
 		JValue.SolveStrSetter(ajObjectInfo,".SID",GetSessionStr("SessionID"),True)
 	EndIf
 	
-	If !JValue.HasPath(ajObjectInfo,".UUID")
+	If JValue.SolveStr(ajObjectInfo,".UUID") != sItemID
 		JValue.SolveStrSetter(ajObjectInfo,".UUID",sItemID,True)
 	EndIf
 
@@ -360,7 +370,7 @@ EndFunction
 ObjectReference Function CreateObject(String asItemID) Global
 {Recreate an item from scratch using its ItemID.}
 	Int jItem = GetItemJMap(asItemID)
-	If !jItem
+	If jItem <= 0
 		DebugTraceAPIItem("CreateObject: " + asItemID + " is not a valid ItemID!",1)
 		Return None
 	EndIf
@@ -374,18 +384,20 @@ ObjectReference Function CreateObjectFromJObj(Int ajObjectInfo) Global
 	Form kItem = JMap.getForm(jItem,"Form")
 	String sItemID = JMap.getStr(jItem,"UUID")
 	If !kItem
-		DebugTraceAPIItem("CreateObject: " + sItemID + " does not reference a valid base Form!!",1)
+		DebugTraceAPIItem("CreateObjectFromJObj: " + sItemID + " could not find base Form!",1)
 		Return None
 	EndIf
 
 	ObjectReference kNowhere = Game.GetFormFromFile(0x00004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
 	ObjectReference kObject = kNowhere.PlaceAtMe(kItem)
 	If !kObject
-		DebugTraceAPIItem("CreateObject: " + sItemID + " could not use base Form " + kItem + " to create an ObjectReference!",1)
+		DebugTraceAPIItem("CreateObjectFromJObj: " + sItemID + " could not use base Form " + kItem + " to create an ObjectReference!",1)
 		Return None
 	EndIf
 
-
+	If !sItemID || GetItemJMap(sItemID) <= 0
+		sItemID = SaveItem(ajObjectInfo,sItemID)
+	EndIf
 
 	If (kItem as Weapon) || (kItem as Armor)
 		Return CustomizeEquipment(sItemID,kObject)
@@ -396,9 +408,21 @@ ObjectReference Function CreateObjectFromJObj(Int ajObjectInfo) Global
 EndFunction
 
 ObjectReference Function CustomizeEquipment(String asItemID, ObjectReference akObject) Global
-{Recreate a custom weapon or armor from its saved version. If akObject is passed, attempt to apply the customization to it rather than creating a new one.}
-	ObjectReference kObject = akObject
+{Apply the customization information from the JObject referenced by asItemID to akObject.}
+	DebugTraceAPIItem("CustomizeEquipment: Will apply attributes from " + asItemID + " to " + akObject + " (" + akObject.GetBaseObject() + "), aka " + akObject.GetBaseObject().GetName())
 	Int jItem = GetItemJMap(asItemID)
+	If jItem <= 0
+		DebugTraceAPIItem("CustomizeEquipment: " + asItemID + " does not refer to a valid saved object!",1)
+		Return kObject
+	EndIf
+	ObjectReference kObject = CustomizeEquipmentFromJObj(jItem,akObject)
+	Return kObject
+EndFunction
+
+ObjectReference Function CustomizeEquipmentFromJObj(Int ajItemInfo, ObjectReference akObject) Global
+{Apply the customization information from ajItemInfo to akObject.}
+	ObjectReference kObject = akObject
+	Int jItem = ajItemInfo
 	Form kItem = JMap.getForm(jItem,"Form")
 	If !(kItem as Weapon) && !(kItem as Armor)
 		DebugTraceAPIItem("CustomizeEquipment: Item is not Weapon or Armor!",1)
@@ -443,6 +467,7 @@ ObjectReference Function CustomizeEquipment(String asItemID, ObjectReference akO
 	EndIf
 	Return kObject
 EndFunction
+
 
 String Function SerializePotion(Form akItem) Global
 {

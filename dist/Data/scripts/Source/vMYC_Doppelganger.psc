@@ -385,7 +385,7 @@ Int Function UpdateNINodes()
 						Float fData = JValue.SolveFlt(jNodeKeyValue,".data")
 						Int iType = JValue.SolveInt(jNodeKeyValue,".type")
 						If iType == 4 && fData && fData != 1
-							Debug.Trace("Scaling NINode " + sNodeName + " to " + fData + "!")
+							DebugTrace("Scaling NINode " + sNodeName + " to " + fData + "!")
 							NetImmerse.SetNodeScale(Self,sNodeName,fData,bFirstPerson)
 						EndIf
 					EndWhile
@@ -408,7 +408,7 @@ Int Function UpdateNINodes()
 		If sNodeName
 			Int jNINodeValues = JArray.GetObj(jNiNodeValueList,i)
 			Float fNINodeScale = JMap.GetFlt(jNINodeValues,"Scale")
-			Debug.Trace("Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
+			DebugTrace("Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,False)
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,True)
 		EndIf
@@ -588,8 +588,8 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 	While i > 0
 		i -= 1
 
-		ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCharacterArmorInfo,i))
 		String sItemID = JValue.SolveStr(JArray.GetObj(jCharacterArmorInfo,i),".UUID")
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
 
 		If kObject
 			Int h = (kObject.GetBaseObject() as Armor).GetSlotMask()
@@ -650,10 +650,14 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 			sHand = "Left"
 		EndIf
 		String sItemID = JValue.SolveStr(_jCharacterData,".Equipment." + sHand + ".UUID")
-		ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JValue.SolveObj(_jCharacterData,".Equipment." + sHand))
+		;ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JValue.SolveObj(_jCharacterData,".Equipment." + sHand))
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
-			kCharacterActor.AddItem(kObject,1,True)
+			If !(kObject.GetBaseObject() as Spell)
+				kCharacterActor.AddItem(kObject,1,True)
+			EndIf
 			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),iHand,False,True) ;FIXME: May need to use the Base form here?
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
 			If kWeapon
@@ -744,7 +748,8 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	While i > 0
 		i -= 1
 		String sItemID = JValue.SolveStr(JArray.GetObj(jCustomItems,i),".UUID")
-		ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCustomItems,i))
+		;ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCustomItems,i))
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
 
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
@@ -1072,80 +1077,84 @@ Int Function UpdateSpells()
 	While i > 0
 		i -= 1
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
-		String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
-		Bool bSpellIsAllowed = False
-		
-		If sMagicSchool
-			bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool)
-		Else
-			bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.AllowOther")
-		EndIf
-		
-		MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-		
-		If GetSessionBool("Config." + SID + ".Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
-			If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-				bSpellIsAllowed = True
-			ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
-				bSpellIsAllowed = True
-			EndIf
-		EndIf
-		
-		If GetSessionBool("Config." + SID + ".Magic.AllowDefensive")
-			If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-				bSpellIsAllowed = True
-			ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
-				bSpellIsAllowed = True
-			EndIf
-		EndIf
-
-		If bSpellIsAllowed
-			Int[] iAllowedSources = New Int[128]
+		If kSpell
+			String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
+			Bool bSpellIsAllowed = False
 			
-			iAllowedSources[0] = GetModByName("Skyrim.esm")
-			iAllowedSources[1] = GetModByName("Update.esm")
-			iAllowedSources[2] = GetModByName("Dawnguard.esm")
-			iAllowedSources[3] = GetModByName("Dragonborn.esm")
-			iAllowedSources[4] = GetModByName("Hearthfires.esm")
-
-			If GetSessionBool("Config." + SID + ".Magic.AllowSelectMods") ; Select mods
-				iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
-				iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
-				iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
-				iAllowedSources[8] = GetModByName("Dwemerverse.esp")
+			If sMagicSchool
+				bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool)
+			Else
+				bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.AllowOther")
 			EndIf
 			
-			bSpellIsAllowed = False
+			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
 			
-			;See if this spell is from an approved source
-			Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
-			If iAllowedSources.Find(iSpellSourceID) > -1
-				bSpellIsAllowed = True
-			ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
-			;A mod author has gone to the trouble of assuring us the spell is compatible.
-				bSpellIsAllowed = True
-			EndIf
-		EndIf
-
-		If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
-		;A mod author has added the spell to the unsafe list.
-			bSpellIsAllowed = False
-		EndIf
-			
-		
-		If bSpellIsAllowed && !HasSpell(kSpell)
-			If AddSpell(kSpell,False)
-				DebugTrace("Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
-				iAdded += 1
-			EndIf
-		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
-			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
-				If RemoveSpell(kSpell)
-					DebugTrace("Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
-					iRemoved += 1
+			If GetSessionBool("Config." + SID + ".Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
+				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
+					bSpellIsAllowed = True
 				EndIf
 			EndIf
+			
+			If GetSessionBool("Config." + SID + ".Magic.AllowDefensive")
+				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
+					bSpellIsAllowed = True
+				EndIf
+			EndIf
+
+			If bSpellIsAllowed
+				Int[] iAllowedSources = New Int[128]
+				
+				iAllowedSources[0] = GetModByName("Skyrim.esm")
+				iAllowedSources[1] = GetModByName("Update.esm")
+				iAllowedSources[2] = GetModByName("Dawnguard.esm")
+				iAllowedSources[3] = GetModByName("Dragonborn.esm")
+				iAllowedSources[4] = GetModByName("Hearthfires.esm")
+
+				If GetSessionBool("Config." + SID + ".Magic.AllowSelectMods") ; Select mods
+					iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
+					iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
+					iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
+					iAllowedSources[8] = GetModByName("Dwemerverse.esp")
+				EndIf
+				
+				bSpellIsAllowed = False
+				
+				;See if this spell is from an approved source
+				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
+				If iAllowedSources.Find(iSpellSourceID) > -1
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
+				;A mod author has gone to the trouble of assuring us the spell is compatible.
+					bSpellIsAllowed = True
+				EndIf
+			EndIf
+
+			If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
+			;A mod author has added the spell to the unsafe list.
+				bSpellIsAllowed = False
+			EndIf
+				
+			
+			If bSpellIsAllowed && !HasSpell(kSpell)
+				If AddSpell(kSpell,False)
+					DebugTrace("Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
+					iAdded += 1
+				EndIf
+			ElseIf !bSpellIsAllowed && HasSpell(kSpell)
+				;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
+				If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
+					If RemoveSpell(kSpell)
+						DebugTrace("Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+						iRemoved += 1
+					EndIf
+				EndIf
+			EndIf
+		Else
+			DebugTrace("Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
 		EndIf
 	EndWhile
 	If iAdded || iRemoved

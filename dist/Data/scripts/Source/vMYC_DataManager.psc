@@ -158,7 +158,7 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		WaitMenuMode(1)
 	EndWhile
 	SavePlayerData()
-	Debug.MessageBox("Finished saving!")
+	;Debug.MessageBox("Finished saving!")
 
 	Actor[] kDoppelgangers = New Actor[32]
 
@@ -168,8 +168,9 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 	While i > 0
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
-		;Int iSex = GetRegInt("Characters." + sUUID + META + ".Sex")
-		kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID) ;as vMYC_Doppelganger
+		;If vMYC_API_Character.GetCharacterName(sUUID) == "Tagaerys"
+			kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID,False) ;as vMYC_Doppelganger
+		;EndIf
 		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
 		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
 		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
@@ -1165,7 +1166,7 @@ Int Function SavePlayerData()
 	JValue.WriteToFile(GetRegObj(sRegKey),"Data/vMYC/" + sPlayerName + ".char.json")
 	StopTimer("SavePlayerData")
 	GotoState("")
-	Debug.MessageBox("Finished saving player!")
+;	Debug.MessageBox("Finished saving player!")
 	Return 0 
 EndFunction
 
@@ -1284,10 +1285,10 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
 				SetRegObj("Characters." + sUUID,jCharacterData)
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
-				If iDataVersion < SerializationVersion
+				;If iDataVersion < SerializationVersion
 					DebugTrace("ImportCharacters - Upgrading data for " + sCharacterName + "! (" + sUUID + ")")
 					UpgradeData(sUUID)
-				EndIf
+				;EndIf
 			Else  ; Data already exists for this SSID
 				;FIXME: If we're going to overwrite existing data check the playtime, ask the player
 				If Math.ABS(GetRegFlt("Characters." + sUUID + META + ".PlayTime") - fPlayTime) < 0.1
@@ -1370,9 +1371,6 @@ Function UpgradeData(String sUUID)
 		While i > 0
 			i -= 1
 			Int ajItemInfo = JArray.GetObj(jOldArmorInfo,i)
-			If !JMap.GetStr(ajItemInfo,"SID")
-				JMap.SetStr(ajItemInfo,"SID",sUUID)
-			EndIf
 			String sItemID = vMYC_API_Item.SaveItem(ajItemInfo)
 			If sItemID
 				JArray.AddObj(jNewArmorInfos,vMYC_API_Item.GetItemJMap(sItemID))
@@ -1402,9 +1400,6 @@ Function UpgradeData(String sUUID)
 		If bTwoHanded && sHands[iHand] == "Left"
 			SetRegObj("Characters." + sUUID + ".Equipment.Left",JMap.Object())
 		Else
-			If !JMap.GetStr(jOldHandInfo,"SID")
-				JMap.SetStr(jOldHandInfo,"SID",sUUID)
-			EndIf
 			String sItemID = vMYC_API_Item.SaveItem(jOldHandInfo)
 			If sItemID
 				SetRegObj("Characters." + sUUID + ".Equipment." + sHands[iHand],vMYC_API_Item.GetItemJMap(sItemID))
@@ -1423,9 +1418,6 @@ Function UpgradeData(String sUUID)
 		While i > 0
 			i -= 1
 			Int ajItemInfo = JArray.GetObj(jOldItemInfos,i)
-			If !JMap.GetStr(ajItemInfo,"SID")
-				JMap.SetStr(ajItemInfo,"SID",sUUID)
-			EndIf
 			String sItemID = vMYC_API_Item.SaveItem(ajItemInfo)
 			If sItemID
 				JArray.AddObj(jNewItemInfos,vMYC_API_Item.GetItemJMap(sItemID))
