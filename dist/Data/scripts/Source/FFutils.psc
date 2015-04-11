@@ -7,6 +7,9 @@ Scriptname FFutils Hidden
 ; faster to do on the c++ side than on the Papyrus side.
 ; ========================================================---
 
+Function SetLevel(ActorBase akActorBase, Int newLevel) native global
+{Set akActorbase's level.}
+
 Function LoadCharacterPerks(ActorBase akActorbase, FormList perkList) native global
 {Replaces akActorbase's perks with the perks listed in the FormList.}
 

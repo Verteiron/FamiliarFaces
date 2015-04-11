@@ -12,6 +12,7 @@ Scriptname vMYC_ShrineManager extends vMYC_ManagerBase
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 
@@ -69,7 +70,7 @@ Event OnAlcoveSync(Int aiAlcoveIndex, Form akAlcoveForm)
 	String sScalesLikeFireID = "A68F7820-A7DD-4B5c-B8cB-47B2ccFe7492"
 	String sKmiruID = "09D1DF7A-4c77-4c77-9e39-351eA4407B3A" ; "A3Ecc712-6F0A-40F0-B81F-B37c829B0E1A"
 	String sMagrazID = "c1c644e7-61e0-44DB-A0c7-A5D15DF3B1e6"  ;"A348AA31-33AF-45D5-8736-BBD9AB120EE3"
-	kAlcove.AlcoveCharacterID = sKmiruID
+	kAlcove.AlcoveCharacterID = "A3Ecc712-6F0A-40F0-B81F-B37c829B0E1A"
 	kAlcove.CheckForCharacterActor()
 EndEvent
 

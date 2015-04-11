@@ -6,6 +6,7 @@ Scriptname vMYC_CompatAFT extends vMYC_CompatBase
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Properties ===--
 

@@ -4,6 +4,7 @@ Scriptname vMYC_TrophyObject_CWMap extends vMYC_TrophyObject
 Import Game
 Import Utility
 Import vMYC_Registry
+Import vMYC_Session
 
 Activator Property CWMapFlagBlueSolitude Auto
 Activator Property CWMapFlagBlueWinterhold Auto

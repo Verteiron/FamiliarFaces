@@ -13,6 +13,7 @@ Scriptname vMYC_TrophyManager extends vMYC_ManagerBase
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 

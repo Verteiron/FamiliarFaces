@@ -19,6 +19,7 @@ Scriptname vMYC_Doppelganger extends Actor
 Import Utility
 Import Game
 Import vMYC_Registry
+Import vMYC_Session
 
 ;=== Constants ===--
 
@@ -64,6 +65,7 @@ Bool				Property IsRaceInvalid	= False					Auto Hidden
 
 String 				Property CharacterName	= ""					Auto Hidden
 String 				Property CharacterUUID	= ""					Auto Hidden
+String 				Property SID			= ""					Auto Hidden
 Race				Property CharacterRace	= None					Auto Hidden
 
 Actor 				Property PlayerREF 									Auto
@@ -150,24 +152,26 @@ Auto State Available
 		;Clear out because we shouldn't be loaded
 	EndEvent
 	
-	Function AssignCharacter(String sUUID)
-	{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
+	Function AssignCharacter(String asSID)
+	{This is the biggie, calling this in Available state will transform the character into the target in asSID.}
 		GoToState("Busy")
-		_jCharacterData = GetRegObj("Characters." + sUUID)
-		_sCharacterInfo = "Characters." + sUUID + ".Info."
+		_jCharacterData = GetRegObj("Characters." + asSID)
+		_sCharacterInfo = "Characters." + asSID + ".Info."
 		SaveSession()
 		If !_jCharacterData
-			DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, but there's no data for that UUID!")
+			DebugTrace("AssignCharacter(" + asSID + ") was called in Available state, but there's no data for that UUID!")
 			GotoState("Available")
 			Return
 		EndIf
-		DebugTrace("AssignCharacter(" + sUUID + ") was called in Available state, transforming into " + GetRegStr(_sCharacterInfo + "Name") + "!")
-		SetRegForm("Doppelgangers.Preferred." + sUUID + ".ActorBase",MyActorBase)
-		SetSessionForm("Doppelgangers." + sUUID + ".ActorBase",MyActorBase)
-		SetSessionForm("Doppelgangers." + sUUID + ".Actor",Self as Actor)
+		SID = asSID
+		DebugTrace("AssignCharacter(" + asSID + ") was called in Available state, transforming into " + GetRegStr(_sCharacterInfo + "Name") + "!")
 		CharacterName = GetRegStr(_sCharacterInfo + "Name")
 		CharacterRace = GetRegForm(_sCharacterInfo + "Race") as Race
+
+		vMYC_API_Doppelganger.RegisterActor(Self)
+
 		MyActorBase.SetName(CharacterName)
+
 		NeedAppearance	= True
 		NeedStats		= True
 		NeedPerks		= True
@@ -236,6 +240,7 @@ State Assigned
 	EndEvent
 
 	Event OnLoad()
+		UpdateNINodes()
 	EndEvent
 	
 EndState
@@ -244,9 +249,15 @@ State Busy
 
 EndState
 
-Function AssignCharacter(String sUUID)
-{This is the biggie, calling this in Available state will transform the character into the target in sUUID.}
-	DebugTrace("AssignCharacter(" + sUUID + ") was called outside of Available state, doing nothing!",1)
+Function AssignCharacter(String asSID)
+{This is the biggie, calling this in Available state will transform the character into the target in asSID.}
+	DebugTrace("AssignCharacter(" + asSID + ") was called outside of Available state, doing nothing!",1)
+EndFunction
+
+Function EraseCharacter()
+{This will blank out this character, delete the Actor and release the Actorbase back into the pool.}
+	;FIXME: Do something!
+	SID = ""
 EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
@@ -319,11 +330,10 @@ Int Function UpdateAppearance()
 	MyActorBase.SetInvulnerable(_bInvulnerableState)
 	If _bCharGenSuccess
 		Return 0
-	Else
-		DebugTrace("Something went wrong during UpdateAppearance!",1)
-		;FIXME: Add more error handling like checking for missing files, etc
-		Return -1
 	EndIf
+	DebugTrace("Something went wrong during UpdateAppearance!",1)
+	;FIXME: Add more error handling like checking for missing files, etc
+	Return -1
 EndFunction
 
 Int Function UpdateNINodes()
@@ -331,22 +341,79 @@ Int Function UpdateNINodes()
 		DebugTrace("UpdateAppearance called outside Assigned state!")
 		Return -2
 	EndIf
+
+	Int i
+
+	DebugTrace("Updating NINodes...")
+	Int jCharGenNodeTransforms = JValue.SolveObj(_jCharacterData,".CharGenData.Transforms")
+	If jCharGenNodeTransforms
+		i = JArray.Count(jCharGenNodeTransforms)
+		While i > 0
+			i -= 1
+			Int jNodeTransform = JArray.GetObj(jCharGenNodeTransforms,i)
+			String sNodeName = JValue.SolveStr(jNodeTransform,".node")
+			If sNodeName
+				; {
+		        ; "firstPerson": 0,
+		          ; "keys": [
+		            ; {
+		              ; "name": "RSMPlugin",
+		              ; "values": [
+		                ; {
+		                  ; "data": 2.5399999618530273,
+		                  ; "key": 30,
+		                  ; "index": 0,
+		                  ; "type": 4
+		                ; }
+		              ; ]
+		            ; }
+		          ; ],
+		          ; "node": "NPC Head [Head]"
+		        ; }
+		        Bool bFirstPerson = JValue.SolveInt(jNodeTransform,".firstPerson") as Bool
+				Int jNodeKeys = JValue.SolveObj(jNodeTransform,".keys")
+				Int iKey = JArray.Count(jNodeKeys)
+				While iKey > 0
+					iKey -= 1
+					Int jNodeKey = JArray.GetObj(jNodeKeys,iKey)
+					String sKeyName = JValue.SolveStr(jNodeKey,".name")
+					Int jNodeKeyValues = JValue.SolveObj(jNodeKey,".values")
+					Int iValue = JArray.Count(jNodeKeyValues)
+					While iValue > 0
+						iValue -= 1
+						Int jNodeKeyValue = JArray.GetObj(jNodeKeyValues,iValue)
+						Float fData = JValue.SolveFlt(jNodeKeyValue,".data")
+						Int iType = JValue.SolveInt(jNodeKeyValue,".type")
+						If iType == 4 && fData && fData != 1
+							DebugTrace("Scaling NINode " + sNodeName + " to " + fData + "!")
+							NetImmerse.SetNodeScale(Self,sNodeName,fData,bFirstPerson)
+						EndIf
+					EndWhile
+				EndWhile
+			EndIf
+		EndWhile
+		Return 0
+	EndIf
+
+
+
 	Int jNINodeData = JValue.SolveObj(_jCharacterData,".NINodeData")
-	
+
 	Int jNiNodeNameList = JMap.AllKeys(jNINodeData)
 	Int jNiNodeValueList = JMap.AllValues(jNINodeData)
-	Int i = JArray.Count(jNiNodeNameList)
+	i = JArray.Count(jNiNodeNameList)
 	While i > 0
 		i -= 1
 		String sNodeName = JArray.GetStr(jNiNodeNameList,i)
 		If sNodeName
 			Int jNINodeValues = JArray.GetObj(jNiNodeValueList,i)
 			Float fNINodeScale = JMap.GetFlt(jNINodeValues,"Scale")
-			Debug.Trace("Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
+			DebugTrace("Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,False)
 			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,True)
 		EndIf
 	EndWhile
+	Return 0
 EndFunction
 
 Int Function UpdateNIOverlays()
@@ -520,34 +587,34 @@ Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 	i = JArray.Count(jCharacterArmorInfo)
 	While i > 0
 		i -= 1
-		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
-		Form kItem = JMap.GetForm(jArmor,"Form")
-		If kItem
-			Int h = (kItem as Armor).GetSlotMask()
-			ObjectReference kObject = DataManager.LoadSerializedEquipment(jArmor)
-			If kObject
-				kObject.SetActorOwner(MyActorBase)
-				kCharacterActor.AddItem(kObject,1,True)
-				kCharacterActor.EquipItemEx(kItem,0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
-				;== Load NIO dye, if applicable ===--
-				If GetRegBool("Config.NIO.ArmorDye.Enabled")
-					Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
-					If JValue.isArray(jNIODyeColors)
-						Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
-						Int iMaskIndex = 0
-						Int iIndexMax = 15
-						While iMaskIndex < iIndexMax
-							Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
-							If Math.RightShift(iColor,24) > 0
-								NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
-							EndIf
-							iMaskIndex += 1
-						EndWhile
-					EndIf
+
+		String sItemID = JValue.SolveStr(JArray.GetObj(jCharacterArmorInfo,i),".UUID")
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+
+		If kObject
+			Int h = (kObject.GetBaseObject() as Armor).GetSlotMask()
+			kObject.SetActorOwner(MyActorBase)
+			kCharacterActor.AddItem(kObject,1,True)
+			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
+			;== Load NIO dye, if applicable ===--
+			If GetRegBool("Config.NIO.ArmorDye.Enabled")
+				Int jArmor = vMYC_API_Item.GetItemJMap(sItemID)
+				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
+				If JValue.isArray(jNIODyeColors)
+					Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
+					Int iMaskIndex = 0
+					Int iIndexMax = 15
+					While iMaskIndex < iIndexMax
+						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
+						If Math.RightShift(iColor,24) > 0
+							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
+						EndIf
+						iMaskIndex += 1
+					EndWhile
 				EndIf
-			Else ;kObject failed, armor didn't get loaded/created for some reason
-				DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
 			EndIf
+		Else ;kObject failed, armor didn't get loaded/created for some reason
+			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 	EndWhile
 
@@ -582,19 +649,24 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
 		If iHand == 0
 			sHand = "Left"
 		EndIf
-		Int jItem = JValue.SolveObj(_jCharacterData,".Equipment." + sHand)
-		Form kItem = JMap.GetForm(jItem,"Form")
-		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
+		String sItemID = JValue.SolveStr(_jCharacterData,".Equipment." + sHand + ".UUID")
+		;ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JValue.SolveObj(_jCharacterData,".Equipment." + sHand))
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
-			kCharacterActor.AddItem(kObject,1,True)
-			kCharacterActor.EquipItemEx(kItem,iHand,False,True)
+			If !(kObject.GetBaseObject() as Spell)
+				kCharacterActor.AddItem(kObject,1,True)
+			EndIf
+			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),iHand,False,True) ;FIXME: May need to use the Base form here?
 			Weapon kWeapon = kObject.GetBaseObject() as Weapon
-			If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
-				bTwoHanded = True
+			If kWeapon
+				If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
+					bTwoHanded = True
+				EndIf
 			EndIf
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
+			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 		iHand -= 1
 		iCount += 1
@@ -675,14 +747,15 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	DebugTrace("Has " + i + " items to be customized!")
 	While i > 0
 		i -= 1
-		Int jItem = JArray.GetObj(jCustomItems,i)
-		Form kItem = JMap.GetForm(jItem,"Form")
-		ObjectReference kObject = DataManager.LoadSerializedEquipment(jItem)
+		String sItemID = JValue.SolveStr(JArray.GetObj(jCustomItems,i),".UUID")
+		;ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCustomItems,i))
+		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
+
 		If kObject
 			kObject.SetActorOwner(MyActorBase)
 			kCharacterActor.AddItem(kObject,1,True)
 		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + kItem + "!",1)
+			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
 		EndIf
 		iCount += 1
 	EndWhile
@@ -708,11 +781,13 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
 	While i > 0
 		i -= 1
 		Form kItem = JArray.GetForm(jPotionList,i)
-		Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
 		If kItem
-			If !(kItem as Potion).IsFood() ;.HasKeywordString("VendorItemFood")
-				AddItem(kItem,iItemCount,True)
-				iCount += iItemCount
+			Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
+			If (kItem as Potion)
+				If !(kItem as Potion).IsFood() ;.HasKeywordString("VendorItemFood")
+					AddItem(kItem,iItemCount,True)
+					iCount += iItemCount
+				EndIf
 			EndIf
 		EndIf
 	EndWhile
@@ -989,9 +1064,9 @@ Int Function UpdateSpells()
 			EndIf
 			
 			If iPerkCount > 1
-				SetSessionBool("Config.Magic.Allow" + sMagicSchool,True)
+				SetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool,True)
 			Else
-				SetSessionBool("Config.Magic.Allow" + sMagicSchool,False)
+				SetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool,False)
 			EndIf
 			i += 1
 		EndWhile
@@ -1002,86 +1077,90 @@ Int Function UpdateSpells()
 	While i > 0
 		i -= 1
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
-		String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
-		Bool bSpellIsAllowed = False
-		
-		If sMagicSchool
-			bSpellIsAllowed = GetSessionBool("Config.Magic.Allow" + sMagicSchool)
-		Else
-			bSpellIsAllowed = GetSessionBool("Config.Magic.AllowOther")
-		EndIf
-		
-		MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-		
-		If GetSessionBool("Config.Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
-			If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-				bSpellIsAllowed = True
-			ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
-				bSpellIsAllowed = True
-			EndIf
-		EndIf
-		
-		If GetSessionBool("Config.Magic.AllowDefensive")
-			If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-				bSpellIsAllowed = True
-			ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
-				bSpellIsAllowed = True
-			EndIf
-		EndIf
-
-		If bSpellIsAllowed
-			Int[] iAllowedSources = New Int[128]
+		If kSpell
+			String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
+			Bool bSpellIsAllowed = False
 			
-			iAllowedSources[0] = GetModByName("Skyrim.esm")
-			iAllowedSources[1] = GetModByName("Update.esm")
-			iAllowedSources[2] = GetModByName("Dawnguard.esm")
-			iAllowedSources[3] = GetModByName("Dragonborn.esm")
-			iAllowedSources[4] = GetModByName("Hearthfires.esm")
-
-			If GetSessionBool("Config.Magic.AllowSelectMods") ; Select mods
-				iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
-				iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
-				iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
-				iAllowedSources[8] = GetModByName("Dwemerverse.esp")
+			If sMagicSchool
+				bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool)
+			Else
+				bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.AllowOther")
 			EndIf
 			
-			bSpellIsAllowed = False
+			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
 			
-			;See if this spell is from an approved source
-			Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
-			If iAllowedSources.Find(iSpellSourceID) > -1
-				bSpellIsAllowed = True
-			ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
-			;A mod author has gone to the trouble of assuring us the spell is compatible.
-				bSpellIsAllowed = True
-			EndIf
-		EndIf
-
-		If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
-		;A mod author has added the spell to the unsafe list.
-			bSpellIsAllowed = False
-		EndIf
-			
-		
-		If bSpellIsAllowed && !HasSpell(kSpell)
-			If AddSpell(kSpell,False)
-				DebugTrace("Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
-				iAdded += 1
-			EndIf
-		ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-			;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
-			If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
-				If RemoveSpell(kSpell)
-					DebugTrace("Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
-					iRemoved += 1
+			If GetSessionBool("Config." + SID + ".Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
+				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
+					bSpellIsAllowed = True
 				EndIf
 			EndIf
+			
+			If GetSessionBool("Config." + SID + ".Magic.AllowDefensive")
+				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
+					bSpellIsAllowed = True
+				EndIf
+			EndIf
+
+			If bSpellIsAllowed
+				Int[] iAllowedSources = New Int[128]
+				
+				iAllowedSources[0] = GetModByName("Skyrim.esm")
+				iAllowedSources[1] = GetModByName("Update.esm")
+				iAllowedSources[2] = GetModByName("Dawnguard.esm")
+				iAllowedSources[3] = GetModByName("Dragonborn.esm")
+				iAllowedSources[4] = GetModByName("Hearthfires.esm")
+
+				If GetSessionBool("Config." + SID + ".Magic.AllowSelectMods") ; Select mods
+					iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
+					iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
+					iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
+					iAllowedSources[8] = GetModByName("Dwemerverse.esp")
+				EndIf
+				
+				bSpellIsAllowed = False
+				
+				;See if this spell is from an approved source
+				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
+				If iAllowedSources.Find(iSpellSourceID) > -1
+					bSpellIsAllowed = True
+				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
+				;A mod author has gone to the trouble of assuring us the spell is compatible.
+					bSpellIsAllowed = True
+				EndIf
+			EndIf
+
+			If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
+			;A mod author has added the spell to the unsafe list.
+				bSpellIsAllowed = False
+			EndIf
+				
+			
+			If bSpellIsAllowed && !HasSpell(kSpell)
+				If AddSpell(kSpell,False)
+					DebugTrace("Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
+					iAdded += 1
+				EndIf
+			ElseIf !bSpellIsAllowed && HasSpell(kSpell)
+				;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
+				If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
+					If RemoveSpell(kSpell)
+						DebugTrace("Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+						iRemoved += 1
+					EndIf
+				EndIf
+			EndIf
+		Else
+			DebugTrace("Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
 		EndIf
 	EndWhile
 	If iAdded || iRemoved
 		DebugTrace("Added " + iAdded + " spells, removed " + iRemoved)
 	EndIf
-
+	SaveSession()
 	Return iAdded
 EndFunction
 
