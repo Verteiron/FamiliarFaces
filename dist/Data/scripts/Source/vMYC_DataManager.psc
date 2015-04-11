@@ -1335,6 +1335,14 @@ Function UpgradeData(String sUUID)
 
 	String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
 
+	If !HasRegKey("Characters." + sUUID + META + ".Race")
+		SetRegForm("Characters." + sUUID + META + ".Race",GetRegForm("Characters." + sUUID + ".Race"))
+	EndIf
+
+	If !HasRegKey("Characters." + sUUID + META + ".Sex")
+		SetRegInt("Characters." + sUUID + META + ".Sex",GetRegInt("Characters." + sUUID + ".Sex"))
+	EndIf
+
 	;=== Upgrade Inventory section ===--
 
 	Int jOldInventory = GetRegObj("Characters." + sUUID + ".Inventory")
