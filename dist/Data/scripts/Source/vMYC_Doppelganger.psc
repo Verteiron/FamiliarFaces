@@ -20,6 +20,7 @@ Import Utility
 Import Game
 Import vMYC_Registry
 Import vMYC_Session
+Import vMYC_API_Doppelganger
 
 ;=== Constants ===--
 
@@ -171,7 +172,7 @@ Auto State Available
 		vMYC_API_Doppelganger.RegisterActor(Self)
 
 		MyActorBase.SetName(CharacterName)
-
+		FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
 		NeedAppearance	= True
 		NeedStats		= True
 		NeedPerks		= True
@@ -323,17 +324,7 @@ Int Function UpdateAppearance()
 		DebugTrace("UpdateAppearance called outside Assigned state!")
 		Return -2
 	EndIf
-	Bool _bInvulnerableState = MyActorBase.IsInvulnerable()
-	Bool _bCharGenSuccess = False
-	MyActorBase.SetInvulnerable(True)
-	_bCharGenSuccess = CharGenLoadCharacter(Self,CharacterRace,CharacterName)
-	MyActorBase.SetInvulnerable(_bInvulnerableState)
-	If _bCharGenSuccess
-		Return 0
-	EndIf
-	DebugTrace("Something went wrong during UpdateAppearance!",1)
-	;FIXME: Add more error handling like checking for missing files, etc
-	Return -1
+	Return vMYC_API_Doppelganger.UpdateAppearance(SID,Self)
 EndFunction
 
 Int Function UpdateNINodes()
@@ -342,78 +333,7 @@ Int Function UpdateNINodes()
 		Return -2
 	EndIf
 
-	Int i
-
-	DebugTrace("Updating NINodes...")
-	Int jCharGenNodeTransforms = JValue.SolveObj(_jCharacterData,".CharGenData.Transforms")
-	If jCharGenNodeTransforms
-		i = JArray.Count(jCharGenNodeTransforms)
-		While i > 0
-			i -= 1
-			Int jNodeTransform = JArray.GetObj(jCharGenNodeTransforms,i)
-			String sNodeName = JValue.SolveStr(jNodeTransform,".node")
-			If sNodeName
-				; {
-		        ; "firstPerson": 0,
-		          ; "keys": [
-		            ; {
-		              ; "name": "RSMPlugin",
-		              ; "values": [
-		                ; {
-		                  ; "data": 2.5399999618530273,
-		                  ; "key": 30,
-		                  ; "index": 0,
-		                  ; "type": 4
-		                ; }
-		              ; ]
-		            ; }
-		          ; ],
-		          ; "node": "NPC Head [Head]"
-		        ; }
-		        Bool bFirstPerson = JValue.SolveInt(jNodeTransform,".firstPerson") as Bool
-				Int jNodeKeys = JValue.SolveObj(jNodeTransform,".keys")
-				Int iKey = JArray.Count(jNodeKeys)
-				While iKey > 0
-					iKey -= 1
-					Int jNodeKey = JArray.GetObj(jNodeKeys,iKey)
-					String sKeyName = JValue.SolveStr(jNodeKey,".name")
-					Int jNodeKeyValues = JValue.SolveObj(jNodeKey,".values")
-					Int iValue = JArray.Count(jNodeKeyValues)
-					While iValue > 0
-						iValue -= 1
-						Int jNodeKeyValue = JArray.GetObj(jNodeKeyValues,iValue)
-						Float fData = JValue.SolveFlt(jNodeKeyValue,".data")
-						Int iType = JValue.SolveInt(jNodeKeyValue,".type")
-						If iType == 4 && fData && fData != 1
-							DebugTrace("Scaling NINode " + sNodeName + " to " + fData + "!")
-							NetImmerse.SetNodeScale(Self,sNodeName,fData,bFirstPerson)
-						EndIf
-					EndWhile
-				EndWhile
-			EndIf
-		EndWhile
-		Return 0
-	EndIf
-
-
-
-	Int jNINodeData = JValue.SolveObj(_jCharacterData,".NINodeData")
-
-	Int jNiNodeNameList = JMap.AllKeys(jNINodeData)
-	Int jNiNodeValueList = JMap.AllValues(jNINodeData)
-	i = JArray.Count(jNiNodeNameList)
-	While i > 0
-		i -= 1
-		String sNodeName = JArray.GetStr(jNiNodeNameList,i)
-		If sNodeName
-			Int jNINodeValues = JArray.GetObj(jNiNodeValueList,i)
-			Float fNINodeScale = JMap.GetFlt(jNINodeValues,"Scale")
-			DebugTrace("Scaling NINode " + sNodeName + " to " + fNINodeScale + "!")
-			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,False)
-			NetImmerse.SetNodeScale(Self,sNodeName,fNINodeScale,True)
-		EndIf
-	EndWhile
-	Return 0
+	Return vMYC_API_Doppelganger.UpdateNINodes(SID,Self)
 EndFunction
 
 Int Function UpdateNIOverlays()
@@ -421,47 +341,7 @@ Int Function UpdateNIOverlays()
 		DebugTrace("UpdateNIOverlays called outside Assigned state!")
 		Return -2
 	EndIf
-	Int jOverlayData = JValue.SolveObj(_jCharacterData,".NIOverrideData")
-
-	If !jOverlayData
-		Return 0 
-	EndIf
-
-	If !NiOverride.HasOverlays(Self)
-		NiOverride.AddOverlays(Self)
-	EndIf
-	
-	NiOverride.RevertOverlays(Self)
-	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
-	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
-	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
-	ApplyNIOverlay(Self,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
-
-	Return 1
-EndFunction
-
-Function ApplyNIOverlay(Actor kCharacter, Int jLayers, String sNodeTemplate)
-	If !kCharacter
-		Return
-	EndIf
-	Int iLayerCount = JArray.Count(jLayers)
-	Int i = 0
-	Bool bIsFemale = kCharacter.GetActorBase().GetSex()
-	While i < iLayerCount
-		Int jLayer = JArray.GetObj(jLayers,i)
-		String sNodeName = sNodeTemplate + i + "]"
-
-		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 7, -1, JMap.GetInt(jLayer,"RGB"), True) ; Set the tint color
-		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 8, -1, JMap.GetFlt(jLayer,"Alpha"), True) ; Set the alpha
-		NiOverride.AddNodeOverrideString(kCharacter, bIsFemale, sNodeName, 9, 0, JMap.GetStr(jLayer,"Texture"), True) ; Set the tint texture
-
-		Int iGlowData = JMap.GetInt(jLayer,"GlowData")
-		Int iGlowColor = iGlowData
-		Int iGlowEmissive = Math.RightShift(iGlowColor, 24)
-		NiOverride.AddNodeOverrideInt(kCharacter, bIsFemale, sNodeName, 0, -1, iGlowColor, True) ; Set the emissive color
-		NiOverride.AddNodeOverrideFloat(kCharacter, bIsFemale, sNodeName, 1, -1, iGlowEmissive / 10.0, True) ; Set the emissive multiple
-		i += 1
-	EndWhile
+	Return vMYC_API_Doppelganger.UpdateNIOverlays(SID,Self)
 EndFunction
 
 Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacterName)
@@ -469,51 +349,7 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 		DebugTrace("CharGenLoadCharacter called outside Assigned state!")
 		Return False
 	EndIf
-	Bool bResult
-	Int iDismountSafetyTimer = 10
-	While akActor.IsOnMount() && iDismountSafetyTimer
-		iDismountSafetyTimer -= 1
-		Bool bDismountSent = akActor.Dismount()
-		Wait(1)
-	EndWhile
-	If !iDismountSafetyTimer
-		Debug.Trace("MYC: (" + CharacterName + "/Actor) Dismount timer expired!",1)
-	EndIf
-	If akActor.IsOnMount()
-		;Debug.Trace("MYC: (" + CharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
-		Return False
-	EndIf
-	;Debug.Trace("MYC: (" + CharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
-	Bool _bExternalHeadExists = JContainers.fileExistsAtPath("Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
-	If CharGen.IsExternalEnabled()
-		If !_bExternalHeadExists
-			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, IsExternalEnabled is true but no head NIF exists, will use LoadCharacter instead!",1)
-			bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
-			Return bResult
-		EndIf
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is true, using LoadExternalCharacter...")
-		bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
-		Return bResult
-	Else
-		If _bExternalHeadExists
-			Debug.Trace("MYC/Actor/" + CharacterName + ": Warning, external head NIF exists but IsExternalEnabled is false, using LoadExternalCharacter instead...",1)
-			bResult = CharGen.LoadExternalCharacter(akActor,akRace,asCharacterName)
-			Return bResult
-		EndIf
-		;Debug.Trace("MYC/Actor/" + CharacterName + ": IsExternalEnabled is false, using LoadCharacter...")
-		bResult = CharGen.LoadCharacter(akActor,akRace,asCharacterName)
-		WaitMenuMode(1)
-		RegenerateHead()
-		Return bResult
-	EndIf
-EndFunction
-
-Bool Function WaitFor3DLoad(ObjectReference kObjectRef, Int iSafety = 20)
-	While !kObjectRef.Is3DLoaded() && iSafety > 0
-		iSafety -= 1
-		Wait(0.1)
-	EndWhile
-	Return iSafety As Bool
+	Return vMYC_API_Doppelganger.CharGenLoadCharacter(akActor,akRace,asCharacterName)
 EndFunction
 
 ;=== Equipment and inventory functions ===--
@@ -525,100 +361,19 @@ Int Function EquipDefaultGear(Bool abLockEquip = False)
 ;FIXME: This may fail to equip the correct item if character has both the base 
 ;and a customized version of the same item in their inventory
 
-	Int jCharacterArmor = JValue.SolveObj(_jCharacterData,".Equipment.Armor")
-	Int jCharacterArmorInfo = JValue.SolveObj(_jCharacterData,".Equipment.ArmorInfo")
+	Return vMYC_API_Doppelganger.EquipDefaultGear(SID,Self,abLockEquip)
 
-	Actor kCharacterActor = Self
-	
-	Int i = JArray.Count(jCharacterArmorInfo)
-	Int iCount = 0
-	While i > 0
-		i -= 1
-		Int jArmor = JArray.GetObj(jCharacterArmorInfo,i)
-		Form kItem = JMap.GetForm(jArmor,"Form")
-		If !IsEquipped(kItem)
-			kCharacterActor.EquipItemEx(kItem,0,abLockEquip,True)
-			iCount += 1
-		EndIf
-	EndWhile
-	Form kItemL = JValue.SolveForm(_jCharacterData,".Equipment.Left.Form")
-	Form kItemR = JValue.SolveForm(_jCharacterData,".Equipment.Right.Form")
-	If !IsEquipped(kItemL)
-		kCharacterActor.EquipItemEx(kItemL,2,abLockEquip,True)
-		iCount += 1
-	EndIf
-	If !IsEquipped(kItemR)
-		kCharacterActor.EquipItemEx(kItemR,1,abLockEquip,True)
-		iCount += 1
-	EndIf
-	Form kAmmo = JValue.SolveForm(_jCharacterData,".Equipment.Ammo")
-	If kAmmo
-		If !kCharacterActor.GetItemCount(kAmmo)
-			kCharacterActor.AddItem(kAmmo,1,True)
-		EndIf
-		kCharacterActor.EquipItemEx(kAmmo,0,abLockEquip,True)
-		iCount += 1
-	EndIf
-	Return iCount
 EndFunction
 
 Int Function UpdateArmor(Bool abReplaceMissing = True, Bool abFullReset = False)
 {Setup equipped Armor based on the saved character data.}
-	Int i
-	Int iCount
-	
-	DebugTrace("Applying Armor...")
-
 	If !ScriptState == "Assigned"
 		DebugTrace("UpdateArmor called outside Assigned state!",1)
 		Return -2
 	EndIf
 	
-	If !_jCharacterData
-		DebugTrace("UpdateArmor called but _jCharacterData is missing!",1)
-		Return -3
-	EndIf
-	
-	Int jCharacterArmor = JValue.SolveObj(_jCharacterData,".Equipment.Armor")
-	Int jCharacterArmorInfo = JValue.SolveObj(_jCharacterData,".Equipment.ArmorInfo")
+	Return vMYC_API_Doppelganger.UpdateArmor(SID,Self,abReplaceMissing,abFullReset)
 
-	Actor kCharacterActor = Self
-	
-	i = JArray.Count(jCharacterArmorInfo)
-	While i > 0
-		i -= 1
-
-		String sItemID = JValue.SolveStr(JArray.GetObj(jCharacterArmorInfo,i),".UUID")
-		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
-
-		If kObject
-			Int h = (kObject.GetBaseObject() as Armor).GetSlotMask()
-			kObject.SetActorOwner(MyActorBase)
-			kCharacterActor.AddItem(kObject,1,True)
-			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),0,True,True) ; By default do not allow unequip, otherwise they strip whenever they draw a weapon.
-			;== Load NIO dye, if applicable ===--
-			If GetRegBool("Config.NIO.ArmorDye.Enabled")
-				Int jArmor = vMYC_API_Item.GetItemJMap(sItemID)
-				Int jNIODyeColors = JValue.solveObj(jArmor,".NIODyeColors")
-				If JValue.isArray(jNIODyeColors)
-					Int iHandle = NIOverride.GetItemUniqueID(kCharacterActor, 0, h, True)
-					Int iMaskIndex = 0
-					Int iIndexMax = 15
-					While iMaskIndex < iIndexMax
-						Int iColor = JArray.GetInt(jNIODyeColors,iMaskIndex)
-						If Math.RightShift(iColor,24) > 0
-							NiOverride.SetItemDyeColor(iHandle, iMaskIndex, iColor)
-						EndIf
-						iMaskIndex += 1
-					EndWhile
-				EndIf
-			EndIf
-		Else ;kObject failed, armor didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
-		EndIf
-	EndWhile
-
-	Return iCount
 EndFunction
 
 Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = False)
@@ -626,98 +381,11 @@ Int Function UpdateWeapons(Bool abReplaceMissing = True, Bool abFullReset = Fals
  abReplaceMissing: (Optional) If an item has been removed, replace it. May lead to item duplication.
  abFullReset: (Optional) Remove ALL items and replace with originals. May cause loss of inventory items.
  Returns: Number of items processed.}
-	Int i
-	Int iCount
-	DebugTrace("Applying Weapons...")
-
 	If !ScriptState == "Assigned"
 		DebugTrace("UpdateWeapons called outside Assigned state!",1)
 		Return -2
 	EndIf
-	
-	If !_jCharacterData
-		DebugTrace("UpdateWeapons called but _jCharacterData is missing!",1)
-		Return -3
-	EndIf
-
-	Actor kCharacterActor = Self
-	
-	Int iHand = 1 ; start with right
-	While iHand >= 0
-		Bool bTwoHanded = False
-		String sHand = "Right"
-		If iHand == 0
-			sHand = "Left"
-		EndIf
-		String sItemID = JValue.SolveStr(_jCharacterData,".Equipment." + sHand + ".UUID")
-		;ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JValue.SolveObj(_jCharacterData,".Equipment." + sHand))
-		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
-
-		If kObject
-			kObject.SetActorOwner(MyActorBase)
-			If !(kObject.GetBaseObject() as Spell)
-				kCharacterActor.AddItem(kObject,1,True)
-			EndIf
-			kCharacterActor.EquipItemEx(kObject.GetBaseObject(),iHand,False,True) ;FIXME: May need to use the Base form here?
-			Weapon kWeapon = kObject.GetBaseObject() as Weapon
-			If kWeapon
-				If kWeapon.IsBow() || kWeapon.IsGreatsword() || kWeapon.IsWaraxe() || kWeapon.IsWarhammer()
-					bTwoHanded = True
-				EndIf
-			EndIf
-		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
-		EndIf
-		iHand -= 1
-		iCount += 1
-		If bTwoHanded ; skip left hand
-			iHand -= 1
-			iCount -= 1
-		EndIf
-	EndWhile
-	
-	Bool bBow = False
-	Bool bCrossbow = False
-	If GetEquippedItemType(0) == 12
-		bCrossBow = True
-	ElseIf GetEquippedItemType(0) == 7
-		bBow = True
-	EndIf
-	
-	Float fBestAmmoDamage = 0.0
-	Ammo kBestAmmo = JValue.SolveForm(_jCharacterData,".Equipment.Ammo") as Ammo
-	Bool bFindBestAmmo = False
-	If !kBestAmmo && (bBow || bCrossbow)
-		bFindBestAmmo = True
-	EndIf
-	If bFindBestAmmo 
-		Int jAmmoFMap = JValue.SolveObj(_jCharacterData,".Inventory.42") ; kAmmo
-		Int jAmmoList = JFormMap.AllKeys(jAmmoFMap)
-		i = JArray.Count(jAmmoList)
-		While i > 0
-			i -= 1
-			Ammo kAmmo = JArray.GetForm(jAmmoList,i) as Ammo
-			If kAmmo
-				If (kAmmo.IsBolt() && bCrossBow) || (!kAmmo.IsBolt() && bBow) ;right ammo
-					If kCharacterActor.GetItemCount(kAmmo) ; character has it
-						If bFindBestAmmo ; but is it the BEST? OF THE BEST? OF THE BEST? SIR?
-							Float fAmmoDamage = (kAmmo as Ammo).GetDamage()
-							If fAmmoDamage > fBestAmmoDamage
-								fBestAmmoDamage = fAmmoDamage
-								kBestAmmo = kAmmo as Ammo
-								DebugTrace("BestAmmo is now " + kBestAmmo.GetName())
-							EndIf
-						EndIf
-					EndIf
-				EndIf
-			EndIf
-		EndWhile
-	EndIf
-	If kBestAmmo
-		EquipItemEx(kBestAmmo,0,False,False)
-	EndIf
-	
-	Return iCount
+	Return vMYC_API_Doppelganger.UpdateWeapons(SID,Self,abReplaceMissing,abFullReset)
 EndFunction
 
 Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = False)
@@ -725,74 +393,11 @@ Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = Fa
  abReplaceMissing: (Optional) If an item has been removed, replace it. May lead to item duplication.
  abFullReset: (Optional) Remove ALL items and replace with originals. May cause loss of inventory items.
  Returns: Number of items processed.}
-	Int i
-	Int iCount
-	DebugTrace("Applying Inventory...")
-
 	If !ScriptState == "Assigned"
 		DebugTrace("UpdateInventory called outside Assigned state!",1)
 		Return -2
 	EndIf
-	
-	If !_jCharacterData
-		DebugTrace("UpdateInventory called but _jCharacterData is missing!",1)
-		Return -3
-	EndIf
-
-	Actor kCharacterActor = Self
-	
-	Int jCustomItems = JValue.SolveObj(_jCharacterData,".InventoryCustomItems")
-
-	i = JArray.Count(jCustomItems)
-	DebugTrace("Has " + i + " items to be customized!")
-	While i > 0
-		i -= 1
-		String sItemID = JValue.SolveStr(JArray.GetObj(jCustomItems,i),".UUID")
-		;ObjectReference kObject = vMYC_API_Item.CreateObjectFromJObj(JArray.GetObj(jCustomItems,i))
-		ObjectReference kObject = vMYC_API_Item.CreateObject(sItemID)
-
-		If kObject
-			kObject.SetActorOwner(MyActorBase)
-			kCharacterActor.AddItem(kObject,1,True)
-		Else ;kObject failed, weapon didn't get loaded/created for some reason
-			DebugTrace("Couldn't create an ObjectReference for " + sItemID + "!",1)
-		EndIf
-		iCount += 1
-	EndWhile
-
-	Int jAmmoFMap = JValue.SolveObj(_jCharacterData,".Inventory.42") ; kAmmo
-	Int jAmmoList = JFormMap.AllKeys(jAmmoFMap)
-	i = JArray.Count(jAmmoList)
-	While i > 0
-		i -= 1
-		Form kItem = JArray.GetForm(jAmmoList,i)
-		Int iItemCount = JFormMap.GetInt(jAmmoFMap,kItem)
-		If kItem
-			If iItemCount
-				kCharacterActor.AddItem(kItem,iItemCount,True)
-				iCount += iItemCount
-			EndIf
-		EndIf
-	EndWhile
-	
-	Int jPotionFMap = JValue.SolveObj(_jCharacterData,".Inventory.46") ; kPotion
-	Int	jPotionList = JFormMap.AllKeys(jPotionFMap)
-	i = JArray.Count(jPotionList)
-	While i > 0
-		i -= 1
-		Form kItem = JArray.GetForm(jPotionList,i)
-		If kItem
-			Int iItemCount = JFormMap.GetInt(jPotionFMap,kItem)
-			If (kItem as Potion)
-				If !(kItem as Potion).IsFood() ;.HasKeywordString("VendorItemFood")
-					AddItem(kItem,iItemCount,True)
-					iCount += iItemCount
-				EndIf
-			EndIf
-		EndIf
-	EndWhile
-	
-	Return iCount
+	Return vMYC_API_Doppelganger.UpdateInventory(SID,Self,abReplaceMissing,abFullReset)
 EndFunction
 
 ;=== Stats ===--
@@ -801,62 +406,12 @@ Int Function UpdateStats(Bool abForceValues = False)
 {Apply AVs and other stats like health. 
  abForceValues: (Optional) Set values absolutely, ignoring any buffs or nerfs from enchantments/magiceffects.
  Returns: -1 for generic failure.}
-	Int i
-	Int iCount
-	DebugTrace("Applying Perks...")
-
 	If !ScriptState == "Assigned"
 		DebugTrace("UpdatePerks called outside Assigned state!",1)
 		Return -2
 	EndIf
 
-	If !_jCharacterData
-		DebugTrace("UpdatePerks called but _jCharacterData is missing!",1)
-		Return -3
-	EndIf
-
-	Actor kCharacterActor = Self
-
-	Int jStats = JValue.SolveObj(_jCharacterData,".Stats")
-	Int jAVs = JValue.SolveObj(_jCharacterData,".Stats.AV")
-	
-	Int jAVNames = JMap.AllKeys(jAVs)
-	i = JArray.Count(jAVNames)
-	While i > 0
-		i -= 1
-		String sAVName = JArray.GetStr(jAVNames,i)
-		If sAVName
-			Float fAV = JMap.GetFlt(jAVS,sAVName)
-			If abForceValues
-				ForceActorValue(sAVName,fAV)
-				DebugTrace("Force " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
-			Else
-				SetActorValue(sAVName,fAV) 
-				DebugTrace("Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
-			EndIf
-		EndIf
-	EndWhile
-	
-	Return JArray.Count(jAVNames)
-EndFunction
-
-Function ReportStats()
-{Just log all stats to the logfile, for testing purposes.}
-	Actor kCharacterActor = Self
-
-	Int jStats = JValue.SolveObj(_jCharacterData,".Stats")
-	Int jAVs = JValue.SolveObj(_jCharacterData,".Stats.AV")
-	
-	Int jAVNames = JMap.AllKeys(jAVs)
-	Int i = JArray.Count(jAVNames)
-	While i > 0
-		i -= 1
-		String sAVName = JArray.GetStr(jAVNames,i)
-		If sAVName
-			Float fAV = JMap.GetFlt(jAVS,sAVName)
-			DebugTrace("Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
-		EndIf
-	EndWhile
+	Return vMYC_API_Doppelganger.UpdateInventory(SID,Self,abForceValues)
 	
 EndFunction
 
@@ -865,66 +420,12 @@ EndFunction
 Int Function UpdatePerks()
 {Apply perks.
  Returns:  for failure, or number of perks applied for success.}
-	Int i
-	Int iCount
-	DebugTrace("Applying Perks...")
-
 	If !ScriptState == "Assigned"
 		DebugTrace("UpdatePerks called outside Assigned state!",1)
 		Return -2
 	EndIf
 	
-	If !_jCharacterData
-		DebugTrace("UpdatePerks called but _jCharacterData is missing!",1)
-		Return -3
-	EndIf
-
-	Actor kCharacterActor = Self
-	
-	Int jPerks = JValue.SolveObj(_jCharacterData,".Perks")
-
-	Formlist kPerklist = DataManager.LockFormList()
-	kPerkList.Revert() ; Should already be empty, but just in case
-
-	i = JArray.Count(jPerks)
-	DebugTrace("Has " + i + " perks to be checked!")
-	Int iMissingCount = 0
-	While i > 0
-		i -= 1
-		Perk kPerk = JArray.getForm(jPerks,i) as Perk
-		If !kPerk
-			iMissingCount += 1
-		Else
-			If vMYC_ModCompatibility_PerkList_Unsafe.HasForm(kPerk)
-				iMissingCount += 1
-			Else
-				kPerklist.AddForm(kPerk)
-			EndIf
-		EndIf
-		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Perk is from " + JArray.getStr(jPerks,i))
-		;DebugTrace("Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
-	EndWhile
-	Int iPerkCountTotal = kPerklist.GetSize()
-	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + kPerklist.GetSize() + " perks to Actorbase...")
-	If iPerkCountTotal + iMissingCount != JArray.Count(jPerks)
-		Debug.Trace("PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
-		DataManager.UnlockFormlist(kPerklist)
-		Return -1
-	ElseIf iPerkCountTotal == 0
-		DebugTrace("PerkList size is 0. Won't attempt to apply this.")
-		DataManager.UnlockFormlist(kPerklist)
-		Return 0
-	EndIf
-	If iMissingCount
-		DebugTrace("Loading " + iPerkCountTotal + " Perks with " + iMissingCount + " skipped...")
-	Else
-		DebugTrace("Loading " + iPerkCountTotal + " Perks...")
-	EndIf
-	FFUtils.LoadCharacterPerks(MyActorBase,kPerklist)
-	DebugTrace("Perks loaded successfully!")
-	WaitMenuMode(0.1)
-	DataManager.UnlockFormlist(kPerklist)
-	Return iPerkCountTotal
+	Return vMYC_API_Doppelganger.UpdatePerks(SID,Self)
 EndFunction
 
 ;=== Shouts ===--
@@ -933,13 +434,10 @@ Int Function UpdateShouts()
 {Apply shouts to named character. Needed because AddShout causes savegame corruption.
  Returns: -1 for failure, or number of shouts applied for success.}
 ;FIXME: I bet this could be done with FFUtils and avoid using the FormList.
-	Int jShouts = JValue.SolveObj(_jCharacterData,".Shouts")
-	
-	Formlist kShoutlist = DataManager.LockFormList()
-	kShoutlist.Revert() ; Should already be empty, but just in case
-	
-	Int i = JArray.Count(jShouts)
-	Int iMissingCount = 0
+	If !ScriptState == "Assigned"
+		DebugTrace("UpdateShouts called outside Assigned state!",1)
+		Return -2
+	EndIf
 
 	RegisterForAnimationEvent(Self,"BeginCastVoice")
 	RegisterForAnimationEvent(Self,"MT_Shout_Exhale")
@@ -967,58 +465,14 @@ Int Function UpdateShouts()
 	RegisterForAnimationEvent(Self,"shoutStart")
 	RegisterForAnimationEvent(Self,"shoutStop")
 	
-	While i > 0
-		i -= 1
-		Shout kShout = JArray.getForm(jShouts,i) as Shout
-		If !kShout
-			iMissingCount += 1
-		Else
-			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
-			Shout kDragonAspectShout
-			If GetModByName("Dragonborn.esm")
-				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
-			EndIf
-			If kShout == kStormCallShout && GetRegBool("Config.Shouts.Disabled.CallStorm")
-				;Don't add it
-			ElseIf kShout == kDragonAspectShout && GetRegBool("Config.Shouts.Disabled.DragonAspect") ;FIXME: Maybe use an array for disabled shouts, then test each one
-				;Don't add it
-			ElseIf GetRegBool("Config.Shouts.BlockUnlearned")
-				If PlayerREF.HasSpell(kShout)
-					kShoutlist.AddForm(kShout)
-				EndIf
-			Else
-				kShoutlist.AddForm(kShout)		
-			EndIf
-		EndIf
-		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
-	EndWhile
-	Int iShoutCount = kShoutlist.GetSize()
-	DebugTrace("Loading " + iShoutCount + " Shouts to Actorbase...")
-	If iShoutCount == 0
-		DebugTrace("ShoutList size is 0. Won't attempt to apply this.")
-		DataManager.UnlockFormlist(kShoutlist)
-		Return 0
-	EndIf
-	If iMissingCount
-		DebugTrace("Loading " + iShoutCount + " Shouts with " + iMissingCount + " skipped.",1)
-	Else
-		DebugTrace("Loaded " + iShoutCount + " Shouts.")
-	EndIf
-	FFUtils.LoadCharacterShouts(MyActorBase,kShoutlist)
-	WaitMenuMode(0.1)
-	DataManager.UnlockFormlist(kShoutlist)
-	Return kShoutlist.GetSize()
+	Return vMYC_API_Doppelganger.UpdateShouts(SID,Self)
+
 EndFunction
 
 Function RemoveCharacterShouts(String sCharacterName)
 {Remove all shouts from named character. Needed because RemoveShout causes savegame corruption.}
 	DebugTrace("Character is not allowed to use shouts, removing them!")
-	Formlist kShoutlist = DataManager.LockFormList()
-	kShoutlist.Revert() ; Should already be empty, but just in case
-	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
-	kShoutlist.AddForm(vMYC_NullShout)
-	FFUtils.LoadCharacterShouts(MyActorBase,kShoutlist)
-	WaitMenuMode(0.1)
+	Return vMYC_API_Doppelganger.RemoveCharacterShouts(SID,Self)
 EndFunction
 
 
@@ -1027,141 +481,11 @@ EndFunction
 Int Function UpdateSpells()
 {Apply Spells. 
  Returns: -1 for failure, or number of Spells applied for success.}
-	Int i
-	Int iCount
-	Int iAdded = 0
-	Int iRemoved = 0
-	DebugTrace("Applying Spells...")
-
 	If !ScriptState == "Assigned"
 		DebugTrace("UpdateSpells called outside Assigned state!",1)
 		Return -2
 	EndIf
-	
-	If !_jCharacterData
-		DebugTrace("UpdateSpells called but _jCharacterData is missing!",1)
-		Return -3
-	EndIf
-
-	If GetRegBool("Config.Compat.AFT.MagicDisabled")
-		;Do not alter spell list if Magic is disabled by AFT
-		Return 0
-	EndIf
-	
-	Actor kCharacterActor = Self
-	
-	Int jSpells = JValue.SolveObj(_jCharacterData,".Spells")
-	Int jSkillNames = GetRegObj("AVNames")
-
-	If GetRegBool("Config.Magic.AutoSelect")
-		i = 18
-		While i < 23
-			String sMagicSchool = JArray.GetStr(jSkillNames,i)
-			DebugTrace("Checking perkCount for " + sMagicSchool + "...")
-			Int iPerkCount = JValue.SolveInt(_jCharacterData,".PerkCounts." + sMagicSchool)
-			If iPerkCount
-				DebugTrace("PerkCount for " + sMagicSchool + " is " + iPerkCount)
-			EndIf
-			
-			If iPerkCount > 1
-				SetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool,True)
-			Else
-				SetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool,False)
-			EndIf
-			i += 1
-		EndWhile
-	EndIf
-	
-	i = JArray.Count(jSpells)
-	
-	While i > 0
-		i -= 1
-		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
-		If kSpell
-			String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
-			Bool bSpellIsAllowed = False
-			
-			If sMagicSchool
-				bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.Allow" + sMagicSchool)
-			Else
-				bSpellIsAllowed = GetSessionBool("Config." + SID + ".Magic.AllowOther")
-			EndIf
-			
-			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-			
-			If GetSessionBool("Config." + SID + ".Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
-				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-					bSpellIsAllowed = True
-				ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
-					bSpellIsAllowed = True
-				EndIf
-			EndIf
-			
-			If GetSessionBool("Config." + SID + ".Magic.AllowDefensive")
-				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-					bSpellIsAllowed = True
-				ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
-					bSpellIsAllowed = True
-				EndIf
-			EndIf
-
-			If bSpellIsAllowed
-				Int[] iAllowedSources = New Int[128]
-				
-				iAllowedSources[0] = GetModByName("Skyrim.esm")
-				iAllowedSources[1] = GetModByName("Update.esm")
-				iAllowedSources[2] = GetModByName("Dawnguard.esm")
-				iAllowedSources[3] = GetModByName("Dragonborn.esm")
-				iAllowedSources[4] = GetModByName("Hearthfires.esm")
-
-				If GetSessionBool("Config." + SID + ".Magic.AllowSelectMods") ; Select mods
-					iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
-					iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
-					iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
-					iAllowedSources[8] = GetModByName("Dwemerverse.esp")
-				EndIf
-				
-				bSpellIsAllowed = False
-				
-				;See if this spell is from an approved source
-				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
-				If iAllowedSources.Find(iSpellSourceID) > -1
-					bSpellIsAllowed = True
-				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
-				;A mod author has gone to the trouble of assuring us the spell is compatible.
-					bSpellIsAllowed = True
-				EndIf
-			EndIf
-
-			If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
-			;A mod author has added the spell to the unsafe list.
-				bSpellIsAllowed = False
-			EndIf
-				
-			
-			If bSpellIsAllowed && !HasSpell(kSpell)
-				If AddSpell(kSpell,False)
-					DebugTrace("Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
-					iAdded += 1
-				EndIf
-			ElseIf !bSpellIsAllowed && HasSpell(kSpell)
-				;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
-				If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
-					If RemoveSpell(kSpell)
-						DebugTrace("Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
-						iRemoved += 1
-					EndIf
-				EndIf
-			EndIf
-		Else
-			DebugTrace("Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
-		EndIf
-	EndWhile
-	If iAdded || iRemoved
-		DebugTrace("Added " + iAdded + " spells, removed " + iRemoved)
-	EndIf
-	SaveSession()
-	Return iAdded
+	Return vMYC_API_Doppelganger.UpdateSpells(SID,Self)
 EndFunction
 
 ;=== Utility functions ===--
