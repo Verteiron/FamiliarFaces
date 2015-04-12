@@ -72,6 +72,7 @@ Race				Property CharacterRace	= None					Auto Hidden
 Actor 				Property PlayerREF 									Auto
 Armor 				Property vMYC_DummyArmor							Auto
 EffectShader 		Property vMYC_BlindingLightGold						Auto
+EffectShader 		Property vMYC_BlindingLightOutwardParticles 		Auto
 Explosion 			Property vMYC_CharacterDeathExplosion				Auto
 VisualEffect		Property vMYC_ValorFX								Auto
 VisualEffect		Property DA02SummonValorTargetFX					Auto
@@ -90,6 +91,11 @@ Message 			Property vMYC_VoiceTypeNoFollower 					Auto
 Message 			Property vMYC_VoiceTypeNoSpouse						Auto
 
 Int					Property _jCharacterData							Auto Hidden
+
+Faction 			Property CurrentFollowerFaction						Auto
+Faction 			Property PotentialFollowerFaction					Auto
+Faction 			Property PotentialMarriageFaction					Auto
+Faction 			Property vMYC_CharacterPlayerEnemyFaction			Auto
 
 ;=== Variables ===--
 
@@ -147,6 +153,27 @@ EndEvent
 Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 	NeedStats = True
 EndEvent
+
+Event OnEnterBleedout()
+	If GetSessionBool("Characters." + SID + ".Config.VanishOnDeath")
+		BlockActivation(True)
+		vMYC_ValorFX.Play(Self,8)
+		KillEssential(PlayerREF)
+		Wait(1)
+		vMYC_BlindingLightOutwardParticles.Play(Self,1)
+		Wait(6)
+		SetAlpha(0.01,True)
+		Wait(1.3)
+		NPCDragonDeathSequenceExplosion.Play(Self)
+		PlaceAtMe(vMYC_CharacterDeathExplosion)
+		NPCDragonDeathFX2D.Play(Self)
+		vMYC_API_Doppelganger.UnregisterActor(Self,SID)
+		Wait(7)
+		Disable()
+		Delete()
+	EndIf
+EndEvent
+
 
 Auto State Available
 	Event OnLoad()
@@ -315,6 +342,45 @@ Function SetNameIfNeeded(Bool abForce = False)
 		;EndWhile
 		SendModEvent("vMYC_UpdateXFLPanel")
 	EndIf
+EndFunction
+
+;=== Disposition and configuration functions ===--
+Int Function UpdateDisposition()
+	Bool bIsFriend 	= GetSessionBool("Characters." + SID + ".Config.IsFriend")
+ 	Bool bIsFoe 	= GetSessionBool("Characters." + SID + ".Config.IsFoe")
+ 	Bool bCanMarry 	= GetSessionBool("Characters." + SID + ".Config.CanMarry")
+
+ 	If bIsFoe
+ 		;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
+ 		;FIXME: Also make sure the player didn't just make an enemy of their spouse!
+ 		DebugTrace("I hate the player! What a jerk!")
+		RemoveFromFaction(CurrentFollowerFaction)
+		RemoveFromFaction(PotentialFollowerFaction)
+		RemoveFromFaction(PotentialMarriageFaction)
+		SetFactionRank(vMYC_CharacterPlayerEnemyFaction,0)
+		SetActorValue("Aggression",1)
+		SetRelationshipRank(PlayerREF,-4)
+	ElseIf bIsFriend
+		DebugTrace("The player's a pretty good friend of mine!")
+		If GetFactionRank(PotentialFollowerFaction) <= -2 || GetRelationshipRank(PlayerREF) == 0
+			RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
+			SetFactionRank(PotentialFollowerFaction,0)
+			SetFactionRank(CurrentFollowerFaction,-1)
+			SetRelationshipRank(PlayerREF,3)
+			SetActorValue("Aggression",0)
+		EndIf
+		Int iSafetyTimer = 10
+		While IsInCombat() && GetCombatTarget() == PlayerREF && iSafetyTimer
+			iSafetyTimer -= 1
+			StopCombat()
+			Wait(0.5)
+		EndWhile
+		If bCanMarry && GetFactionRank(PotentialMarriageFaction) <= -2
+			Debug.Trace("... and I'd marry them if given the chance!")
+			SetFactionRank(PotentialMarriageFaction,0)
+		EndIf
+	EndIf
+	Return 1
 EndFunction
 
 ;=== Appearance functions ===--

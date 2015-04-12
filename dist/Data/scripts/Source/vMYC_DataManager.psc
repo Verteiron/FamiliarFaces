@@ -185,11 +185,19 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 	While i > 0
 		i -= 1
 		If kDoppelgangers[i]
-			While (kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance && (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment
+			While (kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment
 				DebugTrace("Waiting for actor to be ready...")
 				Wait(0.5)
 			EndWhile
 			kDoppelgangers[i].MoveTo(PlayerREF)
+		EndIf
+	EndWhile
+
+	i = kDoppelgangers.Length
+	While i > 0
+		i -= 1
+		If kDoppelgangers[i]
+			vMYC_API_Doppelganger.SetFoe(kDoppelgangers[i])
 		EndIf
 	EndWhile
 	

@@ -177,13 +177,13 @@ Actor Function CreateDoppelganger(String asSID, Bool abLeveled = True) Global
 	Race kRace = GetCharacterRace(asSID)
 
 	If sName && iSex > -1 && kRace
-		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Going to assign a Doppelganger to " + sName + " (" + kRace.GetName() + ")")
+		DebugTraceAPIDopp(asSID,"CreateDoppelganger: Going to assign a Doppelganger to " + sName + " (" + kRace.GetName() + ")")
 	Else
-		Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Character " + asSID + " (" + sName + ") is missing vital data, aborting!",1)
+		DebugTraceAPIDopp(asSID,"CreateDoppelganger: Character " + asSID + " (" + sName + ") is missing vital data, aborting!",1)
 		Return None
 	EndIf
 	ActorBase kDoppelgangerBase = GetAvailableActorBase(iSex,GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase") as Actorbase,abLeveled)
-	Debug.Trace("MYC/API/Doppelganger/CreateDoppelganger: Target ActorBase for " + sName + " will be " + kDoppelgangerBase + " (" + kDoppelgangerBase.GetName() + ")")
+	DebugTraceAPIDopp(asSID,"CreateDoppelganger: Target ActorBase for " + sName + " will be " + kDoppelgangerBase + " (" + kDoppelgangerBase.GetName() + ")")
 ;	;GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase")
 ;	;SetSessionForm("Doppelgangers." + asSID + ".ActorBase",kActorBase)
 	;SetSessionForm("Doppelgangers." + asSID + ".Actor",akActor as Actor)
@@ -194,7 +194,40 @@ Actor Function CreateDoppelganger(String asSID, Bool abLeveled = True) Global
 	Return kDoppelActor
 EndFunction
 
-;=== Appearance functions ===--
+Function DeleteDoppelganger(Actor akActor) Global
+	vMYC_Doppelganger kDoppelganger = akActor as vMYC_Doppelganger
+ 	If !kDoppelganger
+ 		DebugTraceAPIDopp("SetFoe","Passed actor " + akActor + " is not a Doppelganger!",1)
+ 		Return
+ 	EndIf
+ 	String sSID = kDoppelganger.SID
+ 	UnregisterActor(akActor,sSID)
+ 	akActor.RemoveAllItems()
+ 	akActor.Delete()
+EndFunction
+
+;=== Functions - Control and settings for Doppelgangers ===--
+
+Int Function SetFoe(Actor akActor, Bool abVanishOnDeath = True) Global
+{Set the target Actor as a Foe of the player. 
+ abVanishOnDeath: (Optional) When target is killed by the player, they explode and vanish instead of entering bleedout.}
+ 	Int iRet = -1
+	vMYC_Doppelganger kDoppelganger = akActor as vMYC_Doppelganger
+ 	If !kDoppelganger
+ 		DebugTraceAPIDopp("SetFoe","Passed actor " + akActor + " is not a Doppelganger!",1)
+ 		Return iRet
+ 	EndIf
+ 	String sSID = kDoppelganger.SID
+ 	;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
+	SetSessionBool("Characters." + sSID + ".Config.IsFriend",False)
+	SetSessionBool("Characters." + sSID + ".Config.CanMarry",False)
+ 	SetSessionBool("Characters." + sSID + ".Config.IsFoe",True)
+ 	SetSessionBool("Characters." + sSID + ".Config.VanishOnDeath",abVanishOnDeath)
+ 	Return kDoppelganger.UpdateDisposition()
+EndFunction
+
+
+;=== Functions - Appearance ===--
 
 Int Function UpdateAppearance(String asSID, Actor akActor) Global
 	Race kRace = vMYC_API_Character.GetCharacterRace(asSID) as Race

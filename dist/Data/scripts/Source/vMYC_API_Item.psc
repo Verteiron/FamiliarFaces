@@ -409,12 +409,12 @@ EndFunction
 
 ObjectReference Function CustomizeEquipment(String asItemID, ObjectReference akObject) Global
 {Apply the customization information from the JObject referenced by asItemID to akObject.}
-	DebugTraceAPIItem("CustomizeEquipment: Will apply attributes from " + asItemID + " to " + akObject + " (" + akObject.GetBaseObject() + "), aka " + akObject.GetBaseObject().GetName())
 	Int jItem = GetItemJMap(asItemID)
 	If jItem <= 0
 		DebugTraceAPIItem("CustomizeEquipment: " + asItemID + " does not refer to a valid saved object!",1)
 		Return kObject
 	EndIf
+	DebugTraceAPIItem("CustomizeEquipment: Will apply attributes from " + JValue.SolveStr(jItem,".DisplayName") + " to " + akObject.GetBaseObject().GetName() + " " + akObject + "!")
 	ObjectReference kObject = CustomizeEquipmentFromJObj(jItem,akObject)
 	Return kObject
 EndFunction
