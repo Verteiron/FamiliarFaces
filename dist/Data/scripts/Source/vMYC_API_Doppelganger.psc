@@ -705,10 +705,10 @@ Int Function UpdateStats(String asSID, Actor akActor, Bool abForceValues = False
 			Float fAV = JMap.GetFlt(jAVS,sAVName)
 			If abForceValues
 				akActor.ForceActorValue(sAVName,fAV)
-				;;DebugTraceAPIDopp(asSID,"Force " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+				;DebugTraceAPIDopp(asSID,"Force " + sAVName + " to " + fAV + " - GetBase/Get returns " + akActor.GetBaseActorValue(sAVName) + "/" + akActor.GetActorValue(sAVName) + "!")
 			Else
 				akActor.SetActorValue(sAVName,fAV) 
-				;;DebugTraceAPIDopp(asSID,"Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + GetBaseActorValue(sAVName) + "/" + GetActorValue(sAVName) + "!")
+				;DebugTraceAPIDopp(asSID,"Set " + sAVName + " to " + fAV + " - GetBase/Get returns " + akActor.GetBaseActorValue(sAVName) + "/" + akActor.GetActorValue(sAVName) + "!")
 			EndIf
 		EndIf
 	EndWhile

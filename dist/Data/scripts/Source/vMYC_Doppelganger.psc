@@ -477,7 +477,7 @@ Int Function UpdateStats(Bool abForceValues = False)
 		Return -2
 	EndIf
 
-	Return vMYC_API_Doppelganger.UpdateInventory(SID,Self,abForceValues)
+	Return vMYC_API_Doppelganger.UpdateStats(SID,Self,abForceValues)
 	
 EndFunction
 
