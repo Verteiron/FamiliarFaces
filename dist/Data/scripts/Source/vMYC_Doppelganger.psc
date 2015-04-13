@@ -97,6 +97,8 @@ Faction 			Property PotentialFollowerFaction					Auto
 Faction 			Property PotentialMarriageFaction					Auto
 Faction 			Property vMYC_CharacterPlayerEnemyFaction			Auto
 
+Activator 			Property vMYC_FXEmptyActivator						Auto
+Activator 			Property vMYC_CharacterGlow 						Auto
 ;=== Variables ===--
 
 Bool 		_bFirstLoad 				= True
@@ -157,19 +159,29 @@ EndEvent
 Event OnEnterBleedout()
 	If GetSessionBool("Characters." + SID + ".Config.VanishOnDeath")
 		BlockActivation(True)
-		vMYC_ValorFX.Play(Self,8)
+		DispelAllSpells()
 		KillEssential(PlayerREF)
-		Wait(1)
 		vMYC_BlindingLightOutwardParticles.Play(Self,1)
-		Wait(6)
+		Wait(5)
+		vMYC_BlindingLightGold.Play(Self,1)
+		ObjectReference kCharacterGlow = PlaceAtMe(vMYC_CharacterGlow)
+		Wait(1)
 		SetAlpha(0.01,True)
-		Wait(1.3)
-		NPCDragonDeathSequenceExplosion.Play(Self)
+		;Wait(1.3)
+		ObjectReference kSoundSource1 = PlaceAtMe(vMYC_FXEmptyActivator)
+		ObjectReference kSoundSource2 = PlaceAtMe(vMYC_FXEmptyActivator)
+		NPCDragonDeathSequenceExplosion.Play(kSoundSource1)
+		;vMYC_BlindingLightGold.Stop(Self)
+		;vMYC_BlindingLightOutwardParticles.Stop(Self)
 		PlaceAtMe(vMYC_CharacterDeathExplosion)
-		NPCDragonDeathFX2D.Play(Self)
+		NPCDragonDeathFX2D.Play(kSoundSource2)
+		kCharacterGlow.DisableNoWait(True)
+		SetScale(0.01)
 		vMYC_API_Doppelganger.UnregisterActor(Self,SID)
 		Wait(7)
-		Disable()
+		Disable(True)
+		kSoundSource1.Delete()
+		kSoundSource2.Delete()
 		Delete()
 	EndIf
 EndEvent
