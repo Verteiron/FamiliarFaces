@@ -79,6 +79,7 @@ VisualEffect		Property DA02SummonValorTargetFX					Auto
 ImageSpaceModifier	Property ISMDwhiteoutFULLthenFade					Auto
 Sound				Property NPCDragonDeathFX2D							Auto
 Sound				Property NPCDragonDeathSequenceExplosion			Auto
+Sound 				Property vMYC_CharacterVanishLPSM 					Auto
 FormList 			Property vMYC_CombatStyles 							Auto
 FormList 			Property vMYC_ModCompatibility_SpellList_Safe 		Auto
 FormList 			Property vMYC_ModCompatibility_SpellList_Unsafe 	Auto
@@ -99,6 +100,7 @@ Faction 			Property vMYC_CharacterPlayerEnemyFaction			Auto
 
 Activator 			Property vMYC_FXEmptyActivator						Auto
 Activator 			Property vMYC_CharacterGlow 						Auto
+Form 				Property vMYC_BookGlow 								Auto
 ;=== Variables ===--
 
 Bool 		_bFirstLoad 				= True
@@ -162,15 +164,19 @@ Event OnEnterBleedout()
 		DispelAllSpells()
 		KillEssential(PlayerREF)
 		vMYC_BlindingLightOutwardParticles.Play(Self,1)
-		Wait(5)
+		ObjectReference kSoundSource1 = PlaceAtMe(vMYC_FXEmptyActivator)
+		Wait(1)
+		Int iVanishSoundID = vMYC_CharacterVanishLPSM.Play(kSoundSource1)
+		Wait(4)
 		vMYC_BlindingLightGold.Play(Self,1)
-		ObjectReference kCharacterGlow = PlaceAtMe(vMYC_CharacterGlow)
+		ObjectReference kCharacterGlow = PlaceAtMe(vMYC_BookGlow)
 		Wait(1)
 		SetAlpha(0.01,True)
 		;Wait(1.3)
-		ObjectReference kSoundSource1 = PlaceAtMe(vMYC_FXEmptyActivator)
 		ObjectReference kSoundSource2 = PlaceAtMe(vMYC_FXEmptyActivator)
-		NPCDragonDeathSequenceExplosion.Play(kSoundSource1)
+		ObjectReference kSoundSource3 = PlaceAtMe(vMYC_FXEmptyActivator)
+		NPCDragonDeathSequenceExplosion.Play(kSoundSource2)
+		Sound.StopInstance(iVanishSoundID)
 		;vMYC_BlindingLightGold.Stop(Self)
 		;vMYC_BlindingLightOutwardParticles.Stop(Self)
 		PlaceAtMe(vMYC_CharacterDeathExplosion)
@@ -182,6 +188,7 @@ Event OnEnterBleedout()
 		Disable(True)
 		kSoundSource1.Delete()
 		kSoundSource2.Delete()
+		kSoundSource3.Delete()
 		Delete()
 	EndIf
 EndEvent

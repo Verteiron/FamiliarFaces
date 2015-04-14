@@ -168,9 +168,9 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 	While i > 0
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
-		;If vMYC_API_Character.GetCharacterName(sUUID) == "Tagaerys"
+		If vMYC_API_Character.GetCharacterName(sUUID) == "Tagaerys"
 			kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID,False) ;as vMYC_Doppelganger
-		;EndIf
+		EndIf
 		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
 		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
 		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
@@ -1293,10 +1293,10 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
 				SetRegObj("Characters." + sUUID,jCharacterData)
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
-				;If iDataVersion < SerializationVersion
+				If iDataVersion < SerializationVersion
 					DebugTrace("ImportCharacters - Upgrading data for " + sCharacterName + "! (" + sUUID + ")")
 					UpgradeData(sUUID)
-				;EndIf
+				EndIf
 			Else  ; Data already exists for this SSID
 				;FIXME: If we're going to overwrite existing data check the playtime, ask the player
 				If Math.ABS(GetRegFlt("Characters." + sUUID + META + ".PlayTime") - fPlayTime) < 0.1
