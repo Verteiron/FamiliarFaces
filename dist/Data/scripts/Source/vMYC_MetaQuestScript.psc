@@ -36,7 +36,7 @@ vMYC_DataManager 	Property DataManager 	Auto
 vMYC_ShrineManager 	Property ShrineManager 	Auto
 vMYC_TrophyManager 	Property TrophyManager 	Auto
 
-
+VisualEffect 	Property vMYC_FFLogoEffect 	Auto
 ;=== Config variables ===--
 
 GlobalVariable Property vMYC_CFG_Changed Auto
@@ -209,6 +209,7 @@ Function DoInit()
 
 	_Running = True
 	ModVersion = _iCurrentVersion
+	vMYC_FFLogoEffect.Play(PlayerREF)
 	vMYC_ModLoadedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 EndFunction
 
