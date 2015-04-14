@@ -35,117 +35,169 @@ Int		_jAVNames		= 0
 
 Event OnInit()
 	If GetOwningQuest().IsRunning()
-		GotoState("Refreshing")
-		RegisterForModEvent("vMYC_DataManagerReady","OnDataManagerReady")
+		GotoState("Sleeping")
+		RegisterForModEvents()
 		Busy = True
 		_bRefreshed = False
 	EndIf
 EndEvent
 
-Event OnUpdate()
-	If PlayerREF.IsInCombat() ; Don't do this while in combat, it may slow down other more important scripts
-		RegisterForSingleUpdate(5)
-		Return
-	EndIf
-	
-	If !_bRefreshed
-		_bRefreshed = True
-		;SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
-		SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
-		;SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
-		SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
-		SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
-		SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
-		SendModEvent("vMYC_BackgroundFunction","SavePlayerShouts")
-		SendModEvent("vMYC_BackgroundFunction","SavePlayerEquipment")
-		SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
-		SetSessionInt("PerkPoints",GetPerkPoints())
-		SendModEvent("vMYC_TrackerReady")
-	EndIf
-	If GetPerkPoints() != GetSessionInt("PerkPoints")
-		_bNeedPerkScan = True
-	EndIf
-	If _bNeedEquipmentScan
-		_bNeedEquipmentScan = False
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
-	EndIf
-	If _bNeedSpellScan
-		_bNeedSpellScan = False
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
-	EndIf
-	If _bNeedPerkScan
-		_bNeedPerkScan = False
-		SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
-	EndIf
-	SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
-	SetSessionInt("PerkPoints",GetPerkPoints())
-	Busy = False
-	RegisterForSingleUpdate(5)
-;	JValue.WriteToFile(_jInventory,"Data/vMYC/_PlayerInventory.json")
-EndEvent
-
 Event OnPlayerLoadGame()
-	RegisterForModEvent("vMYC_DataManagerReady","OnDataManagerReady")
+	RegisterForModEvents()
 EndEvent
 
 Event OnDataManagerReady(string eventName, string strArg, float numArg, Form sender)
-	UnregisterForModEvent("vMYC_DataManagerReady")
-	RegisterForSingleUpdate(1)
 EndEvent
 
-Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
-	Busy = True
-	If _iThreadCount == MaxThreadCount
-		GotoState("Overloaded")
-	EndIf
-	_iThreadCount += 1
-	Int iType = akBaseItem.GetType()
+Event OnPlayerTrackerStart(string eventName, string strArg, float numArg, Form sender)
+	GoToState("Scanning")
+EndEvent
 
-	If aiItemCount > 0 
-		Int jItemTypeFMap = JMap.getObj(_jInventory,iType)
-		If !JValue.IsFormMap(jItemTypeFMap)
-			jItemTypeFMap = JFormMap.Object()
-			JMap.setObj(_jInventory,iType,jItemTypeFMap)
+Event OnPlayerTrackerStop(string eventName, string strArg, float numArg, Form sender)
+	GoToState("Sleeping")
+EndEvent
+
+Function RegisterForModEvents()
+	RegisterForModEvent("vMYC_DataManagerReady","OnDataManagerReady")
+	RegisterForModEvent("vMYC_PlayerTrackerStart","OnPlayerTrackerStart")
+	RegisterForModEvent("vMYC_PlayerTrackerStop","OnPlayerTrackerStop")
+EndFunction
+
+Auto State Sleeping
+
+	Event OnDataManagerReady(string eventName, string strArg, float numArg, Form sender)
+	EndEvent
+
+	Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+	EndEvent
+
+	Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+	EndEvent
+
+	Event OnUpdate()
+	EndEvent
+
+	Event OnPlayerTrackerStart(string eventName, string strArg, float numArg, Form sender)
+		GoToState("Scanning")
+	EndEvent
+
+	Event OnPlayerTrackerStop(string eventName, string strArg, float numArg, Form sender)
+	EndEvent
+
+EndState
+
+State Scanning
+
+	Event OnBeginState()
+		DebugTrace("Background scanning player data...")
+		RegisterForSingleUpdate(0.1)
+	EndEvent
+
+	Event OnUpdate()
+		If PlayerREF.IsInCombat() ; Don't do this while in combat, it may slow down other more important scripts
+			RegisterForSingleUpdate(5)
+			Return
 		EndIf
-		JFormMap.SetInt(jItemTypeFMap,akBaseItem,JFormMap.GetInt(jItemTypeFMap,akBaseItem) + aiItemCount)
-	EndIf
-
-	_iThreadCount -= 1
-	Busy = False
-EndEvent
-
-Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akDestContainer)
-	Busy = True
-	If _iThreadCount == MaxThreadCount
-		GotoState("Overloaded")
-	EndIf
-	_iThreadCount += 1
-	Int iType = akBaseItem.GetType()
-
-	If aiItemCount > 0 
-		Int jItemTypeFMap = JMap.getObj(_jInventory,iType)
-		If !JValue.IsFormMap(jItemTypeFMap)
-			jItemTypeFMap = JFormMap.Object()
-			JMap.setObj(_jInventory,iType,jItemTypeFMap)
+		
+		If !_bRefreshed
+			_bRefreshed = True
+			;SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
+			SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
+			;SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
+			SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
+			SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
+			SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
+			SendModEvent("vMYC_BackgroundFunction","SavePlayerShouts")
+			SendModEvent("vMYC_BackgroundFunction","SavePlayerEquipment")
+			SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
+			SetSessionInt("PerkPoints",GetPerkPoints())
+			SendModEvent("vMYC_TrackerReady")
 		EndIf
-		JFormMap.SetInt(jItemTypeFMap,akBaseItem,JFormMap.GetInt(jItemTypeFMap,akBaseItem) - aiItemCount)
-	EndIf
+		If GetPerkPoints() != GetSessionInt("PerkPoints")
+			_bNeedPerkScan = True
+		EndIf
+		If _bNeedEquipmentScan
+			_bNeedEquipmentScan = False
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
+		EndIf
+		If _bNeedSpellScan
+			_bNeedSpellScan = False
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
+		EndIf
+		If _bNeedPerkScan
+			_bNeedPerkScan = False
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
+		EndIf
+		SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
+		SetSessionInt("PerkPoints",GetPerkPoints())
+		Busy = False
+		RegisterForSingleUpdate(5)
+	;	JValue.WriteToFile(_jInventory,"Data/vMYC/_PlayerInventory.json")
+	EndEvent
 
-	_iThreadCount -= 1
-	Busy = False
-EndEvent
+	Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+		Busy = True
+		If _iThreadCount == MaxThreadCount
+			GotoState("Overloaded")
+		EndIf
+		_iThreadCount += 1
+		Int iType = akBaseItem.GetType()
 
-Event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
-	_bNeedEquipmentScan = True
-	RegisterForSingleUpdate(1)
-EndEvent
+		If aiItemCount > 0 
+			Int jItemTypeFMap = JMap.getObj(_jInventory,iType)
+			If !JValue.IsFormMap(jItemTypeFMap)
+				jItemTypeFMap = JFormMap.Object()
+				JMap.setObj(_jInventory,iType,jItemTypeFMap)
+			EndIf
+			JFormMap.SetInt(jItemTypeFMap,akBaseItem,JFormMap.GetInt(jItemTypeFMap,akBaseItem) + aiItemCount)
+		EndIf
 
-Event OnObjectUnEquipped(Form akBaseObject, ObjectReference akReference)
-	_bNeedEquipmentScan = True
-	RegisterForSingleUpdate(1)
-EndEvent
+		_iThreadCount -= 1
+		Busy = False
+	EndEvent
 
-State Overloaded
+	Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akDestContainer)
+		Busy = True
+		If _iThreadCount == MaxThreadCount
+			GotoState("Overloaded")
+		EndIf
+		_iThreadCount += 1
+		Int iType = akBaseItem.GetType()
+
+		If aiItemCount > 0 
+			Int jItemTypeFMap = JMap.getObj(_jInventory,iType)
+			If !JValue.IsFormMap(jItemTypeFMap)
+				jItemTypeFMap = JFormMap.Object()
+				JMap.setObj(_jInventory,iType,jItemTypeFMap)
+			EndIf
+			JFormMap.SetInt(jItemTypeFMap,akBaseItem,JFormMap.GetInt(jItemTypeFMap,akBaseItem) - aiItemCount)
+		EndIf
+
+		_iThreadCount -= 1
+		Busy = False
+	EndEvent
+
+	Event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
+		_bNeedEquipmentScan = True
+		RegisterForSingleUpdate(1)
+	EndEvent
+
+	Event OnObjectUnEquipped(Form akBaseObject, ObjectReference akReference)
+		_bNeedEquipmentScan = True
+		RegisterForSingleUpdate(1)
+	EndEvent
+
+	Event OnPlayerTrackerStart(string eventName, string strArg, float numArg, Form sender)
+	EndEvent
+
+	Event OnPlayerTrackerStop(string eventName, string strArg, float numArg, Form sender)
+		GoToState("Sleeping")
+	EndEvent
+
+EndState ;Scanning
+
+State Overloaded 
+; Switch to this if a ton of items are added at once, hopefully preventing a huge mass of threads
 
 	Event OnBeginState()
 		Busy = True
@@ -155,7 +207,7 @@ State Overloaded
 
 	Event OnUpdate()
 		;Debug.Trace("MYC: " + Self + " Resuming item tracking...")
-		GoToState("")
+		GoToState("Scanning")
 		_iThreadCount = 0
 		_bRefreshed = False
 		RegisterForSingleUpdate(0.1)
@@ -167,7 +219,14 @@ State Overloaded
 	Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	EndEvent
 
-EndState
+	Event OnPlayerTrackerStart(string eventName, string strArg, float numArg, Form sender)
+	EndEvent
+
+	Event OnPlayerTrackerStop(string eventName, string strArg, float numArg, Form sender)
+		GoToState("Sleeping")
+	EndEvent
+
+EndState ;Overloaded
 
 State Refreshing
 
@@ -177,7 +236,15 @@ State Refreshing
 	Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	EndEvent
 
-EndState
+	Event OnPlayerTrackerStart(string eventName, string strArg, float numArg, Form sender)
+		GoToState("Scanning")
+	EndEvent
+
+	Event OnPlayerTrackerStop(string eventName, string strArg, float numArg, Form sender)
+		GoToState("Sleeping")
+	EndEvent
+
+EndState ; Refreshing
 
 Function StartTimer(String sTimerLabel)
 	Float fTime = GetCurrentRealTime()

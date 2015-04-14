@@ -138,7 +138,6 @@ Event OnInit()
 			SetSessionObj("ActorbaseMap",JFormMap.Object())
 		EndIf
 		DoUpkeep(False)
-		SendModEvent("vMYC_DataManagerReady")
 		RegisterForSingleUpdate(5.0)
 	EndIf
 EndEvent
@@ -157,49 +156,49 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
-	SavePlayerData()
+	;SavePlayerData()
 	;Debug.MessageBox("Finished saving!")
 
-	Actor[] kDoppelgangers = New Actor[32]
-
-	WaitMenuMode(5)
-	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
-	Int i = JArray.Count(jCharacters)
-	While i > 0
-		i -= 1
-		String sUUID = JArray.GetStr(jCharacters,i)
-		If vMYC_API_Character.GetCharacterName(sUUID) == "Tagaerys"
-			kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID,False) ;as vMYC_Doppelganger
-		EndIf
-		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
-		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
-		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
-		;kDoppelScript.AssignCharacter(sUUID)
-		;While kDoppelActor.NeedAppearance && kDoppelActor.NeedEquipment
-		;	DebugTrace("Waiting for actor to be ready...")
-		;	Wait(0.5)
-		;EndWhile
-	EndWhile
-
-	i = kDoppelgangers.Length
-	While i > 0
-		i -= 1
-		If kDoppelgangers[i]
-			While (kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment
-				DebugTrace("Waiting for actor to be ready...")
-				Wait(0.5)
-			EndWhile
-			kDoppelgangers[i].MoveTo(PlayerREF)
-		EndIf
-	EndWhile
-
-	i = kDoppelgangers.Length
-	While i > 0
-		i -= 1
-		If kDoppelgangers[i]
-			vMYC_API_Doppelganger.SetFoe(kDoppelgangers[i])
-		EndIf
-	EndWhile
+;	Actor[] kDoppelgangers = New Actor[32]
+;
+;	WaitMenuMode(5)
+;	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
+;	Int i = JArray.Count(jCharacters)
+;	While i > 0
+;		i -= 1
+;		String sUUID = JArray.GetStr(jCharacters,i)
+;		If vMYC_API_Character.GetCharacterName(sUUID) == "Tagaerys"
+;			kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID,False) ;as vMYC_Doppelganger
+;		EndIf
+;		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
+;		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
+;		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
+;		;kDoppelScript.AssignCharacter(sUUID)
+;		;While kDoppelActor.NeedAppearance && kDoppelActor.NeedEquipment
+;		;	DebugTrace("Waiting for actor to be ready...")
+;		;	Wait(0.5)
+;		;EndWhile
+;	EndWhile
+;
+;	i = kDoppelgangers.Length
+;	While i > 0
+;		i -= 1
+;		If kDoppelgangers[i]
+;			While (kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment
+;				DebugTrace("Waiting for actor to be ready...")
+;				Wait(0.5)
+;			EndWhile
+;			kDoppelgangers[i].MoveTo(PlayerREF)
+;		EndIf
+;	EndWhile
+;
+;	i = kDoppelgangers.Length
+;	While i > 0
+;		i -= 1
+;		If kDoppelgangers[i]
+;			vMYC_API_Doppelganger.SetFoe(kDoppelgangers[i])
+;		EndIf
+;	EndWhile
 	
 EndEvent
 
@@ -1294,7 +1293,7 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 				SetRegObj("Characters." + sUUID,jCharacterData)
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
 				If iDataVersion < SerializationVersion
-					DebugTrace("ImportCharacters - Upgrading data for " + sCharacterName + "! (" + sUUID + ")")
+					DebugTrace("ImportCharacters - Upgrading data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
 					UpgradeData(sUUID)
 				EndIf
 			Else  ; Data already exists for this SSID
@@ -1319,17 +1318,20 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 EndFunction
 
 Function UpgradeRegistryData()
+	StartTimer("UpgradeRegistryData")
 	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
 	Int i = JArray.Count(jCharacters)
 	While i > 0
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
-		If GetRegInt("Characters." + sUUID + META + ".SerializationVersion") < SerializationVersion
+		Int iDataVersion = GetRegInt("Characters." + sUUID + META + ".SerializationVersion")
+		If iDataVersion < SerializationVersion
 			String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
-			DebugTrace("UpgradeRegistryData - Upgrading Registry data for " + sCharacterName + "! (" + sUUID + ")")
+			DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + "for " + sCharacterName + "! (" + sUUID + ")")
 			UpgradeData(sUUID)
 		EndIf
 	EndWhile
+	StopTimer("UpgradeRegistryData")
 EndFunction
 
 Function UpgradeData(String sUUID)
@@ -1339,7 +1341,7 @@ Function UpgradeData(String sUUID)
 		DebugTrace("UpgradeData - No data for " + sUUID + "!")
 		Return
 	EndIf
-	StartTimer("UpgradeData")
+	;StartTimer("UpgradeData")
 
 	String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
 
@@ -1356,7 +1358,7 @@ Function UpgradeData(String sUUID)
 	Int jOldInventory = GetRegObj("Characters." + sUUID + ".Inventory")
 	If JValue.IsFormMap(jOldInventory)
 		;Old inventory storage, upgrade it
-		DebugTrace("UpgradeData - Upgrading Inventory...")
+		;DebugTrace("UpgradeData - Upgrading Inventory...")
 		Int jOldItems = JFormMap.AllKeys(jOldInventory)
 		Int jNewInventory = JMap.Object()
 		Int i = JArray.Count(jOldItems)
@@ -1381,7 +1383,7 @@ Function UpgradeData(String sUUID)
 
 	Int jOldArmorInfo = GetRegObj("Characters." + sUUID + ".Equipment.ArmorInfo")
 	If JValue.IsArray(jOldArmorInfo)
-		DebugTrace("UpgradeData - Upgrading ArmorInfo...")
+		;DebugTrace("UpgradeData - Upgrading ArmorInfo...")
 		Int jNewArmorInfos = JArray.Object()
 		Int i = JArray.Count(jOldArmorInfo)
 		While i > 0
@@ -1428,7 +1430,7 @@ Function UpgradeData(String sUUID)
 
 	Int jOldItemInfos = GetRegObj("Characters." + sUUID + ".InventoryCustomItems")
 	If JValue.IsArray(jOldItemInfos)
-		DebugTrace("UpgradeData - Upgrading ItemInfos...")
+		;DebugTrace("UpgradeData - Upgrading ItemInfos...")
 		Int jNewItemInfos = JArray.Object()
 		Int i = JArray.Count(jOldItemInfos)
 		While i > 0
@@ -1454,8 +1456,8 @@ Function UpgradeData(String sUUID)
 		EndIf
 	EndIf
 
-
-	StopTimer("UpgradeData")
+	JValue.SolveIntSetter(jCharacterData,META + ".SerializationVersion",SerializationVersion)
+	;StopTimer("UpgradeData")
 EndFunction
 
 ;=== Functions - Requirement list ===--
@@ -1519,10 +1521,10 @@ Function InitNINodeList()
 				EndIf
 			EndIf
 			If bErased
-				DebugTrace("NINodeList - Erased entry " + sNodeName + "!")
+				;DebugTrace("NINodeList - Erased entry " + sNodeName + "!")
 				iNodeCount -= 1
 			Else
-				DebugTrace("NINodeList - Retained entry " + sNodeName + "!")
+				;DebugTrace("NINodeList - Retained entry " + sNodeName + "!")
 				i += 1
 			EndIf
 		EndWhile
@@ -1721,7 +1723,7 @@ EndFunction
 Function StartTimer(String sTimerLabel)
 	Float fTime = GetCurrentRealTime()
 	;Debug.Trace("TimerStart(" + sTimerLabel + ") " + fTime)
-	DebugTrace("Timer: Starting for " + sTimerLabel)
+	;DebugTrace("Timer: Starting for " + sTimerLabel)
 	SetSessionFlt("Timers." + sTimerLabel,fTime)
 EndFunction
 

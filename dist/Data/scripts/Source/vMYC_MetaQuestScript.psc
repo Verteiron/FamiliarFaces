@@ -26,9 +26,16 @@ Message Property vMYC_ModLoadedMSG Auto
 Message Property vMYC_ModUpdatedMSG Auto
 Message Property vMYC_ModShutdownMSG Auto
 
-vMYC_CharacterManagerScript Property CharacterManager Auto
-vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto
+;From 1.x 
+vMYC_CharacterManagerScript Property CharacterManager Auto ; Legacy
+vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto ; Legacy
 vMYC_HangoutManager Property HangoutManager Auto
+
+;From 2.x 
+vMYC_DataManager 	Property DataManager 	Auto
+vMYC_ShrineManager 	Property ShrineManager 	Auto
+vMYC_TrophyManager 	Property TrophyManager 	Auto
+
 
 ;=== Config variables ===--
 
@@ -123,10 +130,12 @@ Function DoUpkeep(Bool DelayedStart = True)
 	If DelayedStart
 		Wait(RandomFloat(3,5))
 	EndIf
-	Quest MQ101 = Quest.GetQuest("MQ101")
-	While vMYC_WaitForMQ.GetValue() > 0 && MQ101.IsRunning() && MQ101.GetCurrentStageID() < 900
-		WaitMenuMode(10)
-	EndWhile
+	
+	;FIXME: Do this some other way!
+	;Quest MQ101 = Quest.GetQuest("MQ101")
+	;While vMYC_WaitForMQ.GetValue() > 0 && MQ101.IsRunning() && MQ101.GetCurrentStageID() < 900
+	;	WaitMenuMode(10)
+	;EndWhile
 	
 	String sErrorMessage
 	SendModEvent("vMYC_UpkeepBegin")
@@ -152,14 +161,13 @@ Function DoUpkeep(Bool DelayedStart = True)
 		vMYC_ModUpdatedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	Else
 		;FIXME: Do init stuff in other quests
-		CharacterManager.DoUpkeep()
-		ShrineOfHeroes.DoUpkeep()
-		HangoutManager.DoUpkeep()
+;		CharacterManager.DoUpkeep()
+;		ShrineOfHeroes.DoUpkeep()
+;		HangoutManager.DoUpkeep()
 		DebugTrace("Loaded, no updates.")
 		;CheckForOrphans()
 	EndIf
 	CheckForExtras()
-	CheckCompatibilityModules()
 	UpdateConfig()
 	DebugTrace("Upkeep complete!")
 	Ready = True
@@ -168,33 +176,37 @@ Function DoUpkeep(Bool DelayedStart = True)
 EndFunction
 
 Function DoInit()
-	DebugTrace("Initializing...")
-	;FIXME: Do init stuff!
-	;If !(CharacterManager as Quest).IsRunning()
-	;	(CharacterManager as Quest).Start()
-	;	WaitMenuMode(0.5)
-	;	CharacterManager.DoInit()
-	;EndIf
-	;If !(ShrineOfHeroes as Quest).IsRunning()
-	;	WaitMenuMode(0.5)
-	;	(ShrineOfHeroes as Quest).Start()
-	;	;CharacterManager.DoInit()
-	;EndIf
-	;If !(HangoutManager as Quest).IsRunning()
-	;	(HangoutManager as Quest).Start()
-	;	WaitMenuMode(0.5)
-	;	HangoutManager.DoInit()
-	;EndIf
+	;vMYC_ModLoadedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
+	Debug.Notification("Familiar Faces will be ready in just a few seconds...")
 
-	;Wait(3)
-	;CharacterManager.SaveCurrentPlayer()
-	;Int i = 0
-	;While i < CharacterManager.CharacterNames.Length
-		;If CharacterManager.CharacterNames[i]
-			;CharacterManager.LoadCharacter(CharacterManager.CharacterNames[i])
-		;EndIf
-		;i += 1
-	;EndWhile
+
+	InitReg()
+
+	DebugTrace("DoInit: Starting DataManager...")
+	DataManager.Start()
+	WaitMenuMode(1)
+	While DataManager.IsBusy
+		WaitMenuMode(0.5)
+	EndWhile
+
+	DebugTrace("DoInit: Starting Compatibility modules...")
+	CheckCompatibilityModules()
+	WaitMenuMode(1)
+
+	DebugTrace("DoInit: Starting TrophyManager...")
+	TrophyManager.Start()
+	WaitMenuMode(1)
+	While !TrophyManager.ReadyToDisplay
+		WaitMenuMode(0.5)
+	EndWhile
+
+	DebugTrace("DoInit: Starting ShrineManager...")
+	ShrineManager.Start()
+	WaitMenuMode(1)
+
+	DebugTrace("DoInit: Starting PlayerTracker...")
+	SendModEvent("vMYC_PlayerTrackerStart")
+
 	_Running = True
 	ModVersion = _iCurrentVersion
 	vMYC_ModLoadedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
@@ -289,14 +301,14 @@ Bool Function CheckDependencies()
 	Else
 		;Proceed
 	EndIf
-	If JContainers.APIVersion() != 3
+	If JContainers.APIVersion() < 3
 		Debug.MessageBox("Familiar Faces\nThis mod requires JContainers with API 3 (3.1.x), but it seems to be missing or out of date.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed
 	EndIf
-	If SKSE.GetPluginVersion("chargen") < 3
-		Debug.MessageBox("Familiar Faces\nThis mod requires RaceMenu 3.0.0 or higher, but it seems to be missing or out of date.\nThe mod will now shut down.")
+	If SKSE.GetPluginVersion("chargen") < 4
+		Debug.MessageBox("Familiar Faces\nThis mod requires RaceMenu 3.2.0 or higher, but it seems to be missing or out of date.\nThe mod will now shut down.")
 		Return False
 	Else
 		;Proceed
@@ -306,17 +318,20 @@ Bool Function CheckDependencies()
 	Else
 		SetRegBool("Config.NIO.ArmorDye.Enabled",False)
 	EndIf
-	Int iRandom = RandomInt(0,999999)
-	Int jTestMap = JMap.Object()
-	JMap.setInt(jTestMap,"RandomInt",iRandom)
-	JValue.WriteToFile(jTestMap,"Data/vMYC/vMYC_testfile.json")
-	WaitMenuMode(0.1)
-	jTestMap = JValue.Release(jTestMap)
-	jTestMap = JValue.ReadFromFile("Data/vMYC/vMYC_testfile.json")
-	If JMap.getInt(jTestMap,"RandomInt") != iRandom
-		Debug.MessageBox("Familiar Faces\nCould not write to Data/vMYC! This may be because your Skyrim directory's permissions are wrong, or the vMYC is missing.\nThe mod will shut down until this is fixed!")
-		Return False
+
+	;In an upgrade from 1.x the *Manager objects might not be filled, so fill them.
+	If !DataManager
+		DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 	EndIf
+	If !TrophyManager
+		TrophyManager = Quest.GetQuest("vMYC_TrophyManagerQuest") as vMYC_TrophyManager
+	EndIf
+	If !ShrineManager
+		ShrineManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_ShrineManager
+	EndIf
+
+	;Removed write test in Skyrim folder, it was dumb anyway.
+
 	Return True
 EndFunction
 
