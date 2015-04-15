@@ -22,6 +22,9 @@ Function LoadCharacterSpells(ActorBase akActorbase, FormList spellList) native g
 Form[] Function GetActorSpellList(Actor akActor, Bool abIncludeBaseSpells = True) native global
 {Returns an array (may be >128) of all the Actor's spells, optionally excluding spells from the actor's base.}
 
+Function SetActorSpellList(ActorBase akActorBase, Form[] akSpellArray) native global
+{Sets akActorBase's spell list to the contents of akSpellArray.}
+
 Form[] Function GetActorShoutList(ActorBase akActorBase) native global
 {Returns an array (may be >128) of all akActorbase's shouts.}
 

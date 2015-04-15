@@ -899,7 +899,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	Int i
 	Int iCount
 	Int iAdded = 0
-	Int iRemoved = 0
+	Int iSkipped = 0
 	;DebugTraceAPIDopp(asSID,"Applying Spells...")
 
 	If !jCharacterData
@@ -918,6 +918,8 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	Int jSkillNames = GetRegObj("AVNames")
 
 	JValue.Retain(jSpells,asSID + "Spells")
+
+
 
 	If GetRegBool("Config.Magic.AutoSelect")
 		i = 18
@@ -938,13 +940,43 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 		EndWhile
 	EndIf
 	
+	String[] sAllowedSources = New String[128]
+				
+	sAllowedSources[0] = "Skyrim.esm"
+	sAllowedSources[1] = "Update.esm"
+	sAllowedSources[2] = "Dawnguard.esm"
+	sAllowedSources[3] = "Dragonborn.esm"
+	sAllowedSources[4] = "Hearthfires.esm"
+
+	If GetSessionBool("Config." + asSID + ".Magic.AllowSelectMods") ; Select mods
+		sAllowedSources[5] = "ColorfulMagic.esp"
+		sAllowedSources[6] = "Magic of the Magna-Ge.esp"
+		sAllowedSources[7] = "Animated Dragon Wings.esp"
+		sAllowedSources[8] = "Dwemerverse.esp"
+	EndIf
+
+	Bool bAllowHealing = GetSessionBool("Config." + asSID + ".Magic.AllowHealing")
+	Bool bAllowDefensive = GetSessionBool("Config." + asSID + ".Magic.AllowDefensive")
+	Bool bDawnguard = False
+	If GetModByName("Dawnguard.esm") != 255
+		bDawnguard = True
+	EndIf
+
 	i = JArray.Count(jSpells)
 	
+	Form[] akAllowedSpells = CreateFormArray(i)
+	
+
+	Int jAllowed = JArray.Object()
+	Int jSkipped = JArray.Object()
+	SetSessionObj("Characters." + asSID + ".Spells.Allowed",jAllowed)
+	SetSessionObj("Characters." + asSID + ".Spells.Skipped",jSkipped)
 	While i > 0
 		i -= 1
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
 		If kSpell
 			String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
+			
 			Bool bSpellIsAllowed = False
 			
 			If sMagicSchool
@@ -954,8 +986,8 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			EndIf
 			
 			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-			
-			If GetSessionBool("Config." + asSID + ".Magic.AllowHealing") ;sMagicSchool == "Restoration" && 
+
+			If bAllowHealing ;sMagicSchool == "Restoration" && 
 				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 					bSpellIsAllowed = True
 				ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
@@ -963,7 +995,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				EndIf
 			EndIf
 			
-			If GetSessionBool("Config." + asSID + ".Magic.AllowDefensive")
+			If bAllowDefensive
 				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 					bSpellIsAllowed = True
 				ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
@@ -971,34 +1003,26 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				EndIf
 			EndIf
 
-			If GetModByName("Dawnguard.esm")
+			If bDawnguard
 				Spell kDLC01SummonSoulHorse = Game.GetFormFromFile(0x0200C600, "Dawnguard.esm") as Spell
 				If kSpell == kDLC01SummonSoulHorse
 					bSpellIsAllowed = False
 				EndIf
 			EndIf
 
-			If bSpellIsAllowed
-				Int[] iAllowedSources = New Int[128]
-				
-				iAllowedSources[0] = GetModByName("Skyrim.esm")
-				iAllowedSources[1] = GetModByName("Update.esm")
-				iAllowedSources[2] = GetModByName("Dawnguard.esm")
-				iAllowedSources[3] = GetModByName("Dragonborn.esm")
-				iAllowedSources[4] = GetModByName("Hearthfires.esm")
+			Int iCastingType = kMagicEffect.GetCastingType()
+			Int iDeliveryType = kMagicEffect.GetDeliveryType()
 
-				If GetSessionBool("Config." + asSID + ".Magic.AllowSelectMods") ; Select mods
-					iAllowedSources[5] = GetModByName("ColorfulMagic.esp")
-					iAllowedSources[6] = GetModByName("Magic of the Magna-Ge.esp")
-					iAllowedSources[7] = GetModByName("Animated Dragon Wings.esp")
-					iAllowedSources[8] = GetModByName("Dwemerverse.esp")
-				EndIf
-				
+			If iCastingType == 0 && iDeliveryType == 0
+				bSpellIsAllowed = True ; Allow self-abilities, probably from a stone or perk
+			EndIf
+
+			If bSpellIsAllowed
 				bSpellIsAllowed = False
 				
 				;See if this spell is from an approved source
-				Int iSpellSourceID = Math.RightShift(kSpell.GetFormID(),24)
-				If iAllowedSources.Find(iSpellSourceID) > -1
+				String sSpellSource = FFUtils.GetSourceMod(kSpell) 
+				If sAllowedSources.Find(sSpellSource) > -1
 					bSpellIsAllowed = True
 				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
 				;A mod author has gone to the trouble of assuring us the spell is compatible.
@@ -1012,26 +1036,31 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			EndIf
 				
 			
-			If bSpellIsAllowed && !akActor.HasSpell(kSpell)
-				If akActor.AddSpell(kSpell,False)
+			If bSpellIsAllowed ;&& !akActor.HasSpell(kSpell)
+				akAllowedSpells[i] = kSpell
+				iAdded += 1
+				JArray.AddStr(JAllowed,kSpell.GetName())
+				;If akActor.AddSpell(kSpell,False)
 					;DebugTraceAPIDopp(asSID,"Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
-					iAdded += 1
-				EndIf
-			ElseIf !bSpellIsAllowed && akActor.HasSpell(kSpell)
-				;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
-				If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
-					If akActor.RemoveSpell(kSpell)
-						;DebugTraceAPIDopp(asSID,"Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
-						iRemoved += 1
-					EndIf
-				EndIf
+				;EndIf
+			Else ;If !bSpellIsAllowed && akActor.HasSpell(kSpell)
+				JArray.AddStr(JSkipped,kSpell.GetName())
+			;	;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
+			;	If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
+			;		If akActor.RemoveSpell(kSpell)
+			;			;DebugTraceAPIDopp(asSID,"Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
+					 iSkipped += 1
+			;		EndIf
+			;	EndIf
 			EndIf
 		Else
 			;DebugTraceAPIDopp(asSID,"Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
 		EndIf
 	EndWhile
-	If iAdded || iRemoved
-		;DebugTraceAPIDopp(asSID,"Added " + iAdded + " spells, removed " + iRemoved)
+	
+	FFUtils.SetActorSpellList(kActorBase,akAllowedSpells)
+	If iAdded || iSkipped
+		DebugTraceAPIDopp(asSID,"Added " + iAdded + " spells, skipped " + iSkipped)
 	EndIf
 	SaveSession()
 	JValue.Release(jSpells)

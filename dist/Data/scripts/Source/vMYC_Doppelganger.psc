@@ -279,9 +279,11 @@ State Assigned
 			EndIf
 		EndIf
 		If NeedSpells
+			StartTimer("UpdateSpells")
 			If UpdateSpells() >= 0 ; No error
 				NeedSpells = False
 			EndIf
+			StopTimer("UpdateSpells")
 		EndIf
 		;ReportStats()
 	EndEvent
@@ -593,4 +595,19 @@ String Function GetFormIDString(Form kForm)
 	sResult = kForm as String ; [FormName < (FF000000)>]
 	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
 	Return sResult
+EndFunction
+
+
+Function StartTimer(String sTimerLabel)
+	Float fTime = GetCurrentRealTime()
+	;Debug.Trace("TimerStart(" + sTimerLabel + ") " + fTime)
+	;DebugTrace("Timer: Starting for " + sTimerLabel)
+	SetSessionFlt("Timers." + sTimerLabel,fTime)
+EndFunction
+
+Function StopTimer(String sTimerLabel)
+	Float fTime = GetCurrentRealTime()
+	;Debug.Trace("TimerStop (" + sTimerLabel + ") " + fTime)
+	DebugTrace("Timer: " + (fTime - GetSessionFlt("Timers." + sTimerLabel)) + " for " + sTimerLabel)
+	ClearSessionKey("Timers." + sTimerLabel)
 EndFunction

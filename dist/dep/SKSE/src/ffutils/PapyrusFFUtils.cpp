@@ -290,7 +290,60 @@ namespace papyrusFFUtils
 			}
 		}
 	}
-	
+
+	void SetActorSpellList(StaticFunctionTag*, TESNPC* actorBase, VMArray<TESForm*> formArr)
+	{
+		TESForm *form = NULL;
+
+		TESSpellList * spellList = &actorBase->spellList;
+		TESSpellList::Data * spellData = spellList->unk04;
+
+		if (actorBase && formArr.Length()) {
+			UInt32 spellCount = formArr.Length();
+
+			if (spellCount > 0) {
+				// Have spellData, free the spells
+				if (spellData) {
+					if (spellData->spells)
+						FormHeap_Free(spellData->spells);
+				}
+
+				// No spellData? Create it
+				if (!spellData) {
+					spellData = (TESSpellList::Data *)FormHeap_Allocate(sizeof(TESSpellList::Data));
+					spellData->spells = NULL;
+					spellData->shouts = NULL;
+					spellData->unk4 = NULL;
+					spellData->numSpells = 0;
+					spellData->numShouts = 0;
+					spellData->numUnk4 = 0;
+					spellList->unk04 = spellData;
+				}
+
+				// Create the spell list
+				UInt32 i = 0;
+				SpellItem ** spellArray = (SpellItem **)FormHeap_Allocate(spellCount * sizeof(SpellItem*));
+
+				for (int i = 0; i < formArr.Length(); i++) {
+					formArr.Get(&form, i);
+					if (form) {
+						if (SpellItem * spell = DYNAMIC_CAST(form, TESForm, SpellItem)) {
+							spellArray[i] = spell;
+						}
+					}
+				}
+
+				// Write the spell list
+				spellData->spells = spellArray;
+				spellData->numSpells = spellCount;
+			}
+			else {
+				spellData->spells = NULL;
+				spellData->numSpells = 0;
+			}
+		}
+	}
+
 	VMResultArray<TESForm*> GetActorSpellList(StaticFunctionTag*, Actor* character, bool includeBaseSpells)
 	{
 		VMResultArray<TESForm*> result;
@@ -772,6 +825,9 @@ void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction2<StaticFunctionTag, VMResultArray<TESForm*>, Actor*, bool>("GetActorSpellList", "FFUtils", papyrusFFUtils::GetActorSpellList, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, void, TESNPC*, VMArray<TESForm*>>("SetActorSpellList", "FFUtils", papyrusFFUtils::SetActorSpellList, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction2<StaticFunctionTag, void, Actor*, BGSListForm*>("GetCharacterShouts", "FFUtils", papyrusFFUtils::GetCharacterShouts, registry));
