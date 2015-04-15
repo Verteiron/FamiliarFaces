@@ -261,9 +261,9 @@ Function AbortStartup(String asAbortReason = "None specified")
 	Stop()
 EndFunction
 
-Function DoShutdown()
+Function DoShutdown(Bool abClearData = False)
 	Ready = False
-	DebugTrace("Shutting down and preparing for removal...")
+	DebugTrace("Shutting down!")
 	_iCurrentVersion = 0
 	ModVersion = 0
 	
@@ -280,10 +280,22 @@ Function DoShutdown()
 		CharacterMAnager.Stop()
 	EndIf
 	
-	JDB.SetObj("vMYC",0)
+	If DataManager.IsRunning()
+		DataManager.Stop()
+	EndIf
+	If !TrophyManager.IsRunning()
+		TrophyManager.Stop()
+	EndIf
+	If !ShrineManager.IsRunning()
+		ShrineManager.Stop()
+	EndIf
+
+	If abClearData
+		JDB.SolveObjSetter(".vMYC",0)
+		DebugTrace("Data cleared, ready for removal!")
+		Debug.Notification("Familiar Faces\nData has been cleared. You should now save and exit, then uninstall the mod before re-launching the game.")
+	EndIf
 	vMYC_ModShutdownMSG.Show()
-	DebugTrace("Data cleared, ready for removal!")
-	Debug.Notification("Familiar Faces\nData has been cleared. You should now save and exit, then uninstall the mod before re-launching the game.")
 	_Running = False
 	Ready = True
 EndFunction
