@@ -291,7 +291,58 @@ namespace papyrusFFUtils
 		}
 	}
 
-	void SetActorSpellList(StaticFunctionTag*, TESNPC* actorBase, VMArray<TESForm*> formArr)
+	void SetPerkList(StaticFunctionTag*, TESNPC* actorBase, VMArray<TESForm*> formArr)
+	{
+		TESForm *form = NULL;
+
+		if (actorBase && formArr.Length()) {
+			UInt32 perkCount = 0;
+			UInt32 i = 0;
+
+			//Get the actual count of valid perks in formArr
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					if (BGSPerk * perk = DYNAMIC_CAST(form, TESForm, BGSPerk)) {
+						perkCount += 1;
+					}
+				}
+			}
+
+			if (perkCount > 0) {
+				// Have PerkData, free the Perks
+				if (actorBase->perkRanks.perkRanks)
+					FormHeap_Free(actorBase->perkRanks.perkRanks);
+
+				// Create the Perk list
+				UInt32 perkIndex = 0;
+
+				//If the shoutArray below has "blanks" in it there will be crashes later
+				BGSPerkRankArray::Data * perkData = (BGSPerkRankArray::Data *)FormHeap_Allocate(perkCount * sizeof(BGSPerkRankArray::Data));
+
+				for (int i = 0; i < formArr.Length(); i++) {
+					formArr.Get(&form, i);
+					if (form) {
+						if (BGSPerk * perk = DYNAMIC_CAST(form, TESForm, BGSPerk)) {
+							perkData[perkIndex].perk = perk;
+							perkData[perkIndex].rank = 1;
+							perkIndex += 1;
+						}
+					}
+				}
+
+				// Write the Perk list
+				actorBase->perkRanks.perkRanks = perkData;
+				actorBase->perkRanks.numPerkRanks = perkCount;
+			}
+			else {
+				actorBase->perkRanks.perkRanks = NULL;
+				actorBase->perkRanks.numPerkRanks = 0;
+			}
+		}
+	}
+
+	void SetShoutList(StaticFunctionTag*, TESNPC* actorBase, VMArray<TESForm*> formArr)
 	{
 		TESForm *form = NULL;
 
@@ -299,7 +350,86 @@ namespace papyrusFFUtils
 		TESSpellList::Data * spellData = spellList->unk04;
 
 		if (actorBase && formArr.Length()) {
-			UInt32 spellCount = formArr.Length();
+			UInt32 shoutCount = 0;
+			UInt32 i = 0;
+
+			//Get the actual count of valid shouts in formArr
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					if (TESShout * shout = DYNAMIC_CAST(form, TESForm, TESShout)) {
+						shoutCount += 1;
+					}
+				}
+			}
+
+			if (shoutCount > 0) {
+				// Have spellData, free the shouts
+				if (spellData) {
+					if (spellData->shouts)
+						FormHeap_Free(spellData->shouts);
+				}
+
+				// No spellData? Create it
+				if (!spellData) {
+					spellData = (TESSpellList::Data *)FormHeap_Allocate(sizeof(TESSpellList::Data));
+					spellData->spells = NULL;
+					spellData->shouts = NULL;
+					spellData->unk4 = NULL;
+					spellData->numSpells = 0;
+					spellData->numShouts = 0;
+					spellData->numUnk4 = 0;
+					spellList->unk04 = spellData;
+				}
+
+				// Create the shout list
+				UInt32 shoutIndex = 0;
+				
+				//If the shoutArray below has "blanks" in it there will be crashes later
+				TESShout ** shoutArray = (TESShout **)FormHeap_Allocate(shoutCount * sizeof(TESShout*));
+
+				for (int i = 0; i < formArr.Length(); i++) {
+					formArr.Get(&form, i);
+					if (form) {
+						if (TESShout * shout = DYNAMIC_CAST(form, TESForm, TESShout)) {
+							//increment the array index only if a valid shout was found
+							shoutArray[shoutIndex] = shout;
+							shoutIndex += 1;
+						}
+					}
+				}
+
+				// Write the spell list
+				spellData->shouts = shoutArray;
+				spellData->numShouts = shoutCount;
+			}
+			else {
+				spellData->shouts = NULL;
+				spellData->numShouts = 0;
+			}
+		}
+	}
+
+	void SetSpellList(StaticFunctionTag*, TESNPC* actorBase, VMArray<TESForm*> formArr)
+	{
+		TESForm *form = NULL;
+
+		TESSpellList * spellList = &actorBase->spellList;
+		TESSpellList::Data * spellData = spellList->unk04;
+
+		if (actorBase && formArr.Length()) {
+			UInt32 spellCount = 0;
+			UInt32 i = 0;
+
+			//Get the actual count of valid spells in formArr
+			for (int i = 0; i < formArr.Length(); i++) {
+				formArr.Get(&form, i);
+				if (form) {
+					if (SpellItem * shout = DYNAMIC_CAST(form, TESForm, SpellItem)) {
+						spellCount += 1;
+					}
+				}
+			}
 
 			if (spellCount > 0) {
 				// Have spellData, free the spells
@@ -321,14 +451,17 @@ namespace papyrusFFUtils
 				}
 
 				// Create the spell list
-				UInt32 i = 0;
+				UInt32 spellIndex = 0;
+
+				//If the spellArray below has "blanks" in it there will be crashes later
 				SpellItem ** spellArray = (SpellItem **)FormHeap_Allocate(spellCount * sizeof(SpellItem*));
 
 				for (int i = 0; i < formArr.Length(); i++) {
 					formArr.Get(&form, i);
 					if (form) {
 						if (SpellItem * spell = DYNAMIC_CAST(form, TESForm, SpellItem)) {
-							spellArray[i] = spell;
+							spellArray[spellIndex] = spell;
+							spellIndex += 1;
 						}
 					}
 				}
@@ -827,7 +960,13 @@ void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction2<StaticFunctionTag, VMResultArray<TESForm*>, Actor*, bool>("GetActorSpellList", "FFUtils", papyrusFFUtils::GetActorSpellList, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction2<StaticFunctionTag, void, TESNPC*, VMArray<TESForm*>>("SetActorSpellList", "FFUtils", papyrusFFUtils::SetActorSpellList, registry));
+		new NativeFunction2<StaticFunctionTag, void, TESNPC*, VMArray<TESForm*>>("SetPerkList", "FFUtils", papyrusFFUtils::SetPerkList, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, void, TESNPC*, VMArray<TESForm*>>("SetShoutList", "FFUtils", papyrusFFUtils::SetShoutList, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<StaticFunctionTag, void, TESNPC*, VMArray<TESForm*>>("SetSpellList", "FFUtils", papyrusFFUtils::SetSpellList, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction2<StaticFunctionTag, void, Actor*, BGSListForm*>("GetCharacterShouts", "FFUtils", papyrusFFUtils::GetCharacterShouts, registry));

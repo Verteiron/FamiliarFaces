@@ -173,6 +173,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	Ready = True
 	;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
 	SendModEvent("vMYC_UpkeepEnd")
+	DataManager.LoadTestCharacter()
 EndFunction
 
 Function DoInit()
@@ -209,7 +210,7 @@ Function DoInit()
 
 	_Running = True
 	ModVersion = _iCurrentVersion
-	vMYC_FFLogoEffect.Play(PlayerREF)
+	;vMYC_FFLogoEffect.Play(PlayerREF)
 	vMYC_ModLoadedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 EndFunction
 

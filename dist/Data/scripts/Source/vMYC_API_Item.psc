@@ -414,7 +414,7 @@ ObjectReference Function CustomizeEquipment(String asItemID, ObjectReference akO
 		DebugTraceAPIItem("CustomizeEquipment: " + asItemID + " does not refer to a valid saved object!",1)
 		Return kObject
 	EndIf
-	DebugTraceAPIItem("CustomizeEquipment: Will apply attributes from " + JValue.SolveStr(jItem,".DisplayName") + " to " + akObject.GetBaseObject().GetName() + " " + akObject + "!")
+	;DebugTraceAPIItem("CustomizeEquipment: Will apply attributes from " + JValue.SolveStr(jItem,".DisplayName") + " to " + akObject.GetBaseObject().GetName() + " " + akObject + "!")
 	ObjectReference kObject = CustomizeEquipmentFromJObj(jItem,akObject)
 	Return kObject
 EndFunction

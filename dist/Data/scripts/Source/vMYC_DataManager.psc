@@ -165,15 +165,19 @@ EndEvent
 
 Function LoadTestCharacter()
 	Actor[] kDoppelgangers = New Actor[32]
-
+	Debug.StartScriptProfiling("vMYC_DataManager")
+	Debug.StartScriptProfiling("vMYC_API_Doppelganger")
+	Debug.StartScriptProfiling("vMYC_Doppelganger")
 	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
 	Int i = JArray.Count(jCharacters)
+	JValue.Retain(jCharacters)
 	While i > 0
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
-		If vMYC_API_Character.GetCharacterName(sUUID) == "Tagaerys"
+		If vMYC_API_Character.GetCharacterName(sUUID) != PlayerREF.GetActorBase().GetName() ; "Tagaerys"
 			kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID,False) ;as vMYC_Doppelganger
 		EndIf
+
 		;ActorBase kDoppelganger = GetAvailableActorBase(iSex)
 		;Actor kDoppelActor = PlayerREF.PlaceAtMe(kDoppelganger) as Actor
 		;vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
@@ -183,13 +187,17 @@ Function LoadTestCharacter()
 		;	Wait(0.5)
 		;EndWhile
 	EndWhile
+	JValue.Release(jCharacters)
+
 
 	i = kDoppelgangers.Length
 	While i > 0
 		i -= 1
 		If kDoppelgangers[i]
-			While (kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment
-				DebugTrace("Waiting for actor to be ready...")
+			Int iSafety = 20
+			While ((kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment) && iSafety > 0
+				iSafety -= 1
+				DebugTrace((kDoppelgangers[i] as vMYC_Doppelganger).SID + " - Waiting for actor to be ready...")
 				Wait(0.5)
 			EndWhile
 			kDoppelgangers[i].MoveTo(PlayerREF)
@@ -252,7 +260,6 @@ Function DoUpkeep(Bool bInBackground = True)
 	GotoState("")
 	DebugTrace("Finished upkeep!")
 	SendModEvent("vMYC_UpkeepEnd")
-	LoadTestCharacter()
 EndFunction
 
 Function SetConfigDefaults(Bool abForce = False)
@@ -1294,10 +1301,10 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vMYC/")
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
 				SetRegObj("Characters." + sUUID,jCharacterData)
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
-				;If iDataVersion < SerializationVersion
+				If iDataVersion < SerializationVersion
 					DebugTrace("ImportCharacters - Upgrading data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
 					UpgradeData(sUUID)
-				;EndIf
+				EndIf
 			Else  ; Data already exists for this SSID
 				;FIXME: If we're going to overwrite existing data check the playtime, ask the player
 				If Math.ABS(GetRegFlt("Characters." + sUUID + META + ".PlayTime") - fPlayTime) < 0.1
@@ -1329,7 +1336,7 @@ Function UpgradeRegistryData()
 		Int iDataVersion = GetRegInt("Characters." + sUUID + META + ".SerializationVersion")
 		;If iDataVersion < SerializationVersion
 			String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
-			DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + "for " + sCharacterName + "! (" + sUUID + ")")
+			DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
 			UpgradeData(sUUID)
 		;EndIf
 	EndWhile
@@ -1396,7 +1403,7 @@ Function UpgradeData(String sUUID)
 				JArray.AddObj(jNewArmorInfos,vMYC_API_Item.GetItemJMap(sItemID))
 			EndIf
 		EndWhile
-		JMap.SetObj(jCharacterData,"ArmorInfo",jNewArmorInfos)
+		JValue.SolveObjSetter(jCharacterData,".Equipment.ArmorInfo",jNewArmorInfos)
 	EndIf
 
 	String[] sHands = New String[2]

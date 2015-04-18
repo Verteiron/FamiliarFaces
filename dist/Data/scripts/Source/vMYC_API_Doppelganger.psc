@@ -731,8 +731,6 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 	FormList vMYC_ModCompatibility_PerkList_Unsafe = Game.GetFormFromFile(0x0202573e, "vMYC_MeetYourCharacters.esp") as FormList
 	vMYC_DataManager DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 
-
-
 	;DebugTraceAPIDopp(asSID,"Applying Perks...")
 
 	If !jCharacterData
@@ -744,10 +742,13 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 	
 	Int jPerks = JValue.SolveObj(jCharacterData,".Perks")
 
-	Formlist kPerklist = DataManager.LockFormList()
-	kPerkList.Revert() ; Should already be empty, but just in case
+	;Formlist kPerklist = DataManager.LockFormList()
+	;kPerkList.Revert() ; Should already be empty, but just in case
 
 	i = JArray.Count(jPerks)
+	
+	Form[] akAllowedPerks = CreateFormArray(i)
+
 	;DebugTraceAPIDopp(asSID,"Has " + i + " perks to be checked!")
 	Int iMissingCount = 0
 	While i > 0
@@ -759,32 +760,36 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 			If vMYC_ModCompatibility_PerkList_Unsafe.HasForm(kPerk)
 				iMissingCount += 1
 			Else
-				kPerklist.AddForm(kPerk)
+				;kPerklist.AddForm(kPerk)
+				akAllowedPerks[i] = kPerk
 			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Perk is from " + JArray.getStr(jPerks,i))
 		;;DebugTraceAPIDopp(asSID,"Adding perk " + kPerk + " (" + kPerk.GetName() + ") to list...")
 	EndWhile
-	Int iPerkCountTotal = kPerklist.GetSize()
+	Int iPerkCountTotal = akAllowedPerks.Length
+	iPerkCountTotal -= iMissingCount
+	;Int iPerkCountTotal = kPerklist.GetSize()
 	;Debug.Trace("MYC/CM/" + sCharacterName + ":  Loading " + kPerklist.GetSize() + " perks to Actorbase...")
-	If iPerkCountTotal + iMissingCount != JArray.Count(jPerks)
-		Debug.Trace("PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
-		DataManager.UnlockFormlist(kPerklist)
-		Return -1
-	ElseIf iPerkCountTotal == 0
-		;DebugTraceAPIDopp(asSID,"PerkList size is 0. Won't attempt to apply this.")
-		DataManager.UnlockFormlist(kPerklist)
-		Return 0
-	EndIf
+	;If iPerkCountTotal + iMissingCount != JArray.Count(jPerks)
+	;	Debug.Trace("PerkList size mismatch, probably due to simultaneous calls. Aborting!",1)
+	;	DataManager.UnlockFormlist(kPerklist)
+	;	Return -1
+	;ElseIf iPerkCountTotal == 0
+	;	;DebugTraceAPIDopp(asSID,"PerkList size is 0. Won't attempt to apply this.")
+	;	DataManager.UnlockFormlist(kPerklist)
+	;	Return 0
+	;EndIf
 	If iMissingCount
 		;DebugTraceAPIDopp(asSID,"Loading " + iPerkCountTotal + " Perks with " + iMissingCount + " skipped...")
 	Else
 		;DebugTraceAPIDopp(asSID,"Loading " + iPerkCountTotal + " Perks...")
 	EndIf
-	FFUtils.LoadCharacterPerks(kActorBase,kPerklist)
+	FFUtils.SetPerkList(kActorBase,akAllowedPerks)
+	;FFUtils.LoadCharacterPerks(kActorBase,kPerklist)
 	;DebugTraceAPIDopp(asSID,"Perks loaded successfully!")
 	WaitMenuMode(0.1)
-	DataManager.UnlockFormlist(kPerklist)
+	;DataManager.UnlockFormlist(kPerklist)
 	Return iPerkCountTotal
 EndFunction
 
@@ -802,13 +807,26 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 	Int jShouts = JValue.SolveObj(jCharacterData,".Shouts")
 	
 
-	Formlist kShoutlist = DataManager.LockFormList()
-	kShoutlist.Revert() ; Should already be empty, but just in case
+	;Formlist kShoutlist = DataManager.LockFormList()
+	;kShoutlist.Revert() ; Should already be empty, but just in case
 	
 	Int i = JArray.Count(jShouts)
+	Form[] akAllowedShouts = CreateFormArray(i)
+
 	Int iMissingCount = 0
 
 	Actor PlayerREF = Game.GetPlayer()
+
+	Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
+	Shout kCallDragonShout = GetFormFromFile(0x00046b8c,"Skyrim.esm") as Shout
+	Shout kDragonAspectShout
+	Shout kDLC1SummonDragonShout
+	If GetModByName("Dawnguard.esm")
+		kDLC1SummonDragonShout = GetFormFromFile(0x020030d2,"Dawnguard.esm") as Shout
+	EndIf
+	If GetModByName("Dragonborn.esm")
+		kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
+	EndIf
 
 	While i > 0
 		i -= 1
@@ -816,40 +834,37 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 		If !kShout
 			iMissingCount += 1
 		Else
-			Shout kStormCallShout = GetFormFromFile(0x0007097D,"Skyrim.esm") as Shout
-			Shout kCallDragonShout = GetFormFromFile(0x00046b8c,"Skyrim.esm") as Shout
-			Shout kDragonAspectShout
-			Shout kDLC1SummonDragonShout
-			If GetModByName("Dawnguard.esm")
-				kDLC1SummonDragonShout = GetFormFromFile(0x020030d2,"Dawnguard.esm") as Shout
-			EndIf
-			If GetModByName("Dragonborn.esm")
-				kDragonAspectShout = GetFormFromFile(0x0201DF92,"DragonBorn.esm") as Shout
-			EndIf
 			If kShout == kStormCallShout && GetRegBool("Config.Shouts.Disabled.CallStorm")
 				;Don't add it
+				iMissingCount += 1
 			ElseIf kShout == kDragonAspectShout && GetRegBool("Config.Shouts.Disabled.DragonAspect") ;FIXME: Maybe use an array for disabled shouts, then test each one
 				;Don't add it
+				iMissingCount += 1
 			ElseIf kShout == kCallDragonShout
 				;Never add Summon Dragon, it screws up the main quest and generally doesn't behave right
 				;FIXME: Is there a way to fake these? It'd be cool to have imported characters use them.
+				iMissingCount += 1
 			ElseIf kShout == kDLC1SummonDragonShout 
 				;Never add Summon Duhrni-whatever, it screws up the quest order and causes crashes
+				iMissingCount += 1
 			ElseIf GetRegBool("Config.Shouts.BlockUnlearned")
-				If PlayerREF.HasSpell(kShout)
-					kShoutlist.AddForm(kShout)
+				If !PlayerREF.HasSpell(kShout)
+					iMissingCount += 1
 				EndIf
 			Else
-				kShoutlist.AddForm(kShout)		
+				akAllowedShouts[i] = kShout
+				;kShoutlist.AddForm(kShout)		
 			EndIf
 		EndIf
 		;Debug.Trace("MYC/CM/" + sCharacterName + ":  Adding Shout " + kShout + " (" + kShout.GetName() + ") to list...")
 	EndWhile
-	Int iShoutCount = kShoutlist.GetSize()
+	;Int iShoutCount = kShoutlist.GetSize()
+	Int iShoutCount = akAllowedShouts.Length
+	iShoutCount -= iMissingCount
 	;DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts to Actorbase...")
 	If iShoutCount == 0
 		;DebugTraceAPIDopp(asSID,"ShoutList size is 0. Won't attempt to apply this.")
-		DataManager.UnlockFormlist(kShoutlist)
+		;DataManager.UnlockFormlist(kShoutlist)
 		Return 0
 	EndIf
 	If iMissingCount
@@ -857,10 +872,11 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 	Else
 		;DebugTraceAPIDopp(asSID,"Loaded " + iShoutCount + " Shouts.")
 	EndIf
-	FFUtils.LoadCharacterShouts(kActorBase,kShoutlist)
+	FFUtils.SetShoutList(kActorBase,akAllowedShouts)
+	;FFUtils.LoadCharacterShouts(kActorBase,kShoutlist)
 	WaitMenuMode(0.1)
-	DataManager.UnlockFormlist(kShoutlist)
-	Return kShoutlist.GetSize()
+	;DataManager.UnlockFormlist(kShoutlist)
+	Return iShoutCount
 EndFunction
 
 Function RemoveCharacterShouts(String asSID,Actor akActor) Global
@@ -900,6 +916,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	Int iCount
 	Int iAdded = 0
 	Int iSkipped = 0
+	String sReason = "Unknown"
 	;DebugTraceAPIDopp(asSID,"Applying Spells...")
 
 	If !jCharacterData
@@ -981,8 +998,10 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			
 			If sMagicSchool
 				bSpellIsAllowed = GetSessionBool("Config." + asSID + ".Magic.Allow" + sMagicSchool)
+				sReason = "AllowedSchool"
 			Else
 				bSpellIsAllowed = GetSessionBool("Config." + asSID + ".Magic.AllowOther")
+				sReason = "AllowedOther"
 			EndIf
 			
 			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
@@ -990,15 +1009,19 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			If bAllowHealing ;sMagicSchool == "Restoration" && 
 				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 					bSpellIsAllowed = True
+					sReason = "Healing"
 				ElseIf vMYC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
+					sReason = "HealingList"
 					bSpellIsAllowed = True
 				EndIf
 			EndIf
 			
 			If bAllowDefensive
 				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
+					sReason = "Armor"
 					bSpellIsAllowed = True
 				ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
+					sReason = "ArmorList"
 					bSpellIsAllowed = True
 				EndIf
 			EndIf
@@ -1007,6 +1030,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				Spell kDLC01SummonSoulHorse = Game.GetFormFromFile(0x0200C600, "Dawnguard.esm") as Spell
 				If kSpell == kDLC01SummonSoulHorse
 					bSpellIsAllowed = False
+					sReason = "PlayerOnly"
 				EndIf
 			EndIf
 
@@ -1023,8 +1047,10 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				;See if this spell is from an approved source
 				String sSpellSource = FFUtils.GetSourceMod(kSpell) 
 				If sAllowedSources.Find(sSpellSource) > -1
+					sReason += ".AllowedSource"
 					bSpellIsAllowed = True
 				ElseIf vMYC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
+					sReason += ".CompatibilityList"
 				;A mod author has gone to the trouble of assuring us the spell is compatible.
 					bSpellIsAllowed = True
 				EndIf
@@ -1033,6 +1059,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			If vMYC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
 			;A mod author has added the spell to the unsafe list.
 				bSpellIsAllowed = False
+				sReason = "UnsafeList"
 			EndIf
 				
 			
@@ -1058,13 +1085,13 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 		EndIf
 	EndWhile
 	
-	FFUtils.SetActorSpellList(kActorBase,akAllowedSpells)
+	FFUtils.SetSpellList(kActorBase,akAllowedSpells)
 	If iAdded || iSkipped
 		DebugTraceAPIDopp(asSID,"Added " + iAdded + " spells, skipped " + iSkipped)
 	EndIf
-	SaveSession()
 	JValue.Release(jSpells)
 	JValue.ReleaseObjectsWithTag(asSID + "Spells") ; just in case
+	SaveSession()
 	Return iAdded
 EndFunction
 

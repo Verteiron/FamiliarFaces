@@ -279,11 +279,11 @@ State Assigned
 			EndIf
 		EndIf
 		If NeedSpells
-			StartTimer("UpdateSpells")
+			;StartTimer("UpdateSpells" + SID)
 			If UpdateSpells() >= 0 ; No error
 				NeedSpells = False
 			EndIf
-			StopTimer("UpdateSpells")
+			;StopTimer("UpdateSpells" + SID)
 		EndIf
 		;ReportStats()
 	EndEvent
@@ -494,7 +494,7 @@ Int Function UpdateStats(Bool abForceValues = False)
  abForceValues: (Optional) Set values absolutely, ignoring any buffs or nerfs from enchantments/magiceffects.
  Returns: -1 for generic failure.}
 	If !ScriptState == "Assigned"
-		DebugTrace("UpdatePerks called outside Assigned state!",1)
+		DebugTrace("UpdateStats called outside Assigned state!",1)
 		Return -2
 	EndIf
 
@@ -511,7 +511,6 @@ Int Function UpdatePerks()
 		DebugTrace("UpdatePerks called outside Assigned state!",1)
 		Return -2
 	EndIf
-	
 	Return vMYC_API_Doppelganger.UpdatePerks(SID,Self)
 EndFunction
 
@@ -526,31 +525,31 @@ Int Function UpdateShouts()
 		Return -2
 	EndIf
 
-	RegisterForAnimationEvent(Self,"BeginCastVoice")
-	RegisterForAnimationEvent(Self,"MT_Shout_Exhale")
-	RegisterForAnimationEvent(Self,"MT_Shout_ExhaleLong")
-	RegisterForAnimationEvent(Self,"MT_Shout_ExhaleMedium")
-	RegisterForAnimationEvent(Self,"MT_Shout_ExhaleSlowTime")
-	RegisterForAnimationEvent(Self,"MT_Shout_Inhale")
-	RegisterForAnimationEvent(Self,"shoutStop")
-	RegisterForAnimationEvent(Self,"Sneak1HM_Shout_Inhale")
-	RegisterForAnimationEvent(Self,"SneakMT_Shout_Exhale")
-	RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleLong")
-	RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleMedium")
-	RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleSlowTime")
-	RegisterForAnimationEvent(Self,"Voice_SpellFire_Event")
-	RegisterForAnimationEvent(Self,"CombatReady_ShoutExhaleMedium")
-	RegisterForAnimationEvent(Self,"MC_shoutStart")
-	RegisterForAnimationEvent(Self,"NPCshoutStart")
-	RegisterForAnimationEvent(Self,"shoutLoopingRelease")
-	RegisterForAnimationEvent(Self,"shoutRelease")
-	RegisterForAnimationEvent(Self,"shoutReleaseSlowTime")
-	RegisterForAnimationEvent(Self,"ShoutSprintLongestStart")
-	RegisterForAnimationEvent(Self,"ShoutSprintLongStart")
-	RegisterForAnimationEvent(Self,"ShoutSprintMediumStart")
-	RegisterForAnimationEvent(Self,"ShoutSprintShortStart")
-	RegisterForAnimationEvent(Self,"shoutStart")
-	RegisterForAnimationEvent(Self,"shoutStop")
+	;RegisterForAnimationEvent(Self,"BeginCastVoice")
+	;RegisterForAnimationEvent(Self,"MT_Shout_Exhale")
+	;RegisterForAnimationEvent(Self,"MT_Shout_ExhaleLong")
+	;RegisterForAnimationEvent(Self,"MT_Shout_ExhaleMedium")
+	;RegisterForAnimationEvent(Self,"MT_Shout_ExhaleSlowTime")
+	;RegisterForAnimationEvent(Self,"MT_Shout_Inhale")
+	;RegisterForAnimationEvent(Self,"shoutStop")
+	;RegisterForAnimationEvent(Self,"Sneak1HM_Shout_Inhale")
+	;RegisterForAnimationEvent(Self,"SneakMT_Shout_Exhale")
+	;RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleLong")
+	;RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleMedium")
+	;RegisterForAnimationEvent(Self,"SneakMT_Shout_ExhaleSlowTime")
+	;RegisterForAnimationEvent(Self,"Voice_SpellFire_Event")
+	;RegisterForAnimationEvent(Self,"CombatReady_ShoutExhaleMedium")
+	;RegisterForAnimationEvent(Self,"MC_shoutStart")
+	;RegisterForAnimationEvent(Self,"NPCshoutStart")
+	;RegisterForAnimationEvent(Self,"shoutLoopingRelease")
+	;RegisterForAnimationEvent(Self,"shoutRelease")
+	;RegisterForAnimationEvent(Self,"shoutReleaseSlowTime")
+	;RegisterForAnimationEvent(Self,"ShoutSprintLongestStart")
+	;RegisterForAnimationEvent(Self,"ShoutSprintLongStart")
+	;RegisterForAnimationEvent(Self,"ShoutSprintMediumStart")
+	;RegisterForAnimationEvent(Self,"ShoutSprintShortStart")
+	;RegisterForAnimationEvent(Self,"shoutStart")
+	;RegisterForAnimationEvent(Self,"shoutStop")
 	
 	Return vMYC_API_Doppelganger.UpdateShouts(SID,Self)
 
@@ -572,6 +571,7 @@ Int Function UpdateSpells()
 		DebugTrace("UpdateSpells called outside Assigned state!",1)
 		Return -2
 	EndIf
+
 	Return vMYC_API_Doppelganger.UpdateSpells(SID,Self)
 EndFunction
 
