@@ -182,7 +182,10 @@ EndFunction
 Function ShowCharacterStatue(Bool abFullEffects = True)
 {Place the character statue, tell it to set itself up, and play special effects.}
 	DebugTrace("ShowCharacterStatue(abFullEffects = " + abFullEffects + ")")
-	Int iStatueSound = vMYC_AlcoveStatueAppearLPSM.Play(AlcoveStatueMarker)
+	Int iStatueSound
+	If abFullEffects
+		iStatueSound = vMYC_AlcoveStatueAppearLPSM.Play(AlcoveStatueMarker)
+	EndIf
 	LightingController.DesiredLightState = 1
 	DebugTrace("AlcoveActor not found! We should create one!")
 	Int iSex = GetRegInt("Characters." + AlcoveCharacterID + ".Info.Sex")
