@@ -193,21 +193,28 @@ Function LoadTestCharacter()
 	i = kDoppelgangers.Length
 	While i > 0
 		i -= 1
-		If kDoppelgangers[i]
+		If kDoppelgangers[i] as Actor
 			Int iSafety = 20
-			While ((kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedEquipment) && iSafety > 0
+			While ((kDoppelgangers[i] as vMYC_Doppelganger).NeedAppearance || (kDoppelgangers[i] as vMYC_Doppelganger).NeedSpells) && iSafety > 0
 				iSafety -= 1
 				DebugTrace((kDoppelgangers[i] as vMYC_Doppelganger).SID + " - Waiting for actor to be ready...")
 				Wait(0.5)
 			EndWhile
-			kDoppelgangers[i].MoveTo(PlayerREF)
+			kDoppelgangers[i].MoveTo(PlayerREF,RandomInt(-500,500),RandomInt(-500,500), 100)
+			iSafety = 20
+			While !kDoppelgangers[i].Is3DLoaded()
+				iSafety -= 1
+				DebugTrace((kDoppelgangers[i] as vMYC_Doppelganger).SID + " - Waiting for actor to be loaded...")
+				Wait(0.5)
+			EndWhile
 		EndIf
 	EndWhile
-
+	Wait(5)
 	i = kDoppelgangers.Length
 	While i > 0
 		i -= 1
 		If kDoppelgangers[i]
+			kDoppelgangers[i].SetActorValue("Aggression",3)
 			vMYC_API_Doppelganger.SetFoe(kDoppelgangers[i])
 		EndIf
 	EndWhile

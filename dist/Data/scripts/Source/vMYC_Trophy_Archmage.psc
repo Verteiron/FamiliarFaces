@@ -10,11 +10,15 @@ Import Game
 
 ;=== Properties ===--
 
+ObjectReference[]	Property	ArchmageObjects		Auto
+
 ;=== Variables ===--
+
+Int[] _iTrophyIDs
 
 ;=== Events/Functions ===--
 
-Function CheckVars()
+Event OnTrophyInit()
 	TrophyName  	= "Archmage"
 	TrophyFullName  = "Archmage of Winterhold College"
 	TrophyPriority 	= 4
@@ -23,22 +27,35 @@ Function CheckVars()
 	TrophySize		= TROPHY_SIZE_LARGE
 	TrophyLoc		= TROPHY_LOC_WALLBACK
 	;TrophyExtras	= 0
-EndFunction
+	
+EndEvent
+
+Event OnSetTemplate()
+	_iTrophyIDs 		= SetTemplateArray(ArchmageObjects)
+EndEvent
 
 ;Overwrites vMYC_TrophyBase@IsAvailable
 Int Function IsAvailable()
 {Return >1 if this trophy is available to the current player. Higher values may be used to indicate more complex results.}
+	
+	Int iTrophyFlags = 0
+	
 	Quest kGoalQuest = Quest.GetQuest("MG08")
 	If kGoalQuest
-		Return kGoalQuest.IsCompleted() as Int
+		iTrophyFlags = kGoalQuest.IsCompleted() as Int
 	EndIf
-	Return 0
+	
+	Return iTrophyFlags
 EndFunction
 
-Int Function Display(Int aiDisplayFlags = 0)
+Event OnDisplayTrophy(Int aiDisplayFlags)
 {User code for display.}
-	Return 1
-EndFunction
+	
+	If aiDisplayFlags
+		DisplayFormArray(_iTrophyIDs)
+	EndIf
+
+EndEvent
 
 Int Function Remove()
 {User code for hide.}
@@ -49,3 +66,4 @@ Int Function ActivateTrophy()
 {User code for activation.}
 	Return 1
 EndFunction
+
