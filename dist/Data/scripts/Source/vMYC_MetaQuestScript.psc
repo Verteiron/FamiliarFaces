@@ -173,7 +173,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	Ready = True
 	;HangoutManager.AssignActorToHangout(CharacterManager.GetCharacterActorByName("Kmiru"),"Blackreach")
 	SendModEvent("vMYC_UpkeepEnd")
-	DataManager.LoadTestCharacter()
+	;DataManager.LoadTestCharacter()
 EndFunction
 
 Function DoInit()
@@ -183,16 +183,16 @@ Function DoInit()
 
 	InitReg()
 
+	DebugTrace("DoInit: Starting Compatibility modules...")
+	CheckCompatibilityModules()
+	WaitMenuMode(1)
+
 	DebugTrace("DoInit: Starting DataManager...")
 	DataManager.Start()
 	WaitMenuMode(1)
 	While DataManager.IsBusy
 		WaitMenuMode(0.5)
 	EndWhile
-
-	DebugTrace("DoInit: Starting Compatibility modules...")
-	CheckCompatibilityModules()
-	WaitMenuMode(1)
 
 	DebugTrace("DoInit: Starting TrophyManager...")
 	TrophyManager.Start()

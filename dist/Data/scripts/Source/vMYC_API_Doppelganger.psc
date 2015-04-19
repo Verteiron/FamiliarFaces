@@ -233,7 +233,7 @@ Int Function UpdateAppearance(String asSID, Actor akActor) Global
 	Race kRace = vMYC_API_Character.GetCharacterRace(asSID) as Race
 	String sCharacterName = vMYC_API_Character.GetCharacterName(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
-
+	DebugTraceAPIDopp(asSID,"UpdateAppearance Something went wrong during UpdateAppearance!",1)
 	If kRace && sCharacterName
 		Bool bInvulnerableState = kActorBase.IsInvulnerable()
 		kActorBase.SetInvulnerable(True)
@@ -244,7 +244,7 @@ Int Function UpdateAppearance(String asSID, Actor akActor) Global
 			Return 0
 		EndIf
 	EndIf
-	;DebugTraceAPIDopp(asSID,"Something went wrong during UpdateAppearance!",1)
+	DebugTraceAPIDopp(asSID,"Something went wrong during UpdateAppearance!",1)
 	Return -1
 EndFunction
 

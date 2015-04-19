@@ -104,6 +104,7 @@ Auto State Available
 		SetSessionForm("Mannequins." + sUUID + ".Actor",Self as Actor)
 		CharacterName = GetRegStr(_sCharacterInfo + "Name")
 		CharacterRace = GetRegForm(_sCharacterInfo + "Race") as Race
+		SID = sUUID
 		MyActorBase.SetName(CharacterName)
 		NeedAppearance	= True
 		NeedStats		= True
@@ -232,8 +233,9 @@ Event OnGainLOS(Actor akViewer, ObjectReference akTarget)
 EndEvent
 
 ;=== Appearance functions ===--
-; Unchanged
+
 ;=== Equipment and inventory functions ===--
+
 
 ;Overrides vMYC_Doppelganger@UpdateInventory
 Int Function UpdateInventory(Bool abReplaceMissing = True, Bool abFullReset = False)

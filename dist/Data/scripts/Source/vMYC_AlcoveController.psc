@@ -268,8 +268,8 @@ Function ShowCharacterStatue(Bool abFullEffects = True)
 			kGlows[i].DisableNoWait(True)
 			;Wait(0.88)
 		EndWhile
-		kGlowSuper.DisableNoWait(True)
 		TrophyManager.SendDisplayAllEvent(AlcoveStatueMarker)
+		kGlowSuper.DisableNoWait(True)
 		If iHarmonicSound
 			Sound.StopInstance(iHarmonicSound)
 			iHarmonicSound = 0
