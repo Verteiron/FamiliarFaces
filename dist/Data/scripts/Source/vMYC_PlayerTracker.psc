@@ -101,14 +101,14 @@ State Scanning
 		
 		If !_bRefreshed
 			_bRefreshed = True
-			;SendModEvent("vMYC_BackgroundFunction","SavePlayerAchievements")
-			SendModEvent("vMYC_BackgroundFunction","SavePlayerMiscStats")
-			;SendModEvent("vMYC_BackgroundFunction","SavePlayerNINodeInfo")
-			SendModEvent("vMYC_BackgroundFunction","SavePlayerPerks")
-			SendModEvent("vMYC_BackgroundFunction","SavePlayerInventory")
-			SendModEvent("vMYC_BackgroundFunction","SavePlayerSpells")
-			SendModEvent("vMYC_BackgroundFunction","SavePlayerShouts")
-			SendModEvent("vMYC_BackgroundFunction","SavePlayerEquipment")
+			;SendModEvent("vMYC_BackgroundFunction","ScanPlayerAchievements")
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerMiscStats")
+			;SendModEvent("vMYC_BackgroundFunction","ScanPlayerNINodeInfo")
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerPerks")
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerInventory")
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerSpells")
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerShouts")
+			SendModEvent("vMYC_BackgroundFunction","ScanPlayerEquipment")
 			SetSessionInt("SpellCount",PlayerRef.GetSpellCount())
 			SetSessionInt("PerkPoints",GetPerkPoints())
 			SendModEvent("vMYC_TrackerReady")

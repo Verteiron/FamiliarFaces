@@ -1483,7 +1483,8 @@ String Function GetSourceMod(Form akForm)
 EndFunction
 
 Function AddToReqList(Form akForm, String asType, String sSID = "")
-{Take the form and add its provider/source to the required mods list of the specified ajCharacterData.}
+{Take the form and add its provider/source to the required mods list of the specified ajCharacterData.
+If sSID is blank, then add to the current Session instead.}
 	;Return
 	
 	If !sSID
@@ -1493,7 +1494,12 @@ Function AddToReqList(Form akForm, String asType, String sSID = "")
 		Return
 	EndIf
 
-	Int jReqList = GetRegObj("Characters." + sSID + META + ".ReqList")
+	Int jReqList 
+	If sSID == SessionID 
+		jReqList = GetSessionObj("Characters." + sSID + META + ".ReqList")		
+	Else
+		jReqList = GetRegObj("Characters." + sSID + META + ".ReqList")
+	EndIf
 	If !jReqList
 		jReqList = JMap.Object()
 	EndIf
@@ -1509,7 +1515,11 @@ Function AddToReqList(Form akForm, String asType, String sSID = "")
 		If !sFormName
 			sFormName = akForm as String
 		EndIf
-		SetRegStr("Characters." + sSID + META + ".ReqList." + sModName + "." + asType + ".0x" + GetFormIDString(akForm),sFormName)
+		If sSID == SessionID 
+			SetSessionStr("Characters." + sSID + META + ".ReqList." + sModName + "." + asType + ".0x" + GetFormIDString(akForm),sFormName)
+		Else
+			SetRegStr("Characters." + sSID + META + ".ReqList." + sModName + "." + asType + ".0x" + GetFormIDString(akForm),sFormName)
+		EndIf
 	EndIf
 EndFunction
 
