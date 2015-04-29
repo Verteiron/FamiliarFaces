@@ -17,6 +17,25 @@ Import vMYC_Session
 
 ;=== Generic Functions ===--
 
+String Function GetItemName(String asItemID) Global
+	DebugTraceAPIItem("Looking up item name for " + asItemID + " ...")
+	String sRet = ""
+	Int jItemInfo = GetItemJMap(asItemID)
+	If jItemInfo
+		sRet = JValue.SolveStr(jItemInfo,".DisplayName")
+		If !sRet
+			Form kItem = JValue.SolveForm(jItemInfo,".Form")
+			If kItem
+				sRet = kItem.GetName()
+				If !sRet
+					sRet = GetFormIDString(kItem)
+				EndIf
+			EndIf
+		EndIf
+	EndIf
+	Return sRet
+EndFunction
+
 Int Function GetItemJMap(String asItemID) Global
 	Int iRet = -2 ; ItemID not present
 	String sRegKey = "Items." + asItemID
@@ -543,4 +562,11 @@ EndFunction
 
 Function DebugTraceAPIItem(String sDebugString, Int iSeverity = 0) Global
 	Debug.Trace("MYC/API/Item: " + sDebugString,iSeverity)
+EndFunction
+
+String Function GetFormIDString(Form kForm) Global
+	String sResult
+	sResult = kForm as String ; [FormName < (FF000000)>]
+	sResult = StringUtil.SubString(sResult,StringUtil.Find(sResult,"(") + 1,8)
+	Return sResult
 EndFunction

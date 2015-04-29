@@ -156,6 +156,32 @@ EndFunction
 
 ;=== API Character/SessionID functions
 
+;Retrieve all SIDs in the Registry.
+String[] Function GetAllSIDs() Global
+	Int jSIDList = JMap.AllKeys(GetRegObj("Characters"))
+	String[] sResults = Utility.CreateStringArray(JArray.Count(jSidList))
+	Int i = JArray.Count(jSIDList)
+	While i > 0
+		i -= 1
+		sResults[i] = JArray.GetStr(jSIDList,i)
+	EndWhile
+	Return sResults
+EndFunction
+
+;Retrieve all character names in the Registry.
+String[] Function GetAllNames() Global
+	Int jNameList = JMap.AllKeys(GetRegObj("Names"))
+	String[] sResults = Utility.CreateStringArray(JArray.Count(jNameList))
+	Int i = JArray.Count(jNameList)
+	DebugTraceAPIChar("Found " + i + " names in the list!")
+	While i > 0
+		i -= 1
+		sResults[i] = JArray.GetStr(jNameList,i)
+		DebugTraceAPIChar("Adding " + sResults[i] + " to the name list!")
+	EndWhile
+	Return sResults
+EndFunction
+
 ;Retrieve matching SIDs for asCharacterName.
 String[] Function GetSIDsByName(String asCharacterName) Global
 	Int jSIDList = JMap.AllKeys(GetRegObj("Names." + asCharacterName))
@@ -368,12 +394,12 @@ Int[] Function GetCharacterArmorIDs(String asSID) Global
 	Return New Int[1]
 EndFunction
 
-; Returns the ID of the item equipped in the saved character's specified location
+; Returns the JMap of the item equipped in the saved character's specified location
 ; 0 - left hand
 ; 1 - right hand
 ; 2 - shout
-Int Function GetCharacterEquippedFormID(String asSID, Int aiLocation) Global
-String sLocation = "Left"
+Int Function GetCharacterEquippedFormObj(String asSID, Int aiLocation) Global
+	String sLocation = "Left"
 	If aiLocation == 1
 		sLocation = "Right"
 	ElseIf aiLocation == 2
@@ -381,6 +407,21 @@ String sLocation = "Left"
 	EndIf
 	String sKey = ".Equipment." + sLocation
 	Return vMYC_API_Character.GetCharacterObj(asSID,sKey)
+EndFunction
+
+; Returns the ItemID of the item equipped in the saved character's specified location
+; 0 - left hand
+; 1 - right hand
+; 2 - shout
+String Function GetCharacterEquippedFormID(String asSID, Int aiLocation) Global
+	String sLocation = "Left"
+	If aiLocation == 1
+		sLocation = "Right"
+	ElseIf aiLocation == 2
+		sLocation = "Voice"
+	EndIf
+	String sKey = ".Equipment." + sLocation + ".UUID"
+	Return vMYC_API_Character.GetCharacterStr(asSID,sKey)
 EndFunction
 
 ;=============================---
@@ -524,4 +565,8 @@ Int Function DeleteCharacter(String asSID)
 		Return 1
 	EndIf
 	Return iRet
+EndFunction
+
+Function DebugTraceAPIChar(String sDebugString, Int iSeverity = 0) Global
+	Debug.Trace("MYC/API/Character: " + sDebugString,iSeverity)
 EndFunction

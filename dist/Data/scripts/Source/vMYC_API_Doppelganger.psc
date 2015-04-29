@@ -96,15 +96,16 @@ String Function GetSIDForActor(Actor kActor) Global
 	Return ""
 EndFunction
 
-Actor Function GetActorForSID(String asSID)
-	Int jActorBaseMap = GetSessionObj("ActorbaseMap")
-	Int jActorForms = JFormMap.AllKeys(jActorBaseMap)
-	Int jActorSIDs = JFormMap.AllValues(jActorBaseMap)
-	Int idx = JArray.FindStr(jActorSIDs,asSID)
-	If idx > -1
-		Return JArray.GetForm(jActorForms,idx) as Actor
-	EndIf
-	Return None
+Actor Function GetActorForSID(String asSID) Global
+	;Int jActorBaseMap = GetSessionObj("ActorbaseMap")
+	;Int jActorForms = JFormMap.AllKeys(jActorBaseMap)
+	;Int jActorSIDs = JFormMap.AllValues(jActorBaseMap)
+	;Int idx = JArray.FindStr(jActorSIDs,asSID)
+	;If idx > -1
+	;	Return JArray.GetForm(jActorForms,idx) as Actor
+	;EndIf
+	;Return None
+	Return GetSessionForm("Doppelgangers." + asSID + ".Actor") as Actor
 EndFunction
 
 Function AddMappedActorBase(ActorBase akActorBase, String asSID) Global
