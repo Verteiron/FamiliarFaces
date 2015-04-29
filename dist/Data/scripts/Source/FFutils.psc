@@ -66,7 +66,7 @@ String Function UUID() native global
 {Returns a random UUID.}
 
 Int Function BuildCharacterPackage(String asCharacterName) native global 
-{Returns a random UUID.}
+{Create a NMM-compatible ZIP file out of exported character data.}
 
 Int Function FilterFormlist(FormList sourceList, Formlist filteredList, Int aiType) native global
 {Populates filteredList with all forms in sourceList that are aiType. Returns number of matching forms.}
