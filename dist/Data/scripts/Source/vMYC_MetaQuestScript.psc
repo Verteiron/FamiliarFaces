@@ -208,6 +208,8 @@ Function DoInit()
 	DebugTrace("DoInit: Starting PlayerTracker...")
 	SendModEvent("vMYC_PlayerTrackerStart")
 
+	DataManager.LoadTestCharacter()
+
 	_Running = True
 	ModVersion = _iCurrentVersion
 	;vMYC_FFLogoEffect.Play(PlayerREF)

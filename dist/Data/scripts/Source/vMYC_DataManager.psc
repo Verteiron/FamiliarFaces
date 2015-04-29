@@ -214,8 +214,8 @@ Function LoadTestCharacter()
 	While i > 0
 		i -= 1
 		If kDoppelgangers[i]
-			kDoppelgangers[i].SetActorValue("Aggression",3)
 			vMYC_API_Doppelganger.SetFoe(kDoppelgangers[i])
+			kDoppelgangers[i].SetActorValue("Aggression",3)
 		EndIf
 	EndWhile
 EndFunction

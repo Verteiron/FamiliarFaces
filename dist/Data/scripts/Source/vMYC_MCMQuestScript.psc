@@ -139,13 +139,13 @@ Int 	_iCurrentHangoutOption
 Bool 	_bConfigClosed
 
 Int Function GetVersion()
-    return 13 ; Default version
+    return 190
 EndFunction
 
 Event OnVersionUpdate(int a_version)
-	If CurrentVersion < 13
+	If CurrentVersion < 190
 		OnConfigInit()
-		;Debug.Trace("MYC/MCM: Updating script to version 12...")
+		Debug.Trace("MYC/MCM: Updating script to version 190...")
 	EndIf
 EndEvent
 
@@ -158,27 +158,27 @@ Event OnConfigInit()
 	Pages[3] = "$Global Options"
 	Pages[4] = "$Debugging"
 
-	_bCharacterEnabled	= New Bool[128]
-	_sCharacterNames = New String[128]
-	_iVoiceTypeSelections = New Int[128]
-	_iAliasSelections = New Int[128]
+	_bCharacterEnabled				= New Bool[128]
+	_sCharacterNames 				= New String[128]
+	_iVoiceTypeSelections 			= New Int[128]
+	_iAliasSelections 	 			= New Int[128]
 
-	_iMagicSchoolOptions = New Int[6]
+	_iMagicSchoolOptions 			= New Int[6]
 
-	_iAlcoveIndices 		= New Int[12]
-	_iAlcoveStates			= New Int[12]
-	_sAlcoveCharacterNames	= New String[12]
+	_iAlcoveIndices 				= New Int[12]
+	_iAlcoveStates					= New Int[12]
+	_sAlcoveCharacterNames			= New String[12]
 
-	_sAlcoveStateEnum		= New String[5]
-	_sAlcoveStateEnum[0]	= "$Empty"
-	_sAlcoveStateEnum[1]	= "$Busy"
-	_sAlcoveStateEnum[2] 	= "$Ready"
-	_sAlcoveStateEnum[3] 	= "$Summoned"
-	_sAlcoveStateEnum[4] 	= "$Error"
+	_sAlcoveStateEnum				= New String[5]
+	_sAlcoveStateEnum[0]			= "$Empty"
+	_sAlcoveStateEnum[1]			= "$Busy"
+	_sAlcoveStateEnum[2] 			= "$Ready"
+	_sAlcoveStateEnum[3] 			= "$Summoned"
+	_sAlcoveStateEnum[4] 			= "$Error"
 
 	OPTION_MENU_ALCOVE_CHARACTER	= New Int[12]
 	OPTION_TOGGLE_ALCOVE_SUMMONED	= New Int[12]
-	_iAlcoveResetOption		= New Int[12]
+	_iAlcoveResetOption				= New Int[12]
 
 	FilterVoiceTypes(VOICETYPE_NOFILTER)
 	FillEnums()
@@ -186,15 +186,15 @@ EndEvent
 
 Function FillEnums()
 
-	ENUM_CHAR_ARMORCHECK = New String[3]
-	ENUM_CHAR_ARMORCHECK[0]	= "$When missing"
-	ENUM_CHAR_ARMORCHECK[1]	= "$Always"
-	ENUM_CHAR_ARMORCHECK[2]	= "$Disable"
+	ENUM_CHAR_ARMORCHECK 				= New String[3]
+	ENUM_CHAR_ARMORCHECK[0]					= "$When missing"
+	ENUM_CHAR_ARMORCHECK[1]					= "$Always"
+	ENUM_CHAR_ARMORCHECK[2]					= "$Disable"
 
-	ENUM_GLOBAL_MAGIC_OVERRIDES	= New String[3]
-	ENUM_GLOBAL_MAGIC_OVERRIDES[0]	= "$None"
-	ENUM_GLOBAL_MAGIC_OVERRIDES[1]	= "$Healing"
-	ENUM_GLOBAL_MAGIC_OVERRIDES[2]	= "$Healing/Defense"
+	ENUM_GLOBAL_MAGIC_OVERRIDES			= New String[3]
+	ENUM_GLOBAL_MAGIC_OVERRIDES[0]			= "$None"
+	ENUM_GLOBAL_MAGIC_OVERRIDES[1]			= "$Healing"
+	ENUM_GLOBAL_MAGIC_OVERRIDES[2]			= "$Healing/Defense"
 
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		= New String[3]
 	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS[0]		= "$Vanilla only"
@@ -271,10 +271,10 @@ endEvent
 event OnPageReset(string a_page)
 	String sKey = "vMYC."
 
-	If _sCurrentPage && !a_page && GetConfigBool("MCM_REMEMBER_PAGE")
-		SetTitleText(_sCurrentPage)
-		a_page = _sCurrentPage
-	EndIf	
+	;If _sCurrentPage && !a_page && GetConfigBool("MCM_REMEMBER_PAGE")
+	;	SetTitleText(_sCurrentPage)
+	;	a_page = _sCurrentPage
+	;EndIf	
 	
 	_sCurrentPage = a_page
 	UpdateSettings()
