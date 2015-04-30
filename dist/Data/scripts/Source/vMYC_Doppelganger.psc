@@ -160,35 +160,78 @@ EndEvent
 
 Event OnEnterBleedout()
 	If GetSessionBool("Characters." + SID + ".Config.VanishOnDeath")
+		ObjectReference[] kGlows = New ObjectReference[20]
 		BlockActivation(True)
 		DispelAllSpells()
 		KillEssential(PlayerREF)
 		vMYC_BlindingLightOutwardParticles.Play(Self,1)
 		ObjectReference kSoundSource1 = PlaceAtMe(vMYC_FXEmptyActivator)
 		Wait(1)
+		kGlows[19] = PlaceAtMe(vMYC_BookGlow)
 		Int iVanishSoundID = vMYC_CharacterVanishLPSM.Play(kSoundSource1)
 		Wait(4)
-		vMYC_BlindingLightGold.Play(Self,1)
-		ObjectReference kCharacterGlow = PlaceAtMe(vMYC_BookGlow)
+		kGlows[18] = PlaceAtMe(vMYC_BookGlow)
+		If kGlows[19].GetDistance(kGlows[18]) > 20
+			kGlows[19].DisableNoWait(True)
+		EndIf
+		kGlows[17] = PlaceAtMe(vMYC_BookGlow,abInitiallyDisabled = True)
+		kGlows[17].SetScale(1.5)
+		kGlows[17].EnableNoWait(True)
 		Wait(1)
-		SetAlpha(0.01,True)
 		;Wait(1.3)
 		ObjectReference kSoundSource2 = PlaceAtMe(vMYC_FXEmptyActivator)
 		ObjectReference kSoundSource3 = PlaceAtMe(vMYC_FXEmptyActivator)
-		NPCDragonDeathSequenceExplosion.Play(kSoundSource2)
+		
+		Float fScaleStart = GetScale()
+		Float fScaleDelta = 0.01 - fScaleStart
+		Int iStep = 0
+		Int iNumSteps = 15
+		vMYC_BlindingLightGold.Play(Self,1)		
+		While iStep < iNumSteps
+			kGlows[iStep] = PlaceAtMe(vMYC_BookGlow,abInitiallyDisabled = True)
+			Float fScale = easeInQuad(iStep,fScaleStart,fScaleDelta,iNumSteps)
+			kGlows[iStep].SetScale(fScale)
+			kGlows[iStep].EnableNoWait()
+			iStep += 3
+		EndWhile
 		Sound.StopInstance(iVanishSoundID)
+		SetAlpha(0.01,True)
+		kGlows[17].DisableNoWait(True)
+		kGlows[18].DisableNoWait(True)
+		kGlows[19].DisableNoWait(True)
+		iStep = 0
+		While iStep < iNumSteps
+			Float fScale = easeInQuad(iStep,fScaleStart,fScaleDelta,iNumSteps)
+			SetScale(fScale)
+			iStep += 1
+		EndWhile
+		NPCDragonDeathSequenceExplosion.Play(kSoundSource2)
 		;vMYC_BlindingLightGold.Stop(Self)
 		;vMYC_BlindingLightOutwardParticles.Stop(Self)
-		PlaceAtMe(vMYC_CharacterDeathExplosion)
 		NPCDragonDeathFX2D.Play(kSoundSource2)
-		kCharacterGlow.DisableNoWait(True)
-		SetScale(0.01)
+		PlaceAtMe(vMYC_CharacterDeathExplosion)
+		iStep = 0
+		While iStep < kGlows.Length
+			If kGlows[iStep]
+				Wait(0.33)
+				kGlows[iStep].DisableNoWait(True)
+			EndIf
+			iStep += 1
+		EndWhile
+		;kCharacterGlow.DisableNoWait(True)
 		vMYC_API_Doppelganger.UnregisterActor(Self,SID)
-		Wait(7)
+		Wait(1)
 		Disable(True)
 		kSoundSource1.Delete()
 		kSoundSource2.Delete()
 		kSoundSource3.Delete()
+		iStep = kGlows.Length
+		While iStep > 0
+			iStep -= 1
+			If kGlows[iStep]
+				kGlows[iStep].Delete()
+			EndIf
+		EndWhile
 		Delete()
 	EndIf
 EndEvent
@@ -610,4 +653,14 @@ Function StopTimer(String sTimerLabel)
 	;Debug.Trace("TimerStop (" + sTimerLabel + ") " + fTime)
 	DebugTrace("Timer: " + (fTime - GetSessionFlt("Timers." + sTimerLabel)) + " for " + sTimerLabel)
 	ClearSessionKey("Timers." + sTimerLabel)
+EndFunction
+
+Float Function EaseOutQuad(Float t, Float b, Float c, Float d) 
+	t /= d
+	return -c * t * (t - 2) + b
+EndFunction
+
+Float Function EaseInQuad(Float t, Float b, Float c, Float d)
+	t /= d
+	return c * t * t + b
 EndFunction
