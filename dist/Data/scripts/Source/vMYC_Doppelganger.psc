@@ -101,6 +101,8 @@ Faction 			Property vMYC_CharacterPlayerEnemyFaction			Auto
 Activator 			Property vMYC_FXEmptyActivator						Auto
 Activator 			Property vMYC_CharacterGlow 						Auto
 Form 				Property vMYC_BookGlow 								Auto
+
+Potion 				Property FoodSweetroll 								Auto
 ;=== Variables ===--
 
 Bool 		_bFirstLoad 				= True
@@ -179,11 +181,9 @@ Event OnEnterBleedout()
 		kGlows[17].EnableNoWait(True)
 		Wait(1)
 		;Wait(1.3)
-		ObjectReference kSoundSource2 = PlaceAtMe(vMYC_FXEmptyActivator)
-		ObjectReference kSoundSource3 = PlaceAtMe(vMYC_FXEmptyActivator)
 		
 		Float fScaleStart = GetScale()
-		Float fScaleDelta = 0.01 - fScaleStart
+		Float fScaleDelta = 0.001 - fScaleStart
 		Int iStep = 0
 		Int iNumSteps = 15
 		vMYC_BlindingLightGold.Play(Self,1)		
@@ -200,6 +200,8 @@ Event OnEnterBleedout()
 		kGlows[18].DisableNoWait(True)
 		kGlows[19].DisableNoWait(True)
 		iStep = 0
+		ObjectReference kSoundSource2 = PlaceAtMe(vMYC_FXEmptyActivator)		
+		ObjectReference kSoundSource3 = PlaceAtMe(vMYC_FXEmptyActivator)
 		While iStep < iNumSteps
 			Float fScale = easeInQuad(iStep,fScaleStart,fScaleDelta,iNumSteps)
 			SetScale(fScale)
@@ -208,20 +210,31 @@ Event OnEnterBleedout()
 		NPCDragonDeathSequenceExplosion.Play(kSoundSource2)
 		;vMYC_BlindingLightGold.Stop(Self)
 		;vMYC_BlindingLightOutwardParticles.Stop(Self)
-		NPCDragonDeathFX2D.Play(kSoundSource2)
+		NPCDragonDeathFX2D.Play(kSoundSource3)
 		PlaceAtMe(vMYC_CharacterDeathExplosion)
+		Wait(0.33)
+		If RandomInt(0,9) == 2
+			ObjectReference kLoot = kSoundSource3.PlaceAtMe(FoodSweetroll)
+			Int iSafetyTimer = 10
+			While !kLoot.Is3DLoaded() && iSafetyTimer
+				iSafetyTimer -= 1
+				;Wait(0.1)
+			EndWhile
+			vMYC_BlindingLightGold.Play(kLoot,1)
+			kLoot.ApplyHavokImpulse(RandomFloat(0,0.5),RandomFloat(0,0.5),1, 8)
+		EndIf
 		iStep = 0
 		While iStep < kGlows.Length
 			If kGlows[iStep]
-				Wait(0.33)
+				Wait(0.5)
 				kGlows[iStep].DisableNoWait(True)
 			EndIf
 			iStep += 1
 		EndWhile
+		Disable(True)
 		;kCharacterGlow.DisableNoWait(True)
 		vMYC_API_Doppelganger.UnregisterActor(Self,SID)
 		Wait(1)
-		Disable(True)
 		kSoundSource1.Delete()
 		kSoundSource2.Delete()
 		kSoundSource3.Delete()
