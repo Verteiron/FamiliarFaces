@@ -22,6 +22,12 @@ Import vMYC_Session
 
 String				Property META			= ".Info"				Auto Hidden
 
+Int 				Property VOICETYPE_NOFILTER  	= 0				AutoReadOnly Hidden
+Int 				Property VOICETYPE_FOLLOWER  	= 1				AutoReadOnly Hidden
+Int 				Property VOICETYPE_SPOUSE 		= 2				AutoReadOnly Hidden
+Int 				Property VOICETYPE_ADOPT 		= 4				AutoReadOnly Hidden
+Int 				Property VOICETYPE_GENDER		= 8 			AutoReadOnly Hidden
+
 ;=== Properties ===--
 
 String 				Property SessionID 								Hidden
@@ -74,6 +80,15 @@ Formlist 			Property vMYC_PlayerShoutCheckList 				Auto
 Formlist			Property vMYC_zTempListsList					Auto
 {A list of Formlists to be used as temporary storage for functions requiring them.}
 
+Formlist 			Property vMYC_VoiceTypesAllList 				Auto
+{A list of all vanilla VoiceTypes.}
+Formlist 			Property vMYC_VoiceTypesFollowerList			Auto
+{A list of all vanilla VoiceTypes with follower dialog.}
+Formlist 			Property vMYC_VoiceTypesSpouseList 				Auto
+{A list of all vanilla VoiceTypes with marriage dialog.}
+Formlist 			Property vMYC_VoiceTypesAdoptList 				Auto
+{A list of all vanilla VoiceType with adoption dialog.}
+
 ;=== Achievement test Properties ===--
 
 Faction 			Property CWImperialFaction 						Auto
@@ -108,6 +123,7 @@ Event OnInit()
 		CreateMiscStatNames()
 		CreateAVNames()
 		InitNINodeList()
+		SortVoiceTypes()
 
 		;Init ActorBasePool forms in case they're not there already
 		If !HasRegKey("ActorbasePool.F")
@@ -174,7 +190,7 @@ Function LoadTestCharacter()
 	While i > 0
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
-		If vMYC_API_Character.GetCharacterName(sUUID) != PlayerREF.GetActorBase().GetName() ; "Tagaerys"
+		If vMYC_API_Character.GetCharacterName(sUUID) ;== "Magraz"  ; != PlayerREF.GetActorBase().GetName() ; "Tagaerys"
 			kDoppelgangers[i] = vMYC_API_Doppelganger.CreateDoppelganger(sUUID,False) ;as vMYC_Doppelganger
 		EndIf
 
@@ -2071,6 +2087,55 @@ Function CreateAVNames()
 		i += 1
 	EndWhile
 EndFunction
+
+Function SortVoiceTypes()
+
+	Int jVoiceTypesAll 		= JArray.Object()
+	Int jVoiceTypesFollower = JArray.Object()
+	Int jVoiceTypesSpouse 	= JArray.Object()
+	Int jVoiceTypesAdopt 	= JArray.Object()
+
+	JArray.addFromFormList(jVoiceTypesAll,		vMYC_VoiceTypesAllList)
+	JArray.addFromFormList(jVoiceTypesFollower,	vMYC_VoiceTypesFollowerList)
+	JArray.addFromFormList(jVoiceTypesSpouse,	vMYC_VoiceTypesSpouseList)
+	JArray.addFromFormList(jVoiceTypesAdopt,	vMYC_VoiceTypesAdoptList)
+
+	;SetRegObj("VoiceTypes.All",		jVoiceTypesAll)
+	;SetRegObj("VoiceTypes.Follower",jVoiceTypesFollower)
+	;SetRegObj("VoiceTypes.Spouse",	jVoiceTypesSpouse)
+	;SetRegObj("VoiceTypes.Adopt",	jVoiceTypesAdopt)
+
+	Int jVoiceTypeData 	= JMap.Object() 
+
+	Int i = JArray.Count(jVoiceTypesAll)
+	While i > 0
+		i -= 1
+		VoiceType kVoiceType 	= JArray.GetForm(jVoiceTypesAll,i) as VoiceType
+		String sVoiceName 		= ""
+
+		sVoiceName = kVoiceType as String
+		sVoiceName = StringUtil.SubString(sVoiceName,0,StringUtil.Find(sVoiceName,">") - 10)
+		sVoiceName = StringUtil.SubString(sVoiceName,StringUtil.Find(sVoiceName,"<") + 1)
+
+		If sVoiceName
+			SetRegForm("VoiceTypes.Info." + sVoiceName + ".Form",kVoiceType)
+			
+			If JArray.FindForm(jVoiceTypesFollower,	kVoiceType) > -1
+				SetRegBool("VoiceTypes.Info." + sVoiceName + ".Follower",True)
+			EndIf
+			If JArray.FindForm(jVoiceTypesSpouse,kVoiceType) > -1
+				SetRegBool("VoiceTypes.Info." + sVoiceName + ".Spouse",True)
+			EndIf
+			If JArray.FindForm(jVoiceTypesAdopt,kVoiceType) > -1
+				SetRegBool("VoiceTypes.Info." + sVoiceName + ".Adopt",True)
+			EndIf
+		EndIf
+	EndWhile
+
+	SetRegObj("VoiceTypes.Names",JMap.AllKeys(GetRegObj("VoiceTypes.Info")))
+EndFunction
+
+
 
 ;=== Functions - Busy state ===--
 

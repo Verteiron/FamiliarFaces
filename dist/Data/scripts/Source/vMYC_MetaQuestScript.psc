@@ -208,7 +208,7 @@ Function DoInit()
 	DebugTrace("DoInit: Starting PlayerTracker...")
 	SendModEvent("vMYC_PlayerTrackerStart")
 
-	DataManager.LoadTestCharacter()
+	;DataManager.LoadTestCharacter()
 
 	_Running = True
 	ModVersion = _iCurrentVersion

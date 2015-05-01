@@ -251,6 +251,12 @@ Class Function GetCharacterClass(String asSID) Global
 	Return vMYC_API_Character.GetCharacterForm(asSID,sKey) as Class
 EndFunction
 
+; Get the VoiceType of the Character
+VoiceType Function GetCharacterVoiceType(String asSID) Global
+	String sKey = ".VoiceType"
+	Return vMYC_API_Character.GetCharacterForm(asSID,sKey) as VoiceType
+EndFunction
+
 ; Get the CombatStyle of the Character
 CombatStyle Function GetCharacterCombatStyle(String asSID) Global
 	String sKey = ".Class"
@@ -464,6 +470,12 @@ EndFunction
 ; Set the Class of the Character
 Int Function SetCharacterClass(String asSID, Class akValue) Global
 	String sKey = ".Class"
+	Return vMYC_API_Character.SetCharacterForm(asSID,sKey,akValue)
+EndFunction
+
+; Set the VoiceType of the Character
+Int Function SetCharacterVoiceType(String asSID, VoiceType akValue) Global
+	String sKey = ".VoiceType"
 	Return vMYC_API_Character.SetCharacterForm(asSID,sKey,akValue)
 EndFunction
 
