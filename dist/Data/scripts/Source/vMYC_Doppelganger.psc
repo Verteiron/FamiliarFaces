@@ -72,6 +72,7 @@ Race				Property CharacterRace	= None					Auto Hidden
 Actor 				Property PlayerREF 									Auto
 Armor 				Property vMYC_DummyArmor							Auto
 EffectShader 		Property vMYC_BlindingLightGold						Auto
+EffectShader 		Property vMYC_BlindingLightInwardParticles 			Auto
 EffectShader 		Property vMYC_BlindingLightOutwardParticles 		Auto
 Explosion 			Property vMYC_CharacterDeathExplosion				Auto
 VisualEffect		Property vMYC_ValorFX								Auto
@@ -301,6 +302,9 @@ State Assigned
 				UpdateNINodes()
 				UpdateNIOverlays()
 				NeedAppearance = False
+				If !NeedEquipment
+					SetAlpha(1)
+				EndIf
 			EndIf
 		EndIf
 		If NeedInventory 
@@ -317,6 +321,7 @@ State Assigned
 			Int bResultWeapons = UpdateWeapons()
 			If bResultArmor >= 0 && bResultWeapons >= 0 ; No error
 				NeedEquipment = False
+				SetAlpha(1)
 			EndIf
 		EndIf
 		If NeedStats
@@ -345,6 +350,11 @@ State Assigned
 	EndEvent
 
 	Event OnLoad()
+		If NeedAppearance && _bFirstLoad ;|| NeedEquipment 
+			_bFirstLoad = False
+			SetAlpha(0.01)
+			vMYC_BlindingLightInwardParticles.Play(Self,2)
+		EndIf
 		UpdateNINodes()
 	EndEvent
 	
