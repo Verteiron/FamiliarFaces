@@ -13,6 +13,20 @@ Import vMYC_Session
 
 ; === Constants ===--
 
+Int 	Property 	PANEL_CHAR_PICKER 					= 1		AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS 					= 2		AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_STATS			= 3		AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC			= 4		AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_EQUIP			= 5		AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_COMBAT			= 6		AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL	= 7		AutoReadOnly Hidden
+; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+
+
 ; === Enums ===--
 
 String[] Property	ENUM_CHAR_ARMORCHECK					Auto Hidden
@@ -23,22 +37,39 @@ String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
 String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
 String[] Property	ENUM_GLOBAL_FILE_LOCATION			    Auto Hidden
 
+Form[] 		Property 	VoiceTypeList							Auto Hidden
+String[] 	Property 	VoiceTypeNames							Auto Hidden
+String[] 	Property 	VoiceTypeLegends						Auto Hidden
 
 ; === Properties ===--
 
-vMYC_MetaQuestScript 	Property MetaQuest 					Auto
-vMYC_DataManager 		Property DataManager 				Auto
-vMYC_ShrineManager 		Property ShrineManager 				Auto
+vMYC_MetaQuestScript 	Property MetaQuest 						Auto
+vMYC_DataManager 		Property DataManager 					Auto
+vMYC_ShrineManager 		Property ShrineManager 					Auto
+
+Int 					Property PanelLeft 						Auto Hidden
+Int 					Property PanelRight						Auto Hidden
+
+Int[] 					Property PanelStack 					Auto Hidden
 
 ; === Properties: Character Page ===--
 
-String[] 				Property CharacterNames 			Auto Hidden
-String 					Property CurrentCharacterName		Auto Hidden
-String 					Property CurrentSID		 			Auto Hidden
+String[] 				Property CharacterNames 				Auto Hidden
+String 					Property CurrentCharacterName			Auto Hidden
+String 					Property CurrentSID		 				Auto Hidden
+VoiceType 				Property CurrentVoiceType 				Auto Hidden
+Class 					Property CurrentClass	 				Auto Hidden
+CombatStyle				Property CurrentCombatStyle				Auto Hidden
 
-Int[]					Property OPTIONLIST_CHARACTER 		Auto Hidden
-Int 					Property OPTION_MENU_CHAR_PICKER 	Auto Hidden
-Int 					Property OPTION_MENU_SID_PICKER 	Auto Hidden
+Int[]					Property OPTIONLIST_CHARACTER 			Auto Hidden
+Int 					Property OPTION_MENU_CHAR_PICKER 		Auto Hidden
+Int 					Property OPTION_MENU_SID_PICKER 		Auto Hidden
+Int 					Property OPTION_MENU_CHAR_VOICETYPE		Auto Hidden
+
+Int 					Property OPTION_TOGGLE_CHAR_TRACKING 	Auto Hidden
+Int 					Property OPTION_TEXT_CHAR_STATS 		Auto Hidden
+Int 					Property OPTION_TEXT_CHAR_MAGIC 		Auto Hidden
+Int 					Property OPTION_TEXT_BACK				Auto Hidden
 
 ; === Variables ===--
 
@@ -83,27 +114,59 @@ Event OnPageReset(string a_page)
 
 	; === Handle other pages ===--
 	If a_page == Pages[0]
-		ShowOptions_CharacterSetup(0)
+		If !TopPanel()
+			PushPanel(PANEL_CHAR_PICKER)
+			PushPanel(PANEL_CHAR_OPTIONS)
+		EndIf
 	Else
 
 	EndIf
+	DisplayPanels()
 EndEvent
 
 
+Function DisplayPanels()
+	Int iPanelLeft = TopPanel(1)
+	Int iPanelRight = TopPanel()
+	If iPanelLeft
+		PanelLeft = iPanelLeft
+	EndIf
+	If iPanelRight
+		PanelRight = iPanelRight
+	EndIf
+	AddPanel(PanelLeft,0)
+	AddPanel(PanelRight,1)
+EndFunction
 
+Function AddPanel(Int PanelID, Int aiLeftRight)
+	If PanelID == PANEL_CHAR_PICKER
+		ShowPanel_CharacterSelect(aiLeftRight)
+	ElseIf PanelID == PANEL_CHAR_OPTIONS
+		ShowPanel_CharacterOptions(aiLeftRight)
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_STATS
+		ShowPanel_CharacterStats(aiLeftRight)
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_COMBAT
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_EQUIP
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC
+		ShowPanel_CharacterMagic(aiLeftRight)
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
+		ShowPanel_CharacterMagic_BySchool(aiLeftRight)
+	EndIf
+	
+EndFunction
 
+Function AddBackButton()
 
+EndFunction
 
+; === Panel display functions ===--
 
-
-; === Page display functions ===--
-
-Function ShowOptions_CharacterSetup(Int aiLeftRight)
+Function ShowPanel_CharacterSelect(Int aiLeftRight)
 	SetCursorFillMode(TOP_TO_BOTTOM)
 	
 	SetCursorPosition(aiLeftRight)
 
-	OPTION_MENU_CHAR_PICKER = AddMenuOption("$Settings for",CurrentCharacterName)
+	AddMenuOptionST("OPTION_MENU_CHAR_PICKER","$Settings for",CurrentCharacterName)
 
 	If !CurrentCharacterName
 		DebugTrace("No CharacterName selected!")
@@ -155,6 +218,10 @@ Function ShowOptions_CharacterSetup(Int aiLeftRight)
 	EndIf
 	AddTextOption("ActorBase: " + sActorBaseString,"",OPTION_FLAG_DISABLED)
 	AddTextOption("Actor: " + sActorString,"",OPTION_FLAG_DISABLED)
+
+	If !kActor
+		AddTextOptionST("OPTION_TEXT_CHAR_SUMMON", "Summon me", "right now!")
+	EndIf
 	;Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
 	;If MissingReqs == 3
 	;	AddEmptyOption()
@@ -171,65 +238,260 @@ Function ShowOptions_CharacterSetup(Int aiLeftRight)
 	;EndIf
 	;===== END info column =============----
 
+	
+
 EndFunction
 
 Function ShowOptions_SIDPicker(Int aiLeftRight, Bool abDisabled = False)
 	SetCursorPosition(aiLeftRight + 2)
-	OPTION_MENU_SID_PICKER = AddMenuOption("$Choose session:",CurrentSID,abDisabled as Int)
+	AddMenuOptionST("OPTION_MENU_SID_PICKER","$Choose session:",StringUtil.Substring(CurrentSID, StringUtil.GetLength(CurrentSID) - 7),abDisabled as Int)
 EndFunction
 
-Event OnOptionSelect(Int Option)
+Function ShowPanel_CharacterOptions(Int aiLeftRight)
+;PANEL_CHAR_OPTIONS
+	SetCursorFillMode(TOP_TO_BOTTOM)
+	
+	SetCursorPosition(aiLeftRight)
 
-EndEvent
+	Int OptionFlags = 0
 
-Event OnOptionMenuOpen(int a_option)
-	If a_option == OPTION_MENU_CHAR_PICKER
-		CHAR_PICKER_MO(a_option)
+	AddHeaderOption(CurrentCharacterName + " Options")
+
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Character." + CurrentSID + ".Config.Tracking",abUseDefault = True))
+	AddEmptyOption()
+
+	AddTextOptionST("OPTION_TEXT_CHAR_STATS","$Skills and stats", "$Details",Math.LogicalAnd(OPTION_FLAG_DISABLED,(PanelRight == PANEL_CHAR_OPTIONS_STATS) as Int))
+	AddTextOptionST("OPTION_TEXT_CHAR_MAGIC","$Magic and Shouts", "$Details",Math.LogicalAnd(OPTION_FLAG_DISABLED,(PanelRight == PANEL_CHAR_OPTIONS_MAGIC) as Int))
+	OptionFlags = 0
+
+	;=== Character voicetype option ===--
+	CurrentVoiceType = vMYC_API_Character.GetCharacterVoiceType(CurrentSID)
+	String sVoiceTypeName = DataManager.GetVoiceTypeName(CurrentVoiceType)
+	If !sVoiceTypeName
+		sVoiceTypeName = "Default"
 	EndIf
-EndEvent
 
-Event OnOptionMenuAccept(int a_option, int a_index)
-	If a_option == OPTION_MENU_CHAR_PICKER
-		CHAR_PICKER_MA(a_option, a_index)
+	AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
+	If PanelLeft == PANEL_CHAR_OPTIONS
+		SetCursorPosition(22)
+		AddTextOptionST("OPTION_TEXT_BACK","$Back to", "Character Select")
 	EndIf
-EndEvent
+EndFunction
+
+Function ShowPanel_CharacterStats(Int aiLeftRight)
+;PANEL_CHAR_OPTIONS_STATS
+	SetCursorFillMode(TOP_TO_BOTTOM)
+	
+	SetCursorPosition(aiLeftRight)
+	AddHeaderOption("$Stats and Skills")
+	AddEmptyOption()
+	AddEmptyOption()
+	AddHeaderOption("$Skill settings")
+
+EndFunction
+
+Function ShowPanel_CharacterMagic(Int aiLeftRight)
+;PANEL_CHAR_OPTIONS_MAGIC
+	SetCursorFillMode(TOP_TO_BOTTOM)
+	
+	SetCursorPosition(aiLeftRight)
+	AddHeaderOption("{$Magic and Shouts}")
+
+	Bool bAutoMagic = GetSessionBool("Character." + CurrentSID + ".Config.Magic.AutoByPerks",True)
+	Bool bAllowHealing 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowHealing",True)
+	Bool bAllowDefense 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowDefense",True)
+
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS","$Auto select spells by perks",bAutoMagic)
+	AddTextOptionST("OPTION_TEXT_CHAR_MAGIC_BYSCHOOL", "$Choose allowed magic", "$Details")
+	AddEmptyOption()
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING","$Always allow healing",bAllowHealing)
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE","$Always allow defense",bAllowDefense)
+
+
+	AddHeaderOption("$Shout settings")
+	AddToggleOptionST("OPTION_TOGGLE_SHOUTS_DISABLED","{$Disable} {$Shouts}",GetSessionBool("Characters." + CurrentSID + ".Config.Shouts.Disabled"))
+	; AddEmptyOption()
+	If PanelLeft == PANEL_CHAR_OPTIONS_MAGIC
+		SetCursorPosition(22)
+		AddTextOptionST("OPTION_TEXT_BACK","$Back to", "Character Options")
+	EndIf
+EndFunction
+
+Function ShowPanel_CharacterMagic_BySchool(Int aiLeftRight)
+;PANEL_CHAR_OPTIONS_MAGIC
+	SetCursorFillMode(TOP_TO_BOTTOM)
+	
+	SetCursorPosition(aiLeftRight)
+	AddHeaderOption("{$Magic Allowed}")
+	Int OptionFlags = 0
+
+	; If !CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
+	; 	Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ALTERATION","{$Allow} {$Alteration}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowAlteration",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_CONJURATION","{$Allow} {$Conjuration}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowConjuration",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_DESTRUCTION","{$Allow} {$Destruction}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowDestruction",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ILLUSION","{$Allow} {$Illusion}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowIllusion",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_RESTORATION","{$Allow} {$Restoration}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowRestoration",OptionFlags))
+
+	;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+
+
+EndFunction
+
+; == Panel: Go back ===--
+State OPTION_TEXT_BACK
+
+	Event OnSelectST()
+		PopPanel()
+		ForcePageReset()
+	EndEvent
+
+EndState
+
+; == Text: Summon character ===--
+State OPTION_TEXT_CHAR_SUMMON
+	Event OnSelectST()
+		vMYC_API_Doppelganger.CreateDoppelganger(CurrentSID,False).MoveTo(Game.GetPlayer())
+		ForcePageReset()
+	EndEvent
+EndState
 
 ; == Menu: Character Picker ===--
+State OPTION_MENU_CHAR_PICKER
 
-Function CHAR_PICKER_MO(Int aiOption)
-	SetMenuDialogOptions(CharacterNames)
-	Int iCharacterNameIdx = CharacterNames.Find(CurrentCharacterName)
-	If iCharacterNameIdx < 0
-		iCharacterNameIdx = 0
-	EndIf
-	SetMenuDialogStartIndex(iCharacterNameIdx)
-	SetMenuDialogDefaultIndex(iCharacterNameIdx)
-EndFunction
+	Event OnMenuOpenST()
+		SetMenuDialogOptions(CharacterNames)
+		Int iCharacterNameIdx = CharacterNames.Find(CurrentCharacterName)
+		If iCharacterNameIdx < 0
+			iCharacterNameIdx = 0
+		EndIf
+		SetMenuDialogStartIndex(iCharacterNameIdx)
+		SetMenuDialogDefaultIndex(iCharacterNameIdx)
+	EndEvent
 
-Function CHAR_PICKER_MA(Int aiOption, Int aiIndex)
-{Character picker menu}
-	String sCharacterName = CharacterNames[aiIndex]
-	If sCharacterName
-		CurrentCharacterName = sCharacterName
-	Else
-		DebugTrace("CHAR_PICKER_MA: No character name found for index " + aiIndex + "!")
-	EndIf
-	ForcePageReset()
-EndFunction
+	Event OnMenuAcceptST(Int aiIndex)
+		String sCharacterName = CharacterNames[aiIndex]
+		If sCharacterName
+			CurrentCharacterName = sCharacterName
+		Else
+			DebugTrace("OPTION_MENU_CHAR_PICKER: No character name found for index " + aiIndex + "!")
+		EndIf
+		ForcePageReset()
+	EndEvent
+
+EndState
+
+; == Toggle: Character Tracking ===--
+State OPTION_TOGGLE_CHAR_TRACKING
+
+	Event OnSelectST()
+
+	EndEvent
+
+EndState
+
+; == Option: Character stat/build options panel ===--
+State OPTION_TEXT_CHAR_STATS
+
+	Event OnSelectST()
+		If TopPanel() != PANEL_CHAR_OPTIONS
+			PopPanel()
+		EndIf
+		PushPanel(PANEL_CHAR_OPTIONS_STATS)
+		ForcePageReset()
+	EndEvent
+
+EndState
+
+; == Option: Character magic/shout options panel ===--
+State OPTION_TEXT_CHAR_MAGIC
+
+	Event OnSelectST()
+		If TopPanel() != PANEL_CHAR_OPTIONS
+			PopPanel()
+		EndIf
+		PushPanel(PANEL_CHAR_OPTIONS_MAGIC)
+		ForcePageReset()
+	EndEvent
+
+EndState
+
+; == Option: Character magic by school panel ===--
+State OPTION_TEXT_CHAR_MAGIC_BYSCHOOL
+
+	Event OnSelectST()
+		If TopPanel() != PANEL_CHAR_OPTIONS_MAGIC
+			PopPanel()
+		EndIf
+		PushPanel(PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL)
+		ForcePageReset()
+	EndEvent
+
+EndState
 
 
+; == Menu: Character Voicetype  ===--
+State OPTION_MENU_CHAR_VOICETYPE
+	
+	Event OnMenuOpenST()
+		SetMenuDialogOptions(VoiceTypeLegends)
+		Int idxVT = VoiceTypeList.Find(CurrentVoiceType) + 1
+		SetMenuDialogStartIndex(idxVT)
+		SetMenuDialogDefaultIndex(0)
+	EndEvent
+	
+	Event OnMenuAcceptST(Int aiIndex)
+		vMYC_API_Character.SetCharacterVoiceType(CurrentSID,VoiceTypeList[aiIndex] as VoiceType)
+		SetMenuOptionValueST(VoiceTypeNames[aiIndex], false, GetState())
+		;ForcePageReset()
+	EndEvent
 
-
-
-
-
-
+EndState
 
 Function DoInit()
 	FillEnums()
 	CharacterNames = vMYC_API_Character.GetAllNames()
-
+	GetVoiceTypeList()
+	PanelStack = New Int[128]
 EndFunction
+
+Function PushPanel(Int aiPanelID)
+	Int idx = PanelStack.Find(0)
+	PanelStack[idx] = aiPanelID
+	PrintPanels()
+EndFunction
+
+Int Function PopPanel()
+	Int idx = PanelStack.Find(0)
+	If idx <= 0
+		Return 0
+	EndIf
+	Int iRet = PanelStack[idx - 1]
+	PanelStack[idx - 1] = 0
+	PrintPanels()
+	Return iRet
+EndFunction
+
+Int Function TopPanel(Int aiBack = 0)
+	Int idx = PanelStack.Find(0)
+	If idx <= 0 || idx - (aiBack + 1) < 0
+		Return 0
+	EndIf
+	Int iRet = PanelStack[idx - (aiBack + 1)]
+	PrintPanels()
+	Return iRet
+EndFunction
+
+Function PrintPanels()
+	Int i = 0
+	String sPrint = "Panel stack: "
+	While i < PanelStack.Length && PanelStack[i] 
+		sPrint += PanelStack[i] + " "
+		i += 1
+	EndWhile
+	DebugTrace(sPrint)
+EndFunction
+
 
 Function FillEnums()
 
@@ -285,3 +547,48 @@ String Function GetPrettyTime(String asTimeInMinutes)
 	String sPrettyTime = iMinutes + ":" + sZero + iSeconds
 	Return sPrettyTime
 EndFunction
+
+Function GetVoiceTypeList()
+	String[] sRawVoiceTypeList = DataManager.JObjToArrayStr(GetRegObj("VoiceTypes.Names"))
+	Int i = sRawVoiceTypeList.Length
+	DebugTrace("Retrieved " + i + " VoiceTypes, creating string lists...")
+	VoiceTypeList = Utility.CreateFormArray(i + 1)
+	VoiceTypeNames = Utility.CreateStringArray(i + 1,"Default")
+	VoiceTypeLegends = Utility.CreateStringArray(i + 1,"")
+	While i > 0
+		i -= 1
+		String sVTName = sRawVoiceTypeList[i]
+		String sLegend = ""
+		If GetRegBool("VoiceTypes.Info." + sVTName + ".Follower")
+			sLegend += "Follower"
+		EndIf
+		If GetRegBool("VoiceTypes.Info." + sVTName + ".Spouse")
+			If sLegend
+				sLegend += ","
+			EndIf
+			sLegend += "Spouse"
+		EndIf
+		If GetRegBool("VoiceTypes.Info." + sVTName + ".Adopt")
+			If sLegend
+				sLegend += ","
+			EndIf
+			sLegend += "Adoption"
+		EndIf
+		VoiceTypeList[i + 1] = GetRegForm("VoiceTypes.Info." + sVTName + ".Form") as VoiceType
+		VoiceTypeNames[i + 1] = sVTName
+		String sSpacer = "                                                " ;48 spaces
+		;If sLegend
+			
+			sSpacer = StringUtil.Substring(sSpacer, 0, 48 - StringUtil.GetLength(sVTName + "(" + sLegend + ")"))
+			VoiceTypeLegends[i + 1] = sVTName + sSpacer + "(" + sLegend + ")"
+		;Else
+		;	VoiceTypeLegends[i + 1] = sVTName + sSpacer 
+		;EndIf
+		DebugTrace("Processed " + sVTName + "!")
+	EndWhile
+
+	VoiceTypeList[0] = None
+	VoiceTypeNames[0] = "Default"
+	VoiceTypeLegends[0] = "Default"
+EndFunction
+

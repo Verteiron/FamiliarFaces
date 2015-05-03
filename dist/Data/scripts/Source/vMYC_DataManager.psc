@@ -1786,6 +1786,26 @@ String Function StringReplace(String sString, String sToFind, String sReplacemen
 	Return sString
 EndFunction
 
+String[] Function JObjToArrayStr(Int ajObj)
+
+	String[] sReturn
+	Int jStrArray
+	If JValue.IsMap(ajObj)
+		jStrArray = JMap.AllKeys(ajObj)
+	ElseIf jValue.IsArray(ajObj)
+		jStrArray = ajObj
+	EndIf
+	If jStrArray
+		Int i = JArray.Count(jStrArray)
+		sReturn = Utility.CreateStringArray(i, "")
+		While i > 0
+			i -= 1
+			sReturn[i] = JArray.GetStr(jStrArray,i)
+		EndWhile
+	EndIf
+	Return sReturn
+EndFunction
+
 String Function GetAVName(Int iAVIndex)
 	If !_jAVNames
 		DebugTrace("Pulling AVNames from registry...")
@@ -2088,6 +2108,14 @@ Function CreateAVNames()
 	EndWhile
 EndFunction
 
+String Function GetVoiceTypeName(VoiceType akVoiceType)
+	String sRet
+	sRet = akVoiceType as String
+	sRet = StringUtil.SubString(sRet,0,StringUtil.Find(sRet,">") - 11)
+	sRet = StringUtil.SubString(sRet,StringUtil.Find(sRet,"<") + 1)
+	Return sRet
+EndFunction
+
 Function SortVoiceTypes()
 
 	Int jVoiceTypesAll 		= JArray.Object()
@@ -2113,9 +2141,7 @@ Function SortVoiceTypes()
 		VoiceType kVoiceType 	= JArray.GetForm(jVoiceTypesAll,i) as VoiceType
 		String sVoiceName 		= ""
 
-		sVoiceName = kVoiceType as String
-		sVoiceName = StringUtil.SubString(sVoiceName,0,StringUtil.Find(sVoiceName,">") - 10)
-		sVoiceName = StringUtil.SubString(sVoiceName,StringUtil.Find(sVoiceName,"<") + 1)
+		sVoiceName = GetVoiceTypeName(kVoiceType)
 
 		If sVoiceName
 			SetRegForm("VoiceTypes.Info." + sVoiceName + ".Form",kVoiceType)
@@ -2134,8 +2160,6 @@ Function SortVoiceTypes()
 
 	SetRegObj("VoiceTypes.Names",JMap.AllKeys(GetRegObj("VoiceTypes.Info")))
 EndFunction
-
-
 
 ;=== Functions - Busy state ===--
 
