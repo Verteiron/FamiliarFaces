@@ -87,6 +87,17 @@ Bool Function GetSessionBool(String asPath, Bool abUseDefault = False) Global
 	Return JDB.solveInt(".vMYC.Session." + asPath) as Bool
 EndFunction
 
+Bool Function ToggleSessionBool(String asPath, Bool abMakeDefault = False) Global
+	Int jSession = CreateSessionDataIfMissing()
+	Bool bToggleValue = !(GetSessionBool(asPath))
+	JValue.solveIntSetter(jSession,"." + asPath,bToggleValue as Int,True)
+	If abMakeDefault
+		SetRegBool(asPath,bToggleValue)
+	EndIf
+	SendSessionEvent(asPath)
+	Return bToggleValue
+EndFunction
+
 Function SetSessionInt(String asPath, Int aiInt, Bool abMakeDefault = False) Global
 	Int jSession = CreateSessionDataIfMissing()
 	JValue.solveIntSetter(jSession,"." + asPath,aiInt,True)

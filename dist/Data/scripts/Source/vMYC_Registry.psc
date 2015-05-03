@@ -113,6 +113,19 @@ Bool Function GetRegBool(String asPath) Global
 	Return JDB.solveInt(".vMYC.Registry." + asPath) as Bool
 EndFunction
 
+Bool Function ToggleRegBool(String asPath, Bool abDeferSave = False, Bool abNoEvent = False) Global
+	Int jReg = CreateRegDataIfMissing()
+	Bool bToggleValue = !(GetRegBool(asPath))
+	JValue.solveIntSetter(jReg,"." + asPath,bToggleValue as Int,True)
+	If !abNoEvent
+		SendRegEvent(asPath)
+	EndIf
+	If !abDeferSave
+		SyncReg()
+	EndIf
+	Return bToggleValue
+EndFunction
+
 Function SetRegInt(String asPath, Int aiInt, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jReg = CreateRegDataIfMissing()
 	JValue.solveIntSetter(jReg,"." + asPath,aiInt,True)
