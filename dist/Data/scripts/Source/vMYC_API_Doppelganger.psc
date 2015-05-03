@@ -220,10 +220,10 @@ Int Function SetFoe(Actor akActor, Bool abVanishOnDeath = True) Global
  	EndIf
  	String sSID = kDoppelganger.SID
  	;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
-	SetSessionBool("Characters." + sSID + ".Config.IsFriend",False)
-	SetSessionBool("Characters." + sSID + ".Config.CanMarry",False)
- 	SetSessionBool("Characters." + sSID + ".Config.IsFoe",True)
- 	SetSessionBool("Characters." + sSID + ".Config.VanishOnDeath",abVanishOnDeath)
+	SetSessionBool("Config." + sSID + ".IsFriend",False)
+	SetSessionBool("Config." + sSID + ".CanMarry",False)
+ 	SetSessionBool("Config." + sSID + ".IsFoe",True)
+ 	SetSessionBool("Config." + sSID + ".VanishOnDeath",abVanishOnDeath)
  	Return kDoppelganger.UpdateDisposition()
 EndFunction
 
@@ -987,8 +987,8 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 
 	Int jAllowed = JArray.Object()
 	Int jSkipped = JArray.Object()
-	SetSessionObj("Characters." + asSID + ".Spells.Allowed",jAllowed)
-	SetSessionObj("Characters." + asSID + ".Spells.Skipped",jSkipped)
+	SetSessionObj("Config." + asSID + ".Spells.Allowed",jAllowed)
+	SetSessionObj("Config." + asSID + ".Spells.Skipped",jSkipped)
 	While i > 0
 		i -= 1
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell

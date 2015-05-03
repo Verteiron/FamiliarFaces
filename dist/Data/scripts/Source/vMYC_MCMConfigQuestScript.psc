@@ -20,7 +20,7 @@ Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC			= 4		AutoReadOnly Hidden
 Int 	Property 	PANEL_CHAR_OPTIONS_EQUIP			= 5		AutoReadOnly Hidden
 Int 	Property 	PANEL_CHAR_OPTIONS_COMBAT			= 6		AutoReadOnly Hidden
 Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL	= 7		AutoReadOnly Hidden
-; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_SHOUTS_MANAGE	= 8		AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
@@ -73,6 +73,7 @@ Int 					Property OPTION_TEXT_BACK				Auto Hidden
 
 ; === Variables ===--
 
+Int[] 					iShoutOptions
 
 ; === Events/Functions ===--
 
@@ -151,6 +152,8 @@ Function AddPanel(Int PanelID, Int aiLeftRight)
 		ShowPanel_CharacterMagic(aiLeftRight)
 	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
 		ShowPanel_CharacterMagic_BySchool(aiLeftRight)
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
+		ShowPanel_CharacterMagic_ShoutsManage(aiLeftRight)
 	EndIf
 	
 EndFunction
@@ -257,7 +260,7 @@ Function ShowPanel_CharacterOptions(Int aiLeftRight)
 
 	AddHeaderOption(CurrentCharacterName + " Options")
 
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Character." + CurrentSID + ".Config.Tracking",abUseDefault = True))
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
 	AddEmptyOption()
 
 	AddTextOptionST("OPTION_TEXT_CHAR_STATS","$Skills and stats", "$Details",Math.LogicalAnd(OPTION_FLAG_DISABLED,(PanelRight == PANEL_CHAR_OPTIONS_STATS) as Int))
@@ -297,7 +300,7 @@ Function ShowPanel_CharacterMagic(Int aiLeftRight)
 	SetCursorPosition(aiLeftRight)
 	AddHeaderOption("{$Magic and Shouts}")
 
-	Bool bAutoMagic = GetSessionBool("Character." + CurrentSID + ".Config.Magic.AutoByPerks",True)
+	Bool bAutoMagic 		= GetSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks",True)
 	Bool bAllowHealing 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowHealing",True)
 	Bool bAllowDefense 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowDefense",True)
 
@@ -307,9 +310,18 @@ Function ShowPanel_CharacterMagic(Int aiLeftRight)
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING","$Always allow healing",bAllowHealing)
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE","$Always allow defense",bAllowDefense)
 
+	AddEmptyOption()
 
 	AddHeaderOption("$Shout settings")
-	AddToggleOptionST("OPTION_TOGGLE_SHOUTS_DISABLED","{$Disable} {$Shouts}",GetSessionBool("Characters." + CurrentSID + ".Config.Shouts.Disabled"))
+
+	Bool bDisableShouts 	= GetSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
+
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_SHOUTS_DISABLED","{$Disable} {$Shouts}",bDisableShouts)
+	Int OptionFlags
+	If bDisableShouts
+		OptionFlags = OPTION_FLAG_DISABLED
+	EndIf
+	AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$Details",OptionFlags)
 	; AddEmptyOption()
 	If PanelLeft == PANEL_CHAR_OPTIONS_MAGIC
 		SetCursorPosition(22)
@@ -318,7 +330,7 @@ Function ShowPanel_CharacterMagic(Int aiLeftRight)
 EndFunction
 
 Function ShowPanel_CharacterMagic_BySchool(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS_MAGIC
+;PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
 	SetCursorFillMode(TOP_TO_BOTTOM)
 	
 	SetCursorPosition(aiLeftRight)
@@ -327,14 +339,43 @@ Function ShowPanel_CharacterMagic_BySchool(Int aiLeftRight)
 
 	; If !CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
 	; 	Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ALTERATION","{$Allow} {$Alteration}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowAlteration",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_CONJURATION","{$Allow} {$Conjuration}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowConjuration",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_DESTRUCTION","{$Allow} {$Destruction}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowDestruction",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ILLUSION","{$Allow} {$Illusion}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowIllusion",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_RESTORATION","{$Allow} {$Restoration}",GetSessionBool("Characters." + CurrentSID + ".Config.Magic.AllowRestoration",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ALTERATION","{$Allow} {$Alteration}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowAlteration",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_CONJURATION","{$Allow} {$Conjuration}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowConjuration",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_DESTRUCTION","{$Allow} {$Destruction}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowDestruction",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ILLUSION","{$Allow} {$Illusion}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowIllusion",OptionFlags))
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_RESTORATION","{$Allow} {$Restoration}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowRestoration",OptionFlags))
 
 	;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
 
+
+EndFunction
+
+Function ShowPanel_CharacterMagic_ShoutsManage(Int aiLeftRight)
+;PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
+	SetCursorFillMode(TOP_TO_BOTTOM)
+	
+	SetCursorPosition(aiLeftRight)
+	AddHeaderOption("{$Shouts Allowed}")
+	Int OptionFlags = 0
+
+	Int jShoutsArray 	= GetRegObj("Characters." + CurrentSID + ".Shouts")
+	Int jShoutsBL		= GetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist")
+	Int iShoutCount = JArray.Count(jShoutsArray)
+
+	iShoutOptions = Utility.CreateIntArray(iShoutCount)
+
+	Int i = 0
+	While i < iShoutCount
+		Shout kShout = JArray.GetForm(jShoutsArray,i) as Shout
+		Bool bEnabled = True
+		If jShoutsBL
+			If JArray.FindForm(jShoutsBL,kShout) >= 0
+				bEnabled = False
+			EndIf
+		EndIf
+		iShoutOptions[i] = AddToggleOption(kShout.GetName(), bEnabled)
+		i += 1
+	EndWhile
 
 EndFunction
 
@@ -416,6 +457,22 @@ State OPTION_TEXT_CHAR_MAGIC
 
 EndState
 
+State OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING
+	
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowHealing"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE
+	
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowDefense"),False,GetState())
+	EndEvent
+
+EndState
+
 ; == Option: Character magic by school panel ===--
 State OPTION_TEXT_CHAR_MAGIC_BYSCHOOL
 
@@ -429,6 +486,27 @@ State OPTION_TEXT_CHAR_MAGIC_BYSCHOOL
 
 EndState
 
+; == Option: Character shout master disable ===--
+State OPTION_TOGGLE_CHAR_SHOUTS_DISABLED
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Shouts.Disabled"),False,GetState())
+	EndEvent
+
+EndState
+
+; == Option: Character shout management panel ===--
+State OPTION_TEXT_CHAR_SHOUTS_MANAGE
+
+	Event OnSelectST()
+		If TopPanel() != PANEL_CHAR_OPTIONS_MAGIC
+			PopPanel()
+		EndIf
+		PushPanel(PANEL_CHAR_OPTIONS_SHOUTS_MANAGE)
+		ForcePageReset()
+	EndEvent
+
+EndState
 
 ; == Menu: Character Voicetype  ===--
 State OPTION_MENU_CHAR_VOICETYPE
@@ -447,6 +525,35 @@ State OPTION_MENU_CHAR_VOICETYPE
 	EndEvent
 
 EndState
+
+Event OnOptionSelect(int a_option)
+	;A few options really aren't suited for states, so handle them here
+	If iShoutOptions.Find(a_option) >= 0
+		Int iShoutIndex = iShoutOptions.Find(a_option)
+
+		Int jShoutsArray 	= GetRegObj("Characters." + CurrentSID + ".Shouts")
+		Int jShoutsBL		= GetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist")
+		If !jShoutsBL
+			jShoutsBL = JArray.Object()
+			SetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist",jShoutsBL)
+		EndIf
+		Shout kShout 		= JArray.GetForm(jShoutsArray,iShoutIndex) as Shout
+		Int iBLIndex 		= JArray.FindForm(jShoutsBL,kShout)
+		If iBLIndex >= 0 ; Remove this Shout from the blacklist
+			SetToggleOptionValue(a_option, True)
+			JArray.EraseIndex(jShoutsBL,iBLIndex)
+			JArray.Unique(jShoutsBL)
+		Else ; Add this Shout to the blacklist
+			SetToggleOptionValue(a_option, False)
+			JArray.AddForm(jShoutsBL,kShout)
+			JArray.Unique(jShoutsBL)
+		EndIf
+		SaveSession()
+	EndIf
+EndEvent
+
+
+
 
 Function DoInit()
 	FillEnums()

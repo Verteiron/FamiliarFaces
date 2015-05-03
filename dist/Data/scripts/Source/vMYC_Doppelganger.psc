@@ -162,7 +162,7 @@ Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 EndEvent
 
 Event OnEnterBleedout()
-	If GetSessionBool("Characters." + SID + ".Config.VanishOnDeath")
+	If GetSessionBool("Config." + SID + ".VanishOnDeath")
 		ObjectReference[] kGlows = New ObjectReference[20]
 		BlockActivation(True)
 		DispelAllSpells()
@@ -433,9 +433,9 @@ EndFunction
 
 ;=== Disposition and configuration functions ===--
 Int Function UpdateDisposition()
-	Bool bIsFriend 	= GetSessionBool("Characters." + SID + ".Config.IsFriend")
- 	Bool bIsFoe 	= GetSessionBool("Characters." + SID + ".Config.IsFoe")
- 	Bool bCanMarry 	= GetSessionBool("Characters." + SID + ".Config.CanMarry")
+	Bool bIsFriend 	= GetSessionBool("Config." + SID + ".IsFriend")
+ 	Bool bIsFoe 	= GetSessionBool("Config." + SID + ".IsFoe")
+ 	Bool bCanMarry 	= GetSessionBool("Config." + SID + ".CanMarry")
 
  	If bIsFoe
  		;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
