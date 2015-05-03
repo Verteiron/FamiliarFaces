@@ -161,6 +161,10 @@ Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 	NeedStats = True
 EndEvent
 
+Event OnSessionUpdate(String asPath)
+	;Do nothing if not assigned
+EndEvent
+
 Event OnEnterBleedout()
 	If GetSessionBool("Config." + SID + ".VanishOnDeath")
 		ObjectReference[] kGlows = New ObjectReference[20]
@@ -297,6 +301,7 @@ State Assigned
 	EndEvent
 
 	Event OnUpdate()
+		DebugTrace("OnUpdate!")
 		If NeedAppearance
 			If UpdateAppearance() == 0 ; No error
 				UpdateNINodes()
@@ -346,6 +351,7 @@ State Assigned
 			EndIf
 			;StopTimer("UpdateSpells" + SID)
 		EndIf
+		RegisterForModEvent("vMYC_SessionUpdate","OnSessionUpdate")
 		;ReportStats()
 	EndEvent
 
@@ -357,6 +363,25 @@ State Assigned
 		EndIf
 		UpdateNINodes()
 	EndEvent
+
+	Event OnSessionUpdate(String asPath)
+		If StringUtil.Find(asPath, SID) < 0
+			Return
+		EndIf
+		DebugTrace("My session data has been updated: " + asPath)
+		If !NeedSpells
+			If StringUtil.Find(asPath, "Spells") >= 0
+				NeedSpells = True
+			EndIf
+		EndIf
+		If !NeedShouts
+			If StringUtil.Find(asPath, "Shouts") >= 0
+				NeedShouts = True
+			EndIf
+		EndIf
+		RegisterForSingleUpdate(1)
+	EndEvent
+
 	
 EndState
 
@@ -378,7 +403,6 @@ EndFunction
 Function DoUpkeep(Bool bInBackground = True)
 {Run whenever the player loads up the Game. Sets the name and such.}
 	RegisterForModEvent("vMYC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
-	RegisterForModEvent("vMYC_ConfigUpdate","OnConfigUpdate")
 	If bInBackground
 		NeedUpkeep = True
 		RegisterForSingleUpdate(0)

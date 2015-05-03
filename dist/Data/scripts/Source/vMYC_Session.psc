@@ -15,6 +15,8 @@ Function SendSessionEvent(String asPath) Global
 	If iHandle
 		ModEvent.PushString(iHandle,asPath)
 		ModEvent.Send(iHandle)
+	Else
+		Debug.Trace("MYC/Session: Could not send vMYC_SessionUpdate!")
 	EndIf
 EndFunction
 

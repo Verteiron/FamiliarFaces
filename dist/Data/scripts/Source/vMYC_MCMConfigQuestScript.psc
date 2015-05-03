@@ -490,7 +490,15 @@ EndState
 State OPTION_TOGGLE_CHAR_SHOUTS_DISABLED
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Shouts.Disabled"),False,GetState())
+		Bool bDisabled = ToggleSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
+		SetToggleOptionValueST(bDisabled,False,GetState())
+		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisabled as Int), false, "OPTION_TEXT_CHAR_SHOUTS_MANAGE")
+		
+		;Handle player disabling shouts while shout management panel is open
+		If bDisabled && TopPanel() == PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
+			PopPanel()
+			ForcePageReset()
+		EndIf
 	EndEvent
 
 EndState
@@ -548,12 +556,9 @@ Event OnOptionSelect(int a_option)
 			JArray.AddForm(jShoutsBL,kShout)
 			JArray.Unique(jShoutsBL)
 		EndIf
-		SaveSession()
+		SetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist",jShoutsBL)
 	EndIf
 EndEvent
-
-
-
 
 Function DoInit()
 	FillEnums()

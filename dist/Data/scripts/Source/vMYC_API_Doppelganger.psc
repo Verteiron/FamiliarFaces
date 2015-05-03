@@ -806,7 +806,13 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 	vMYC_DataManager DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 
 	Int jShouts = JValue.SolveObj(jCharacterData,".Shouts")
-	
+	Int jShoutsConfig = vMYC_Session.GetSessionObj("Config." + asSID + ".Shouts")
+
+	If JValue.SolveInt(jShoutsConfig,".Disabled")
+		RemoveCharacterShouts(asSID, akActor)
+		Return 0
+	EndIf
+	Int jShoutsBL = JValue.SolveObj(jShoutsConfig,".Blacklist")
 
 	;Formlist kShoutlist = DataManager.LockFormList()
 	;kShoutlist.Revert() ; Should already be empty, but just in case
@@ -835,7 +841,10 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 		If !kShout
 			iMissingCount += 1
 		Else
-			If kShout == kStormCallShout && GetRegBool("Config.Shouts.Disabled.CallStorm")
+			If JArray.FindForm(jShoutsBL,kShout) >= 0
+				;Blacklisted by config, don't add it
+				iMissingCount += 1
+			ElseIf kShout == kStormCallShout && GetRegBool("Config.Shouts.Disabled.CallStorm")
 				;Don't add it
 				iMissingCount += 1
 			ElseIf kShout == kDragonAspectShout && GetRegBool("Config.Shouts.Disabled.DragonAspect") ;FIXME: Maybe use an array for disabled shouts, then test each one
@@ -869,9 +878,9 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 		Return 0
 	EndIf
 	If iMissingCount
-		;DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts with " + iMissingCount + " skipped.",1)
+		DebugTraceAPIDopp(asSID,"Loading " + iShoutCount + " Shouts with " + iMissingCount + " skipped.",1)
 	Else
-		;DebugTraceAPIDopp(asSID,"Loaded " + iShoutCount + " Shouts.")
+		DebugTraceAPIDopp(asSID,"Loaded " + iShoutCount + " Shouts.")
 	EndIf
 	FFUtils.SetShoutList(kActorBase,akAllowedShouts)
 	;FFUtils.LoadCharacterShouts(kActorBase,kShoutlist)
@@ -888,7 +897,7 @@ Function RemoveCharacterShouts(String asSID,Actor akActor) Global
 
 	vMYC_DataManager DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 
-	;DebugTraceAPIDopp(asSID,"Character is not allowed to use shouts, removing them!")
+	DebugTraceAPIDopp(asSID,"Character is not allowed to use shouts, removing them!")
 	Formlist kShoutlist = DataManager.LockFormList()
 	kShoutlist.Revert() ; Should already be empty, but just in case
 	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
