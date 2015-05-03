@@ -302,6 +302,7 @@ State Assigned
 
 	Event OnUpdate()
 		DebugTrace("OnUpdate!")
+		UnregisterForModEvent("vMYC_SessionUpdate") ; Can create loops otherwise
 		If NeedAppearance
 			If UpdateAppearance() == 0 ; No error
 				UpdateNINodes()
@@ -370,7 +371,7 @@ State Assigned
 		EndIf
 		DebugTrace("My session data has been updated: " + asPath)
 		If !NeedSpells
-			If StringUtil.Find(asPath, "Spells") >= 0
+			If StringUtil.Find(asPath, "Magic") >= 0
 				NeedSpells = True
 			EndIf
 		EndIf

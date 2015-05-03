@@ -263,8 +263,8 @@ Function ShowPanel_CharacterOptions(Int aiLeftRight)
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
 	AddEmptyOption()
 
-	AddTextOptionST("OPTION_TEXT_CHAR_STATS","$Skills and stats", "$Details",Math.LogicalAnd(OPTION_FLAG_DISABLED,(PanelRight == PANEL_CHAR_OPTIONS_STATS) as Int))
-	AddTextOptionST("OPTION_TEXT_CHAR_MAGIC","$Magic and Shouts", "$Details",Math.LogicalAnd(OPTION_FLAG_DISABLED,(PanelRight == PANEL_CHAR_OPTIONS_MAGIC) as Int))
+	AddPanelLink("OPTION_TEXT_CHAR_STATS","$Skills and stats",PANEL_CHAR_OPTIONS_STATS)
+	AddPanelLink("OPTION_TEXT_CHAR_MAGIC","$Magic and Shouts",PANEL_CHAR_OPTIONS_MAGIC)
 	OptionFlags = 0
 
 	;=== Character voicetype option ===--
@@ -303,12 +303,14 @@ Function ShowPanel_CharacterMagic(Int aiLeftRight)
 	Bool bAutoMagic 		= GetSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks",True)
 	Bool bAllowHealing 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowHealing",True)
 	Bool bAllowDefense 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowDefense",True)
+	Bool bBlockWallOfs 		= GetSessionBool("Config." + CurrentSID + ".Magic.BlockWallOfs",True)
 
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS","$Auto select spells by perks",bAutoMagic)
-	AddTextOptionST("OPTION_TEXT_CHAR_MAGIC_BYSCHOOL", "$Choose allowed magic", "$Details")
+	AddPanelLink("OPTION_TEXT_CHAR_MAGIC_BYSCHOOL", "$Choose allowed magic", PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL, Math.LogicalAnd(OPTION_FLAG_DISABLED,bAutoMagic as Int))
 	AddEmptyOption()
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING","$Always allow healing",bAllowHealing)
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE","$Always allow defense",bAllowDefense)
+	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_BLOCKWALLOFS","$Always disable walls",bBlockWallOfs)
 
 	AddEmptyOption()
 
@@ -317,11 +319,8 @@ Function ShowPanel_CharacterMagic(Int aiLeftRight)
 	Bool bDisableShouts 	= GetSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
 
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_SHOUTS_DISABLED","{$Disable} {$Shouts}",bDisableShouts)
-	Int OptionFlags
-	If bDisableShouts
-		OptionFlags = OPTION_FLAG_DISABLED
-	EndIf
-	AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$Details",OptionFlags)
+	AddPanelLink("OPTION_TEXT_CHAR_SHOUTS_MANAGE", "$Choose allowed Shouts", PANEL_CHAR_OPTIONS_SHOUTS_MANAGE, Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisableShouts as Int))
+	;AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$Details",OptionFlags)
 	; AddEmptyOption()
 	If PanelLeft == PANEL_CHAR_OPTIONS_MAGIC
 		SetCursorPosition(22)
@@ -457,6 +456,21 @@ State OPTION_TEXT_CHAR_MAGIC
 
 EndState
 
+State OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS
+	
+	Event OnSelectST()
+		Bool bValue = ToggleSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks")
+		SetToggleOptionValueST(bValue,True,GetState())
+		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bValue as Int), false, "OPTION_TEXT_CHAR_MAGIC_BYSCHOOL")
+		;Handle player setting auto-select while magic panel is open
+		If bValue && TopPanel() == PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
+			PopPanel()
+			ForcePageReset()
+		EndIf
+	EndEvent
+
+EndState
+
 State OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING
 	
 	Event OnSelectST()
@@ -469,6 +483,54 @@ State OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE
 	
 	Event OnSelectST()
 		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowDefense"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_CHAR_MAGIC_BLOCKWALLOFS
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.BlockWallOfs"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_MAGICALLOW_ALTERATION
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowAlteration"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowDestruction"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_MAGICALLOW_ILLUSION
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowIllusion"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_MAGICALLOW_CONJURATION
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowConjuration"),False,GetState())
+	EndEvent
+
+EndState
+
+State OPTION_TOGGLE_MAGICALLOW_RESTORATION
+
+	Event OnSelectST()
+		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowRestoration"),False,GetState())
 	EndEvent
 
 EndState
@@ -604,6 +666,14 @@ Function PrintPanels()
 	DebugTrace(sPrint)
 EndFunction
 
+Function AddPanelLink(string a_stateName, string a_text, Int aiPanelIndex, int a_flags = 0)
+	String a_value = "$Details"
+	If PanelRight == aiPanelIndex
+		a_flags = OPTION_FLAG_DISABLED
+		a_value	= ">>>"
+	EndIf
+	AddTextOptionST(a_stateName, a_text, a_value, a_flags)
+EndFunction
 
 Function FillEnums()
 

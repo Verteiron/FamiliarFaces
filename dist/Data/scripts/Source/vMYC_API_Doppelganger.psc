@@ -946,9 +946,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 
 	JValue.Retain(jSpells,asSID + "Spells")
 
-
-
-	If GetRegBool("Config.Magic.AutoSelect")
+	If GetRegBool("Config.Magic.AutoSelect") || GetSessionBool("Config." + asSID + ".Magic.AutoByPerks")
 		i = 18
 		While i < 23
 			String sMagicSchool = JArray.GetStr(jSkillNames,i)
@@ -975,15 +973,9 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	sAllowedSources[3] = "Dragonborn.esm"
 	sAllowedSources[4] = "Hearthfires.esm"
 
-	If GetSessionBool("Config." + asSID + ".Magic.AllowSelectMods") ; Select mods
-		sAllowedSources[5] = "ColorfulMagic.esp"
-		sAllowedSources[6] = "Magic of the Magna-Ge.esp"
-		sAllowedSources[7] = "Animated Dragon Wings.esp"
-		sAllowedSources[8] = "Dwemerverse.esp"
-	EndIf
-
 	Bool bAllowHealing = GetSessionBool("Config." + asSID + ".Magic.AllowHealing")
-	Bool bAllowDefensive = GetSessionBool("Config." + asSID + ".Magic.AllowDefensive")
+	Bool bAllowDefense = GetSessionBool("Config." + asSID + ".Magic.AllowDefense")
+	Bool bBlockWallOfs = GetSessionBool("Config." + asSID + ".Magic.BlockWallOfs")
 	Bool bDawnguard = False
 	If GetModByName("Dawnguard.esm") != 255
 		bDawnguard = True
@@ -1026,13 +1018,21 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				EndIf
 			EndIf
 			
-			If bAllowDefensive
+			If bAllowDefense
 				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 					sReason = "Armor"
 					bSpellIsAllowed = True
 				ElseIf vMYC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
 					sReason = "ArmorList"
 					bSpellIsAllowed = True
+				EndIf
+			EndIf
+
+			If bBlockWallOfs
+				String sSpellName = kSpell.GetName()
+				If StringUtil.Find(sSpellName,"Wall of ") == 0
+					sReason = "No wall spells"
+					bSpellIsAllowed = False
 				EndIf
 			EndIf
 
