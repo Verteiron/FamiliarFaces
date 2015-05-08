@@ -277,7 +277,7 @@ Function ShowPanel_CharacterOptions(Int aiLeftRight)
 	AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
 	If PanelLeft == PANEL_CHAR_OPTIONS
 		SetCursorPosition(22)
-		AddTextOptionST("OPTION_TEXT_BACK","$Back to", "Character Select")
+		AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
 	EndIf
 EndFunction
 
@@ -320,11 +320,11 @@ Function ShowPanel_CharacterMagic(Int aiLeftRight)
 
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_SHOUTS_DISABLED","{$Disable} {$Shouts}",bDisableShouts)
 	AddPanelLink("OPTION_TEXT_CHAR_SHOUTS_MANAGE", "$Choose allowed Shouts", PANEL_CHAR_OPTIONS_SHOUTS_MANAGE, Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisableShouts as Int))
-	;AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$Details",OptionFlags)
+	;AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$More_button",OptionFlags)
 	; AddEmptyOption()
 	If PanelLeft == PANEL_CHAR_OPTIONS_MAGIC
 		SetCursorPosition(22)
-		AddTextOptionST("OPTION_TEXT_BACK","$Back to", "Character Options")
+		AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Options")
 	EndIf
 EndFunction
 
@@ -667,10 +667,10 @@ Function PrintPanels()
 EndFunction
 
 Function AddPanelLink(string a_stateName, string a_text, Int aiPanelIndex, int a_flags = 0)
-	String a_value = "$Details"
+	String a_value = "$More_button"
 	If PanelRight == aiPanelIndex
 		a_flags = OPTION_FLAG_DISABLED
-		a_value	= ">>>"
+		a_value	= "$Back_button"
 	EndIf
 	AddTextOptionST(a_stateName, a_text, a_value, a_flags)
 EndFunction
