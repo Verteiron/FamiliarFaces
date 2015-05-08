@@ -49,6 +49,7 @@ ActorBase			Property MyActorBase							Auto Hidden
 vMYC_DataManager	Property DataManager							Auto
 
 Bool 				Property NeedAppearance	= False 				Auto Hidden
+Bool 				Property NeedBehavior	= False 				Auto Hidden
 Bool 				Property NeedStats		= False 				Auto Hidden
 Bool 				Property NeedPerks		= False 				Auto Hidden
 Bool 				Property NeedSpells		= False 				Auto Hidden
@@ -166,7 +167,7 @@ Event OnSessionUpdate(String asPath)
 EndEvent
 
 Event OnEnterBleedout()
-	If GetSessionBool("Config." + SID + ".VanishOnDeath")
+	If GetSessionBool("Config." + SID + ".Behavior.VanishOnDeath")
 		ObjectReference[] kGlows = New ObjectReference[20]
 		BlockActivation(True)
 		DispelAllSpells()
@@ -289,6 +290,7 @@ Auto State Available
 		NeedInventory	= True
 		NeedRefresh 	= True
 		NeedUpkeep		= True
+		NeedBehavior 	= True
 		GotoState("Assigned")
 	EndFunction
 EndState
@@ -352,6 +354,11 @@ State Assigned
 			EndIf
 			;StopTimer("UpdateSpells" + SID)
 		EndIf
+		If NeedBehavior
+			If UpdateDisposition() >= 0 ; No error
+				NeedBehavior = False
+			EndIf
+		EndIf
 		RegisterForModEvent("vMYC_SessionUpdate","OnSessionUpdate")
 		;ReportStats()
 	EndEvent
@@ -378,6 +385,11 @@ State Assigned
 		If !NeedShouts
 			If StringUtil.Find(asPath, "Shouts") >= 0
 				NeedShouts = True
+			EndIf
+		EndIf
+		If !NeedBehavior
+			If StringUtil.Find(asPath, "Behavior") >= 0
+				NeedBehavior = True
 			EndIf
 		EndIf
 		RegisterForSingleUpdate(1)
@@ -458,11 +470,10 @@ EndFunction
 
 ;=== Disposition and configuration functions ===--
 Int Function UpdateDisposition()
-	Bool bIsFriend 	= GetSessionBool("Config." + SID + ".IsFriend")
- 	Bool bIsFoe 	= GetSessionBool("Config." + SID + ".IsFoe")
- 	Bool bCanMarry 	= GetSessionBool("Config." + SID + ".CanMarry")
+	Int iPlayerRelationship	= GetSessionInt("Config." + SID + ".Behavior.PlayerRelationship",True)
 
- 	If bIsFoe
+	SetSessionBool("Config." + SID + ".Behavior.VanishOnDeath",False)
+ 	If iPlayerRelationship < 0
  		;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
  		;FIXME: Also make sure the player didn't just make an enemy of their spouse!
  		DebugTrace("I hate the player! What a jerk!")
@@ -470,29 +481,60 @@ Int Function UpdateDisposition()
 		RemoveFromFaction(PotentialFollowerFaction)
 		RemoveFromFaction(PotentialMarriageFaction)
 		SetFactionRank(vMYC_CharacterPlayerEnemyFaction,0)
-		SetActorValue("Aggression",1)
+		SetActorValue("Aggression",0)
 		SetRelationshipRank(PlayerREF,-4)
-	ElseIf bIsFriend
-		DebugTrace("The player's a pretty good friend of mine!")
-		If GetFactionRank(PotentialFollowerFaction) <= -2 || GetRelationshipRank(PlayerREF) == 0
+		SetSessionBool("Config." + SID + ".Behavior.VanishOnDeath",True)
+	ElseIf iPlayerRelationship == 0
+		DebugTrace("I don't know the player.")
+		RemoveFromFaction(CurrentFollowerFaction)
+		RemoveFromFaction(PotentialFollowerFaction)
+		RemoveFromFaction(PotentialMarriageFaction)
+		RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
+		SetActorValue("Aggression",0)
+		SetRelationshipRank(PlayerREF,0)
+		StopFightingPlayer()
+	ElseIf iPlayerRelationship == 1
+		DebugTrace("I know the player, they're alright.")
+		RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
+		SetActorValue("Aggression",0)
+		SetRelationshipRank(PlayerREF,1)
+		StopFightingPlayer()
+		RemoveFromFaction(CurrentFollowerFaction)
+		RemoveFromFaction(PotentialFollowerFaction)
+		RemoveFromFaction(PotentialMarriageFaction)
+		RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
+	ElseIf iPlayerRelationship >= 2
+		DebugTrace("The player's a pretty good friend of mine, I'd follow them anywhere...")
+		RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
+		SetActorValue("Aggression",0)
+		StopFightingPlayer()
+		SetRelationshipRank(PlayerREF,3)
+		If GetFactionRank(PotentialFollowerFaction) <= -2 
 			RemoveFromFaction(vMYC_CharacterPlayerEnemyFaction)
 			SetFactionRank(PotentialFollowerFaction,0)
 			SetFactionRank(CurrentFollowerFaction,-1)
-			SetRelationshipRank(PlayerREF,3)
-			SetActorValue("Aggression",0)
 		EndIf
-		Int iSafetyTimer = 10
-		While IsInCombat() && GetCombatTarget() == PlayerREF && iSafetyTimer
-			iSafetyTimer -= 1
-			StopCombat()
-			Wait(0.5)
-		EndWhile
-		If bCanMarry && GetFactionRank(PotentialMarriageFaction) <= -2
-			Debug.Trace("... and I'd marry them if given the chance!")
+		If iPlayerRelationship >= 3 && GetFactionRank(PotentialMarriageFaction) < 0
+			DebugTrace("... even into their bed!")
 			SetFactionRank(PotentialMarriageFaction,0)
+		ElseIf iPlayerRelationship < 3 && GetFactionRank(PotentialMarriageFaction) > -2
+			;FIXME: Make sure we aren't breaking relationship with a current spouse!
+			Debug.Trace("... except their bed! That'd be kind of weird.")
+			RemoveFromFaction(PotentialMarriageFaction)
 		EndIf
+	Else
+		DebugTrace("Invalid value found for PlayerRelationship: " + iPlayerRelationship,1)
 	EndIf
 	Return 1
+EndFunction
+
+Function StopFightingPlayer()
+	Int iSafetyTimer = 10
+	While IsInCombat() && GetCombatTarget() == PlayerREF && iSafetyTimer
+		iSafetyTimer -= 1
+		StopCombat()
+		Wait(0.5)
+	EndWhile
 EndFunction
 
 ;=== Appearance functions ===--

@@ -220,11 +220,9 @@ Int Function SetFoe(Actor akActor, Bool abVanishOnDeath = True) Global
  	EndIf
  	String sSID = kDoppelganger.SID
  	;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
-	SetSessionBool("Config." + sSID + ".IsFriend",False)
-	SetSessionBool("Config." + sSID + ".CanMarry",False)
- 	SetSessionBool("Config." + sSID + ".IsFoe",True)
- 	SetSessionBool("Config." + sSID + ".VanishOnDeath",abVanishOnDeath)
- 	Return kDoppelganger.UpdateDisposition()
+	SetSessionInt("Config." + sSID + ".Behavior.PlayerRelationship",-1)
+ 	SetSessionBool("Config." + sSID + ".Behavior.VanishOnDeath",abVanishOnDeath)
+ 	;Return kDoppelganger.UpdateDisposition()
 EndFunction
 
 

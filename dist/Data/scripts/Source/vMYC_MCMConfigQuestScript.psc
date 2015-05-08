@@ -21,7 +21,7 @@ Int 	Property 	PANEL_CHAR_OPTIONS_EQUIP			= 5		AutoReadOnly Hidden
 Int 	Property 	PANEL_CHAR_OPTIONS_COMBAT			= 6		AutoReadOnly Hidden
 Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL	= 7		AutoReadOnly Hidden
 Int 	Property 	PANEL_CHAR_OPTIONS_SHOUTS_MANAGE	= 8		AutoReadOnly Hidden
-; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
+Int 	Property 	PANEL_CHAR_OPTIONS_BEHAVIOR			= 9		AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
@@ -30,6 +30,8 @@ Int 	Property 	PANEL_CHAR_OPTIONS_SHOUTS_MANAGE	= 8		AutoReadOnly Hidden
 ; === Enums ===--
 
 String[] Property	ENUM_CHAR_ARMORCHECK					Auto Hidden
+
+String[] Property	ENUM_CHAR_PLAYERRELATIONSHIP			Auto Hidden
 
 String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES				Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
@@ -146,14 +148,16 @@ Function AddPanel(Int PanelID, Int aiLeftRight)
 		ShowPanel_CharacterOptions(aiLeftRight)
 	ElseIf PanelID == PANEL_CHAR_OPTIONS_STATS
 		ShowPanel_CharacterStats(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_COMBAT
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_EQUIP
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_BEHAVIOR
+		ShowPanel_CharacterBehavior(aiLeftRight)
 	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC
 		ShowPanel_CharacterMagic(aiLeftRight)
 	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
 		ShowPanel_CharacterMagic_BySchool(aiLeftRight)
 	ElseIf PanelID == PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
 		ShowPanel_CharacterMagic_ShoutsManage(aiLeftRight)
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_COMBAT
+	ElseIf PanelID == PANEL_CHAR_OPTIONS_EQUIP
 	EndIf
 	
 EndFunction
@@ -263,6 +267,7 @@ Function ShowPanel_CharacterOptions(Int aiLeftRight)
 	AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
 	AddEmptyOption()
 
+	AddPanelLink("OPTION_TEXT_CHAR_BEHAVIOR","$Faction and behavior",PANEL_CHAR_OPTIONS_BEHAVIOR)
 	AddPanelLink("OPTION_TEXT_CHAR_STATS","$Skills and stats",PANEL_CHAR_OPTIONS_STATS)
 	AddPanelLink("OPTION_TEXT_CHAR_MAGIC","$Magic and Shouts",PANEL_CHAR_OPTIONS_MAGIC)
 	OptionFlags = 0
@@ -279,6 +284,23 @@ Function ShowPanel_CharacterOptions(Int aiLeftRight)
 		SetCursorPosition(22)
 		AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
 	EndIf
+EndFunction
+
+Function ShowPanel_CharacterBehavior(Int aiLeftRight)
+;PANEL_CHAR_OPTIONS_BEHAVIOR
+	SetCursorFillMode(TOP_TO_BOTTOM)
+	
+	SetCursorPosition(aiLeftRight)
+	AddHeaderOption("$Factions")
+	AddEmptyOption()
+	AddHeaderOption("$Behavior")
+
+	Int 	iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
+	Bool 	bVanish				= GetSessionBool("Config." + CurrentSID + ".Behavior.VanishOnDeath")
+
+	AddTextOptionST("OPTION_TEXT_CHAR_PLAYERRELATIONSHIP", "$Player relationship", ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship])
+	
+
 EndFunction
 
 Function ShowPanel_CharacterStats(Int aiLeftRight)
@@ -426,6 +448,34 @@ State OPTION_TOGGLE_CHAR_TRACKING
 
 	Event OnSelectST()
 
+	EndEvent
+
+EndState
+
+; == Option: Character factions and behavior panel ===--
+State OPTION_TEXT_CHAR_BEHAVIOR
+	
+	Event OnSelectST()
+		If TopPanel() != PANEL_CHAR_OPTIONS
+			PopPanel()
+		EndIf
+		PushPanel(PANEL_CHAR_OPTIONS_BEHAVIOR)
+		ForcePageReset()	
+	EndEvent
+	
+EndState
+
+; == Option: Set character relationship ===--
+State OPTION_TEXT_CHAR_PLAYERRELATIONSHIP
+
+	Event OnSelectST()
+		Int iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
+		iPlayerRelationship += 1
+		If iPlayerRelationship >= ENUM_CHAR_PLAYERRELATIONSHIP.Length
+			iPlayerRelationship = 0
+		EndIf
+		SetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship",iPlayerRelationship - 1)
+		SetTextOptionValueST(ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship], false, GetState())
 	EndEvent
 
 EndState
@@ -703,6 +753,13 @@ Function FillEnums()
 	ENUM_GLOBAL_FILE_LOCATION[0]			= "$Data/vMYC"
 	ENUM_GLOBAL_FILE_LOCATION[1]			= "$My Games/Skyrim"
 	
+
+	ENUM_CHAR_PLAYERRELATIONSHIP		= New String[5]
+	ENUM_CHAR_PLAYERRELATIONSHIP[0]			= "$Archenemy"
+	ENUM_CHAR_PLAYERRELATIONSHIP[1]			= "$Neutral"
+	ENUM_CHAR_PLAYERRELATIONSHIP[2]			= "$Friendly"
+	ENUM_CHAR_PLAYERRELATIONSHIP[3]			= "$Follower"
+	ENUM_CHAR_PLAYERRELATIONSHIP[4]			= "$CanMarry"
 EndFunction
 
 ; === Utility functions ===--
