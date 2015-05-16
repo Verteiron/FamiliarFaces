@@ -168,6 +168,7 @@ EndEvent
 
 Event OnEnterBleedout()
 	If GetSessionBool("Config." + SID + ".Behavior.VanishOnDeath")
+		UnregisterForAllModEvents()
 		ObjectReference[] kGlows = New ObjectReference[20]
 		BlockActivation(True)
 		DispelAllSpells()
@@ -237,6 +238,7 @@ Event OnEnterBleedout()
 			EndIf
 			iStep += 1
 		EndWhile
+		UnregisterForAllModEvents()
 		Disable(True)
 		;kCharacterGlow.DisableNoWait(True)
 		vMYC_API_Doppelganger.UnregisterActor(Self,SID)
@@ -379,6 +381,11 @@ State Assigned
 			Return
 		EndIf
 		DebugTrace("My session data has been updated: " + asPath)
+		If GetActorForSID(SID) != Self
+			DebugTrace("I am not the correct actor for this SID! Ignoring!")
+			UnregisterForAllModEvents()
+			Return
+		EndIf
 		If !NeedSpells
 			If StringUtil.Find(asPath, "Magic") >= 0
 				NeedSpells = True
