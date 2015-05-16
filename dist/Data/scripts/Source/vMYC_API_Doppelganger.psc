@@ -1103,6 +1103,34 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	Return iAdded
 EndFunction
 
+Int Function UpdateClass(String asSID, Actor akActor) Global
+	ActorBase kActorBase = akActor.GetActorBase()
+	Class kClass = GetSessionForm("Characters." + asSID + ".Class",True) as Class
+	If !kClass
+		Return -1
+	EndIf
+	If kActorBase.GetClass() && kActorBase.GetClass() != kClass
+		kActorBase.SetClass(kClass)
+	Else
+		Return 0
+	EndIf
+	Return 1
+EndFunction
+
+Int Function UpdateCombatStyle(String asSID, Actor akActor) Global
+	ActorBase kActorBase = akActor.GetActorBase()
+	CombatStyle kCombatStyle = GetSessionForm("Characters." + asSID + ".CombatStyle",True) as CombatStyle
+	If !kCombatStyle
+		Return -1
+	EndIf
+	If kActorBase.GetCombatStyle() && kActorBase.GetCombatStyle() != kCombatStyle
+		kActorBase.SetCombatStyle(kCombatStyle)
+	Else
+		Return 0
+	EndIf
+	Return 1
+EndFunction
+
 ;=== Utility functions ===--
 
 Function DebugTraceAPIDopp(String asSID,String sDebugString, Int iSeverity = 0) Global

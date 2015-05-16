@@ -333,6 +333,7 @@ State Assigned
 			EndIf
 		EndIf
 		If NeedStats
+			UpdateClass(SID,Self)
 			If UpdateStats() >= 0
 				NeedStats = False
 			EndIf
@@ -355,6 +356,7 @@ State Assigned
 			;StopTimer("UpdateSpells" + SID)
 		EndIf
 		If NeedBehavior
+			UpdateCombatStyle(SID,Self)
 			If UpdateDisposition() >= 0 ; No error
 				NeedBehavior = False
 			EndIf
@@ -388,8 +390,13 @@ State Assigned
 			EndIf
 		EndIf
 		If !NeedBehavior
-			If StringUtil.Find(asPath, "Behavior") >= 0
+			If StringUtil.Find(asPath, "Behavior") >= 0 || StringUtil.Find(asPath,"CombatStyle") >= 0
 				NeedBehavior = True
+			EndIf
+		EndIf
+		If !NeedStats
+			If StringUtil.Find(asPath,"Class") >= 0
+				NeedStats = True
 			EndIf
 		EndIf
 		RegisterForSingleUpdate(1)

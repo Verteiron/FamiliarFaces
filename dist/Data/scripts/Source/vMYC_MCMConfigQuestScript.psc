@@ -39,6 +39,9 @@ String[] Property	ENUM_GLOBAL_MAGIC_ALLOWFROMMODS		    Auto Hidden
 String[] Property	ENUM_GLOBAL_SHOUTS_HANDLING			    Auto Hidden
 String[] Property	ENUM_GLOBAL_FILE_LOCATION			    Auto Hidden
 
+Form[] 		Property 	CombatStyleList							Auto Hidden
+String[] 	Property 	CombatStyleNames						Auto Hidden
+
 Form[] 		Property 	VoiceTypeList							Auto Hidden
 String[] 	Property 	VoiceTypeNames							Auto Hidden
 String[] 	Property 	VoiceTypeLegends						Auto Hidden
@@ -293,13 +296,20 @@ Function ShowPanel_CharacterBehavior(Int aiLeftRight)
 	SetCursorPosition(aiLeftRight)
 	AddHeaderOption("$Factions")
 	AddEmptyOption()
-	AddHeaderOption("$Behavior")
-
 	Int 	iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
 	Bool 	bVanish				= GetSessionBool("Config." + CurrentSID + ".Behavior.VanishOnDeath")
 
 	AddTextOptionST("OPTION_TEXT_CHAR_PLAYERRELATIONSHIP", "$Player relationship", ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship])
-	
+	AddEmptyOption()
+	AddHeaderOption("$Behavior")
+	AddEmptyOption()
+	AddHeaderOption("$Combat")
+	CurrentCombatStyle = vMYC_API_Character.GetCharacterCombatStyle(CurrentSID)
+	String sCombatStyleName = JFormMap.GetStr(GetRegObj("CombatStyles.FormMap"),CurrentCombatStyle)
+	If !sCombatStyleName
+		sCombatStyleName = "$Unknown"
+	EndIf
+	AddMenuOptionST("OPTION_TEXT_CHAR_COMBATSTYLE", "$CombatStyle", sCombatStyleName)
 
 EndFunction
 
@@ -463,6 +473,25 @@ State OPTION_TEXT_CHAR_BEHAVIOR
 		ForcePageReset()	
 	EndEvent
 	
+EndState
+
+; == Menu: CombatStyle picker ===--
+State OPTION_TEXT_CHAR_COMBATSTYLE
+
+	Event OnMenuOpenST()
+		SetMenuDialogOptions(CombatStyleNames)
+		Int idxCS = CombatStyleList.Find(CurrentCombatStyle)
+		SetMenuDialogStartIndex(idxCS)
+		SetMenuDialogDefaultIndex(0)
+	EndEvent
+	
+	Event OnMenuAcceptST(Int aiIndex)
+		vMYC_API_Character.SetCharacterCombatStyle(CurrentSID,CombatStyleList[aiIndex] as CombatStyle)
+		SetSessionForm("Config." + CurrentSID + ".CombatStyle",CombatStyleList[aiIndex] as CombatStyle) ;FIXME: UGLY, are we setting Session or Registry data here?
+		SetMenuOptionValueST(CombatStyleNames[aiIndex], false, GetState())
+		;ForcePageReset()
+	EndEvent
+
 EndState
 
 ; == Option: Set character relationship ===--
@@ -676,6 +705,7 @@ Function DoInit()
 	FillEnums()
 	CharacterNames = vMYC_API_Character.GetAllNames()
 	GetVoiceTypeList()
+	GetCombatStyleList()
 	PanelStack = New Int[128]
 EndFunction
 
@@ -829,5 +859,15 @@ Function GetVoiceTypeList()
 	VoiceTypeList[0] = None
 	VoiceTypeNames[0] = "Default"
 	VoiceTypeLegends[0] = "Default"
+EndFunction
+
+Function GetCombatStyleList()
+	CombatStyleNames = DataManager.JObjToArrayStr(GetRegObj("CombatStyles.Names"))
+	Int i = CombatStyleNames.Length
+	CombatStyleList = Utility.CreateFormArray(i)
+	While i > 0
+		i -= 1
+		CombatStyleList[i] = GetRegForm("CombatStyles.Map." + CombatStyleNames[i])
+	EndWhile
 EndFunction
 

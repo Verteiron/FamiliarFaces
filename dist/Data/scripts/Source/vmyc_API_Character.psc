@@ -481,7 +481,7 @@ EndFunction
 
 ; Set the CombatStyle of the Character
 Int Function SetCharacterCombatStyle(String asSID, CombatStyle akValue) Global
-	String sKey = ".Class"
+	String sKey = ".CombatStyle"
 	Return vMYC_API_Character.SetCharacterForm(asSID,sKey, akValue)
 EndFunction
 

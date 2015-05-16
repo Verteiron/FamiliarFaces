@@ -89,6 +89,9 @@ Formlist 			Property vMYC_VoiceTypesSpouseList 				Auto
 Formlist 			Property vMYC_VoiceTypesAdoptList 				Auto
 {A list of all vanilla VoiceType with adoption dialog.}
 
+Formlist 			Property vMYC_CombatStyles 						Auto
+{A list of selected vanilla CombatStyles.}
+
 ;=== Achievement test Properties ===--
 
 Faction 			Property CWImperialFaction 						Auto
@@ -124,6 +127,7 @@ Event OnInit()
 		CreateAVNames()
 		InitNINodeList()
 		SortVoiceTypes()
+		SortCombatStyles()
 
 		;Init ActorBasePool forms in case they're not there already
 		If !HasRegKey("ActorbasePool.F")
@@ -1797,12 +1801,15 @@ String[] Function JObjToArrayStr(Int ajObj)
 	EndIf
 	If jStrArray
 		Int i = JArray.Count(jStrArray)
+		DebugTrace("JObjToArrayStr: Converting " + i + " jValues to an array of strings...")
 		sReturn = Utility.CreateStringArray(i, "")
 		While i > 0
 			i -= 1
 			sReturn[i] = JArray.GetStr(jStrArray,i)
+			DebugTrace("JObjToArrayStr:  Added " + sReturn[i] + " at index " + i + "!")
 		EndWhile
 	EndIf
+	DebugTrace("JObjToArrayStr: Done!")
 	Return sReturn
 EndFunction
 
@@ -2116,6 +2123,15 @@ String Function GetVoiceTypeName(VoiceType akVoiceType)
 	Return sRet
 EndFunction
 
+String Function GetCombatStyleName(CombatStyle akCombatStyle)
+	String sRet
+	sRet = akCombatStyle as String
+	DebugTrace("CombatStyle " + akCombatStyle + " is named " + akCombatStyle.GetName())
+	sRet = StringUtil.SubString(sRet,0,StringUtil.Find(sRet,">") - 11)
+	sRet = StringUtil.SubString(sRet,StringUtil.Find(sRet,"<") + 1)
+	Return sRet
+EndFunction
+
 Function SortVoiceTypes()
 
 	Int jVoiceTypesAll 		= JArray.Object()
@@ -2159,6 +2175,34 @@ Function SortVoiceTypes()
 	EndWhile
 
 	SetRegObj("VoiceTypes.Names",JMap.AllKeys(GetRegObj("VoiceTypes.Info")))
+EndFunction
+
+Function SortCombatStyles()
+	Int jCombatStyles 		= JArray.Object()
+
+	JArray.addFromFormList(jCombatStyles,		vMYC_CombatStyles)
+
+	Int jCombatStyleFMap 	= JFormMap.Object() 
+
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(0),"Default")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(1),"Tank")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(2),"Balanced")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(3),"Prefer 1-handed")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(4),"Prefer 2-handed")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(5),"Berserker")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(6),"Prefer magic")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(7),"Prefer bow")
+	JFormMap.SetStr(jCombatStyleFMap,vMYC_CombatStyles.GetAt(8),"Dual-wielding")
+
+	SetRegObj("CombatStyles.FormMap",jCombatStyleFMap)
+	
+	Form kCombatStyle = JFormMap.nextKey(jCombatStyleFMap)
+	While kCombatStyle 
+		SetRegForm("CombatStyles.Map." + jFormMap.GetStr(jCombatStyleFMap,kCombatStyle),kCombatStyle)
+		kCombatStyle = JFormMap.nextKey(jCombatStyleFMap,kCombatStyle)
+	EndWhile
+
+	SetRegObj("CombatStyles.Names",JFormMap.AllValues(jCombatStyleFMap))
 EndFunction
 
 ;=== Functions - Busy state ===--
