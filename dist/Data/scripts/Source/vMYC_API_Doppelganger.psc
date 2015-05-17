@@ -188,7 +188,7 @@ Actor Function CreateDoppelganger(String asSID, Bool abLeveled = True) Global
 ;	;GetRegForm("Doppelgangers.Preferred." + asSID + ".ActorBase")
 ;	;SetSessionForm("Doppelgangers." + asSID + ".ActorBase",kActorBase)
 	;SetSessionForm("Doppelgangers." + asSID + ".Actor",akActor as Actor)
-	ObjectReference kNowhere = Game.GetFormFromFile(0x00004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
+	ObjectReference kNowhere = Game.GetFormFromFile(0x00004e4d,"vFFC_FamiliarFaces.esp") As ObjectReference ; Marker in vMYC_StagingCell
 	Actor kDoppelActor = kNowhere.PlaceAtMe(kDoppelgangerBase) as Actor
 	vMYC_Doppelganger kDoppelScript = kDoppelActor as vMYC_Doppelganger
 	kDoppelScript.AssignCharacter(asSID)
@@ -727,7 +727,7 @@ Int Function UpdatePerks(String asSID, Actor akActor) Global
 	ActorBase kActorBase = akActor.GetActorBase()
 
 	;FIXME: Compatibility Formlists should probably be provided by another API rather than by GetFormFromFile.
-	FormList vMYC_ModCompatibility_PerkList_Unsafe = Game.GetFormFromFile(0x0202573e, "vMYC_MeetYourCharacters.esp") as FormList
+	FormList vMYC_ModCompatibility_PerkList_Unsafe = Game.GetFormFromFile(0x0202573e, "vFCC_FamiliarFaces.esp") as FormList
 	vMYC_DataManager DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 
 	;DebugTraceAPIDopp(asSID,"Applying Perks...")
@@ -898,7 +898,7 @@ Function RemoveCharacterShouts(String asSID,Actor akActor) Global
 	DebugTraceAPIDopp(asSID,"Character is not allowed to use shouts, removing them!")
 	Formlist kShoutlist = DataManager.LockFormList()
 	kShoutlist.Revert() ; Should already be empty, but just in case
-	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vMYC_MeetYourCharacters.esp") as Shout
+	Shout vMYC_NullShout = GetFormFromFile(0x0201f055,"vFCC_FamiliarFaces.esp") as Shout
 	kShoutlist.AddForm(vMYC_NullShout)
 	FFUtils.LoadCharacterShouts(kActorBase,kShoutlist)
 	WaitMenuMode(0.1)
@@ -915,10 +915,10 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 
 	vMYC_DataManager DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
 	;FIXME: Compatibility Formlists should probably be provided by another API rather than by GetFormFromFile.
-	FormList vMYC_ModCompatibility_SpellList_Safe 	= Game.GetFormFromFile(0x02024c6b, "vMYC_MeetYourCharacters.esp") as FormList 
-	FormList vMYC_ModCompatibility_SpellList_Unsafe 	= Game.GetFormFromFile(0x02024c6c, "vMYC_MeetYourCharacters.esp") as FormList 
-	FormList vMYC_ModCompatibility_SpellList_Healing = Game.GetFormFromFile(0x02024c6d, "vMYC_MeetYourCharacters.esp") as FormList 
-	FormList vMYC_ModCompatibility_SpellList_Armor 	= Game.GetFormFromFile(0x02024c6e, "vMYC_MeetYourCharacters.esp") as FormList
+	FormList vMYC_ModCompatibility_SpellList_Safe 	= Game.GetFormFromFile(0x02024c6b, "vFCC_FamiliarFaces.esp") as FormList 
+	FormList vMYC_ModCompatibility_SpellList_Unsafe 	= Game.GetFormFromFile(0x02024c6c, "vFCC_FamiliarFaces.esp") as FormList 
+	FormList vMYC_ModCompatibility_SpellList_Healing = Game.GetFormFromFile(0x02024c6d, "vFCC_FamiliarFaces.esp") as FormList 
+	FormList vMYC_ModCompatibility_SpellList_Armor 	= Game.GetFormFromFile(0x02024c6e, "vFCC_FamiliarFaces.esp") as FormList
 
 	Int i
 	Int iCount

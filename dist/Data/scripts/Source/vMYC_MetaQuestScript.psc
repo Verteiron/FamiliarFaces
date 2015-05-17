@@ -26,15 +26,7 @@ Message Property vMYC_ModLoadedMSG Auto
 Message Property vMYC_ModUpdatedMSG Auto
 Message Property vMYC_ModShutdownMSG Auto
 
-;From 1.x 
-vMYC_CharacterManagerScript Property CharacterManager Auto ; Legacy
-vMYC_ShrineOfHeroesQuestScript Property ShrineOfHeroes Auto ; Legacy
-vMYC_HangoutManager Property HangoutManager Auto
-
-;From 2.x 
 vMYC_DataManager 	Property DataManager 	Auto
-vMYC_ShrineManager 	Property ShrineManager 	Auto
-vMYC_TrophyManager 	Property TrophyManager 	Auto
 
 VisualEffect 	Property vMYC_FFLogoEffect 	Auto
 ;=== Config variables ===--
@@ -194,17 +186,6 @@ Function DoInit()
 		WaitMenuMode(0.5)
 	EndWhile
 
-	DebugTrace("DoInit: Starting TrophyManager...")
-	TrophyManager.Start()
-	WaitMenuMode(1)
-	While !TrophyManager.ReadyToDisplay
-		WaitMenuMode(0.5)
-	EndWhile
-
-	DebugTrace("DoInit: Starting ShrineManager...")
-	ShrineManager.Start()
-	WaitMenuMode(1)
-
 	DebugTrace("DoInit: Starting PlayerTracker...")
 	SendModEvent("vMYC_PlayerTrackerStart")
 
@@ -222,8 +203,6 @@ Function DoUpgrade()
 	
 	If ModVersion < GetVersionInt(1,1,2)
 		Debug.Trace("MYC/Upgrade/1.1.2: Upgrading to 1.1.2...")
-		CharacterManager.DoUpkeep()
-		ShrineOfHeroes.DoUpkeep()
 		Debug.Trace("MYC/Upgrade/1.1.2: Upgrade to 1.1.2 complete!")
 		ModVersion = GetVersionInt(1,1,2)
 	EndIf
@@ -270,27 +249,8 @@ Function DoShutdown(Bool abClearData = False)
 	_iCurrentVersion = 0
 	ModVersion = 0
 	
-	If HangoutManager.IsRunning()
-		HangoutManager.DoShutdown()
-		HangoutManager.Stop()
-	EndIf
-	If ShrineOfHeroes.IsRunning()
-		ShrineOfHeroes.DoShutdown()
-		ShrineOfHeroes.Stop()
-	EndIf
-	If CharacterManager.IsRunning()
-		CharacterManager.DoShutdown()
-		CharacterMAnager.Stop()
-	EndIf
-	
 	If DataManager.IsRunning()
 		DataManager.Stop()
-	EndIf
-	If !TrophyManager.IsRunning()
-		TrophyManager.Stop()
-	EndIf
-	If !ShrineManager.IsRunning()
-		ShrineManager.Stop()
 	EndIf
 
 	If abClearData
@@ -338,12 +298,6 @@ Bool Function CheckDependencies()
 	;In an upgrade from 1.x the *Manager objects might not be filled, so fill them.
 	If !DataManager
 		DataManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_DataManager
-	EndIf
-	If !TrophyManager
-		TrophyManager = Quest.GetQuest("vMYC_TrophyManagerQuest") as vMYC_TrophyManager
-	EndIf
-	If !ShrineManager
-		ShrineManager = Quest.GetQuest("vMYC_DataManagerQuest") as vMYC_ShrineManager
 	EndIf
 
 	;Removed write test in Skyrim folder, it was dumb anyway.
