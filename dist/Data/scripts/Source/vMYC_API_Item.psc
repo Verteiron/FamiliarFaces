@@ -407,7 +407,7 @@ ObjectReference Function CreateObjectFromJObj(Int ajObjectInfo) Global
 		Return None
 	EndIf
 
-	ObjectReference kNowhere = Game.GetFormFromFile(0x00004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
+	ObjectReference kNowhere = Game.GetFormFromFile(0x00FF0004,"vFFC_FamiliarFaces.esp") As ObjectReference ; Marker in vMYC_StagingCell
 	ObjectReference kObject = kNowhere.PlaceAtMe(kItem)
 	If !kObject
 		DebugTraceAPIItem("CreateObjectFromJObj: " + sItemID + " could not use base Form " + kItem + " to create an ObjectReference!",1)
@@ -537,7 +537,7 @@ ObjectReference Function CreatePotion(String asItemID) Global
 	Potion kDefaultPotion = Game.GetformFromFile(0x0005661f,"Skyrim.esm") as Potion
 	Potion kDefaultPoison = Game.GetformFromFile(0x0005629e,"Skyrim.esm") as Potion
 	
-	ObjectReference kNowhere = Game.GetFormFromFile(0x02004e4d,"vMYC_MeetYourCharacters.esp") As ObjectReference ; Marker in vMYC_StagingCell
+	ObjectReference kNowhere = Game.GetFormFromFile(0x00FF0004,"vFFC_FamiliarFaces.esp") As ObjectReference ; Marker in vMYC_StagingCell
 	Potion kPotion 
 	If JMap.GetInt(jPotionInfo,"IsPoison")
 		kPotion = kDefaultPoison
