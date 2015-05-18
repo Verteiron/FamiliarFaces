@@ -9,4 +9,4 @@ Check: Retain Directory Names
 Check: Retain File Names
 Set File Group Root: Data\
 Add File Group: filelist.txt
-Save Archive: Data\vMYC_MeetYourCharacters.bsa
+Save Archive: Data\vFF_FamiliarFaces.bsa

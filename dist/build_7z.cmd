@@ -1,5 +1,5 @@
 @echo off
-SET FILENAME=vMYC_FamiliarFaces
+SET FILENAME=vFF_FamiliarFaces
 SET ZEXE=c:\Program Files\7-Zip\7z.exe
 
 for /f "tokens=1,2,3,4 delims=^/ " %%W in ('@echo %date%') DO SET NEWTIME=%%Z-%%X-%%Y
@@ -13,8 +13,8 @@ xcopy /y ..\data\*.bsa .
 xcopy /y ..\data\*readme* .
 xcopy /y ..\..\doc\*readme* .
 echo d | xcopy /e /y ..\data\skse skse
-echo d | xcopy /e /y ..\data\vMYC vMYC
-"%ZEXE%" a -r "vMYC_FamiliarFaces_%NEWTIME%.7z" "*"
+echo d | xcopy /e /y ..\data\vFF vFF
+"%ZEXE%" a -r "vFF_FamiliarFaces_%NEWTIME%.7z" "*"
 xcopy /y *.7z ..
 cd ..
 ping -n 1 -w 1000 1.0.0.0 > nul
