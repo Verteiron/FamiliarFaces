@@ -60,9 +60,9 @@ Int _iUpkeepsCompleted
 ;=== Events ===--
 
 Event OnInit()
-	DebugTrace("Metaquest event: OnGameReloaded")
+	DebugTrace("Metaquest event: OnInit")
 	If IsRunning() && ModVersion == 0 && !ModVersionMajor
-		DoUpkeep(True)
+		DoUpkeep(False)
 	EndIf
 EndEvent
 
@@ -105,7 +105,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 	;FIXME: CHANGE THIS WHEN UPDATING!
 	ModVersionMajor = 1
 	ModVersionMinor = 9
-	ModVersionPatch = 0
+	ModVersionPatch = 1
 	If !CheckDependencies()
 		AbortStartup()
 		Return
@@ -175,16 +175,15 @@ Function DoInit()
 
 	InitReg()
 
-	DebugTrace("DoInit: Starting Compatibility modules...")
-	CheckCompatibilityModules()
-	WaitMenuMode(1)
-
 	DebugTrace("DoInit: Starting DataManager...")
 	DataManager.Start()
 	WaitMenuMode(1)
 	While DataManager.IsBusy
 		WaitMenuMode(0.5)
 	EndWhile
+
+	DebugTrace("DoInit: Starting Compatibility modules...")
+	CheckCompatibilityModules()
 
 	DebugTrace("DoInit: Starting PlayerTracker...")
 	SendModEvent("vFFC_PlayerTrackerStart")
