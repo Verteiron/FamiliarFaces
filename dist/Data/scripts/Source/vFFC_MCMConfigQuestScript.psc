@@ -1,4 +1,4 @@
-Scriptname vFFC_MCMConfigQuestScript extends SKI_ConfigBase
+Scriptname vFFC_MCMConfigQuestScript extends vFFC_MCMPanelNav
 {MCM config script for Familiar Faces 2.0.}
 
 ; === [ vFFC_MCMConfigQuestScript.psc ] ===================================---
@@ -13,15 +13,15 @@ Import vFF_Session
 
 ; === Constants ===--
 
-Int 	Property 	PANEL_CHAR_PICKER 					= 1		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS 					= 2		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_STATS			= 3		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC			= 4		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_EQUIP			= 5		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_COMBAT			= 6		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL	= 7		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_SHOUTS_MANAGE	= 8		AutoReadOnly Hidden
-Int 	Property 	PANEL_CHAR_OPTIONS_BEHAVIOR			= 9		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_PICKER 					= 1		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS 					= 2		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_STATS			= 3		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC			= 4		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_EQUIP			= 5		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_COMBAT			= 6		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL	= 7		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_SHOUTS_MANAGE	= 8		AutoReadOnly Hidden
+;Int 	Property 	PANEL_CHAR_OPTIONS_BEHAVIOR			= 9		AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
 ; Int 	Property 	PANEL_CHAR_SELECT 			= 0			AutoReadOnly Hidden
@@ -50,11 +50,6 @@ String[] 	Property 	VoiceTypeLegends						Auto Hidden
 
 vFFC_MetaQuestScript 	Property MetaQuest 						Auto
 vFFC_DataManager 		Property DataManager 					Auto
-
-Int 					Property PanelLeft 						Auto Hidden
-Int 					Property PanelRight						Auto Hidden
-
-Int[] 					Property PanelStack 					Auto Hidden
 
 ; === Properties: Character Page ===--
 
@@ -101,6 +96,17 @@ Event OnConfigInit()
 	Pages[3] = "$Global Options"
 	Pages[4] = "$Debugging"
 
+
+CreatePanel("PANEL_CHAR_PICKER","$Character Picker")
+CreatePanel("PANEL_CHAR_OPTIONS","$Character Options","PANEL_CHAR_PICKER")
+CreatePanel("PANEL_CHAR_OPTIONS_STATS","$Character Stats","PANEL_CHAR_OPTIONS")
+CreatePanel("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts","PANEL_CHAR_OPTIONS")
+CreatePanel("PANEL_CHAR_OPTIONS_EQUIP","$Equipment","PANEL_CHAR_OPTIONS")
+CreatePanel("PANEL_CHAR_OPTIONS_BEHAVIOR","$Behavior","PANEL_CHAR_OPTIONS")
+CreatePanel("PANEL_CHAR_OPTIONS_COMBAT","$Combat behavior","PANEL_CHAR_OPTIONS")
+CreatePanel("PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL","$Magic by school","PANEL_CHAR_OPTIONS_MAGIC")
+CreatePanel("PANEL_CHAR_OPTIONS_SHOUTS_MANAGE","$Manage Shouts","PANEL_CHAR_OPTIONS_MAGIC")
+
 EndEvent
 
 Event OnConfigOpen()
@@ -120,8 +126,8 @@ Event OnPageReset(string a_page)
 	; === Handle other pages ===--
 	If a_page == Pages[0]
 		If !TopPanel()
-			PushPanel(PANEL_CHAR_PICKER)
-			PushPanel(PANEL_CHAR_OPTIONS)
+			PushPanel("PANEL_CHAR_PICKER")
+			PushPanel("PANEL_CHAR_OPTIONS")
 		EndIf
 	Else
 
@@ -130,237 +136,216 @@ Event OnPageReset(string a_page)
 EndEvent
 
 
-Function DisplayPanels()
-	Int iPanelLeft = TopPanel(1)
-	Int iPanelRight = TopPanel()
-	If iPanelLeft
-		PanelLeft = iPanelLeft
-	EndIf
-	If iPanelRight
-		PanelRight = iPanelRight
-	EndIf
-	AddPanel(PanelLeft,0)
-	AddPanel(PanelRight,1)
-EndFunction
 
-Function AddPanel(Int PanelID, Int aiLeftRight)
-	If PanelID == PANEL_CHAR_PICKER
-		ShowPanel_CharacterSelect(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS
-		ShowPanel_CharacterOptions(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_STATS
-		ShowPanel_CharacterStats(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_BEHAVIOR
-		ShowPanel_CharacterBehavior(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC
-		ShowPanel_CharacterMagic(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
-		ShowPanel_CharacterMagic_BySchool(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
-		ShowPanel_CharacterMagic_ShoutsManage(aiLeftRight)
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_COMBAT
-	ElseIf PanelID == PANEL_CHAR_OPTIONS_EQUIP
-	EndIf
-	
-EndFunction
-
-Function AddBackButton()
-
-EndFunction
 
 ; === Panel display functions ===--
 
-Function ShowPanel_CharacterSelect(Int aiLeftRight)
-	SetCursorFillMode(TOP_TO_BOTTOM)
-	
-	SetCursorPosition(aiLeftRight)
+State PANEL_CHAR_PICKER
 
-	AddMenuOptionST("OPTION_MENU_CHAR_PICKER","$Settings for",CurrentCharacterName)
+	Event OnPanelAdd(Int aiLeftRight)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		SetCursorPosition(aiLeftRight)
 
-	If !CurrentCharacterName
-		DebugTrace("No CharacterName selected!")
-		Return
-	EndIf
+		AddMenuOptionST("OPTION_MENU_CHAR_PICKER","$Settings for",CurrentCharacterName)
 
-	String[] sSIDs = vFF_API_Character.GetSIDsByName(CurrentCharacterName)
-	If sSIDs.Length == 1
-		CurrentSID = sSIDs[0]
-		ShowOptions_SIDPicker(aiLeftRight,True)
-	ElseIf sSIDs.Length > 1
-		CurrentSID = sSIDs[0]
-		ShowOptions_SIDPicker(aiLeftRight)
-	Else
-		DebugTrace("No SIDs found for " + CurrentCharacterName,1)
-		AddTextOption("$Error:","No data found!")
-		Return
-	EndIf
+		If !CurrentCharacterName
+			DebugTrace("No CharacterName selected!")
+			Return
+		EndIf
 
-	; === Begin info column ===--
-	
-	SetCursorPosition(aiLeftRight + 6)
-	
-	String[] sSex 	= New String[2]
-	sSex[0] 		= "Male"
-	sSex[1] 		= "Female"
+		String[] sSIDs = vFF_API_Character.GetSIDsByName(CurrentCharacterName)
+		If sSIDs.Length == 1
+			CurrentSID = sSIDs[0]
+			ShowOptions_SIDPicker(aiLeftRight,True)
+		ElseIf sSIDs.Length > 1
+			CurrentSID = sSIDs[0]
+			ShowOptions_SIDPicker(aiLeftRight)
+		Else
+			DebugTrace("No SIDs found for " + CurrentCharacterName,1)
+			AddTextOption("$Error:","No data found!")
+			Return
+		EndIf
 
-	AddTextOption("Level " + (vFF_API_Character.GetCharacterLevel(CurrentSID) as Int) + " " + (vFF_API_Character.GetCharacterStr(CurrentSID,".Info.RaceText")) + " " + sSex[vFF_API_Character.GetCharacterSex(CurrentSID)],"",OPTION_FLAG_DISABLED)
+		; === Begin info column ===--
+		
+		SetCursorPosition(aiLeftRight + 6)
+		
+		String[] sSex 	= New String[2]
+		sSex[0] 		= "Male"
+		sSex[1] 		= "Female"
 
-	AddTextOption("Health: " + (vFF_API_Character.GetCharacterAV(CurrentSID,"Health") as Int) + \
-					", Stamina:" + (vFF_API_Character.GetCharacterAV(CurrentSID,"Stamina") as Int) + \
-					", Magicka:" + (vFF_API_Character.GetCharacterAV(CurrentSID,"Magicka") as Int), "",OPTION_FLAG_DISABLED)
+		AddTextOption("Level " + (vFF_API_Character.GetCharacterLevel(CurrentSID) as Int) + " " + (vFF_API_Character.GetCharacterStr(CurrentSID,".Info.RaceText")) + " " + sSex[vFF_API_Character.GetCharacterSex(CurrentSID)],"",OPTION_FLAG_DISABLED)
 
-	String sWeaponName = vFF_API_Item.GetItemName(vFF_API_Character.GetCharacterEquippedFormID(CurrentSID,1))
-	String sLWeaponName = vFF_API_Item.GetItemName(vFF_API_Character.GetCharacterEquippedFormID(CurrentSID,0))
-	If sLWeaponName && sLWeaponName != sWeaponName
-		sWeaponName += " and " + sLWeaponName
-	ElseIf sLWeaponName && sLWeaponName == sWeaponName
-		sWeaponName += " (Both)"
-	EndIf
-	AddTextOption("Wielding " + sWeaponName,"",OPTION_FLAG_DISABLED)
-	AddEmptyOption()
-	String sActorBaseString = "Not loaded"
-	String sActorString 	= "Not loaded"
-	Actor kActor = vFF_API_Doppelganger.GetActorForSID(CurrentSID)
-	If kActor 
-		sActorBaseString 	= GetFormIDString(kActor.GetActorBase())
-		sActorString 		= GetFormIDString(kActor)
-	EndIf
-	AddTextOption("ActorBase: " + sActorBaseString,"",OPTION_FLAG_DISABLED)
-	AddTextOption("Actor: " + sActorString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("Health: " + (vFF_API_Character.GetCharacterAV(CurrentSID,"Health") as Int) + \
+						", Stamina:" + (vFF_API_Character.GetCharacterAV(CurrentSID,"Stamina") as Int) + \
+						", Magicka:" + (vFF_API_Character.GetCharacterAV(CurrentSID,"Magicka") as Int), "",OPTION_FLAG_DISABLED)
 
-	If !kActor
-		AddTextOptionST("OPTION_TEXT_CHAR_SUMMON", "Summon me", "right now!")
-	EndIf
-	;Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
-	;If MissingReqs == 3
-	;	AddEmptyOption()
-	;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
-	;ElseIf MissingReqs == 2
-	;	AddEmptyOption()
-	;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
-	;ElseIf MissingReqs == 1
-	;	AddEmptyOption()
-	;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
-	;Else
-	;	AddEmptyOption()
-	;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements}","$Report")
-	;EndIf
-	;===== END info column =============----
+		String sWeaponName = vFF_API_Item.GetItemName(vFF_API_Character.GetCharacterEquippedFormID(CurrentSID,1))
+		String sLWeaponName = vFF_API_Item.GetItemName(vFF_API_Character.GetCharacterEquippedFormID(CurrentSID,0))
+		If sLWeaponName && sLWeaponName != sWeaponName
+			sWeaponName += " and " + sLWeaponName
+		ElseIf sLWeaponName && sLWeaponName == sWeaponName
+			sWeaponName += " (Both)"
+		EndIf
+		AddTextOption("Wielding " + sWeaponName,"",OPTION_FLAG_DISABLED)
+		AddEmptyOption()
+		String sActorBaseString = "Not loaded"
+		String sActorString 	= "Not loaded"
+		Actor kActor = vFF_API_Doppelganger.GetActorForSID(CurrentSID)
+		If kActor 
+			sActorBaseString 	= GetFormIDString(kActor.GetActorBase())
+			sActorString 		= GetFormIDString(kActor)
+		EndIf
+		AddTextOption("ActorBase: " + sActorBaseString,"",OPTION_FLAG_DISABLED)
+		AddTextOption("Actor: " + sActorString,"",OPTION_FLAG_DISABLED)
 
-	
+		If !kActor
+			AddTextOptionST("OPTION_TEXT_CHAR_SUMMON", "Summon me", "right now!")
+		EndIf
+		;Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
+		;If MissingReqs == 3
+		;	AddEmptyOption()
+		;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$critical} {$mods} !","$Report")
+		;ElseIf MissingReqs == 2
+		;	AddEmptyOption()
+		;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$equipment} {$mods} !","$Report")
+		;ElseIf MissingReqs == 1
+		;	AddEmptyOption()
+		;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$Missing} {$minor} {$mods} !","$Report")
+		;Else
+		;	AddEmptyOption()
+		;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements}","$Report")
+		;EndIf
+		;===== END info column =============----
 
-EndFunction
+	EndEvent
+EndState
 
 Function ShowOptions_SIDPicker(Int aiLeftRight, Bool abDisabled = False)
 	SetCursorPosition(aiLeftRight + 2)
 	AddMenuOptionST("OPTION_MENU_SID_PICKER","$Choose session:",StringUtil.Substring(CurrentSID, StringUtil.GetLength(CurrentSID) - 7),abDisabled as Int)
 EndFunction
 
-Function ShowPanel_CharacterOptions(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS
-	SetCursorFillMode(TOP_TO_BOTTOM)
-	
-	SetCursorPosition(aiLeftRight)
+State PANEL_CHAR_OPTIONS
 
-	Int OptionFlags = 0
+	Event OnPanelAdd(Int aiLeftRight)
 
-	AddHeaderOption(CurrentCharacterName + " Options")
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		SetCursorPosition(aiLeftRight)
 
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
-	AddEmptyOption()
+		Int OptionFlags = 0
 
-	AddPanelLink("OPTION_TEXT_CHAR_BEHAVIOR","$Faction and behavior",PANEL_CHAR_OPTIONS_BEHAVIOR)
-	AddPanelLink("OPTION_TEXT_CHAR_STATS","$Skills and stats",PANEL_CHAR_OPTIONS_STATS)
-	AddPanelLink("OPTION_TEXT_CHAR_MAGIC","$Magic and Shouts",PANEL_CHAR_OPTIONS_MAGIC)
-	OptionFlags = 0
+		AddHeaderOption(CurrentCharacterName + " Options")
 
-	;=== Character voicetype option ===--
-	CurrentVoiceType = vFF_API_Character.GetCharacterVoiceType(CurrentSID)
-	String sVoiceTypeName = DataManager.GetVoiceTypeName(CurrentVoiceType)
-	If !sVoiceTypeName
-		sVoiceTypeName = "Default"
-	EndIf
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
+		AddEmptyOption()
 
-	AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
-	If PanelLeft == PANEL_CHAR_OPTIONS
-		SetCursorPosition(22)
-		AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
-	EndIf
-EndFunction
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_BEHAVIOR","$Faction and behavior")
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_STATS","$Skills and stats")
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
+		OptionFlags = 0
 
-Function ShowPanel_CharacterBehavior(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS_BEHAVIOR
-	SetCursorFillMode(TOP_TO_BOTTOM)
-	
-	SetCursorPosition(aiLeftRight)
-	AddHeaderOption("$Factions")
-	AddEmptyOption()
-	Int 	iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
-	Bool 	bVanish				= GetSessionBool("Config." + CurrentSID + ".Behavior.VanishOnDeath")
+		;=== Character voicetype option ===--
+		CurrentVoiceType = vFF_API_Character.GetCharacterVoiceType(CurrentSID)
+		String sVoiceTypeName = DataManager.GetVoiceTypeName(CurrentVoiceType)
+		If !sVoiceTypeName
+			sVoiceTypeName = "Default"
+		EndIf
 
-	AddTextOptionST("OPTION_TEXT_CHAR_PLAYERRELATIONSHIP", "$Player relationship", ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship])
-	AddEmptyOption()
-	AddHeaderOption("$Behavior")
-	AddEmptyOption()
-	AddHeaderOption("$Combat")
-	CurrentCombatStyle = vFF_API_Character.GetCharacterCombatStyle(CurrentSID)
-	String sCombatStyleName = JFormMap.GetStr(GetRegObj("CombatStyles.FormMap"),CurrentCombatStyle)
-	If !sCombatStyleName
-		sCombatStyleName = "$Unknown"
-	EndIf
-	AddMenuOptionST("OPTION_TEXT_CHAR_COMBATSTYLE", "$CombatStyle", sCombatStyleName)
+		AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
+		;If PanelLeft == PANEL_CHAR_OPTIONS
+		;	SetCursorPosition(22)
+		;	AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
+		;EndIf
+	EndEvent
 
-EndFunction
+EndState
 
-Function ShowPanel_CharacterStats(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS_STATS
-	SetCursorFillMode(TOP_TO_BOTTOM)
-	
-	SetCursorPosition(aiLeftRight)
-	AddHeaderOption("$Stats and Skills")
-	AddEmptyOption()
-	AddEmptyOption()
-	AddHeaderOption("$Skill settings")
+State PANEL_CHAR_OPTIONS_BEHAVIOR
 
-EndFunction
+	Event OnPanelAdd(Int aiLeftRight)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		SetCursorPosition(aiLeftRight)
+		AddHeaderOption("$Factions")
+		AddEmptyOption()
+		Int 	iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
+		Bool 	bVanish				= GetSessionBool("Config." + CurrentSID + ".Behavior.VanishOnDeath")
 
-Function ShowPanel_CharacterMagic(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS_MAGIC
-	SetCursorFillMode(TOP_TO_BOTTOM)
-	
-	SetCursorPosition(aiLeftRight)
-	AddHeaderOption("{$Magic and Shouts}")
+		AddTextOptionST("OPTION_TEXT_CHAR_PLAYERRELATIONSHIP", "$Player relationship", ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship])
+		AddEmptyOption()
+		AddHeaderOption("$Behavior")
+		AddEmptyOption()
+		AddHeaderOption("$Combat")
+		CurrentCombatStyle = vFF_API_Character.GetCharacterCombatStyle(CurrentSID)
+		String sCombatStyleName = JFormMap.GetStr(GetRegObj("CombatStyles.FormMap"),CurrentCombatStyle)
+		If !sCombatStyleName
+			sCombatStyleName = "$Unknown"
+		EndIf
+		AddMenuOptionST("OPTION_TEXT_CHAR_COMBATSTYLE", "$CombatStyle", sCombatStyleName)
 
-	Bool bAutoMagic 		= GetSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks",True)
-	Bool bAllowHealing 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowHealing",True)
-	Bool bAllowDefense 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowDefense",True)
-	Bool bBlockWallOfs 		= GetSessionBool("Config." + CurrentSID + ".Magic.BlockWallOfs",True)
+	EndEvent
+EndState
 
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS","$Auto select spells by perks",bAutoMagic)
-	AddPanelLink("OPTION_TEXT_CHAR_MAGIC_BYSCHOOL", "$Choose allowed magic", PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL, Math.LogicalAnd(OPTION_FLAG_DISABLED,bAutoMagic as Int))
-	AddEmptyOption()
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING","$Always allow healing",bAllowHealing)
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE","$Always allow defense",bAllowDefense)
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_BLOCKWALLOFS","$Always disable walls",bBlockWallOfs)
+State PANEL_CHAR_OPTIONS_STATS
 
-	AddEmptyOption()
+	Event OnPanelAdd(Int aiLeftRight)
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		SetCursorPosition(aiLeftRight)
+		AddHeaderOption("$Stats and Skills")
+		AddEmptyOption()
+		AddEmptyOption()
+		AddHeaderOption("$Skill settings")
 
-	AddHeaderOption("$Shout settings")
+	EndEvent
 
-	Bool bDisableShouts 	= GetSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
+EndState
 
-	AddToggleOptionST("OPTION_TOGGLE_CHAR_SHOUTS_DISABLED","{$Disable} {$Shouts}",bDisableShouts)
-	AddPanelLink("OPTION_TEXT_CHAR_SHOUTS_MANAGE", "$Choose allowed Shouts", PANEL_CHAR_OPTIONS_SHOUTS_MANAGE, Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisableShouts as Int))
-	;AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$More_button",OptionFlags)
-	; AddEmptyOption()
-	If PanelLeft == PANEL_CHAR_OPTIONS_MAGIC
-		SetCursorPosition(22)
-		AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Options")
-	EndIf
-EndFunction
+State PANEL_CHAR_OPTIONS_MAGIC
 
-Function ShowPanel_CharacterMagic_BySchool(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
+	Event OnPanelAdd(Int aiLeftRight)
+
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		SetCursorPosition(aiLeftRight)
+		AddHeaderOption("{$Magic and Shouts}")
+
+		Bool bAutoMagic 		= GetSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks",True)
+		Bool bAllowHealing 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowHealing",True)
+		Bool bAllowDefense 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowDefense",True)
+		Bool bBlockWallOfs 		= GetSessionBool("Config." + CurrentSID + ".Magic.BlockWallOfs",True)
+
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS","$Auto select spells by perks",bAutoMagic)
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL", "$Choose allowed magic", Math.LogicalAnd(OPTION_FLAG_DISABLED,bAutoMagic as Int))
+		AddEmptyOption()
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING","$Always allow healing",bAllowHealing)
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE","$Always allow defense",bAllowDefense)
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_BLOCKWALLOFS","$Always disable walls",bBlockWallOfs)
+
+		AddEmptyOption()
+
+		AddHeaderOption("$Shout settings")
+
+		Bool bDisableShouts 	= GetSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
+
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_SHOUTS_DISABLED","{$Disable} {$Shouts}",bDisableShouts)
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_SHOUTS_MANAGE", "$Choose allowed Shouts", Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisableShouts as Int))
+		;AddTextOptionST("OPTION_TEXT_CHAR_SHOUTS_MANAGE","$Choose allowed Shouts","$More_button",OptionFlags)
+		; AddEmptyOption()
+		;If PanelLeft == PANEL_CHAR_OPTIONS_MAGIC
+		;	SetCursorPosition(22)
+		;	AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Options")
+		;EndIf
+	EndEvent
+EndState
+
+State PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
+
+	Event OnPanelAdd(Int aiLeftRight)
+
 	SetCursorFillMode(TOP_TO_BOTTOM)
 	
 	SetCursorPosition(aiLeftRight)
@@ -378,45 +363,39 @@ Function ShowPanel_CharacterMagic_BySchool(Int aiLeftRight)
 	;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
 
 
-EndFunction
-
-Function ShowPanel_CharacterMagic_ShoutsManage(Int aiLeftRight)
-;PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
-	SetCursorFillMode(TOP_TO_BOTTOM)
-	
-	SetCursorPosition(aiLeftRight)
-	AddHeaderOption("{$Shouts Allowed}")
-	Int OptionFlags = 0
-
-	Int jShoutsArray 	= GetRegObj("Characters." + CurrentSID + ".Shouts")
-	Int jShoutsBL		= GetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist")
-	Int iShoutCount = JArray.Count(jShoutsArray)
-
-	iShoutOptions = Utility.CreateIntArray(iShoutCount)
-
-	Int i = 0
-	While i < iShoutCount
-		Shout kShout = JArray.GetForm(jShoutsArray,i) as Shout
-		Bool bEnabled = True
-		If jShoutsBL
-			If JArray.FindForm(jShoutsBL,kShout) >= 0
-				bEnabled = False
-			EndIf
-		EndIf
-		iShoutOptions[i] = AddToggleOption(kShout.GetName(), bEnabled)
-		i += 1
-	EndWhile
-
-EndFunction
-
-; == Panel: Go back ===--
-State OPTION_TEXT_BACK
-
-	Event OnSelectST()
-		PopPanel()
-		ForcePageReset()
 	EndEvent
+EndState
 
+State PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
+
+	Event OnPanelAdd(Int aiLeftRight)
+
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		
+		SetCursorPosition(aiLeftRight)
+		AddHeaderOption("{$Shouts Allowed}")
+		Int OptionFlags = 0
+
+		Int jShoutsArray 	= GetRegObj("Characters." + CurrentSID + ".Shouts")
+		Int jShoutsBL		= GetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist")
+		Int iShoutCount = JArray.Count(jShoutsArray)
+
+		iShoutOptions = Utility.CreateIntArray(iShoutCount)
+
+		Int i = 0
+		While i < iShoutCount
+			Shout kShout = JArray.GetForm(jShoutsArray,i) as Shout
+			Bool bEnabled = True
+			If jShoutsBL
+				If JArray.FindForm(jShoutsBL,kShout) >= 0
+					bEnabled = False
+				EndIf
+			EndIf
+			iShoutOptions[i] = AddToggleOption(kShout.GetName(), bEnabled)
+			i += 1
+		EndWhile
+
+	EndEvent
 EndState
 
 ; == Text: Summon character ===--
@@ -461,19 +440,6 @@ State OPTION_TOGGLE_CHAR_TRACKING
 
 EndState
 
-; == Option: Character factions and behavior panel ===--
-State OPTION_TEXT_CHAR_BEHAVIOR
-	
-	Event OnSelectST()
-		If TopPanel() != PANEL_CHAR_OPTIONS
-			PopPanel()
-		EndIf
-		PushPanel(PANEL_CHAR_OPTIONS_BEHAVIOR)
-		ForcePageReset()	
-	EndEvent
-	
-EndState
-
 ; == Menu: CombatStyle picker ===--
 State OPTION_TEXT_CHAR_COMBATSTYLE
 
@@ -512,10 +478,10 @@ EndState
 State OPTION_TEXT_CHAR_STATS
 
 	Event OnSelectST()
-		If TopPanel() != PANEL_CHAR_OPTIONS
+		If TopPanel() != "PANEL_CHAR_OPTIONS"
 			PopPanel()
 		EndIf
-		PushPanel(PANEL_CHAR_OPTIONS_STATS)
+		PushPanel("PANEL_CHAR_OPTIONS_STATS")
 		ForcePageReset()
 	EndEvent
 
@@ -525,10 +491,10 @@ EndState
 State OPTION_TEXT_CHAR_MAGIC
 
 	Event OnSelectST()
-		If TopPanel() != PANEL_CHAR_OPTIONS
+		If TopPanel() != "PANEL_CHAR_OPTIONS"
 			PopPanel()
 		EndIf
-		PushPanel(PANEL_CHAR_OPTIONS_MAGIC)
+		PushPanel("PANEL_CHAR_OPTIONS_MAGIC")
 		ForcePageReset()
 	EndEvent
 
@@ -539,9 +505,10 @@ State OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS
 	Event OnSelectST()
 		Bool bValue = ToggleSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks")
 		SetToggleOptionValueST(bValue,True,GetState())
-		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bValue as Int), false, "OPTION_TEXT_CHAR_MAGIC_BYSCHOOL")
+		DebugTrace("OnSelectST called in " + GetState())
+		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bValue as Int), false, "PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL")
 		;Handle player setting auto-select while magic panel is open
-		If bValue && TopPanel() == PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
+		If bValue && TopPanel() == "PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL"
 			PopPanel()
 			ForcePageReset()
 		EndIf
@@ -617,10 +584,10 @@ EndState
 State OPTION_TEXT_CHAR_MAGIC_BYSCHOOL
 
 	Event OnSelectST()
-		If TopPanel() != PANEL_CHAR_OPTIONS_MAGIC
+		If TopPanel() != "PANEL_CHAR_OPTIONS_MAGIC"
 			PopPanel()
 		EndIf
-		PushPanel(PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL)
+		PushPanel("PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL")
 		ForcePageReset()
 	EndEvent
 
@@ -632,10 +599,10 @@ State OPTION_TOGGLE_CHAR_SHOUTS_DISABLED
 	Event OnSelectST()
 		Bool bDisabled = ToggleSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
 		SetToggleOptionValueST(bDisabled,False,GetState())
-		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisabled as Int), false, "OPTION_TEXT_CHAR_SHOUTS_MANAGE")
+		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisabled as Int), false, "PANEL_CHAR_OPTIONS_SHOUTS_MANAGE")
 		
 		;Handle player disabling shouts while shout management panel is open
-		If bDisabled && TopPanel() == PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
+		If bDisabled && TopPanel() == "PANEL_CHAR_OPTIONS_SHOUTS_MANAGE"
 			PopPanel()
 			ForcePageReset()
 		EndIf
@@ -647,10 +614,10 @@ EndState
 State OPTION_TEXT_CHAR_SHOUTS_MANAGE
 
 	Event OnSelectST()
-		If TopPanel() != PANEL_CHAR_OPTIONS_MAGIC
+		If TopPanel() != "PANEL_CHAR_OPTIONS_MAGIC"
 			PopPanel()
 		EndIf
-		PushPanel(PANEL_CHAR_OPTIONS_SHOUTS_MANAGE)
+		PushPanel("PANEL_CHAR_OPTIONS_SHOUTS_MANAGE")
 		ForcePageReset()
 	EndEvent
 
@@ -705,54 +672,9 @@ Function DoInit()
 	CharacterNames = vFF_API_Character.GetAllNames()
 	GetVoiceTypeList()
 	GetCombatStyleList()
-	PanelStack = New Int[128]
 EndFunction
 
-Function PushPanel(Int aiPanelID)
-	Int idx = PanelStack.Find(0)
-	PanelStack[idx] = aiPanelID
-	PrintPanels()
-EndFunction
 
-Int Function PopPanel()
-	Int idx = PanelStack.Find(0)
-	If idx <= 0
-		Return 0
-	EndIf
-	Int iRet = PanelStack[idx - 1]
-	PanelStack[idx - 1] = 0
-	PrintPanels()
-	Return iRet
-EndFunction
-
-Int Function TopPanel(Int aiBack = 0)
-	Int idx = PanelStack.Find(0)
-	If idx <= 0 || idx - (aiBack + 1) < 0
-		Return 0
-	EndIf
-	Int iRet = PanelStack[idx - (aiBack + 1)]
-	PrintPanels()
-	Return iRet
-EndFunction
-
-Function PrintPanels()
-	Int i = 0
-	String sPrint = "Panel stack: "
-	While i < PanelStack.Length && PanelStack[i] 
-		sPrint += PanelStack[i] + " "
-		i += 1
-	EndWhile
-	DebugTrace(sPrint)
-EndFunction
-
-Function AddPanelLink(string a_stateName, string a_text, Int aiPanelIndex, int a_flags = 0)
-	String a_value = "$More_button"
-	If PanelRight == aiPanelIndex
-		a_flags = OPTION_FLAG_DISABLED
-		a_value	= "$Back_button"
-	EndIf
-	AddTextOptionST(a_stateName, a_text, a_value, a_flags)
-EndFunction
 
 Function FillEnums()
 

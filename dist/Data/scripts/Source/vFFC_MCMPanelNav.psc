@@ -1,127 +1,165 @@
 Scriptname vFFC_MCMPanelNav extends SKI_ConfigBase
 {MCM config script for Familiar Faces 2.0.}
 
-Int[] 		Property 	PanelIDs 		Auto Hidden
-String[] 	Property 	PanelNames 		Auto Hidden
+String[] 	Property 	PanelStates		Auto Hidden
+String[] 	Property 	PanelNames		Auto Hidden
+String[] 	Property 	PanelParents	Auto Hidden
 
-Int[]		Property 	MnuOpt_IDs 			Auto Hidden
-String[] 	Property 	MnuOpt_Names 		Auto Hidden
-String[] 	Property 	MnuOpt_Param_Text	Auto Hidden
-String[] 	Property 	MnuOpt_Param_Value 	Auto Hidden
-Int[] 		Property 	MnuOpt_Param_Flags 	Auto Hidden
 
-Int[]		Property 	TogOpt_IDs 			Auto Hidden
-String[] 	Property 	TogOpt_Names 		Auto Hidden
-String[] 	Property 	TogOpt_Param_Text	Auto Hidden
-Bool[] 		Property 	TogOpt_Param_Value 	Auto Hidden
-Int[] 		Property 	TogOpt_Param_Flags 	Auto Hidden
+String[]	Property 	PanelStack 		Auto Hidden
 
-Int[]		Property 	TxtOpt_IDs 			Auto Hidden
-String[] 	Property 	TxtOpt_Names 		Auto Hidden
-String[] 	Property 	TxtOpt_Param_Text	Auto Hidden
-String[] 	Property 	TxtOpt_Param_Value 	Auto Hidden
-Int[] 		Property 	TxtOpt_Param_Flags 	Auto Hidden
-
-Int[]		Property 	HdrOpt_IDs 			Auto Hidden
-String[] 	Property 	HdrOpt_Names 		Auto Hidden
-String[] 	Property 	HdrOpt_Param_Text	Auto Hidden
-String[] 	Property 	HdrOpt_Param_Value 	Auto Hidden
-Int[] 		Property 	HdrOpt_Param_Flags 	Auto Hidden
-
-Int[]		Property 	EmtOpt_IDs 			Auto Hidden
-String[] 	Property 	EmtOpt_Names 		Auto Hidden
-
-Int[] 		Property 	PanelOptionIDs 		Auto Hidden
-
-Int[] 		Property 	PanelStack 		Auto Hidden
+String		Property 	PanelLeft 		Auto Hidden
+String		Property 	PanelRight		Auto Hidden
 
 Event OnInit()
-	PanelStack		= New Int[128]
+	PanelStack		= New String[128]
 	
-	PanelIDs 		= New Int[128]	
-	PanelNames 		= New String[128]
+	PanelStates 	= New String[128]
+	PanelNames	 	= New String[128]
+	PanelParents	= New String[128]
 	
-	PanelOptionIDs 	= New Int[128]	
-
 	Parent.OnInit()
 EndEvent
 
-Int Function CreatePanel(String asPanelName)
-	Int iPanelIdx = GetPanelID(asPanelName)
-	If iPanelIdx >= 0
-		Return iPanelIdx
+String Function GetPanelName(String asPanelState)
+	Int idx = PanelStates.Find(asPanelState)
+	If idx >= 0 
+		Return PanelNames[idx]
+	EndIf
+	Return ""
+EndFunction
+
+String Function GetPanelParent(String asPanelState)
+	Int idx = PanelStates.Find(asPanelState)
+	If idx >= 0 
+		Return PanelParents[idx]
+	EndIf
+	Return ""
+EndFunction
+
+Function CreatePanel(String asPanelState, String asPanelName, String asPanelParent = "")
+	Int idx = PanelStates.Find(asPanelState)
+	If idx >= 0 ; Panel already exists
+		PanelNames[idx] 	= asPanelName
+		PanelParents[idx] 	= asPanelParent
+		Return
 	Else
-		iPanelIdx = PanelStack.Find(0)
-		If iPanelIdx <= 0
-			Return 0
-		Else
-			Return iPanelIdx
-		EndIf
+		idx = PanelStates.Find("") ; return empty slot
+		PanelStates[idx] = asPanelState
+		PanelNames[idx] = asPanelName
+		PanelParents[idx] = asPanelParent
 	EndIf
 EndFunction
 
-Int Function GetPanelID(String asPanelName)
-	Int iPanelIdx = PanelNames.Find(asPanelName)
-	Return iPanelIdx
-EndFunction
-
-Int Function AddPanelMenuOption(Int aiPanelID, String asOptionName, string a_text, string a_value, int a_flags = 0)
-	
-EndFunction
-
-Int Function AddPanelToggleOption(Int aiPanelID, String asOptionName, string a_text, bool a_checked, int a_flags = 0)
-
-EndFunction
-
-Int Function AddPanelTextOption(Int aiPanelID, String asOptionName, string a_text, string a_value, int a_flags = 0)
-
-EndFunction
-
-Int Function AddPanelHeaderOption(Int aiPanelID, string a_text, int a_flags = 0)
-
-EndFunction
-
-Function AddPanelEmptyOption(Int aiPanelID)
-
-EndFunction
-
-Function PushPanel(Int aiPanelID)
-	Int idx = PanelStack.Find(0)
-	PanelStack[idx] = aiPanelID
+Function PushPanel(String asPanelState)
+	Int idx = PanelStack.Find("")
+	PanelStack[idx] = asPanelState
 	PrintPanels()
 EndFunction
 
-Int Function PopPanel()
-	Int idx = PanelStack.Find(0)
+String Function PopPanel()
+	Int idx = PanelStack.Find("")
 	If idx <= 0
-		Return 0
+		Return ""
 	EndIf
-	Int iRet = PanelStack[idx - 1]
-	PanelStack[idx - 1] = 0
+	String sRet = PanelStack[idx - 1]
+	PanelStack[idx - 1] = ""
 	PrintPanels()
-	Return iRet
+	Return sRet
 EndFunction
 
-Int Function TopPanel(Int aiBack = 0)
-	Int idx = PanelStack.Find(0)
+String Function TopPanel(Int aiBack = 0)
+	Int idx = PanelStack.Find("")
 	If idx <= 0 || idx - (aiBack + 1) < 0
-		Return 0
+		Return ""
 	EndIf
-	Int iRet = PanelStack[idx - (aiBack + 1)]
+	String sRet = PanelStack[idx - (aiBack + 1)]
 	PrintPanels()
-	Return iRet
+	Return sRet
 EndFunction
 
 Function PrintPanels()
 	Int i = 0
 	String sPrint = "Panel stack: "
+	String sArrow = ""
 	While i < PanelStack.Length && PanelStack[i] 
-		sPrint += PanelStack[i] + " "
+		sPrint += sArrow + PanelStack[i]
+		sArrow = "->"
 		i += 1
 	EndWhile
 	DebugTrace(sPrint)
 EndFunction
 
+Function DisplayPanels()
+	String sPanelLeft 	= TopPanel(1)
+	String sPanelRight 	= TopPanel()
+	If sPanelLeft
+		PanelLeft = sPanelLeft
+	EndIf
+	If sPanelRight
+		PanelRight = sPanelRight
+	EndIf
+	AddPanel(PanelLeft,0)
+	AddPanel(PanelRight,1)
+EndFunction
+
+Function AddPanel(String asPanelState, Int aiLeftRight)
+	String sPrevState = GetState()
+	GotoState(asPanelState)
+	OnPanelAdd(aiLeftRight)
+	If TopPanel(2) && aiLeftRight == 0
+		SetCursorPosition(22)
+		AddTextOptionST("OPTION_TEXT_BACK","$Back_button", GetPanelName(TopPanel(2)))
+	EndIf
+	GoToState(sPrevState)
+EndFunction
+
+Function AddPanelLinkOption(String asPanelState, String asOptionText, Int aiOptionFlags = 0)
+	String sOptionValue = "$More_button"
+	If PanelRight == asPanelState
+		aiOptionFlags = OPTION_FLAG_DISABLED
+		sOptionValue	= "$Back_button"
+	EndIf
+	AddTextOptionST(asPanelState, asOptionText, sOptionValue, aiOptionFlags)
+EndFunction
+
+Event OnSelectST()
+	String sState = GetState()
+	If !sState ; Really called outside state, pass up and do nothing
+		Parent.OnSelectST()
+		Return
+	EndIf
+	Int idx = PanelStates.Find(sState)
+	If idx >= 0 ; Called from a PanelLink
+		String sPanelParent = GetPanelParent(sState)
+		If TopPanel() != sPanelParent
+			PopPanel()
+		EndIf
+		PushPanel(sState)
+		ForcePageReset()
+	Else 
+		Parent.OnSelectST()
+	EndIf
+EndEvent
+
+Function AddBackButton()
+
+EndFunction
+
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
 	Debug.Trace("vFF/PanelNav: " + sDebugString,iSeverity)
 EndFunction
+
+Event OnPanelAdd(Int aiLeftRight)
+	DebugTrace("OnPanelAdd called on parent script!")
+EndEvent
+
+; == Panel: Go back ===--
+State OPTION_TEXT_BACK
+
+	Event OnSelectST()
+		PopPanel()
+		ForcePageReset()
+	EndEvent
+
+EndState
