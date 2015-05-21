@@ -97,15 +97,16 @@ Event OnConfigInit()
 	Pages[4] = "$Debugging"
 
 
-CreatePanel("PANEL_CHAR_PICKER","$Character Picker")
-CreatePanel("PANEL_CHAR_OPTIONS","$Character Options","PANEL_CHAR_PICKER")
-CreatePanel("PANEL_CHAR_OPTIONS_STATS","$Character Stats","PANEL_CHAR_OPTIONS")
-CreatePanel("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts","PANEL_CHAR_OPTIONS")
-CreatePanel("PANEL_CHAR_OPTIONS_EQUIP","$Equipment","PANEL_CHAR_OPTIONS")
-CreatePanel("PANEL_CHAR_OPTIONS_BEHAVIOR","$Behavior","PANEL_CHAR_OPTIONS")
-CreatePanel("PANEL_CHAR_OPTIONS_COMBAT","$Combat behavior","PANEL_CHAR_OPTIONS")
-CreatePanel("PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL","$Magic by school","PANEL_CHAR_OPTIONS_MAGIC")
-CreatePanel("PANEL_CHAR_OPTIONS_SHOUTS_MANAGE","$Manage Shouts","PANEL_CHAR_OPTIONS_MAGIC")
+	CreatePanel("PANEL_CHAR_PICKER","$Character Picker")
+	CreatePanel("PANEL_CHAR_OPTIONS","$Character Options","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_INFO","$Character Info","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_OPTIONS_STATS","$Character Stats","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_OPTIONS_EQUIP","$Equipment","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_OPTIONS_BEHAVIOR","$Behavior","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_OPTIONS_COMBAT","$Combat behavior","PANEL_CHAR_OPTIONS_BEHAVIOR")
+	CreatePanel("PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL","$Magic by school","PANEL_CHAR_OPTIONS_MAGIC")
+	CreatePanel("PANEL_CHAR_OPTIONS_SHOUTS_MANAGE","$Manage Shouts","PANEL_CHAR_OPTIONS_MAGIC")
 
 EndEvent
 
@@ -117,7 +118,7 @@ Event OnPageReset(string a_page)
 	
 	; === Handle Logo ===--
 	If (a_page == "")
-        LoadCustomContent("vFFC_fflogo.dds")
+        LoadCustomContent("vMYC_fflogo.dds")
         Return
     Else
         UnloadCustomContent()
@@ -127,7 +128,7 @@ Event OnPageReset(string a_page)
 	If a_page == Pages[0]
 		If !TopPanel()
 			PushPanel("PANEL_CHAR_PICKER")
-			PushPanel("PANEL_CHAR_OPTIONS")
+			PushPanel("PANEL_CHAR_INFO")
 		EndIf
 	Else
 
@@ -166,9 +167,60 @@ State PANEL_CHAR_PICKER
 			AddTextOption("$Error:","No data found!")
 			Return
 		EndIf
+		AddEmptyOption()
+		AddPanelLinkOption("PANEL_CHAR_INFO","$Character Info")
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_BEHAVIOR","$Faction and behavior")
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_STATS","$Skills and stats")
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
 
-		; === Begin info column ===--
+	EndEvent
+EndState
+
+Function ShowOptions_SIDPicker(Int aiLeftRight, Bool abDisabled = False)
+	SetCursorPosition(aiLeftRight + 2)
+	AddMenuOptionST("OPTION_MENU_SID_PICKER","$Choose session:",StringUtil.Substring(CurrentSID, StringUtil.GetLength(CurrentSID) - 7),abDisabled as Int)
+EndFunction
+
+State PANEL_CHAR_OPTIONS
+
+	Event OnPanelAdd(Int aiLeftRight)
+
+		SetCursorFillMode(TOP_TO_BOTTOM)
 		
+		SetCursorPosition(aiLeftRight)
+
+		Int OptionFlags = 0
+
+		AddHeaderOption(CurrentCharacterName + " Options")
+
+		;AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
+		AddEmptyOption()
+		
+		OptionFlags = 0
+
+		;=== Character voicetype option ===--
+		CurrentVoiceType = vFF_API_Character.GetCharacterVoiceType(CurrentSID)
+		String sVoiceTypeName = DataManager.GetVoiceTypeName(CurrentVoiceType)
+		If !sVoiceTypeName
+			sVoiceTypeName = "Default"
+		EndIf
+
+		AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
+		;If PanelLeft == PANEL_CHAR_OPTIONS
+		;	SetCursorPosition(22)
+		;	AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
+		;EndIf
+	EndEvent
+
+EndState
+
+State PANEL_CHAR_INFO
+
+	Event OnPanelAdd(Int aiLeftRight)
+; === Begin info column ===--
+		If !CurrentSID 
+			Return
+		EndIf
 		SetCursorPosition(aiLeftRight + 6)
 		
 		String[] sSex 	= New String[2]
@@ -218,47 +270,6 @@ State PANEL_CHAR_PICKER
 		;	OPTION_TEXT_MODREQREPORT = AddTextOption("{$View mod requirements}","$Report")
 		;EndIf
 		;===== END info column =============----
-
-	EndEvent
-EndState
-
-Function ShowOptions_SIDPicker(Int aiLeftRight, Bool abDisabled = False)
-	SetCursorPosition(aiLeftRight + 2)
-	AddMenuOptionST("OPTION_MENU_SID_PICKER","$Choose session:",StringUtil.Substring(CurrentSID, StringUtil.GetLength(CurrentSID) - 7),abDisabled as Int)
-EndFunction
-
-State PANEL_CHAR_OPTIONS
-
-	Event OnPanelAdd(Int aiLeftRight)
-
-		SetCursorFillMode(TOP_TO_BOTTOM)
-		
-		SetCursorPosition(aiLeftRight)
-
-		Int OptionFlags = 0
-
-		AddHeaderOption(CurrentCharacterName + " Options")
-
-		AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
-		AddEmptyOption()
-
-		AddPanelLinkOption("PANEL_CHAR_OPTIONS_BEHAVIOR","$Faction and behavior")
-		AddPanelLinkOption("PANEL_CHAR_OPTIONS_STATS","$Skills and stats")
-		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
-		OptionFlags = 0
-
-		;=== Character voicetype option ===--
-		CurrentVoiceType = vFF_API_Character.GetCharacterVoiceType(CurrentSID)
-		String sVoiceTypeName = DataManager.GetVoiceTypeName(CurrentVoiceType)
-		If !sVoiceTypeName
-			sVoiceTypeName = "Default"
-		EndIf
-
-		AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
-		;If PanelLeft == PANEL_CHAR_OPTIONS
-		;	SetCursorPosition(22)
-		;	AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
-		;EndIf
 	EndEvent
 
 EndState
