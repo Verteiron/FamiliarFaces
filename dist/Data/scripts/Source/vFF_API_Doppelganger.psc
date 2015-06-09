@@ -907,8 +907,10 @@ EndFunction
 
 ;=== Spell functions ===--
 
-Int Function UpdateSpells(String asSID, Actor akActor) Global
+Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True) Global
 {Apply Spells. 
+ bUseActorBase: If True, Spells are added to the ActorBase rather than the Actor and will thus ignore the RemoveSpell function.
+                This is faster but may not always be the desired behavior.
  Returns: -1 for failure, or number of Spells applied for success.}
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
@@ -970,6 +972,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	sAllowedSources[2] = "Dawnguard.esm"
 	sAllowedSources[3] = "Dragonborn.esm"
 	sAllowedSources[4] = "Hearthfires.esm"
+	sAllowedSources[5] = "Colorful_Magic.esp" ; FIXME: Test only!
 
 	Bool bAllowHealing = GetSessionBool("Config." + asSID + ".Magic.AllowHealing")
 	Bool bAllowDefense = GetSessionBool("Config." + asSID + ".Magic.AllowDefense")
@@ -988,6 +991,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 	Int jSkipped = JArray.Object()
 	SetSessionObj("Config." + asSID + ".Spells.Allowed",jAllowed)
 	SetSessionObj("Config." + asSID + ".Spells.Skipped",jSkipped)
+	DebugTraceAPIDopp(asSID,"Filtering spells. AllowHealing:" + bAllowHealing + ", AllowDefense:" + bAllowDefense + ", BlockWalls:" + bBlockWallOfs + ", Dawnguard:" + bDawnguard)
 	While i > 0
 		i -= 1
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
@@ -998,10 +1002,14 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			
 			If sMagicSchool
 				bSpellIsAllowed = GetSessionBool("Config." + asSID + ".Magic.Allow" + sMagicSchool)
-				sReason = "AllowedSchool"
 			Else
 				bSpellIsAllowed = GetSessionBool("Config." + asSID + ".Magic.AllowOther")
-				sReason = "AllowedOther"
+			EndIf
+
+			If bSpellIsAllowed
+				sReason = "Allowed School:" + sMagicSchool
+			Else
+				sReason = "Blocked School:" + sMagicSchool
 			EndIf
 			
 			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
@@ -1009,19 +1017,19 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			If bAllowHealing ;sMagicSchool == "Restoration" && 
 				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
 					bSpellIsAllowed = True
-					sReason = "Healing"
+					sReason += " Healing"
 				ElseIf vFFC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
-					sReason = "HealingList"
+					sReason += " HealingList"
 					bSpellIsAllowed = True
 				EndIf
 			EndIf
 			
 			If bAllowDefense
 				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-					sReason = "Armor"
+					sReason += " Armor"
 					bSpellIsAllowed = True
 				ElseIf vFFC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
-					sReason = "ArmorList"
+					sReason += " ArmorList"
 					bSpellIsAllowed = True
 				EndIf
 			EndIf
@@ -1029,7 +1037,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 			If bBlockWallOfs
 				String sSpellName = kSpell.GetName()
 				If StringUtil.Find(sSpellName,"Wall of ") == 0
-					sReason = "No wall spells"
+					sReason += " No wall spells"
 					bSpellIsAllowed = False
 				EndIf
 			EndIf
@@ -1038,7 +1046,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				Spell kDLC01SummonSoulHorse = Game.GetFormFromFile(0x0200C600, "Dawnguard.esm") as Spell
 				If kSpell == kDLC01SummonSoulHorse
 					bSpellIsAllowed = False
-					sReason = "PlayerOnly"
+					sReason += " PlayerOnly"
 				EndIf
 			EndIf
 
@@ -1047,6 +1055,7 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 
 			If iCastingType == 0 && iDeliveryType == 0
 				bSpellIsAllowed = True ; Allow self-abilities, probably from a stone or perk
+				sReason += " Self-Ability"
 			EndIf
 
 			If bSpellIsAllowed
@@ -1055,45 +1064,58 @@ Int Function UpdateSpells(String asSID, Actor akActor) Global
 				;See if this spell is from an approved source
 				String sSpellSource = FFUtils.GetSourceMod(kSpell) 
 				If sAllowedSources.Find(sSpellSource) > -1
-					sReason += ".AllowedSource"
+					sReason += " AllowedSource(" + sSpellSource + ")"
 					bSpellIsAllowed = True
 				ElseIf vFFC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
-					sReason += ".CompatibilityList"
+					sReason += " CompatibilityList(" + sSpellSource + ")"
 				;A mod author has gone to the trouble of assuring us the spell is compatible.
 					bSpellIsAllowed = True
+				Else
+					sReason += " BlockedSource(" + sSpellSource + ")"
 				EndIf
 			EndIf
 
 			If vFFC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
 			;A mod author has added the spell to the unsafe list.
 				bSpellIsAllowed = False
-				sReason = "UnsafeList"
+				sReason += " UnsafeList"
 			EndIf
 				
 			
-			If bSpellIsAllowed ;&& !akActor.HasSpell(kSpell)
+			If bSpellIsAllowed
 				akAllowedSpells[i] = kSpell
 				iAdded += 1
-				JArray.AddStr(JAllowed,kSpell.GetName())
-				;If akActor.AddSpell(kSpell,False)
-					;DebugTraceAPIDopp(asSID,"Added " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ") from " + GetModName(Math.RightShift(kSpell.GetFormID(),24)))
-				;EndIf
-			Else ;If !bSpellIsAllowed && akActor.HasSpell(kSpell)
-				JArray.AddStr(JSkipped,kSpell.GetName())
-			;	;Remove only if it is hostile, or has a duration, or has an associated cost discount perk. This way we avoid stripping perk, race, and doom stone abilities
-			;	If kMagicEffect.IsEffectFlagSet(0x00000001) || kSpell.GetPerk() || kSpell.GetNthEffectDuration(0) > 0
-			;		If akActor.RemoveSpell(kSpell)
-			;			;DebugTraceAPIDopp(asSID,"Removed " + sMagicSchool + " spell - " + kSpell.GetName() + " (" + kSpell + ")")
-					 iSkipped += 1
-			;		EndIf
-			;	EndIf
+				JArray.AddForm(JAllowed,kSpell)
+				DebugTraceAPIDopp(asSID,"Allowed " + kSpell.GetName() + ": " + sReason)
+			Else
+				iSkipped += 1
+				JArray.AddForm(JSkipped,kSpell)
+				DebugTraceAPIDopp(asSID,"Skipped " + kSpell.GetName() + ": " + sReason)
 			EndIf
 		Else
 			;DebugTraceAPIDopp(asSID,"Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
 		EndIf
 	EndWhile
-	
-	FFUtils.SetSpellList(kActorBase,akAllowedSpells)
+	If bUseActorBase 
+		;Use FFUtils function to add the spell to the ActorBase rather than the Actor.
+		DebugTraceAPIDopp(asSID,"Adding " + akAllowedSpells.Length + " spells to ActorBase using SetSpellList!")
+		FFUtils.SetSpellList(kActorBase,akAllowedSpells)
+	Else 
+		;Add spells in the traditional way.
+		i = JArray.Count(JAllowed)
+		DebugTraceAPIDopp(asSID,"Adding " + i + " spells...")
+		While i > 0
+			i -= 1
+			akActor.AddSpell(JArray.GetForm(JAllowed,i) as Spell, abVerbose = False)
+		EndWhile
+		;Remove all spells that weren't allowed.
+		i = JArray.Count(JSkipped)
+		DebugTraceAPIDopp(asSID,"Removing " + i + " spells...")
+		While i > 0
+			i -= 1
+			akActor.RemoveSpell(JArray.GetForm(JSkipped,i) as Spell)
+		EndWhile
+	EndIf
 	If iAdded || iSkipped
 		DebugTraceAPIDopp(asSID,"Added " + iAdded + " spells, skipped " + iSkipped)
 	EndIf

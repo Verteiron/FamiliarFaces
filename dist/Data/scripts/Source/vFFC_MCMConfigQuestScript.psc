@@ -136,9 +136,6 @@ Event OnPageReset(string a_page)
 	DisplayPanels()
 EndEvent
 
-
-
-
 ; === Panel display functions ===--
 
 State PANEL_CHAR_PICKER
