@@ -60,9 +60,11 @@ Int _iUpkeepsCompleted
 ;=== Events ===--
 
 Event OnInit()
-	DebugTrace("Metaquest event: OnInit")
+	DebugTrace("Metaquest event: OnInit - IsRunning: " + IsRunning() + " ModVersion: " + ModVersion + " ModVersionMajor: " + ModVersionMajor)
 	If IsRunning() && ModVersion == 0 && !ModVersionMajor
-		DoUpkeep(False)
+		DoUpkeep(True)
+	;Else
+		;DoUpkeep(True)
 	EndIf
 EndEvent
 
