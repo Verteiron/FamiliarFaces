@@ -174,7 +174,7 @@ Event OnTrackerReady(string eventName, string strArg, float numArg, Form sender)
 		DebugTrace("Waiting to be not busy....")
 		WaitMenuMode(1)
 	EndWhile
-	;SavePlayerData()
+	SavePlayerData()
 	;Debug.MessageBox("Finished saving!")
 
 EndEvent
@@ -1111,7 +1111,7 @@ Int Function SavePlayerData()
 	SetRegStr(sRegKey + META + ".RaceText",kPlayerBase.GetRace().GetName())
 	SetRegInt(sRegKey + META + ".SerializationVersion",SerializationVersion)
 	
-	SetRegObj(sRegKey + "._vFF",GetRegObj(sRegKey + META))
+	;SetRegObj(sRegKey + "._vFF",GetRegObj(sRegKey + META))
 	
 	Int jPlayerModList = JArray.Object()
 	Int iModCount = GetModCount()
@@ -1354,20 +1354,43 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vFFC/")
 	StopTimer("ImportCharacterFiles")
 EndFunction
 
+Int Function UpdateMetaData(String asUUID)
+	Int jMetaData = GetRegObj("Characters." + asUUID + META)
+	If !jMetaData
+		jMetaData = GetRegObj("Characters." + asUUID + "._MYC")
+		If !jMetaData
+			jMetaData = GetRegObj("Characters." + asUUID + "._vFF")
+		EndIf
+		If jMetaData
+			DebugTrace("UpdateMetaData - Found Metadata at old location, moving it...")
+			SetRegObj("Characters." + asUUID + META,JValue.DeepCopy(jMetaData))
+			ClearRegKey("Characters." + asUUID + "._MYC")
+			ClearRegKey("Characters." + asUUID + "._vFF")
+		EndIf
+	EndIf
+	Return jMetaData
+EndFunction
+
 Function UpgradeRegistryData()
 	StartTimer("UpgradeRegistryData")
 	Int jCharacters = JMap.AllKeys(GetRegObj("Characters"))
+	JValue.addToPool(jCharacters,"vFF_CharacterPool")
 	Int i = JArray.Count(jCharacters)
 	While i > 0
 		i -= 1
 		String sUUID = JArray.GetStr(jCharacters,i)
-		Int iDataVersion = GetRegInt("Characters." + sUUID + META + ".SerializationVersion")
-		;If iDataVersion < SerializationVersion
+		Int jMetaData = UpdateMetaData(sUUID)
+		If jMetaData
+			Int iDataVersion = GetRegInt("Characters." + sUUID + META + ".SerializationVersion")
+			;If iDataVersion < SerializationVersion
 			String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
 			DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
 			UpgradeData(sUUID)
-		;EndIf
+		Else
+			DebugTrace("UpgradeRegistryData - No Metadata could be found for " + sUUID + "!")
+		EndIf
 	EndWhile
+	JValue.cleanPool("vFF_CharacterPool")
 	StopTimer("UpgradeRegistryData")
 EndFunction
 

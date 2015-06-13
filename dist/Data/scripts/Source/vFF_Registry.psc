@@ -86,6 +86,11 @@ Bool Function HasRegKey(String asPath) Global
 	Return JValue.hasPath(jReg,"." + asPath) || JMap.hasKey(jReg,asPath)
 EndFunction
 
+Function ClearRegKey(String asPath) Global
+	Int jReg = CreateRegDataIfMissing()
+	JValue.solveObjSetter(jReg,"." + asPath,0)
+EndFunction
+
 Function SetRegStr(String asPath, String asString, Bool abDeferSave = False, Bool abNoEvent = False) Global
 	Int jReg = CreateRegDataIfMissing()
 	JValue.solveStrSetter(jReg,"." + asPath,asString,True)
