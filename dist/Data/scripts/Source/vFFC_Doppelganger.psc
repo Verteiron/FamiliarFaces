@@ -142,6 +142,16 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnGameReload()
+	DebugTrace("Event: OnGameReload")
+	;If vFFC_CFG_Shutdown.GetValue() != 0
+	NeedRefresh = True
+	MyActorBase.SetName(CharacterName)
+	FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
+	DoUpkeep(True)
+	;EndIf
+EndEvent
+
 Event OnAnimationEvent(ObjectReference akSource, String asEventName)
 	DebugTrace("AnimationEvent:" + asEventName)
 	;If asEventName == "BeginCastVoice"
@@ -311,11 +321,11 @@ State Assigned
 			NeedAppearance	= True
 			NeedStats		= True
 			NeedPerks		= True
-			NeedSpells		= True
+			;NeedSpells		= True
 			NeedShouts		= True
-			NeedEquipment	= True
-			NeedInventory	= True
-			NeedUpkeep		= True
+			;NeedEquipment	= True
+			;NeedInventory	= True
+			;NeedUpkeep		= True
 			NeedBehavior 	= True
 		EndIf
 		If NeedBehavior
@@ -544,7 +554,7 @@ Int Function UpdateDisposition()
 			SetFactionRank(PotentialMarriageFaction,0)
 		ElseIf iPlayerRelationship < 3 && GetFactionRank(PotentialMarriageFaction) > -2
 			;FIXME: Make sure we aren't breaking relationship with a current spouse!
-			Debug.Trace("... except their bed! That'd be kind of weird.")
+			DebugTrace("... except their bed! That'd be kind of weird.")
 			RemoveFromFaction(PotentialMarriageFaction)
 		EndIf
 	Else

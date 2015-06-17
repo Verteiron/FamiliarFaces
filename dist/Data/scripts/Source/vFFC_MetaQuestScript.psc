@@ -76,8 +76,8 @@ Event OnUpdate()
 
 EndEvent
 
-Event OnGameReloaded()
-	DebugTrace("Metaquest event: OnGameReloaded")
+Event OnGameReload()
+	DebugTrace("Metaquest event: OnGameReload")
 	;If vFFC_CFG_Shutdown.GetValue() != 0
 		DoUpkeep(False)
 	;EndIf
@@ -155,7 +155,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		vFFC_ModUpdatedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	Else
 		;FIXME: Do init stuff in other quests
-;		CharacterManager.DoUpkeep()
+		DataManager.DoUpkeep(True)
 ;		ShrineOfHeroes.DoUpkeep()
 ;		HangoutManager.DoUpkeep()
 		DebugTrace("Loaded, no updates.")

@@ -247,6 +247,7 @@ Function DoUpkeep(Bool bInBackground = True)
 		RegisterForSingleUpdate(0.25)
 		Return
 	EndIf
+	NeedUpkeep = False
 	GotoState("Busy")
 	IsBusy = True
 	DebugTrace("Starting upkeep...")
@@ -263,6 +264,18 @@ Function DoUpkeep(Bool bInBackground = True)
 	If sMatchedSID
 		SetSessionID(sMatchedSID)
 	EndIf
+
+	DebugTrace("Starting character refresh...")
+	String[] sSIDList = vFF_API_Character.GetAllSIDs()
+	Int i = sSIDList.Length
+	While i > 0
+		i -= 1
+		vFFC_Doppelganger kDoppelganger = vFF_API_Doppelganger.GetActorForSID(sSIDList[i]) as vFFC_Doppelganger
+		If kDoppelganger
+			DebugTrace("Calling OnGameReload() for " + sSIDList[i])
+			kDoppelganger.OnGameReload()
+		EndIf
+	EndWhile
 
 	;=== Add shouts from expansions to the checklist ===--
 	If GetModByName("Dawnguard.esm") != 255
@@ -284,6 +297,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	;=== Don't register this until after we've init'd everything else
 	RegisterForModEvent("vFFC_BackgroundFunction","OnBackgroundFunction")
 	;RegisterForModEvent("vFFC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
+
 	IsBusy = False
 	GotoState("")
 	DebugTrace("Finished upkeep!")
@@ -1364,10 +1378,10 @@ Int Function UpdateMetaData(String asUUID)
 		If jMetaData
 			DebugTrace("UpdateMetaData - Found Metadata at old location, moving it...")
 			SetRegObj("Characters." + asUUID + META,JValue.DeepCopy(jMetaData))
-			ClearRegKey("Characters." + asUUID + "._MYC")
-			ClearRegKey("Characters." + asUUID + "._vFF")
 		EndIf
 	EndIf
+	ClearRegKey("Characters." + asUUID + "._MYC")
+	ClearRegKey("Characters." + asUUID + "._vFF")
 	Return jMetaData
 EndFunction
 
