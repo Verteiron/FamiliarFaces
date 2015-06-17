@@ -307,6 +307,23 @@ State Assigned
 	Event OnUpdate()
 		DebugTrace("OnUpdate!")
 		UnregisterForModEvent("vFF_SessionUpdate") ; Can create loops otherwise
+		If NeedRefresh
+			NeedAppearance	= True
+			NeedStats		= True
+			NeedPerks		= True
+			NeedSpells		= True
+			NeedShouts		= True
+			NeedEquipment	= True
+			NeedInventory	= True
+			NeedUpkeep		= True
+			NeedBehavior 	= True
+		EndIf
+		If NeedBehavior
+			UpdateCombatStyle(SID,Self)
+			If UpdateDisposition() >= 0 ; No error
+				NeedBehavior = False
+			EndIf
+		EndIf
 		If NeedAppearance
 			If UpdateAppearance() == 0 ; No error
 				UpdateNINodes()
@@ -356,12 +373,6 @@ State Assigned
 				NeedSpells = False
 			EndIf
 			;StopTimer("UpdateSpells" + SID)
-		EndIf
-		If NeedBehavior
-			UpdateCombatStyle(SID,Self)
-			If UpdateDisposition() >= 0 ; No error
-				NeedBehavior = False
-			EndIf
 		EndIf
 		RegisterForModEvent("vFF_SessionUpdate","OnSessionUpdate")
 		;ReportStats()
