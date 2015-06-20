@@ -232,7 +232,6 @@ Int Function UpdateAppearance(String asSID, Actor akActor) Global
 	Race kRace = vFF_API_Character.GetCharacterRace(asSID) as Race
 	String sCharacterName = vFF_API_Character.GetCharacterName(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
-	DebugTraceAPIDopp(asSID,"UpdateAppearance Something went wrong during UpdateAppearance!",1)
 	If kRace && sCharacterName
 		Bool bInvulnerableState = kActorBase.IsInvulnerable()
 		kActorBase.SetInvulnerable(True)
