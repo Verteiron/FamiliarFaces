@@ -146,7 +146,7 @@ Event OnGameReload()
 	DebugTrace("Event: OnGameReload")
 	;If vFFC_CFG_Shutdown.GetValue() != 0
 	NeedRefresh = True
-	MyActorBase.SetName(CharacterName)
+	SetNameIfNeeded()
 	FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
 	DoUpkeep(True)
 	;EndIf
@@ -318,6 +318,7 @@ State Assigned
 		DebugTrace("OnUpdate!")
 		UnregisterForModEvent("vFF_SessionUpdate") ; Can create loops otherwise
 		If NeedRefresh
+			NeedRefresh		= False
 			NeedAppearance	= True
 			NeedStats		= True
 			NeedPerks		= True
@@ -386,6 +387,7 @@ State Assigned
 		EndIf
 		RegisterForModEvent("vFF_SessionUpdate","OnSessionUpdate")
 		;ReportStats()
+		RegisterForSingleUpdate(10)
 	EndEvent
 
 	Event OnLoad()
@@ -418,19 +420,17 @@ State Assigned
 			EndIf
 		EndIf
 		If !NeedBehavior
-			If StringUtil.Find(asPath, "Behavior") >= 0 || StringUtil.Find(asPath,"CombatStyle") >= 0
+			If StringUtil.Find(asPath, "Behavior") >= 0 || StringUtil.Find(asPath, "CombatStyle") >= 0
 				NeedBehavior = True
 			EndIf
 		EndIf
 		If !NeedStats
-			If StringUtil.Find(asPath,"Class") >= 0
+			If StringUtil.Find(asPath, "Class") >= 0 || StringUtil.Find(asPath, "Stats") >= 0
 				NeedStats = True
 			EndIf
 		EndIf
 		RegisterForSingleUpdate(1)
 	EndEvent
-
-	
 EndState
 
 State Busy
@@ -451,6 +451,7 @@ EndFunction
 Function DoUpkeep(Bool bInBackground = True)
 {Run whenever the player loads up the Game. Sets the name and such.}
 	RegisterForModEvent("vFFC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
+	RegisterForModEvent("vFF_SessionUpdate","OnSessionUpdate")
 	If bInBackground
 		NeedUpkeep = True
 		RegisterForSingleUpdate(0)

@@ -15,6 +15,7 @@ Function SendSessionEvent(String asPath) Global
 	If iHandle
 		ModEvent.PushString(iHandle,asPath)
 		ModEvent.Send(iHandle)
+		Debug.Trace("vFF/Session: Sent SessionEvent: " + asPath)
 	Else
 		Debug.Trace("vFF/Session: Could not send vFF_SessionUpdate!")
 	EndIf

@@ -102,6 +102,7 @@ Int Function SetCharacterObj(String asSID, String asKey, Int ajValue) Global
 	Else
 		iRet = 1
 		JValue.SolveObjSetter(jCharacterData,asKey,ajValue,True)
+		SendSessionEvent(asSID + "." + asKey)
 	EndIf
 	Return iRet
 EndFunction
@@ -114,6 +115,7 @@ Int Function SetCharacterInt(String asSID, String asKey, Int aiValue) Global
 	Else
 		iRet = 1
 		JValue.SolveIntSetter(jCharacterData,asKey,aiValue,True)
+		SendSessionEvent(asSID + "." + asKey)
 	EndIf
 	Return iRet
 EndFunction
@@ -126,6 +128,7 @@ Int Function SetCharacterFlt(String asSID, String asKey, Float afValue) Global
 	Else
 		iRet = 1
 		JValue.SolveFltSetter(jCharacterData,asKey,afValue,True)
+		SendSessionEvent(asSID + "." + asKey)
 	EndIf
 	Return iRet
 EndFunction
@@ -138,6 +141,7 @@ Int Function SetCharacterStr(String asSID, String asKey, String asValue) Global
 	Else
 		iRet = 1
 		JValue.SolveStrSetter(jCharacterData,asKey,asValue,True)
+		SendSessionEvent(asSID + "." + asKey)
 	EndIf
 	Return iRet
 EndFunction
@@ -150,6 +154,7 @@ Int Function SetCharacterForm(String asSID, String asKey, Form akValue) Global
 	Else
 		iRet = 1
 		JValue.SolveFormSetter(jCharacterData,asKey,akValue,True)
+		SendSessionEvent(asSID + "." + asKey)
 	EndIf
 	Return iRet
 EndFunction
