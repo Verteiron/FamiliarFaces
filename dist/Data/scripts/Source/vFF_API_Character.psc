@@ -159,6 +159,85 @@ Int Function SetCharacterForm(String asSID, String asKey, Form akValue) Global
 	Return iRet
 EndFunction
 
+;=== Character Config Get/Set Functions ===--
+; These will try to read from Character-specific configs, then fall back to 
+; more general defaults.
+
+Int Function GetCharConfigObj(String asSID, String asKey) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	Int jRet = GetSessionObj(asKey,abUseDefault = True)
+	If !jRet
+		jRet = GetConfigObj(asKey)
+	EndIf
+
+	Return jRet
+EndFunction
+
+Int Function GetCharConfigInt(String asSID, String asKey) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	Int iRet = GetSessionInt(asKey,abUseDefault = True)
+	If !iRet
+		iRet = GetConfigInt(asKey)
+	EndIf
+
+	Return iRet
+EndFunction
+
+Float Function GetCharConfigFlt(String asSID, String asKey) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	Float fRet = GetSessionFlt(asKey,abUseDefault = True)
+	If !fRet
+		fRet = GetConfigFlt(asKey)
+	EndIf
+
+	Return fRet
+EndFunction
+
+String Function GetCharConfigStr(String asSID, String asKey) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	String sRet = GetSessionStr(asKey,abUseDefault = True)
+	If !sRet
+		sRet = GetConfigStr(asKey)
+	EndIf
+
+	Return sRet
+EndFunction
+
+Form Function GetCharConfigForm(String asSID, String asKey) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	Form kRet = GetSessionForm(asKey,abUseDefault = True)
+	If !kRet
+		kRet = GetConfigForm(asKey)
+	EndIf
+
+	Return kRet
+EndFunction
+
+Function SetCharConfigObj(String asSID, String asKey, Int ajValue, Bool abMakeDefault = False) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	SetSessionObj(sRegKey,ajValue,abMakeDefault)
+EndFunction
+
+Function SetCharConfigInt(String asSID, String asKey, Int aiValue, Bool abMakeDefault = False) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	SetSessionInt(sRegKey,aiValue,abMakeDefault)
+EndFunction
+
+Function SetCharConfigFlt(String asSID, String asKey, Float afValue, Bool abMakeDefault = False) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	SetSessionFlt(sRegKey,afValue,abMakeDefault)
+EndFunction
+
+Function SetCharConfigStr(String asSID, String asKey, String asValue, Bool abMakeDefault = False) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	SetSessionStr(sRegKey,asValue,abMakeDefault)
+EndFunction
+
+Function SetCharConfigForm(String asSID, String asKey, Form akValue, Bool abMakeDefault = False) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	SetSessionForm(sRegKey,akValue,abMakeDefault)
+EndFunction
+
 ;=== API Character/SessionID functions
 
 ;Retrieve all SIDs in the Registry.

@@ -172,3 +172,91 @@ Int Function GetSessionObj(String asPath, Bool abUseDefault = False) Global
 	EndIf
 	Return JDB.solveObj(".vFFC.Session." + asPath)
 EndFunction
+
+Function SendConfigEvent(String asPath) Global
+
+EndFunction
+
+Bool Function HasConfigKey(String asPath) Global
+	Return HasSessionKey("Config." + asPath)
+EndFunction 
+
+Function ClearConfigKey(String asPath) Global
+	ClearSessionKey("Config." + asPath)
+EndFunction
+
+Function MakeConfigDefault(String asPath) Global
+	
+EndFunction
+
+Function SetConfigStr(String asPath, String asString, Bool abMakeDefault = False) Global
+	String sOldValue = GetSessionStr("Config." + asPath)
+	If sOldValue != asString
+		SetSessionStr("Config." + asPath,asString,abMakeDefault)
+		SendConfigEvent(asPath)
+	EndIf
+EndFunction
+
+String Function GetConfigStr(String asPath, Bool abUseDefault = True) Global
+	Return GetSessionStr("Config." + asPath,abUseDefault)
+EndFunction
+
+Function SetConfigBool(String asPath, Bool abBool, Bool abMakeDefault = False) Global
+	Bool bOldValue = GetSessionBool("Config." + asPath)
+	If bOldValue != abBool
+		SetSessionBool("Config." + asPath,abBool,abMakeDefault)
+		SendConfigEvent(asPath)
+	EndIf
+EndFunction
+
+Bool Function GetConfigBool(String asPath, Bool abUseDefault = True) Global
+	Return GetSessionBool("Config." + asPath,abUseDefault)
+EndFunction
+
+Function SetConfigInt(String asPath, Int aiInt, Bool abMakeDefault = False) Global
+	Int iOldValue = GetSessionInt("Config." + asPath)
+	If iOldValue != aiInt
+		SetSessionInt("Config." + asPath,aiInt,abMakeDefault)
+		SendConfigEvent(asPath)
+	EndIf
+EndFunction
+
+Int Function GetConfigInt(String asPath, Bool abUseDefault = True) Global
+	Return GetSessionInt("Config." + asPath,abUseDefault)
+EndFunction
+
+Function SetConfigFlt(String asPath, Float afFloat, Bool abMakeDefault = False) Global
+	Float fOldValue = GetSessionFlt("Config." + asPath)
+	If fOldValue != afFloat
+		SetSessionFlt("Config." + asPath,afFloat,abMakeDefault)
+		SendConfigEvent(asPath)
+	EndIf
+EndFunction
+
+Float Function GetConfigFlt(String asPath, Bool abUseDefault = True) Global
+	Return GetSessionFlt("Config." + asPath,abUseDefault)
+EndFunction
+
+Function SetConfigForm(String asPath, Form akForm, Bool abMakeDefault = False) Global
+	Form kOldValue = GetSessionForm("Config." + asPath)
+	If kOldValue != akForm
+		SetSessionForm("Config." + asPath,akForm,abMakeDefault)
+		SendConfigEvent(asPath)
+	EndIf
+EndFunction
+
+Form Function GetConfigForm(String asPath, Bool abUseDefault = True) Global
+	Return GetSessionForm("Config." + asPath,abUseDefault)
+EndFunction
+
+Function SetConfigObj(String asPath, Int ajObj, Bool abMakeDefault = False) Global
+	Int jOldValue = GetSessionObj("Config." + asPath)
+	If jOldValue != ajObj
+		SetSessionObj("Config." + asPath,ajObj,abMakeDefault)
+		SendConfigEvent(asPath)
+	EndIf
+EndFunction
+
+Int Function GetConfigObj(String asPath, Bool abUseDefault = True) Global
+	Return GetSessionObj("Config." + asPath,abUseDefault)
+EndFunction
