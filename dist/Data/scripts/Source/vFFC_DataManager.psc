@@ -253,10 +253,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	DebugTrace("Starting upkeep...")
 	SendModEvent("vFFC_UpkeepBegin")
 	InitReg()
-	If !GetRegBool("Config.DefaultsSet")
-		SetRegObj("Characters",JMap.Object(),True)
-		SetRegObj("Hangouts",JMap.Object(),True)
-		SetRegObj("Shrine",JMap.Object(),True)
+	If !GetConfigBool("DefaultsSet")
 		SetConfigDefaults()
 	EndIf
 
@@ -307,16 +304,17 @@ EndFunction
 Function SetConfigDefaults(Bool abForce = False)
 	If !GetRegBool("Config.DefaultsSet") || abForce
 		DebugTrace("Setting Config defaults!")
-		SetRegBool("Config.Enabled",True,True,True)
-		SetRegBool("Config.Compat.Enabled",True,True,True)
-		SetRegBool("Config.Warnings.Enabled",True,True,True)
-		SetRegBool("Config.Debug.Perf.Threads.Limit",False,True,True)
-		SetRegInt ("Config.Debug.Perf.Threads.Max",4,True,True)
-		SetRegBool("Config.Magic.AutoSelect",True)
-		SetSessionBool("Config.Magic.AllowOther",True)
-		SetSessionBool("Config.Magic.AllowHealing",True)
-		SetSessionBool("Config.Magic.AllowDefensive",True)
-		SetRegBool("Config.DefaultsSet",True)
+		SetConfigBool("Compat.Enabled",True,abMakeDefault = True)
+		SetConfigBool("Warnings.Enabled",True,abMakeDefault = True)
+		SetConfigBool("Debug.Perf.Threads.Limit",False,abMakeDefault = True)
+		SetConfigInt("Debug.Perf.Threads.Max",4,abMakeDefault = True)
+		SetConfigBool("Magic.AutoByPerks",True,abMakeDefault = True)
+		SetConfigBool("Magic.AllowHealing",True,abMakeDefault = True)
+		SetConfigBool("Magic.AllowDefense",True,abMakeDefault = True)
+		SetConfigBool("Magic.BlockWallOfs",True,abMakeDefault = True)
+		SetConfigBool("Magic.AllowOther",True,abMakeDefault = True)
+		SetConfigBool("Magic.AllowDefense",True,abMakeDefault = True)
+		SetConfigBool("Magic.AllowDefense",True,abMakeDefault = True)
 	EndIf
 EndFunction
 
@@ -1396,10 +1394,11 @@ Function UpgradeRegistryData()
 		Int jMetaData = UpdateMetaData(sUUID)
 		If jMetaData
 			Int iDataVersion = GetRegInt("Characters." + sUUID + META + ".SerializationVersion")
-			;If iDataVersion < SerializationVersion
-			String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
-			DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
-			UpgradeData(sUUID)
+			If iDataVersion < SerializationVersion
+				String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
+				DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
+				UpgradeData(sUUID)
+			EndIf
 		Else
 			DebugTrace("UpgradeRegistryData - No Metadata could be found for " + sUUID + "!")
 		EndIf

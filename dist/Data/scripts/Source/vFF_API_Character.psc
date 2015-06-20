@@ -33,6 +33,7 @@ Int Function GetCharacterJMap(String asSID) Global
 EndFunction
 
 Int Function GetCharacterObj(String asSID, String asKey) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if nothing is found
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -46,6 +47,7 @@ Int Function GetCharacterObj(String asSID, String asKey) Global
 EndFunction
 
 Int Function GetCharacterInt(String asSID, String asKey) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if nothing is found
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -59,6 +61,7 @@ Int Function GetCharacterInt(String asSID, String asKey) Global
 EndFunction
 
 Float Function GetCharacterFlt(String asSID, String asKey) Global
+	asKey = MakePath(asKey)
 	Float fRet = -1.0 ; Default error if nothing is found
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -72,6 +75,7 @@ Float Function GetCharacterFlt(String asSID, String asKey) Global
 EndFunction
 
 String Function GetCharacterStr(String asSID, String asKey) Global
+	asKey = MakePath(asKey)
 	String sRet = "-1" ; Default error if nothing is found
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -85,6 +89,7 @@ String Function GetCharacterStr(String asSID, String asKey) Global
 EndFunction
 
 Form Function GetCharacterForm(String asSID, String asKey) Global
+	asKey = MakePath(asKey)
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData
 		Return JValue.SolveForm(jCharacterData,asKey)
@@ -95,6 +100,7 @@ EndFunction
 ;=== Generic Write Functions ===--
 
 Int Function SetCharacterObj(String asSID, String asKey, Int ajValue) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if write fails
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -102,12 +108,13 @@ Int Function SetCharacterObj(String asSID, String asKey, Int ajValue) Global
 	Else
 		iRet = 1
 		JValue.SolveObjSetter(jCharacterData,asKey,ajValue,True)
-		SendSessionEvent(asSID + "." + asKey)
+		SendSessionEvent(asSID + asKey)
 	EndIf
 	Return iRet
 EndFunction
 
 Int Function SetCharacterInt(String asSID, String asKey, Int aiValue) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if write fails
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -115,12 +122,13 @@ Int Function SetCharacterInt(String asSID, String asKey, Int aiValue) Global
 	Else
 		iRet = 1
 		JValue.SolveIntSetter(jCharacterData,asKey,aiValue,True)
-		SendSessionEvent(asSID + "." + asKey)
+		SendSessionEvent(asSID + asKey)
 	EndIf
 	Return iRet
 EndFunction
 
 Int Function SetCharacterFlt(String asSID, String asKey, Float afValue) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if write fails
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -128,12 +136,13 @@ Int Function SetCharacterFlt(String asSID, String asKey, Float afValue) Global
 	Else
 		iRet = 1
 		JValue.SolveFltSetter(jCharacterData,asKey,afValue,True)
-		SendSessionEvent(asSID + "." + asKey)
+		SendSessionEvent(asSID + asKey)
 	EndIf
 	Return iRet
 EndFunction
 
 Int Function SetCharacterStr(String asSID, String asKey, String asValue) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if write fails
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -141,12 +150,13 @@ Int Function SetCharacterStr(String asSID, String asKey, String asValue) Global
 	Else
 		iRet = 1
 		JValue.SolveStrSetter(jCharacterData,asKey,asValue,True)
-		SendSessionEvent(asSID + "." + asKey)
+		SendSessionEvent(asSID + asKey)
 	EndIf
 	Return iRet
 EndFunction
 
 Int Function SetCharacterForm(String asSID, String asKey, Form akValue) Global
+	asKey = MakePath(asKey)
 	Int iRet = -1 ; Default error if write fails
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	If jCharacterData <= 0
@@ -154,7 +164,7 @@ Int Function SetCharacterForm(String asSID, String asKey, Form akValue) Global
 	Else
 		iRet = 1
 		JValue.SolveFormSetter(jCharacterData,asKey,akValue,True)
-		SendSessionEvent(asSID + "." + asKey)
+		SendSessionEvent(asSID + asKey)
 	EndIf
 	Return iRet
 EndFunction

@@ -274,6 +274,13 @@ String Function GetHexString(Int iDec, Int iPadLength = 0) Global
 	Return sHex
 EndFunction
 
-Int Function GetVersionInt(Int iMajor, Int iMinor, Int iPatch)
+Int Function GetVersionInt(Int iMajor, Int iMinor, Int iPatch) Global
 	Return Math.LeftShift(iMajor,16) + Math.LeftShift(iMinor,8) + iPatch
+EndFunction
+
+String Function MakePath(String asPath) Global
+	If StringUtil.GetNthChar(asPath,0) == "."
+		Return asPath
+	EndIf
+	Return "." + asPath
 EndFunction
