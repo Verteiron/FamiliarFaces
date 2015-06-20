@@ -32,6 +32,9 @@ Import vFF_Session
 String[] Property	ENUM_CHAR_ARMORCHECK					Auto Hidden
 
 String[] Property	ENUM_CHAR_PLAYERRELATIONSHIP			Auto Hidden
+String[] Property   ENUM_CHAR_CONFIDENCE					Auto Hidden
+String[] Property 	ENUM_CHAR_AGGRESSION					Auto Hidden
+String[] Property 	ENUM_CHAR_ASSISTANCE					Auto Hidden
 
 String[] Property	ENUM_GLOBAL_MAGIC_OVERRIDES				Auto Hidden
 String[] Property	ENUM_GLOBAL_MAGIC_HANDLING			    Auto Hidden
@@ -77,13 +80,13 @@ Int[] 					iShoutOptions
 ; === Events/Functions ===--
 
 Int Function GetVersion()
-    return 190
+    return 191
 EndFunction
 
 Event OnVersionUpdate(int a_version)
-	If CurrentVersion < 190
+	If CurrentVersion < 191
 		OnConfigInit()
-		Debug.Trace("vFF/MCM: Updating script to version 190...")
+		Debug.Trace("vFF/MCM: Updating script to version 191...")
 	EndIf
 EndEvent
 
@@ -126,6 +129,11 @@ Event OnPageReset(string a_page)
 
 	; === Handle other pages ===--
 	If a_page == Pages[0]
+		If CurrentCharacterName
+			SetTitleText("Settings for " + CurrentCharacterName)
+		Else
+			SetTitleText(Pages[0])
+		EndIf
 		If !TopPanel()
 			PushPanel("PANEL_CHAR_PICKER")
 			PushPanel("PANEL_CHAR_INFO")
@@ -165,11 +173,50 @@ State PANEL_CHAR_PICKER
 			Return
 		EndIf
 		AddEmptyOption()
-		AddPanelLinkOption("PANEL_CHAR_INFO","$Character Info")
+		;AddPanelLinkOption("PANEL_CHAR_INFO","$Character Info")
+
+		If !CurrentSID 
+			Return
+		EndIf
+		SetCursorPosition(aiLeftRight + 6)
+		
+		String[] sSex 	= New String[2]
+		sSex[0] 		= "Male"
+		sSex[1] 		= "Female"
+
+		AddTextOption("Level " + (vFF_API_Character.GetCharacterLevel(CurrentSID) as Int) + " " + (vFF_API_Character.GetCharacterStr(CurrentSID,".Info.RaceText")) + " " + sSex[vFF_API_Character.GetCharacterSex(CurrentSID)],"",OPTION_FLAG_DISABLED)
+
+		AddTextOption("Health: " + (vFF_API_Character.GetCharacterAV(CurrentSID,"Health") as Int) + \
+						", Stamina:" + (vFF_API_Character.GetCharacterAV(CurrentSID,"Stamina") as Int) + \
+						", Magicka:" + (vFF_API_Character.GetCharacterAV(CurrentSID,"Magicka") as Int), "",OPTION_FLAG_DISABLED)
+
+		String sWeaponName = vFF_API_Item.GetItemName(vFF_API_Character.GetCharacterEquippedFormID(CurrentSID,1))
+		String sLWeaponName = vFF_API_Item.GetItemName(vFF_API_Character.GetCharacterEquippedFormID(CurrentSID,0))
+		If sLWeaponName && sLWeaponName != sWeaponName
+			sWeaponName += " and " + sLWeaponName
+		ElseIf sLWeaponName && sLWeaponName == sWeaponName
+			sWeaponName += " (Both)"
+		EndIf
+		AddTextOption("Wielding " + sWeaponName,"",OPTION_FLAG_DISABLED)
+		; AddEmptyOption()
+		; String sActorBaseString = "Not loaded"
+		; String sActorString 	= "Not loaded"
+		; Actor kActor = vFF_API_Doppelganger.GetActorForSID(CurrentSID)
+		; If kActor 
+		; 	sActorBaseString 	= GetFormIDString(kActor.GetActorBase())
+		; 	sActorString 		= GetFormIDString(kActor)
+		; EndIf
+		; AddTextOption("ActorBase: " + sActorBaseString,"",OPTION_FLAG_DISABLED)
+		; AddTextOption("Actor: " + sActorString,"",OPTION_FLAG_DISABLED)
+		
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_BEHAVIOR","$Faction and behavior")
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_STATS","$Skills and stats")
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
-
+		
+		If !vFF_API_Doppelganger.GetActorForSID(CurrentSID)
+			AddEmptyOption()
+			AddTextOptionST("OPTION_TEXT_CHAR_SUMMON", "Summon me", "right now!")
+		EndIf
 	EndEvent
 EndState
 
@@ -249,9 +296,6 @@ State PANEL_CHAR_INFO
 		AddTextOption("ActorBase: " + sActorBaseString,"",OPTION_FLAG_DISABLED)
 		AddTextOption("Actor: " + sActorString,"",OPTION_FLAG_DISABLED)
 
-		If !kActor
-			AddTextOptionST("OPTION_TEXT_CHAR_SUMMON", "Summon me", "right now!")
-		EndIf
 		;Int MissingReqs = CharacterManager.CheckModReqs(_sCharacterName)
 		;If MissingReqs == 3
 		;	AddEmptyOption()
@@ -280,11 +324,31 @@ State PANEL_CHAR_OPTIONS_BEHAVIOR
 		AddHeaderOption("$Factions")
 		AddEmptyOption()
 		Int 	iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
+		Int 	iConfidence			= vFF_API_Character.GetCharacterAV(CurrentSID,"Confidence") as Int
+		Int 	iAggression			= vFF_API_Character.GetCharacterAV(CurrentSID,"Aggression") as Int
+		Int 	iAssistance			= vFF_API_Character.GetCharacterAV(CurrentSID,"Assistance") as Int
 		Bool 	bVanish				= GetSessionBool("Config." + CurrentSID + ".Behavior.VanishOnDeath")
+
+		;These values are not saved by default, so set sane defaults
+		If iConfidence < 0
+			iConfidence = 3 ; Brave
+			vFF_API_Character.SetCharacterAV(CurrentSID,"Confidence",iConfidence as Float)
+		EndIf
+		If iAggression < 0
+			iAggression = 0 ; Passive
+			vFF_API_Character.SetCharacterAV(CurrentSID,"Aggression",iAggression as Float)
+		EndIf
+		If iAssistance < 0
+			iAssistance = 0 ; Help no one
+			vFF_API_Character.SetCharacterAV(CurrentSID,"Assistance",iAssistance as Float)
+		EndIf
 
 		AddTextOptionST("OPTION_TEXT_CHAR_PLAYERRELATIONSHIP", "$Player relationship", ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship])
 		AddEmptyOption()
 		AddHeaderOption("$Behavior")
+		AddTextOptionST("OPTION_TEXT_CHAR_CONFIDENCE", "$Confidence", ENUM_CHAR_CONFIDENCE[iConfidence])
+		AddTextOptionST("OPTION_TEXT_CHAR_AGGRESSION", "$Aggression", ENUM_CHAR_AGGRESSION[iAggression])
+		AddTextOptionST("OPTION_TEXT_CHAR_ASSISTANCE", "$Assistance", ENUM_CHAR_ASSISTANCE[iAssistance])
 		AddEmptyOption()
 		AddHeaderOption("$Combat")
 		CurrentCombatStyle = vFF_API_Character.GetCharacterCombatStyle(CurrentSID)
@@ -478,6 +542,51 @@ State OPTION_TEXT_CHAR_PLAYERRELATIONSHIP
 		EndIf
 		SetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship",iPlayerRelationship - 1)
 		SetTextOptionValueST(ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship], false, GetState())
+	EndEvent
+
+EndState
+
+; == Option: Set character confidence ===--
+State OPTION_TEXT_CHAR_CONFIDENCE
+
+	Event OnSelectST()
+		Int iConfidence	= vFF_API_Character.GetCharacterAV(CurrentSID,"Confidence") as Int
+		iConfidence += 1
+		If iConfidence >= ENUM_CHAR_CONFIDENCE.Length
+			iConfidence = 0
+		EndIf
+		vFF_API_Character.SetCharacterAV(CurrentSID,"Confidence",iConfidence as Float)
+		SetTextOptionValueST(ENUM_CHAR_CONFIDENCE[iConfidence], false, GetState())
+	EndEvent
+
+EndState
+
+; == Option: Set character aggression ===--
+State OPTION_TEXT_CHAR_AGGRESSION
+
+	Event OnSelectST()
+		Int iAggression	= vFF_API_Character.GetCharacterAV(CurrentSID,"Aggression") as Int
+		iAggression += 1
+		If iAggression >= ENUM_CHAR_AGGRESSION.Length
+			iAggression = 0
+		EndIf
+		vFF_API_Character.SetCharacterAV(CurrentSID,"Aggression",iAggression as Float)
+		SetTextOptionValueST(ENUM_CHAR_AGGRESSION[iAggression], false, GetState())
+	EndEvent
+
+EndState
+
+; == Option: Set character assistance ===--
+State OPTION_TEXT_CHAR_ASSISTANCE
+
+	Event OnSelectST()
+		Int iAssistance	= vFF_API_Character.GetCharacterAV(CurrentSID,"Assistance") as Int
+		iAssistance += 1
+		If iAssistance >= ENUM_CHAR_ASSISTANCE.Length
+			iAssistance = 0
+		EndIf
+		vFF_API_Character.SetCharacterAV(CurrentSID,"Assistance",iAssistance as Float)
+		SetTextOptionValueST(ENUM_CHAR_ASSISTANCE[iAssistance], false, GetState())
 	EndEvent
 
 EndState
@@ -719,6 +828,24 @@ Function FillEnums()
 	ENUM_CHAR_PLAYERRELATIONSHIP[2]			= "$Friendly"
 	ENUM_CHAR_PLAYERRELATIONSHIP[3]			= "$Follower"
 	ENUM_CHAR_PLAYERRELATIONSHIP[4]			= "$CanMarry"
+
+	ENUM_CHAR_CONFIDENCE				= New String[5]
+	ENUM_CHAR_CONFIDENCE[0]					= "$Coward"
+	ENUM_CHAR_CONFIDENCE[1]					= "$Cautious"
+	ENUM_CHAR_CONFIDENCE[2]					= "$Average"
+	ENUM_CHAR_CONFIDENCE[3]					= "$Brave"
+	ENUM_CHAR_CONFIDENCE[4]					= "$Foolhardy"
+
+	ENUM_CHAR_AGGRESSION				= New String[4]
+	ENUM_CHAR_AGGRESSION[0]					= "$Passive"
+	ENUM_CHAR_AGGRESSION[1]					= "$Aggressive"
+	ENUM_CHAR_AGGRESSION[2]					= "$Very Aggressive"
+	ENUM_CHAR_AGGRESSION[3]					= "$Frenzied"
+
+	ENUM_CHAR_ASSISTANCE				= New String[3]
+	ENUM_CHAR_ASSISTANCE[0]					= "$Helps nobody"
+	ENUM_CHAR_ASSISTANCE[1]					= "$Helps friends"
+	ENUM_CHAR_ASSISTANCE[2]					= "$Helps friends/allies"
 EndFunction
 
 ; === Utility functions ===--
