@@ -20,6 +20,7 @@ Import Utility
 Import Game
 Import vFF_Registry
 Import vFF_Session
+Import vFF_API_Character
 Import vFF_API_Doppelganger
 
 ;=== Constants ===--
@@ -177,7 +178,7 @@ Event OnSessionUpdate(String asPath)
 EndEvent
 
 Event OnEnterBleedout()
-	If GetSessionBool("Config." + SID + ".Behavior.VanishOnDeath")
+	If GetCharConfigBool(SID, "Behavior.VanishOnDeath")
 		UnregisterForAllModEvents()
 		ObjectReference[] kGlows = New ObjectReference[20]
 		BlockActivation(True)
@@ -506,9 +507,9 @@ EndFunction
 
 ;=== Disposition and configuration functions ===--
 Int Function UpdateDisposition()
-	Int iPlayerRelationship	= GetSessionInt("Config." + SID + ".Behavior.PlayerRelationship",True)
+	Int iPlayerRelationship	= GetCharConfigInt(SID,"Behavior.PlayerRelationship")
 
-	SetSessionBool("Config." + SID + ".Behavior.VanishOnDeath",False)
+	SetCharConfigBool(SID,"Behavior.VanishOnDeath",False)
  	If iPlayerRelationship < 0
  		;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
  		;FIXME: Also make sure the player didn't just make an enemy of their spouse!
@@ -519,7 +520,7 @@ Int Function UpdateDisposition()
 		SetFactionRank(vFFC_CharacterPlayerEnemyFaction,0)
 		SetActorValue("Aggression",0)
 		SetRelationshipRank(PlayerREF,-4)
-		SetSessionBool("Config." + SID + ".Behavior.VanishOnDeath",True)
+		SetCharConfigBool(SID,"Behavior.VanishOnDeath",True)
 	ElseIf iPlayerRelationship == 0
 		DebugTrace("I don't know the player.")
 		RemoveFromFaction(CurrentFollowerFaction)

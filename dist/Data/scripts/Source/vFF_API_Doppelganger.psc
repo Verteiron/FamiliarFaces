@@ -221,8 +221,8 @@ Int Function SetFoe(Actor akActor, Bool abVanishOnDeath = True) Global
  	EndIf
  	String sSID = kDoppelganger.SID
  	;FIXME: Avoid Gopher's bug, make sure they are NOT a follower before making them a baddie!
-	SetSessionInt("Config." + sSID + ".Behavior.PlayerRelationship",-1)
- 	SetSessionBool("Config." + sSID + ".Behavior.VanishOnDeath",abVanishOnDeath)
+ 	SetCharConfigInt(sSID,"Behavior.PlayerRelationship",-1)
+ 	SetCharConfigBool(sSID,"Behavior.VanishOnDeath",abVanishOnDeath)
  	;Return kDoppelganger.UpdateDisposition()
 EndFunction
 
@@ -803,7 +803,7 @@ Int Function UpdateShouts(String asSID, Actor akActor) Global
 	vFFC_DataManager DataManager = Quest.GetQuest("vFFC_DataManagerQuest") as vFFC_DataManager
 
 	Int jShouts = JValue.SolveObj(jCharacterData,".Shouts")
-	Int jShoutsConfig = vFF_Session.GetSessionObj("Config." + asSID + ".Shouts")
+	Int jShoutsConfig = GetCharConfigObj(asSID,"Shouts")
 
 	If JValue.SolveInt(jShoutsConfig,".Disabled")
 		RemoveCharacterShouts(asSID, akActor)
@@ -933,7 +933,7 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 		Return -3
 	EndIf
 
-	If GetRegBool("Config.Compat.AFT.MagicDisabled")
+	If GetConfigBool("Compat.AFT.MagicDisabled")
 		;Do not alter spell list if Magic is disabled by AFT
 		Return 0
 	EndIf
@@ -945,7 +945,7 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 
 	JValue.Retain(jSpells,asSID + "Spells")
 
-	If GetRegBool("Config.Magic.AutoSelect") || GetSessionBool("Config." + asSID + ".Magic.AutoByPerks")
+	If vFF_API_Character.GetCharConfigInt(asSID,"Magic.AutoByPerks")
 		i = 18
 		While i < 23
 			String sMagicSchool = JArray.GetStr(jSkillNames,i)
@@ -956,9 +956,9 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 			EndIf
 			
 			If iPerkCount > 1
-				SetSessionBool("Config." + asSID + ".Magic.Allow" + sMagicSchool,True)
+				SetCharConfigBool(asSID,"Magic.Allow" + sMagicSchool,True)
 			Else
-				SetSessionBool("Config." + asSID + ".Magic.Allow" + sMagicSchool,False)
+				SetCharConfigBool(asSID,"Magic.Allow" + sMagicSchool,False)
 			EndIf
 			i += 1
 		EndWhile
@@ -973,9 +973,9 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 	sAllowedSources[4] = "Hearthfires.esm"
 	sAllowedSources[5] = "Colorful_Magic.esp" ; FIXME: Test only!
 
-	Bool bAllowHealing = GetSessionBool("Config." + asSID + ".Magic.AllowHealing")
-	Bool bAllowDefense = GetSessionBool("Config." + asSID + ".Magic.AllowDefense")
-	Bool bBlockWallOfs = GetSessionBool("Config." + asSID + ".Magic.BlockWallOfs")
+	Bool bAllowHealing = vFF_API_Character.GetCharConfigInt(asSID,"Magic.AllowHealing") as Bool
+	Bool bAllowDefense = vFF_API_Character.GetCharConfigInt(asSID,"Magic.AllowDefense") as Bool
+	Bool bBlockWallOfs = vFF_API_Character.GetCharConfigInt(asSID,"Magic.BlockWallOfs") as Bool
 	Bool bDawnguard = False
 	If GetModByName("Dawnguard.esm") != 255
 		bDawnguard = True
@@ -988,8 +988,8 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 
 	Int jAllowed = JArray.Object()
 	Int jSkipped = JArray.Object()
-	SetSessionObj("Config." + asSID + ".Spells.Allowed",jAllowed)
-	SetSessionObj("Config." + asSID + ".Spells.Skipped",jSkipped)
+	SetCharConfigObj(asSID,"Spells.Allowed",jAllowed)
+	SetCharConfigObj(asSID,"Spells.Skipped",jSkipped)
 	DebugTraceAPIDopp(asSID,"Filtering spells. AllowHealing:" + bAllowHealing + ", AllowDefense:" + bAllowDefense + ", BlockWalls:" + bBlockWallOfs + ", Dawnguard:" + bDawnguard)
 	While i > 0
 		i -= 1
@@ -1000,9 +1000,9 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 			Bool bSpellIsAllowed = False
 			
 			If sMagicSchool
-				bSpellIsAllowed = GetSessionBool("Config." + asSID + ".Magic.Allow" + sMagicSchool)
+				bSpellIsAllowed = GetCharConfigInt(asSID,"Magic.Allow" + sMagicSchool) as Bool
 			Else
-				bSpellIsAllowed = GetSessionBool("Config." + asSID + ".Magic.AllowOther")
+				bSpellIsAllowed = GetCharConfigInt(asSID,"Magic.AllowOther") as Bool
 			EndIf
 
 			If bSpellIsAllowed
@@ -1128,6 +1128,9 @@ Int Function UpdateClass(String asSID, Actor akActor) Global
 	ActorBase kActorBase = akActor.GetActorBase()
 	Class kClass = GetSessionForm("Characters." + asSID + ".Class",True) as Class
 	If !kClass
+		kClass = GetCharConfigForm(asSID,"Class") as Class
+	EndIf
+	If !kClass
 		Return -1
 	EndIf
 	If kActorBase.GetClass() && kActorBase.GetClass() != kClass
@@ -1141,6 +1144,9 @@ EndFunction
 Int Function UpdateCombatStyle(String asSID, Actor akActor) Global
 	ActorBase kActorBase = akActor.GetActorBase()
 	CombatStyle kCombatStyle = GetSessionForm("Characters." + asSID + ".CombatStyle",True) as CombatStyle
+	If !kCombatStyle
+		kCombatStyle = GetCharConfigForm(asSID,"CombatStyle") as CombatStyle
+	EndIf
 	If !kCombatStyle
 		Return -1
 	EndIf

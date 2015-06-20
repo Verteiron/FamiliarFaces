@@ -165,8 +165,12 @@ EndFunction
 
 Int Function GetCharConfigObj(String asSID, String asKey) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
-	Int jRet = GetSessionObj(asKey,abUseDefault = True)
-	If !jRet
+	Int jRet
+	If HasSessionKey(sRegKey) || HasRegKey(sRegKey)
+		;DebugTraceAPIChar("Session has this key!")
+		jRet = GetSessionObj(sRegKey,abUseDefault = True)
+	Else
+		;DebugTraceAPIChar("Session does NOT have this key!")
 		jRet = GetConfigObj(asKey)
 	EndIf
 
@@ -175,18 +179,40 @@ EndFunction
 
 Int Function GetCharConfigInt(String asSID, String asKey) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
-	Int iRet = GetSessionInt(asKey,abUseDefault = True)
-	If !iRet
+	Int iRet
+	If HasSessionKey(sRegKey) || HasRegKey(sRegKey)
+		;DebugTraceAPIChar("Session has this key!")
+		iRet = GetSessionInt(sRegKey,abUseDefault = True)
+	Else
+		;DebugTraceAPIChar("Session does NOT have this key!")
 		iRet = GetConfigInt(asKey)
 	EndIf
 
 	Return iRet
 EndFunction
 
+Bool Function GetCharConfigBool(String asSID, String asKey) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	Bool bRet
+	If HasSessionKey(sRegKey) || HasRegKey(sRegKey)
+		;DebugTraceAPIChar("Session has this key!")
+		bRet = GetSessionBool(sRegKey,abUseDefault = True)
+	Else
+		;DebugTraceAPIChar("Session does NOT have this key!")
+		bRet = GetConfigBool(asKey)
+	EndIf
+
+	Return bRet
+EndFunction
+
 Float Function GetCharConfigFlt(String asSID, String asKey) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
-	Float fRet = GetSessionFlt(asKey,abUseDefault = True)
-	If !fRet
+	Float fRet
+	If HasSessionKey(sRegKey) || HasRegKey(sRegKey)
+		;DebugTraceAPIChar("Session has this key!")
+		fRet = GetSessionFlt(sRegKey,abUseDefault = True)
+	Else
+		;DebugTraceAPIChar("Session does NOT have this key!")
 		fRet = GetConfigFlt(asKey)
 	EndIf
 
@@ -195,8 +221,12 @@ EndFunction
 
 String Function GetCharConfigStr(String asSID, String asKey) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
-	String sRet = GetSessionStr(asKey,abUseDefault = True)
-	If !sRet
+	String sRet
+	If HasSessionKey(sRegKey) || HasRegKey(sRegKey)
+		;DebugTraceAPIChar("Session has this key!")
+		sRet = GetSessionStr(sRegKey,abUseDefault = True)
+	Else
+		;DebugTraceAPIChar("Session does NOT have this key!")
 		sRet = GetConfigStr(asKey)
 	EndIf
 
@@ -205,8 +235,12 @@ EndFunction
 
 Form Function GetCharConfigForm(String asSID, String asKey) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
-	Form kRet = GetSessionForm(asKey,abUseDefault = True)
-	If !kRet
+	Form kRet
+	If HasSessionKey(sRegKey) || HasRegKey(sRegKey)
+		;DebugTraceAPIChar("Session has this key!")
+		kRet = GetSessionForm(sRegKey,abUseDefault = True)
+	Else
+		;DebugTraceAPIChar("Session does NOT have this key!")
 		kRet = GetConfigForm(asKey)
 	EndIf
 
@@ -220,7 +254,13 @@ EndFunction
 
 Function SetCharConfigInt(String asSID, String asKey, Int aiValue, Bool abMakeDefault = False) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	DebugTraceAPIChar("Setting " + sRegKey + " to " + aiValue)
 	SetSessionInt(sRegKey,aiValue,abMakeDefault)
+EndFunction
+
+Function SetCharConfigBool(String asSID, String asKey, Bool abValue, Bool abMakeDefault = False) Global
+	String sRegKey = "Characters." + asSID + ".Config." + asKey
+	SetSessionBool(sRegKey,abValue,abMakeDefault)
 EndFunction
 
 Function SetCharConfigFlt(String asSID, String asKey, Float afValue, Bool abMakeDefault = False) Global
@@ -236,6 +276,12 @@ EndFunction
 Function SetCharConfigForm(String asSID, String asKey, Form akValue, Bool abMakeDefault = False) Global
 	String sRegKey = "Characters." + asSID + ".Config." + asKey
 	SetSessionForm(sRegKey,akValue,abMakeDefault)
+EndFunction
+
+Bool Function ToggleCharConfigBool(String asSID, String asKey, Bool abMakeDefault = False) Global
+	Bool bToggleValue = !GetCharConfigBool(asSID,asKey)
+	SetCharConfigBool(asSID,asKey,bToggleValue,abMakeDefault)
+	Return bToggleValue
 EndFunction
 
 ;=== API Character/SessionID functions

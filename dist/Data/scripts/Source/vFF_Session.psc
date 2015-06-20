@@ -11,6 +11,7 @@ Scriptname vFF_Session Hidden
 Import vFF_Registry
 
 Function SendSessionEvent(String asPath) Global
+	SaveSession() ;FIXME Temporary debugging
 	Int iHandle = ModEvent.Create("vFF_SessionUpdate")
 	If iHandle
 		ModEvent.PushString(iHandle,asPath)
@@ -259,4 +260,13 @@ EndFunction
 
 Int Function GetConfigObj(String asPath, Bool abUseDefault = True) Global
 	Return GetSessionObj("Config." + asPath,abUseDefault)
+EndFunction
+
+Bool Function ToggleConfigBool(String asPath, Bool abMakeDefault = False) Global
+	Bool bToggleValue = ToggleSessionBool("Config." + asPath)
+	If abMakeDefault
+		SetRegBool("Config." + asPath,bToggleValue)
+	EndIf
+	SendConfigEvent(asPath)
+	Return bToggleValue
 EndFunction

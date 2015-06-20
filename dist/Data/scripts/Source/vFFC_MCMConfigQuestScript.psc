@@ -10,6 +10,7 @@ Scriptname vFFC_MCMConfigQuestScript extends vFFC_MCMPanelNav
 
 Import vFF_Registry
 Import vFF_Session
+Import vFF_API_Character
 
 ; === Constants ===--
 
@@ -237,7 +238,7 @@ State PANEL_CHAR_OPTIONS
 
 		AddHeaderOption(CurrentCharacterName + " Options")
 
-		;AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetSessionBool("Config." + CurrentSID + ".Tracking",abUseDefault = True))
+		;AddToggleOptionST("OPTION_TOGGLE_CHAR_TRACKING","$Track this character", GetCharConfigBool(CurrentSID,"Tracking",abUseDefault = True))
 		AddEmptyOption()
 		
 		OptionFlags = 0
@@ -323,11 +324,11 @@ State PANEL_CHAR_OPTIONS_BEHAVIOR
 		SetCursorPosition(aiLeftRight)
 		AddHeaderOption("$Factions")
 		AddEmptyOption()
-		Int 	iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
+		Int 	iPlayerRelationship	= GetCharConfigInt(CurrentSID,"Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
 		Int 	iConfidence			= vFF_API_Character.GetCharacterAV(CurrentSID,"Confidence") as Int
 		Int 	iAggression			= vFF_API_Character.GetCharacterAV(CurrentSID,"Aggression") as Int
 		Int 	iAssistance			= vFF_API_Character.GetCharacterAV(CurrentSID,"Assistance") as Int
-		Bool 	bVanish				= GetSessionBool("Config." + CurrentSID + ".Behavior.VanishOnDeath")
+		Bool 	bVanish				= GetCharConfigBool(CurrentSID,"Behavior.VanishOnDeath")
 
 		;These values are not saved by default, so set sane defaults
 		If iConfidence < 0
@@ -385,10 +386,10 @@ State PANEL_CHAR_OPTIONS_MAGIC
 		SetCursorPosition(aiLeftRight)
 		AddHeaderOption("{$Magic and Shouts}")
 
-		Bool bAutoMagic 		= GetSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks",True)
-		Bool bAllowHealing 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowHealing",True)
-		Bool bAllowDefense 		= GetSessionBool("Config." + CurrentSID + ".Magic.AllowDefense",True)
-		Bool bBlockWallOfs 		= GetSessionBool("Config." + CurrentSID + ".Magic.BlockWallOfs",True)
+		Bool bAutoMagic 		= GetCharConfigBool(CurrentSID,"Magic.AutoByPerks")
+		Bool bAllowHealing 		= GetCharConfigBool(CurrentSID,"Magic.AllowHealing")
+		Bool bAllowDefense 		= GetCharConfigBool(CurrentSID,"Magic.AllowDefense")
+		Bool bBlockWallOfs 		= GetCharConfigBool(CurrentSID,"Magic.BlockWallOfs")
 
 		AddToggleOptionST("OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS","$Auto select spells by perks",bAutoMagic)
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL", "$Choose allowed magic", Math.LogicalAnd(OPTION_FLAG_DISABLED,bAutoMagic as Int))
@@ -401,7 +402,7 @@ State PANEL_CHAR_OPTIONS_MAGIC
 
 		AddHeaderOption("$Shout settings")
 
-		Bool bDisableShouts 	= GetSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
+		Bool bDisableShouts 	= GetCharConfigBool(CurrentSID,"Shouts.Disabled")
 
 		AddToggleOptionST("OPTION_TOGGLE_CHAR_SHOUTS_DISABLED","{$Disable} {$Shouts}",bDisableShouts)
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_SHOUTS_MANAGE", "$Choose allowed Shouts", Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisableShouts as Int))
@@ -426,13 +427,12 @@ State PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL
 
 	; If !CharacterManager.GetLocalInt(_sCharacterName,"Compat_AFT_Tweaked")
 	; 	Bool bAutoMagic = CharacterManager.GetLocalInt(_sCharacterName,"MagicAutoSelect") as Bool
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ALTERATION","{$Allow} {$Alteration}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowAlteration",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_CONJURATION","{$Allow} {$Conjuration}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowConjuration",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_DESTRUCTION","{$Allow} {$Destruction}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowDestruction",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ILLUSION","{$Allow} {$Illusion}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowIllusion",OptionFlags))
-	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_RESTORATION","{$Allow} {$Restoration}",GetSessionBool("Config." + CurrentSID + ".Magic.AllowRestoration",OptionFlags))
-
-	;OPTION_TOGGLE_MAGICALLOW_OTHER			= AddToggleOption(" {$Allow} {$Other}",CharacterManager.GetLocalInt(_sCharacterName,"MagicAllowOther") as Bool)
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ALTERATION",	"{$Allow} {$Alteration}",	GetCharConfigInt(CurrentSID,"Magic.AllowAlteration"),	OptionFlags)
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_CONJURATION",	"{$Allow} {$Conjuration}",	GetCharConfigInt(CurrentSID,"Magic.AllowConjuration"),	OptionFlags)
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_DESTRUCTION",	"{$Allow} {$Destruction}",	GetCharConfigInt(CurrentSID,"Magic.AllowDestruction"),	OptionFlags)
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_ILLUSION",		"{$Allow} {$Illusion}",		GetCharConfigInt(CurrentSID,"Magic.AllowIllusion"),		OptionFlags)
+	AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_RESTORATION",	"{$Allow} {$Restoration}",	GetCharConfigInt(CurrentSID,"Magic.AllowRestoration"),	OptionFlags)
+	;AddToggleOptionST("OPTION_TOGGLE_MAGICALLOW_OTHER",		"{$Allow} {$Other}",		GetCharConfigInt(CurrentSID,"Magic.AllowOther"),		OptionFlags)
 
 
 	EndEvent
@@ -448,8 +448,8 @@ State PANEL_CHAR_OPTIONS_SHOUTS_MANAGE
 		AddHeaderOption("{$Shouts Allowed}")
 		Int OptionFlags = 0
 
-		Int jShoutsArray 	= GetRegObj("Characters." + CurrentSID + ".Shouts")
-		Int jShoutsBL		= GetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist")
+		Int jShoutsArray 	= GetCharacterObj(CurrentSID, "Shouts")
+		Int jShoutsBL		= GetCharConfigObj(CurrentSID, "Shouts.Blacklist")
 		Int iShoutCount = JArray.Count(jShoutsArray)
 
 		iShoutOptions = Utility.CreateIntArray(iShoutCount)
@@ -524,7 +524,7 @@ State OPTION_TEXT_CHAR_COMBATSTYLE
 	
 	Event OnMenuAcceptST(Int aiIndex)
 		vFF_API_Character.SetCharacterCombatStyle(CurrentSID,CombatStyleList[aiIndex] as CombatStyle)
-		SetSessionForm("Config." + CurrentSID + ".CombatStyle",CombatStyleList[aiIndex] as CombatStyle) ;FIXME: UGLY, are we setting Session or Registry data here?
+		SetCharConfigForm(CurrentSID,"CombatStyle",CombatStyleList[aiIndex] as CombatStyle)
 		SetMenuOptionValueST(CombatStyleNames[aiIndex], false, GetState())
 		;ForcePageReset()
 	EndEvent
@@ -535,12 +535,12 @@ EndState
 State OPTION_TEXT_CHAR_PLAYERRELATIONSHIP
 
 	Event OnSelectST()
-		Int iPlayerRelationship	= GetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
+		Int iPlayerRelationship	= GetCharConfigInt(CurrentSID, "Behavior.PlayerRelationship") + 1 ; -1 is Foe but arrays can't have negative indicies
 		iPlayerRelationship += 1
 		If iPlayerRelationship >= ENUM_CHAR_PLAYERRELATIONSHIP.Length
 			iPlayerRelationship = 0
 		EndIf
-		SetSessionInt("Config." + CurrentSID + ".Behavior.PlayerRelationship",iPlayerRelationship - 1)
+		SetCharConfigInt(CurrentSID,"Behavior.PlayerRelationship",iPlayerRelationship - 1)
 		SetTextOptionValueST(ENUM_CHAR_PLAYERRELATIONSHIP[iPlayerRelationship], false, GetState())
 	EndEvent
 
@@ -620,7 +620,7 @@ EndState
 State OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS
 	
 	Event OnSelectST()
-		Bool bValue = ToggleSessionBool("Config." + CurrentSID + ".Magic.AutoByPerks")
+		Bool bValue = ToggleCharConfigBool(CurrentSID, "Magic.AutoByPerks")
 		SetToggleOptionValueST(bValue,True,GetState())
 		DebugTrace("OnSelectST called in " + GetState())
 		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bValue as Int), false, "PANEL_CHAR_OPTIONS_MAGIC_BYSCHOOL")
@@ -636,7 +636,7 @@ EndState
 State OPTION_TOGGLE_CHAR_MAGIC_ALLOWHEALING
 	
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowHealing"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowHealing"),False,GetState())
 	EndEvent
 
 EndState
@@ -644,7 +644,7 @@ EndState
 State OPTION_TOGGLE_CHAR_MAGIC_ALLOWDEFENSE
 	
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowDefense"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowDefense"),False,GetState())
 	EndEvent
 
 EndState
@@ -652,7 +652,7 @@ EndState
 State OPTION_TOGGLE_CHAR_MAGIC_BLOCKWALLOFS
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.BlockWallOfs"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.BlockWallOfs"),False,GetState())
 	EndEvent
 
 EndState
@@ -660,7 +660,7 @@ EndState
 State OPTION_TOGGLE_MAGICALLOW_ALTERATION
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowAlteration"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowAlteration"),False,GetState())
 	EndEvent
 
 EndState
@@ -668,7 +668,7 @@ EndState
 State OPTION_TOGGLE_MAGICALLOW_DESTRUCTION
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowDestruction"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowDestruction"),False,GetState())
 	EndEvent
 
 EndState
@@ -676,7 +676,7 @@ EndState
 State OPTION_TOGGLE_MAGICALLOW_ILLUSION
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowIllusion"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowIllusion"),False,GetState())
 	EndEvent
 
 EndState
@@ -684,7 +684,7 @@ EndState
 State OPTION_TOGGLE_MAGICALLOW_CONJURATION
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowConjuration"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowConjuration"),False,GetState())
 	EndEvent
 
 EndState
@@ -692,7 +692,7 @@ EndState
 State OPTION_TOGGLE_MAGICALLOW_RESTORATION
 
 	Event OnSelectST()
-		SetToggleOptionValueST(ToggleSessionBool("Config." + CurrentSID + ".Magic.AllowRestoration"),False,GetState())
+		SetToggleOptionValueST(ToggleCharConfigBool(CurrentSID, "Magic.AllowRestoration"),False,GetState())
 	EndEvent
 
 EndState
@@ -714,7 +714,7 @@ EndState
 State OPTION_TOGGLE_CHAR_SHOUTS_DISABLED
 
 	Event OnSelectST()
-		Bool bDisabled = ToggleSessionBool("Config." + CurrentSID + ".Shouts.Disabled")
+		Bool bDisabled = ToggleCharConfigBool(CurrentSID, "Shouts.Disabled")
 		SetToggleOptionValueST(bDisabled,False,GetState())
 		SetOptionFlagsST(Math.LogicalAnd(OPTION_FLAG_DISABLED,bDisabled as Int), false, "PANEL_CHAR_OPTIONS_SHOUTS_MANAGE")
 		
@@ -764,10 +764,10 @@ Event OnOptionSelect(int a_option)
 		Int iShoutIndex = iShoutOptions.Find(a_option)
 
 		Int jShoutsArray 	= GetRegObj("Characters." + CurrentSID + ".Shouts")
-		Int jShoutsBL		= GetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist")
+		Int jShoutsBL		= GetCharConfigObj(CurrentSID,"Shouts.Blacklist")
 		If !jShoutsBL
 			jShoutsBL = JArray.Object()
-			SetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist",jShoutsBL)
+			SetCharConfigObj(CurrentSID,"Shouts.Blacklist",jShoutsBL)
 		EndIf
 		Shout kShout 		= JArray.GetForm(jShoutsArray,iShoutIndex) as Shout
 		Int iBLIndex 		= JArray.FindForm(jShoutsBL,kShout)
@@ -780,7 +780,7 @@ Event OnOptionSelect(int a_option)
 			JArray.AddForm(jShoutsBL,kShout)
 			JArray.Unique(jShoutsBL)
 		EndIf
-		SetSessionObj("Config." + CurrentSID + ".Shouts.Blacklist",jShoutsBL)
+		SetCharConfigObj(CurrentSID,"Shouts.Blacklist",jShoutsBL)
 	EndIf
 EndEvent
 
