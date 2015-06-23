@@ -180,6 +180,7 @@ EndEvent
 Event OnEnterBleedout()
 	If GetCharConfigBool(SID, "Behavior.VanishOnDeath")
 		UnregisterForAllModEvents()
+		UnregisterForUpdate()
 		ObjectReference[] kGlows = New ObjectReference[20]
 		BlockActivation(True)
 		DispelAllSpells()
@@ -264,10 +265,26 @@ Event OnEnterBleedout()
 				kGlows[iStep].Delete()
 			EndIf
 		EndWhile
+		GotoState("Dead")
 		Delete()
 	EndIf
 EndEvent
 
+State Dead
+
+	Event OnUpdate()
+		;Do nothing
+	EndEvent
+
+	Event OnLoad()
+		;Do nothing
+	EndEvent
+
+	Event OnUnload()
+		;Do nothing
+	EndEvent
+
+EndState
 
 Auto State Available
 	Event OnLoad()
@@ -311,7 +328,7 @@ EndState
 State Assigned
 	Event OnBeginState()
 		DebugTrace("Entered Assigned state! CharacterName is " + CharacterName + ". Will update appearance, etc in just a sec...")
-		RegisterForSingleUpdate(1)
+		RegisterForSingleUpdate(0.1)
 		SetNameIfNeeded()
 	EndEvent
 
@@ -388,7 +405,7 @@ State Assigned
 		EndIf
 		RegisterForModEvent("vFF_SessionUpdate","OnSessionUpdate")
 		;ReportStats()
-		RegisterForSingleUpdate(10)
+		RegisterForSingleUpdate(15)
 	EndEvent
 
 	Event OnLoad()
