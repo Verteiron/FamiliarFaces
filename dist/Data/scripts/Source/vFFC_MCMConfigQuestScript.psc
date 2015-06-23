@@ -93,19 +93,17 @@ EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[5]
+	Pages = New String[32]
 	Pages[0] = "$Character Setup"
-	Pages[1] = "$Shrine of Heroes"
-	Pages[2] = "$Hangout Manager"
-	Pages[3] = "$Global Options"
-	Pages[4] = "$Debugging"
+	Pages[1] = "$Global Options"
+	Pages[31] = "$Debugging"
 
 
 	CreatePanel("PANEL_CHAR_PICKER","$Character Picker")
 	CreatePanel("PANEL_CHAR_OPTIONS","$Character Options","PANEL_CHAR_PICKER")
 	CreatePanel("PANEL_CHAR_INFO","$Character Info","PANEL_CHAR_PICKER")
 	CreatePanel("PANEL_CHAR_OPTIONS_STATS","$Character Stats","PANEL_CHAR_PICKER")
-	CreatePanel("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts","PANEL_CHAR_PICKER")
+	CreatePanel("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts","PANEL_CHAR_OPTIONS_STATS")
 	CreatePanel("PANEL_CHAR_OPTIONS_EQUIP","$Equipment","PANEL_CHAR_PICKER")
 	CreatePanel("PANEL_CHAR_OPTIONS_BEHAVIOR","$Behavior","PANEL_CHAR_PICKER")
 	CreatePanel("PANEL_CHAR_OPTIONS_COMBAT","$Combat behavior","PANEL_CHAR_OPTIONS_BEHAVIOR")
@@ -212,7 +210,7 @@ State PANEL_CHAR_PICKER
 		
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_BEHAVIOR","$Faction and behavior")
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_STATS","$Skills and stats")
-		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
+		
 		
 		If !vFF_API_Doppelganger.GetActorForSID(CurrentSID)
 			AddEmptyOption()
@@ -243,14 +241,7 @@ State PANEL_CHAR_OPTIONS
 		
 		OptionFlags = 0
 
-		;=== Character voicetype option ===--
-		CurrentVoiceType = vFF_API_Character.GetCharacterVoiceType(CurrentSID)
-		String sVoiceTypeName = DataManager.GetVoiceTypeName(CurrentVoiceType)
-		If !sVoiceTypeName
-			sVoiceTypeName = "Default"
-		EndIf
-
-		AddMenuOptionST("OPTION_MENU_CHAR_VOICETYPE","$VoiceType",sVoiceTypeName,OptionFlags)
+		
 		;If PanelLeft == PANEL_CHAR_OPTIONS
 		;	SetCursorPosition(22)
 		;	AddTextOptionST("OPTION_TEXT_BACK","$Back_button", "Character Select")
@@ -369,7 +360,7 @@ State PANEL_CHAR_OPTIONS_STATS
 		
 		SetCursorPosition(aiLeftRight)
 		AddHeaderOption("$Stats and Skills")
-		AddEmptyOption()
+		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
 		AddEmptyOption()
 		AddHeaderOption("$Skill settings")
 
