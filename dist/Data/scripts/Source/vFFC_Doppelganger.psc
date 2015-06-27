@@ -214,7 +214,7 @@ Event OnEnterBleedout()
 			iStep += 3
 		EndWhile
 		Sound.StopInstance(iVanishSoundID)
-		SetAlpha(0.01,True)
+		;SetAlpha(0.01,True)
 		kGlows[17].DisableNoWait(True)
 		kGlows[18].DisableNoWait(True)
 		kGlows[19].DisableNoWait(True)
@@ -359,7 +359,7 @@ State Assigned
 				UpdateNIOverlays()
 				NeedAppearance = False
 				If !NeedEquipment
-					SetAlpha(1)
+					;SetAlpha(1)
 				EndIf
 			EndIf
 		EndIf
@@ -377,7 +377,7 @@ State Assigned
 			Int bResultWeapons = UpdateWeapons()
 			If bResultArmor >= 0 && bResultWeapons >= 0 ; No error
 				NeedEquipment = False
-				SetAlpha(1)
+				;SetAlpha(1)
 			EndIf
 		EndIf
 		If NeedStats
@@ -411,10 +411,21 @@ State Assigned
 	Event OnLoad()
 		If NeedAppearance && _bFirstLoad ;|| NeedEquipment 
 			_bFirstLoad = False
-			SetAlpha(0.01)
+			;SetAlpha(0.01)
 			vFFC_BlindingLightInwardParticles.Play(Self,2)
 		EndIf
 		UpdateNINodes()
+		
+		; DebugTrace("Get/Setting all headparts")
+		; ActorBase kActorBase = GetActorBase()
+		; Int i = kActorBase.GetNumHeadParts()
+		; While i > 0
+		; 	i -= 1
+		; 	Wait(1)
+		; 	HeadPart kHeadPart = kActorBase.GetNthHeadPart(i)
+		; 	DebugTrace("Headpart " + i + " is " + kHeadPart + "(" + kHeadPart.GetName() + ") of type " + kHeadPart.GetType())
+		; 	kActorBase.SetNthHeadPart(kHeadPart, kHeadPart.GetType())
+		; EndWhile
 	EndEvent
 
 	Event OnSessionUpdate(String asPath)
