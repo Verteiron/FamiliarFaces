@@ -262,18 +262,6 @@ Function DoUpkeep(Bool bInBackground = True)
 		SetSessionID(sMatchedSID)
 	EndIf
 
-	DebugTrace("Starting character refresh...")
-	String[] sSIDList = vFF_API_Character.GetAllSIDs()
-	Int i = sSIDList.Length
-	While i > 0
-		i -= 1
-		vFFC_Doppelganger kDoppelganger = vFF_API_Doppelganger.GetActorForSID(sSIDList[i]) as vFFC_Doppelganger
-		If kDoppelganger
-			DebugTrace("Calling OnGameReload() for " + sSIDList[i])
-			kDoppelganger.OnGameReload()
-		EndIf
-	EndWhile
-
 	;=== Add shouts from expansions to the checklist ===--
 	If GetModByName("Dawnguard.esm") != 255
 		vFFC_PlayerShoutCheckList.AddForm(GetFormFromFile(0x02007CB6,"Dawnguard.esm")) ; Soul Tear
@@ -1394,11 +1382,11 @@ Function UpgradeRegistryData()
 		Int jMetaData = UpdateMetaData(sUUID)
 		If jMetaData
 			Int iDataVersion = GetRegInt("Characters." + sUUID + META + ".SerializationVersion")
-			If iDataVersion < SerializationVersion
+			;If iDataVersion < SerializationVersion
 				String sCharacterName = GetRegStr("Characters." + sUUID + META + ".Name")
 				DebugTrace("UpgradeRegistryData - Upgrading Registry data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
 				UpgradeData(sUUID)
-			EndIf
+			;EndIf
 		Else
 			DebugTrace("UpgradeRegistryData - No Metadata could be found for " + sUUID + "!")
 		EndIf

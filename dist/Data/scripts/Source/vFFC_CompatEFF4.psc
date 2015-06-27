@@ -24,7 +24,7 @@ EndFunction
 Int Function StartModule()
 {User code for startup.}
 	RegisterForModEvent("vFFC_UpdateXFLPanel","OnUpdateXFLPanel")
-	DebugTrace("vFF/CompatEFF: Registered for vFFC_UpdateXFLPanel!")
+	DebugTrace("Registered for vFFC_UpdateXFLPanel!")
 	
 	Return 1
 EndFunction

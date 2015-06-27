@@ -37,6 +37,20 @@ Int Function GetCharacterJMap(String asSID) Global
 	Return iRet
 EndFunction
 
+Function RefreshAll() Global
+	DebugTraceAPIDopp(0,"Starting character refresh...")
+	String[] sSIDList = vFF_API_Character.GetAllSIDs()
+	Int i = sSIDList.Length
+	While i > 0
+		i -= 1
+		vFFC_Doppelganger kDoppelganger = vFF_API_Doppelganger.GetActorForSID(sSIDList[i]) as vFFC_Doppelganger
+		If kDoppelganger
+			DebugTraceAPIDopp(sSIDList[i],"Calling OnGameReload!")
+			kDoppelganger.OnGameReload()
+		EndIf
+	EndWhile
+EndFunction
+
 ;=== Functions - Actorbase/Actor management ===--
 
 ActorBase Function GetAvailableActorBase(Int aiSex, ActorBase akPreferredAB = None, Bool abLeveled = True) Global
@@ -177,7 +191,7 @@ Actor Function CreateDoppelganger(String asSID, Bool abLeveled = True) Global
 	Int iSex = GetCharacterSex(asSID)
 	Race kRace = GetCharacterRace(asSID)
 
-	If sName && iSex > -1 && kRace
+	If sName && iSex > -1 ;&& kRace
 		DebugTraceAPIDopp(asSID,"CreateDoppelganger: Going to assign a Doppelganger to " + sName + " (" + kRace.GetName() + ")")
 	Else
 		DebugTraceAPIDopp(asSID,"CreateDoppelganger: Character " + asSID + " (" + sName + ") is missing vital data, aborting!",1)

@@ -155,6 +155,7 @@ Function DoUpkeep(Bool DelayedStart = True)
 		vFFC_ModUpdatedMSG.Show(ModVersionMajor,ModVersionMinor,ModVersionPatch)
 	Else
 		;FIXME: Do init stuff in other quests
+		vFF_API_Doppelganger.RefreshAll()
 		DataManager.DoUpkeep(True)
 ;		ShrineOfHeroes.DoUpkeep()
 ;		HangoutManager.DoUpkeep()
