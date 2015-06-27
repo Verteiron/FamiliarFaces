@@ -363,6 +363,7 @@ State PANEL_CHAR_OPTIONS_STATS
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
 		AddEmptyOption()
 		AddHeaderOption("$Skill settings")
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_STATS_AUTOLEVEL","$Use auto-leveling",GetCharConfigBool(CurrentSID,"Stats.UseAutoLeveling"))
 
 	EndEvent
 
@@ -464,7 +465,8 @@ EndState
 ; == Text: Summon character ===--
 State OPTION_TEXT_CHAR_SUMMON
 	Event OnSelectST()
-		vFF_API_Doppelganger.CreateDoppelganger(CurrentSID,False).MoveTo(Game.GetPlayer())
+		Bool bUseAutoLeveling = GetCharConfigBool(CurrentSID,"Stats.UseAutoLeveling")
+		vFF_API_Doppelganger.CreateDoppelganger(CurrentSID,bUseAutoLeveling).MoveTo(Game.GetPlayer())
 		ForcePageReset()
 	EndEvent
 EndState
@@ -606,6 +608,17 @@ State OPTION_TEXT_CHAR_MAGIC
 		ForcePageReset()
 	EndEvent
 
+EndState
+
+
+State OPTION_TOGGLE_CHAR_STATS_AUTOLEVEL
+	Event OnSelectST()
+		Bool bResponse = ShowMessage("$This will only affect new instances of this character.", a_withCancel = true)
+		If bResponse == True
+			Bool bValue = ToggleCharConfigBool(CurrentSID, "Stats.UseAutoLeveling")
+			SetToggleOptionValueST(bValue,False,GetState())
+		EndIf
+	EndEvent
 EndState
 
 State OPTION_TOGGLE_CHAR_MAGIC_AUTOBYPERKS

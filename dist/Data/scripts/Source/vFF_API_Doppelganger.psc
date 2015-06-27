@@ -59,16 +59,6 @@ ActorBase Function GetAvailableActorBase(Int aiSex, ActorBase akPreferredAB = No
 	ActorBase kDoppelgangerBase = None
 	Int jActorbaseMap = GetSessionObj("ActorbaseMap")
 	
-	If akPreferredAB
-		If !JFormMap.GetStr(jActorbaseMap,akPreferredAB) ; If this AB is not already assigned in this session...
-			JFormMap.SetStr(jActorBaseMap,akPreferredAB,"Reserved")
-			SaveSession()
-			Return akPreferredAB
-		EndIf
-	EndIf
-	
-	;== If we got this far then the preferred base is either not set or is in use ===--
-
 	Int jActorbasePool = 0
 	
 	If aiSex ; 0 = m, 1 = f
@@ -84,7 +74,17 @@ ActorBase Function GetAvailableActorBase(Int aiSex, ActorBase akPreferredAB = No
 			jActorbasePool = GetRegObj("ActorbasePool.UM")
 		EndIf
 	EndIf
-	
+
+	If akPreferredAB
+		If !JFormMap.GetStr(jActorbaseMap,akPreferredAB) ; If this AB is not already assigned in this session...
+			If JArray.FindForm(jActorbasePool,akPreferredAB) > -1 ; ...and the the AB is the right sex and autolevel type...
+				JFormMap.SetStr(jActorBaseMap,akPreferredAB,"Reserved")
+				SaveSession()
+				Return akPreferredAB
+			EndIf
+		EndIf
+	EndIf
+
 	Int i = JArray.Count(jActorbasePool)
 	While i > 0
 		i -= 1

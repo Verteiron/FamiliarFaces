@@ -148,7 +148,9 @@ Event OnGameReload()
 	;If vFFC_CFG_Shutdown.GetValue() != 0
 	NeedRefresh = True
 	SetNameIfNeeded()
-	FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
+	If !GetCharConfigBool(SID,"Stats.UseAutoLeveling")
+		FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
+	EndIf
 	DoUpkeep(True)
 	;EndIf
 EndEvent
@@ -310,7 +312,9 @@ Auto State Available
 		vFF_API_Doppelganger.RegisterActor(Self)
 
 		MyActorBase.SetName(CharacterName)
-		FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
+		If !GetCharConfigBool(SID,"Stats.UseAutoLeveling")
+			FFUtils.SetLevel(MyActorBase,JValue.SolveInt(_jCharacterData,".Stats.Level"))
+		EndIf
 		NeedAppearance	= True
 		NeedStats		= True
 		NeedPerks		= True

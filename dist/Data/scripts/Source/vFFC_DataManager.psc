@@ -303,6 +303,7 @@ Function SetConfigDefaults(Bool abForce = False)
 		SetConfigBool("Magic.AllowOther",True,abMakeDefault = True)
 		SetConfigBool("Magic.AllowDefense",True,abMakeDefault = True)
 		SetConfigBool("Magic.AllowDefense",True,abMakeDefault = True)
+		SetConfigBool("Stats.UseAutoLeveling",False,abMakeDefault = True)
 	EndIf
 EndFunction
 
