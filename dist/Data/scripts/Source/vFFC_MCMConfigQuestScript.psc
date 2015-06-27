@@ -46,6 +46,9 @@ String[] Property	ENUM_GLOBAL_FILE_LOCATION			    Auto Hidden
 Form[] 		Property 	CombatStyleList							Auto Hidden
 String[] 	Property 	CombatStyleNames						Auto Hidden
 
+Form[] 		Property 	ClassList								Auto Hidden
+String[] 	Property 	ClassNames								Auto Hidden
+
 Form[] 		Property 	VoiceTypeList							Auto Hidden
 String[] 	Property 	VoiceTypeNames							Auto Hidden
 String[] 	Property 	VoiceTypeLegends						Auto Hidden
@@ -348,7 +351,7 @@ State PANEL_CHAR_OPTIONS_BEHAVIOR
 		If !sCombatStyleName
 			sCombatStyleName = "$Unknown"
 		EndIf
-		AddMenuOptionST("OPTION_TEXT_CHAR_COMBATSTYLE", "$CombatStyle", sCombatStyleName)
+		AddMenuOptionST("OPTION_MENU_CHAR_COMBATSTYLE", "$CombatStyle", sCombatStyleName)
 
 	EndEvent
 EndState
@@ -358,12 +361,23 @@ State PANEL_CHAR_OPTIONS_STATS
 	Event OnPanelAdd(Int aiLeftRight)
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		
+		Bool bUseAutoLeveling = GetCharConfigBool(CurrentSID,"Stats.UseAutoLeveling")
+
+		CurrentClass = vFF_API_Character.GetCharacterClass(CurrentSID)
+		String sClassName = JFormMap.GetStr(GetRegObj("Classes.FormMap"),CurrentClass)
+		If !sClassName && CurrentClass as Class
+			sClassName = CurrentClass.GetName()
+		ElseIf !sClassName
+			sClassName = "$Unknown"
+		EndIf
+
 		SetCursorPosition(aiLeftRight)
 		AddHeaderOption("$Stats and Skills")
 		AddPanelLinkOption("PANEL_CHAR_OPTIONS_MAGIC","$Magic and Shouts")
 		AddEmptyOption()
 		AddHeaderOption("$Skill settings")
-		AddToggleOptionST("OPTION_TOGGLE_CHAR_STATS_AUTOLEVEL","$Use auto-leveling",GetCharConfigBool(CurrentSID,"Stats.UseAutoLeveling"))
+		AddToggleOptionST("OPTION_TOGGLE_CHAR_STATS_AUTOLEVEL","$Use auto-leveling",bUseAutoLeveling)
+		AddMenuOptionST("OPTION_MENU_CHAR_STATS_CLASS", "$Leveling class", "$Default", (!bUseAutoLeveling) as Int)
 
 	EndEvent
 
@@ -506,7 +520,7 @@ State OPTION_TOGGLE_CHAR_TRACKING
 EndState
 
 ; == Menu: CombatStyle picker ===--
-State OPTION_TEXT_CHAR_COMBATSTYLE
+State OPTION_MENU_CHAR_COMBATSTYLE
 
 	Event OnMenuOpenST()
 		SetMenuDialogOptions(CombatStyleNames)
@@ -519,6 +533,25 @@ State OPTION_TEXT_CHAR_COMBATSTYLE
 		vFF_API_Character.SetCharacterCombatStyle(CurrentSID,CombatStyleList[aiIndex] as CombatStyle)
 		SetCharConfigForm(CurrentSID,"CombatStyle",CombatStyleList[aiIndex] as CombatStyle)
 		SetMenuOptionValueST(CombatStyleNames[aiIndex], false, GetState())
+		;ForcePageReset()
+	EndEvent
+
+EndState
+
+; == Menu: Class picker ===--
+State OPTION_MENU_CHAR_STATS_CLASS
+
+	Event OnMenuOpenST()
+		SetMenuDialogOptions(ClassNames)
+		Int idxCS = ClassList.Find(CurrentClass)
+		SetMenuDialogStartIndex(idxCS)
+		SetMenuDialogDefaultIndex(0)
+	EndEvent
+	
+	Event OnMenuAcceptST(Int aiIndex)
+		vFF_API_Character.SetCharacterClass(CurrentSID,ClassList[aiIndex] as Class)
+		SetCharConfigForm(CurrentSID,"Class",ClassList[aiIndex] as Class)
+		SetMenuOptionValueST(ClassNames[aiIndex], false, GetState())
 		;ForcePageReset()
 	EndEvent
 
@@ -616,7 +649,8 @@ State OPTION_TOGGLE_CHAR_STATS_AUTOLEVEL
 		Bool bResponse = ShowMessage("$This will only affect new instances of this character.", a_withCancel = true)
 		If bResponse == True
 			Bool bValue = ToggleCharConfigBool(CurrentSID, "Stats.UseAutoLeveling")
-			SetToggleOptionValueST(bValue,False,GetState())
+			SetToggleOptionValueST(bValue,True,GetState())
+			SetOptionFlagsST((!bValue) as Int, False, "OPTION_MENU_CHAR_STATS_CLASS")
 		EndIf
 	EndEvent
 EndState
@@ -793,9 +827,8 @@ Function DoInit()
 	CharacterNames = vFF_API_Character.GetAllNames()
 	GetVoiceTypeList()
 	GetCombatStyleList()
+	GetClassList()
 EndFunction
-
-
 
 Function FillEnums()
 
@@ -928,6 +961,16 @@ Function GetCombatStyleList()
 	While i > 0
 		i -= 1
 		CombatStyleList[i] = GetRegForm("CombatStyles.Map." + CombatStyleNames[i])
+	EndWhile
+EndFunction
+
+Function GetClassList()
+	ClassNames = DataManager.JObjToArrayStr(GetRegObj("Classes.Names"))
+	Int i = ClassNames.Length
+	ClassList = Utility.CreateFormArray(i)
+	While i > 0
+		i -= 1
+		ClassList[i] = GetRegForm("Classes.Map." + ClassNames[i])
 	EndWhile
 EndFunction
 

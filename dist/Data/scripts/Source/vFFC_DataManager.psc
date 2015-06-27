@@ -90,6 +90,10 @@ Formlist 			Property vFFC_VoiceTypesAdoptList 				Auto
 Formlist 			Property vFFC_CombatStyles 						Auto
 {A list of selected vanilla CombatStyles.}
 
+Formlist 			Property vFFC_Classes	 						Auto
+{A list of selected vanilla Classes.}
+
+
 ;=== Achievement test Properties ===--
 
 Faction 			Property CWImperialFaction 						Auto
@@ -126,6 +130,7 @@ Event OnInit()
 		InitNINodeList()
 		SortVoiceTypes()
 		SortCombatStyles()
+		SortClasses()
 
 		;Init ActorBasePool forms in case they're not there already
 		If !HasRegKey("ActorbasePool.F")
@@ -2229,6 +2234,30 @@ Function SortCombatStyles()
 	EndWhile
 
 	SetRegObj("CombatStyles.Names",JFormMap.AllValues(jCombatStyleFMap))
+EndFunction
+
+Function SortClasses()
+	Int jClasses 		= JArray.Object()
+
+	JArray.addFromFormList(jClasses,		vFFC_Classes)
+
+	Int jClassFMap 	= JFormMap.Object() 
+
+	Int i = vFFC_Classes.GetSize()
+	While i > 0
+		i -= 1
+		JFormMap.SetStr(jClassFMap,vFFC_Classes.GetAt(i),vFFC_Classes.GetAt(i).GetName())
+	EndWhile
+
+	SetRegObj("Classes.FormMap",jClassFMap)
+	
+	Form kClass = JFormMap.nextKey(jClassFMap)
+	While kClass 
+		SetRegForm("Classes.Map." + jFormMap.GetStr(jClassFMap,kClass),kClass)
+		kClass = JFormMap.nextKey(jClassFMap,kClass)
+	EndWhile
+
+	SetRegObj("Classes.Names",JFormMap.AllValues(jClassFMap))
 EndFunction
 
 ;=== Functions - Busy state ===--
