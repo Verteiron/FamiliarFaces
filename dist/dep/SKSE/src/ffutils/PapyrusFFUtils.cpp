@@ -253,10 +253,10 @@ namespace papyrusFFUtils
 			TESSpellList::Data * spellData = spellList->unk04;
 			
 			if (spellCount > 0) {
-			// Have spellData, free the shouts
+			// Have spellData, free the spells
 				if (spellData) {
-					if (spellData->shouts)
-						FormHeap_Free(spellData->shouts);
+					if (spellData->spells)
+						FormHeap_Free(spellData->spells);
 				}
 
 				// No spellData? Create it
@@ -271,7 +271,7 @@ namespace papyrusFFUtils
 					spellList->unk04 = spellData;
 				}
 
-				// Create the shout list
+				// Create the spell list
 				UInt32 i = 0;
 				SpellItem ** spellArray = (SpellItem **)FormHeap_Allocate(spellCount * sizeof(SpellItem*));
 				VisitFormList(spellFormList, [&](TESForm * form){
@@ -282,11 +282,11 @@ namespace papyrusFFUtils
 				});
 
 				spellData->spells = spellArray;
-				spellData->numShouts = spellCount;
+				spellData->numSpells = spellCount;
 			}
 			else {
 				spellData->spells = NULL;
-				spellData->numShouts = 0;
+				spellData->numSpells = 0;
 			}
 		}
 	}
@@ -425,7 +425,7 @@ namespace papyrusFFUtils
 			for (int i = 0; i < formArr.Length(); i++) {
 				formArr.Get(&form, i);
 				if (form) {
-					if (SpellItem * shout = DYNAMIC_CAST(form, TESForm, SpellItem)) {
+					if (SpellItem * spell = DYNAMIC_CAST(form, TESForm, SpellItem)) {
 						spellCount += 1;
 					}
 				}
@@ -770,7 +770,10 @@ namespace papyrusFFUtils
 		if (pBaseForm)
 			pContainer = DYNAMIC_CAST(pBaseForm, TESForm, TESContainer);
 
-		ExtraContainerChanges* pXContainerChanges = static_cast<ExtraContainerChanges*>(object->extraData.GetByType(kExtraData_ContainerChanges));
+		ExtraContainerChanges* containerChanges = static_cast<ExtraContainerChanges*>(object->extraData.GetByType(kExtraData_ContainerChanges));
+		ExtraContainerChanges::Data* containerData = containerChanges ? containerChanges->data : NULL;
+		if (!containerData)
+			return result;
 
 		TESForm *form = NULL;
 
@@ -779,9 +782,14 @@ namespace papyrusFFUtils
 				formArr.Get(&form, i);
 				if (form) {
 					UInt32 countBase = pContainer->CountItem(form);
-					ExtraContainerChanges::EntryData *entrydata = pXContainerChanges->data->FindItemEntry(form);
-					UInt32 countXtra = (entrydata) ? entrydata->countDelta : 0;
-					result.push_back(countBase + countXtra);
+					
+					UInt32 countChanges = 0;
+
+					InventoryEntryData* entryData = containerData->FindItemEntry(form);
+					if (entryData) {
+						countChanges = entryData->countDelta;
+					}
+					result.push_back(countBase + countChanges);
 				}
 			}
 		}
@@ -853,14 +861,17 @@ namespace papyrusFFUtils
 		if (!player)
 			return result;
 		
-		ExtraContainerChanges* pContainerChanges = static_cast<ExtraContainerChanges*>(player->extraData.GetByType(kExtraData_ContainerChanges));
-		
+		ExtraContainerChanges* containerChanges = static_cast<ExtraContainerChanges*>(player->extraData.GetByType(kExtraData_ContainerChanges));
+		ExtraContainerChanges::Data* containerData = containerChanges ? containerChanges->data : NULL;
+		if (!containerData)
+			return result;
+
 		if (formArr.Length()) {
 			for (int i = 0; i < formArr.Length(); i++) {
 				formArr.Get(&form, i);
 				int thisResult = 0;
 				if (form) {
-					ExtraContainerChanges::EntryData * formEntryData = pContainerChanges->data->FindItemEntry(form);
+					InventoryEntryData* formEntryData = containerData->FindItemEntry(form);
 					//TESFullName* pFullName = DYNAMIC_CAST(form, TESForm, TESFullName);
 					//_MESSAGE("Dumping extendDataList for form %08X (%s)-------", form->formID, (pFullName) ? pFullName->name.data : 0);
 					if (formEntryData) {
