@@ -696,6 +696,7 @@ Int Function UpdateStats(String asSID, Actor akActor, Bool abForceValues = False
 		DebugTraceAPIDopp(asSID," is an Autolevel actor, ignoring saved actor values and recalculating!")
 		akActor.AddItem(vFFC_DummyArmor, 1, True)
 		akActor.RemoveItem(vFFC_DummyArmor, 1)
+		Return 0
 	EndIf
 
 	Int i

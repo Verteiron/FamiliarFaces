@@ -377,7 +377,7 @@ State PANEL_CHAR_OPTIONS_STATS
 		AddEmptyOption()
 		AddHeaderOption("$Skill settings")
 		AddToggleOptionST("OPTION_TOGGLE_CHAR_STATS_AUTOLEVEL","$Use auto-leveling",bUseAutoLeveling)
-		AddMenuOptionST("OPTION_MENU_CHAR_STATS_CLASS", "$Leveling class", "$Default", (!bUseAutoLeveling) as Int)
+		AddMenuOptionST("OPTION_MENU_CHAR_STATS_CLASS", "$Leveling class", sClassName, (!bUseAutoLeveling) as Int)
 
 	EndEvent
 

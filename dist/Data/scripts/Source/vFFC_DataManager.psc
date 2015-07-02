@@ -1827,7 +1827,7 @@ String[] Function JObjToArrayStr(Int ajObj)
 	String[] sReturn
 	Int jStrArray
 	If JValue.IsMap(ajObj)
-		jStrArray = JMap.AllKeys(ajObj)
+		jStrArray = JArray.Sort(JMap.AllKeys(ajObj))
 	ElseIf jValue.IsArray(ajObj)
 		jStrArray = ajObj
 	EndIf
@@ -2258,7 +2258,7 @@ Function SortClasses()
 		kClass = JFormMap.nextKey(jClassFMap,kClass)
 	EndWhile
 
-	SetRegObj("Classes.Names",JFormMap.AllValues(jClassFMap))
+	SetRegObj("Classes.Names",JArray.Sort(JFormMap.AllValues(jClassFMap)))
 EndFunction
 
 ;=== Functions - Busy state ===--
