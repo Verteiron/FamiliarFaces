@@ -1315,6 +1315,7 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vFFC/")
 		Float fPlayTime = jValue.SolveFlt(jCharacterData,META + ".Playtime")
 		If sCharacterName
 			DebugTrace("ImportCharacters - " + JArray.GetStr(jCharFiles,i) + " is " + sCharacterName + "!")
+			DebugTrace("ImportCharacters - " + sCharacterName + "'s race is Str:" + jValue.SolveStr(jCharacterData,META + ".Race") + ", Int:" + jValue.SolveInt(jCharacterData,META + ".Race")  + ", Form:" + jValue.SolveForm(jCharacterData,META + ".Race"))
 		EndIf
 
 		;It's possible the UUID is missing due to a bug in an earlier version		
@@ -1333,7 +1334,7 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vFFC/")
 			;=== Data is complete enough to load ===--
 			If !HasRegKey("Characters." + sUUID) ; Character doesn't exist, import them
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
-				SetRegObj("Characters." + sUUID,jCharacterData)
+				SetRegObj("Characters." + sUUID,JValue.DeepCopy(jCharacterData))
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
 				If iDataVersion < SerializationVersion
 					DebugTrace("ImportCharacters - Upgrading data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")

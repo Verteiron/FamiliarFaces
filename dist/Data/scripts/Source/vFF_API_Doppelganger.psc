@@ -372,10 +372,10 @@ Bool Function CharGenLoadCharacter(Actor akActor, Race akRace, String asCharacte
 		Wait(1)
 	EndWhile
 	If !iDismountSafetyTimer
-		;DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + " Dismount timer expired!",1)
+		DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + " Dismount timer expired!",1)
 	EndIf
 	If akActor.IsOnMount()
-		;Debug.Trace("vFF: (" + asCharacterName + "/Actor) Actor is still mounted, will not apply CharGen data!",2)
+		DebugTraceAPIDopp("CharGenLoadCharacter",asCharacterName + " Actor is still mounted, will not apply CharGen data!",2)
 		Return False
 	EndIf
 	;Debug.Trace("vFF: (" + asCharacterName + "/Actor) Checking for Data/Meshes/CharGen/Exported/" + asCharacterName + ".nif")
@@ -690,6 +690,14 @@ Int Function UpdateStats(String asSID, Actor akActor, Bool abForceValues = False
 {Apply AVs and other stats like health. 
  abForceValues: (Optional) Set values absolutely, ignoring any buffs or nerfs from enchantments/magiceffects.
  Returns: -1 for generic failure.}
+
+	If GetCharConfigBool(asSID,"Stats.UseAutoLeveling")
+		Armor vFFC_DummyArmor = (akActor as vFFC_Doppelganger).vFFC_DummyArmor
+		DebugTraceAPIDopp(asSID," is an Autolevel actor, ignoring saved actor values and recalculating!")
+		akActor.AddItem(vFFC_DummyArmor, 1, True)
+		akActor.RemoveItem(vFFC_DummyArmor, 1)
+	EndIf
+
 	Int i
 	Int iCount
 	
