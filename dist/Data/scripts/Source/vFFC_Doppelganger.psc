@@ -135,6 +135,9 @@ String		_sFormID
 Event OnInit()
 	MyActorBase = GetActorBase()
 	MyActorBase.SetEssential(True)
+	If !DataManager
+		DataManager = Quest.GetQuest("vFFC_DataManagerQuest") as vFFC_DataManager
+	EndIf
 EndEvent
 
 Event OnUpdate()
@@ -483,6 +486,9 @@ EndFunction
 
 Function DoUpkeep(Bool bInBackground = True)
 {Run whenever the player loads up the Game. Sets the name and such.}
+	If !DataManager
+		DataManager = Quest.GetQuest("vFFC_DataManagerQuest") as vFFC_DataManager
+	EndIf
 	RegisterForModEvent("vFFC_UpdateCharacterSpellList", "OnUpdateCharacterSpellList")
 	RegisterForModEvent("vFF_SessionUpdate","OnSessionUpdate")
 	If bInBackground

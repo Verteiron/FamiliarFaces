@@ -283,7 +283,7 @@ Function DoUpkeep(Bool bInBackground = True)
 	ImportCharacterFiles("Data/vMYC/")
 	ImportCharacterFiles(JContainers.userDirectory() + "/vMYC/") 
 
-	UpgradeRegistryData()
+	;UpgradeRegistryData()
 	;=== Don't register this until after we've init'd everything else
 	RegisterForModEvent("vFFC_BackgroundFunction","OnBackgroundFunction")
 	;RegisterForModEvent("vFFC_LoadSerializedEquipmentReq","OnLoadSerializedEquipmentReq")
@@ -1336,10 +1336,10 @@ Function ImportCharacterFiles(String sDataFolder = "Data/vFFC/")
 				DebugTrace("ImportCharacters - Adding " + sCharacterName + " to the registry with UUID " + sUUID)
 				SetRegObj("Characters." + sUUID,JValue.DeepCopy(jCharacterData))
 				SetRegObj("Names." + sCharacterName + "." + sUUID,jCharacterData)
-				If iDataVersion < SerializationVersion
+				;If iDataVersion < SerializationVersion
 					DebugTrace("ImportCharacters - Upgrading data from version " + iDataVersion + " for " + sCharacterName + "! (" + sUUID + ")")
 					UpgradeData(sUUID)
-				EndIf
+				;EndIf
 			Else  ; Data already exists for this SSID
 				;FIXME: If we're going to overwrite existing data check the playtime, ask the player
 				If Math.ABS(GetRegFlt("Characters." + sUUID + META + ".PlayTime") - fPlayTime) < 0.1

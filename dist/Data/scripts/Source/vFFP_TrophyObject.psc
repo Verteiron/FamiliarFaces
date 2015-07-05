@@ -82,10 +82,10 @@ ObjectReference[]	_TemplateObjects
 
 Event OnInit()
 	If !vFFP_TrophyEmptyBase
-		vFFP_TrophyEmptyBase = GetFormFromFile(0x0203055F,"vFF_MeetYourCharacters.esp") as Activator
+		vFFP_TrophyEmptyBase = GetFormFromFile(0x0203055F,"vFFP_ShrineOfHeroes.esp") as Activator
 	EndIf
 	If !vFFP_TrophyObjectBase
-		vFFP_TrophyObjectBase = GetFormFromFile(0x02033E5C,"vFF_MeetYourCharacters.esp") as Activator
+		vFFP_TrophyObjectBase = GetFormFromFile(0x02033E5C,"vFFP_ShrineOfHeroes.esp") as Activator
 	EndIf
 	RegisterForModEvents()
 EndEvent

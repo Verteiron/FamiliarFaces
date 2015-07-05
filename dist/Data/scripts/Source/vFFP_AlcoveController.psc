@@ -93,6 +93,14 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
+Event OnGameReload()
+	DebugTrace("OnGameReload!")
+	CheckVars()
+	RegisterForModEvents()
+	SendSyncEvent()
+	RegisterForSingleUpdate(2)
+EndEvent
+
 Event OnShrineManagerReady(Form akSender)
 {Event sent by ShrineManager when it's ready for Alcoves to register themselves.}
 	If !ShrineManager && akSender as vFFP_ShrineManager
@@ -105,7 +113,8 @@ Event OnShrineManagerReady(Form akSender)
 			DebugTrace("Already registered at index " + GetRegInt("Shrine.Alcove" + AlcoveIndex + ".Index") + "!")
 			SendSyncEvent()
 		EndIf
-		If !DataManager
+		If !DataManager && ShrineManager.DataManager
+			DebugTrace("Setting DataManager to " + ShrineManager.DataManager + "!")
 			DataManager = ShrineManager.DataManager
 		EndIf
 	EndIf
@@ -156,7 +165,7 @@ EndFunction
 Function FindObjects()
 {Find and assign the objects we control to the right variables.}
 	;LightingController = FindClosestReferenceOfTypeFromRef(vFFP_AlcoveLightingControllerActivator,Self,1500) as vFF_AlcoveLightingController
-	LightingController = GetLinkedRef(Keyword.GetKeyword("vFF_LightingControllerKW")) as vFFP_AlcoveLightingController
+	LightingController = GetLinkedRef(Keyword.GetKeyword("vFFP_LightingControllerKW")) as vFFP_AlcoveLightingController
 	;AlcoveStatueMarker = FindClosestReferenceOfTypeFromRef(vFFP_AlcoveStatueMarker,Self,1500)
 	AlcoveStatueMarker = GetLinkedRef(Keyword.GetKeyword("vFFP_AlcoveStatueMarkerKW")) 
 	DebugTrace("LightingController is " + LightingController + "!")

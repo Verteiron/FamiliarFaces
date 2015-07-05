@@ -38,6 +38,16 @@ EndEvent
 
 Event OnGameReload()
 	RegisterForModEvents()
+	Int jAlcoveMap = GetRegObj("Shrine")
+	String sKey = JMap.NextKey(jAlcoveMap)
+	DebugTrace("sKey is " + sKey + "!")
+	While sKey
+		vFFP_AlcoveController AlcoveController = GetRegForm("Shrine." + sKey + ".Form") as vFFP_AlcoveController
+		AlcoveController.OnGameReload()
+		sKey = JMap.NextKey(jAlcoveMap,sKey)
+		DebugTrace("sKey is " + sKey + "!")
+	EndWhile
+	SendShrineManagerReady()
 EndEvent
 
 Function RegisterForModEvents()
@@ -46,6 +56,7 @@ EndFunction
 
 Event OnDataManagerReady(string eventName, string strArg, float numArg, Form sender)
 	If !DataManager && (sender as vFFC_DataManager)
+		DebugTrace("Setting DataManager to " + sender + "!")
 		DataManager = sender as vFFC_DataManager
 	EndIf
 	UnregisterForModEvent("vFF_DataManagerReady")
@@ -73,7 +84,7 @@ Event OnAlcoveSync(Int aiAlcoveIndex, Form akAlcoveForm)
 	String sScalesLikeFireID = "A68F7820-A7DD-4B5c-B8cB-47B2ccFe7492"
 	String sKmiruID = "09D1DF7A-4c77-4c77-9e39-351eA4407B3A" ; "A3Ecc712-6F0A-40F0-B81F-B37c829B0E1A"
 	String sMagrazID = "c1c644e7-61e0-44DB-A0c7-A5D15DF3B1e6"  ;"A348AA31-33AF-45D5-8736-BBD9AB120EE3"
-	String sTagaerysID = "B1870CCA-A4AB-4946-AE08-FB50931BBB28"
+	String sTagaerysID = vFF_API_Character.GetSIDsByName("Tagaerys")[0]
 	kAlcove.AlcoveCharacterID = sTagaerysID
 	kAlcove.CheckForCharacterActor()
 EndEvent

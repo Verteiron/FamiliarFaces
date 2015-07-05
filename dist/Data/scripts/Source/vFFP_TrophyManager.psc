@@ -266,14 +266,14 @@ ObjectReference Function GetTrophyOrigin()
 {Returns: TrophyOrigin marker in Cell vFFP_AlcoveLayout.}
 	;FIXME - For now always returns statue marker in vFFP_AlcoveLayout
 	;Return GetFormFromFile(0x0203051d,"vFF_MeetYourCharacters.esp") as ObjectReference (Mannequin)
-	Return GetFormFromFile(0x02033e5b,"vFF_MeetYourCharacters.esp") as ObjectReference ;(Actual origin marker)
+	Return GetFormFromFile(0x02033e5b,"vFFP_ShrineOfHeroes.esp") as ObjectReference ;(Actual origin marker)
 EndFunction
 
 ObjectReference Function GetTrophyOffsetOrigin()
 {Returns: TrophyOffset marker in Cell vFFP_AlcoveLayout (for debugging purposes).}
 	;FIXME - For now always returns statue marker in vFFP_AlcoveLayout
 	;Return GetFormFromFile(0x02031C1E,"vFF_MeetYourCharacters.esp") as ObjectReference
-	Return GetFormFromFile(0x0202fed9,"vFF_MeetYourCharacters.esp") as ObjectReference
+	Return GetFormFromFile(0x0202fed9,"vFFP_ShrineOfHeroes.esp") as ObjectReference
 EndFunction
 
 Function DebugTrace(String sDebugString, Int iSeverity = 0)
