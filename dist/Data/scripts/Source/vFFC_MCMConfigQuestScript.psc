@@ -123,7 +123,7 @@ Event OnPageReset(string a_page)
 	
 	; === Handle Logo ===--
 	If (a_page == "")
-        LoadCustomContent("vMYC_fflogo.dds")
+        LoadCustomContent("vFF_fflogo.dds")
         Return
     Else
         UnloadCustomContent()

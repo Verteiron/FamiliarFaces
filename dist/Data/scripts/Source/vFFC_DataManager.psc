@@ -169,7 +169,7 @@ Event OnUpdate()
 	If NeedUpkeep
 		DoUpkeep(False)
 	EndIf
-	SendModEvent("vFFC_DataManagerReady")
+	SendModEvent("vFF_DataManagerReady")
 	RegisterForSingleUpdate(5.0)
 EndEvent
 
