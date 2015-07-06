@@ -1065,7 +1065,7 @@ Int Function SavePlayerMiscStats()
 	StopTimer("SavePlayerMiscStats")
 	Return 0
 EndFunction	
-	
+
 Int Function SavePlayerData()
 	GotoState("Busy")
 	DebugTrace("Saving player data...")
@@ -1090,7 +1090,6 @@ Int Function SavePlayerData()
 			EndIf
 		EndWhile
 	EndIf
-
 	
 	String sRegKey = "Characters." + sSessionID
 	Int jPlayerData = GetRegObj(sRegKey)
@@ -1219,6 +1218,16 @@ Int Function SavePlayerData()
 ;	Debug.MessageBox("Finished saving player!")
 	Return 0 
 EndFunction
+
+Function RequestSavePlayerData()
+	RegisterForModEvent("vFFC_SavePlayerData","OnSaveRequest")
+	SendModEvent("vFFC_SavePlayerData")
+EndFunction
+
+Event OnSaveRequest(string eventName, string strArg, float numArg, Form sender)
+	UnregisterForModEvent("vFFC_SavePlayerData")
+	SavePlayerData()
+EndEvent
 
 Event OnBackgroundFunction(string eventName, string strArg, float numArg, Form sender)
 	Int iMaxThreads = GetRegInt("Config.Debug.Perf.Threads.Max")

@@ -90,16 +90,16 @@ EndFunction
 Event OnVersionUpdate(int a_version)
 	If CurrentVersion < 191
 		OnConfigInit()
-		Debug.Trace("vFF/MCM: Updating script to version 191...")
+		DebugTrace("Updating script to version 191...")
 	EndIf
 EndEvent
 
 Event OnConfigInit()
 	ModName = "$Familiar Faces"
-	Pages = New String[32]
+	Pages = New String[8]
 	Pages[0] = "$Character Setup"
 	Pages[1] = "$Global Options"
-	Pages[31] = "$Debugging"
+	Pages[7] = "$Debugging"
 
 
 	CreatePanel("PANEL_CHAR_PICKER","$Character Picker")
@@ -140,6 +140,8 @@ Event OnPageReset(string a_page)
 			PushPanel("PANEL_CHAR_PICKER")
 			PushPanel("PANEL_CHAR_INFO")
 		EndIf
+	ElseIf a_page == Pages[7]
+		AddTextOptionST("OPTION_TEXT_PLAYER_SAVE", "Save player", "right now!")
 	Else
 
 	EndIf
@@ -482,6 +484,13 @@ State OPTION_TEXT_CHAR_SUMMON
 		Bool bUseAutoLeveling = GetCharConfigBool(CurrentSID,"Stats.UseAutoLeveling")
 		vFF_API_Doppelganger.CreateDoppelganger(CurrentSID,bUseAutoLeveling).MoveTo(Game.GetPlayer())
 		ForcePageReset()
+	EndEvent
+EndState
+
+; == Text: Save Player ===--
+State OPTION_TEXT_PLAYER_SAVE
+	Event OnSelectST()
+		DataManager.RequestSavePlayerData()
 	EndEvent
 EndState
 
