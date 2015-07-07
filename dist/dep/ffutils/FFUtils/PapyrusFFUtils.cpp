@@ -827,6 +827,9 @@ namespace papyrusFFUtils
 					TESFullName* pFullName = DYNAMIC_CAST(form, TESForm, TESFullName);
 					result.push_back(pFullName->name.data);
 				}
+				else {
+					result.push_back("");
+				}
 			}
 		}
 
