@@ -71,8 +71,13 @@ Int Function BuildCharacterPackage(String asCharacterName) native global
 Int Function FilterFormlist(FormList sourceList, Formlist filteredList, Int aiType) native global
 {Populates filteredList with all forms in sourceList that are aiType. Returns number of matching forms.}
 
-Form[] Function GetfilteredList(FormList sourceList, Int aiType) native global
+Form[] Function GetFilteredList(FormList sourceList, Int aiType) native global
 {Returns an array (may be >128) of all forms in sourceList that are aiType.}
+
+Form[] Function FilterFormArray(Form[] sourceArray, Form[] opArray, Bool abWhitelist = True) native global
+{Return an array (may be >128) of Forms.
+ If Whitelist is true, return Forms present in both arrays. 
+ If Whitelist is false, return Forms found in sourceArray but not opArray.}
 
 Int[] Function GetItemCounts(Form[] sourceArray, ObjectReference akObject) native global
 {Returns an array (may be >128) of the counts for all form in sourceArray in akObject's inventory.}

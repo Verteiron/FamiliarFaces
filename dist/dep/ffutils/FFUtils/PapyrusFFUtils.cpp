@@ -747,6 +747,56 @@ namespace papyrusFFUtils
 		return formCount;
 	}
 
+	VMResultArray<TESForm*> FilterFormArray(StaticFunctionTag*, VMArray<TESForm*> srcArr, VMArray<TESForm*> opArr, bool whitelist)
+	{
+		VMResultArray<TESForm*> result;
+
+		TESForm *srcForm = NULL;
+		TESForm *opForm = NULL;
+
+		if (whitelist) { // Whitelist - Return each form in srcArray only if it exists in opArr
+			if (srcArr.Length()) {
+				for (int i = 0; i < srcArr.Length(); i++) {
+					srcArr.Get(&srcForm, i);
+					if (srcForm) {
+						bool addThis = false;
+						for (int j = 0; j < opArr.Length(); j++) {
+							opArr.Get(&opForm, j);
+							if (srcForm == opForm) {
+								addThis = true;
+								break;
+							}
+						}
+						if (addThis) {
+							result.push_back(srcForm);
+						}
+					}
+				}
+			}
+		}
+		else {  // Blacklist - Return each form in srcArray only if it does NOT exist in opArr
+			if (srcArr.Length()) {
+				for (int i = 0; i < srcArr.Length(); i++) {
+					srcArr.Get(&srcForm, i);
+					if (srcForm) {
+						bool addThis = true;
+						for (int j = 0; j < opArr.Length(); j++) {
+							opArr.Get(&opForm, j);
+							if (srcForm == opForm) {
+								addThis = false;
+								break;
+							}
+						}
+						if (addThis) {
+							result.push_back(srcForm);
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+
 	VMResultArray<TESForm*> GetFilteredList(StaticFunctionTag*, BGSListForm* sourceList, UInt32 typeFilter)
 	{
 		VMResultArray<TESForm*> result;
@@ -1004,6 +1054,9 @@ void papyrusFFUtils::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction3<StaticFunctionTag, SInt32, BGSListForm*, BGSListForm*, UInt32>("FilterFormlist", "FFUtils", papyrusFFUtils::FilterFormlist, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction3<StaticFunctionTag, VMResultArray<TESForm*>, VMArray<TESForm*>, VMArray<TESForm*>, bool>("FilterFormArray", "FFUtils", papyrusFFUtils::FilterFormArray, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1<StaticFunctionTag, BSFixedString, TESForm*>("GetSourceMod", "FFUtils", papyrusFFUtils::GetSourceMod, registry));
