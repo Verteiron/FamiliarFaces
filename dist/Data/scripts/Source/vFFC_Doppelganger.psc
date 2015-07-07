@@ -780,7 +780,7 @@ Int Function UpdateSpells()
 		Return -2
 	EndIf
 
-	Return vFF_API_Doppelganger.UpdateSpells(SID,Self,False)
+	Return vFF_API_Doppelganger.UpdateSpells(SID,Self,True)
 EndFunction
 
 ;=== Utility functions ===--

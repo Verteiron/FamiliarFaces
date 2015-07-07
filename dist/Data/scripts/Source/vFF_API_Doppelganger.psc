@@ -995,6 +995,7 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 	sAllowedSources[3] = "Dragonborn.esm"
 	sAllowedSources[4] = "Hearthfires.esm"
 	sAllowedSources[5] = "Colorful_Magic.esp" ; FIXME: Test only!
+	sAllowedSources[6] = "Animated Dragon Wings.esp" ; FIXME: Test only!
 
 	Bool bAllowHealing = vFF_API_Character.GetCharConfigInt(asSID,"Magic.AllowHealing") as Bool
 	Bool bAllowDefense = vFF_API_Character.GetCharConfigInt(asSID,"Magic.AllowDefense") as Bool
@@ -1005,123 +1006,146 @@ Int Function UpdateSpells(String asSID, Actor akActor, Bool bUseActorBase = True
 	EndIf
 
 	i = JArray.Count(jSpells)
-	
-	Form[] akAllowedSpells = CreateFormArray(i)
-	
+
+	Form[] kCharacterSpells = DataManager.JObjToArrayForm(jSpells)
+	String[] sSpellNames 	= FFUtils.GetItemNames(kCharacterSpells)
+	Form[] kAllowedSpells 	= CreateFormArray(i)
 
 	Int jAllowed = JArray.Object()
 	Int jSkipped = JArray.Object()
 	SetCharConfigObj(asSID,"Spells.Allowed",jAllowed)
 	SetCharConfigObj(asSID,"Spells.Skipped",jSkipped)
 	DebugTraceAPIDopp(asSID,"Filtering spells. AllowHealing:" + bAllowHealing + ", AllowDefense:" + bAllowDefense + ", BlockWalls:" + bBlockWallOfs + ", Dawnguard:" + bDawnguard)
+
 	While i > 0
 		i -= 1
 		Spell kSpell = JArray.GetForm(jSpells,i) As Spell
 		If kSpell
-			String sMagicSchool = kSpell.GetNthEffectMagicEffect(0).GetAssociatedSkill()
-			
-			Bool bSpellIsAllowed = False
-			
-			If sMagicSchool
-				bSpellIsAllowed = GetCharConfigInt(asSID,"Magic.Allow" + sMagicSchool) as Bool
-			Else
-				bSpellIsAllowed = GetCharConfigInt(asSID,"Magic.AllowOther") as Bool
-			EndIf
+			Bool bDone 				= False
+			Bool bSpellIsAllowed 	= True
+			String sSpellName 		= sSpellNames[i]
 
-			If bSpellIsAllowed
-				sReason = "Allowed School:" + sMagicSchool
-			Else
-				sReason = "Blocked School:" + sMagicSchool
-			EndIf
-			
-			MagicEffect kMagicEffect = kSpell.GetNthEffectMagicEffect(0)
-
-			If bAllowHealing ;sMagicSchool == "Restoration" && 
-				If kMagicEffect.HasKeywordString("MagicRestoreHealth") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-					bSpellIsAllowed = True
-					sReason += " Healing"
-				ElseIf vFFC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
-					sReason += " HealingList"
-					bSpellIsAllowed = True
-				EndIf
-			EndIf
-			
-			If bAllowDefense
-				If kMagicEffect.HasKeywordString("MagicArmorSpell") && kMagicEffect.GetDeliveryType() == 0 && !kSpell.IsHostile() ;&& !kMagicEffect.IsEffectFlagSet(0x00000004) 
-					sReason += " Armor"
-					bSpellIsAllowed = True
-				ElseIf vFFC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
-					sReason += " ArmorList"
-					bSpellIsAllowed = True
-				EndIf
-			EndIf
-
-			If bBlockWallOfs
-				String sSpellName = kSpell.GetName()
-				If StringUtil.Find(sSpellName,"Wall of ") == 0
-					sReason += " No wall spells"
-					bSpellIsAllowed = False
-				EndIf
-			EndIf
-
-			If bDawnguard
-				Spell kDLC01SummonSoulHorse = Game.GetFormFromFile(0x0200C600, "Dawnguard.esm") as Spell
-				If kSpell == kDLC01SummonSoulHorse
-					bSpellIsAllowed = False
-					sReason += " PlayerOnly"
-				EndIf
-			EndIf
-
-			Int iCastingType = kMagicEffect.GetCastingType()
-			Int iDeliveryType = kMagicEffect.GetDeliveryType()
-
-			If iCastingType == 0 && iDeliveryType == 0
-				bSpellIsAllowed = True ; Allow self-abilities, probably from a stone or perk
-				sReason += " Self-Ability"
-			EndIf
-
-			If bSpellIsAllowed
-				bSpellIsAllowed = False
-				
-				;See if this spell is from an approved source
-				String sSpellSource = FFUtils.GetSourceMod(kSpell) 
-				If sAllowedSources.Find(sSpellSource) > -1
-					sReason += " AllowedSource(" + sSpellSource + ")"
-					bSpellIsAllowed = True
-				ElseIf vFFC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
-					sReason += " CompatibilityList(" + sSpellSource + ")"
-				;A mod author has gone to the trouble of assuring us the spell is compatible.
-					bSpellIsAllowed = True
-				Else
-					sReason += " BlockedSource(" + sSpellSource + ")"
-				EndIf
-			EndIf
+			sReason = ""
 
 			If vFFC_ModCompatibility_SpellList_Unsafe.HasForm(kSpell)
 			;A mod author has added the spell to the unsafe list.
 				bSpellIsAllowed = False
-				sReason += " UnsafeList"
+				bDone = True
+				sReason = "Compatibility_SpellList_Unsafe"
+			ElseIf bAllowHealing && vFFC_ModCompatibility_SpellList_Healing.HasForm(kSpell)
+			;We always allow healing spells and a mod author has added the spell to the Healing list.
+				bSpellIsAllowed = True
+				bDone = True
+				sReason = "AllowHealing + Compatibility_SpellList_Healing"
+			ElseIf bAllowDefense && vFFC_ModCompatibility_SpellList_Armor.HasForm(kSpell)
+			;We always allow defensive/armor spells and a mod author has added the spell to the Armor list.
+				bSpellIsAllowed = True
+				bDone = True
+				sReason = "AllowDefense + Compatibility_SpellList_Armor"
 			EndIf
+
+			If !bDone
+				String sSpellSource = FFUtils.GetSourceMod(kSpell)
 				
-			
+				If sAllowedSources.Find(sSpellSource) > -1
+				;Spell's source is on the compatible list.
+					bSpellIsAllowed = True
+					sReason += "Compatible source (" + sSpellSource + "), "
+				ElseIf vFFC_ModCompatibility_SpellList_Safe.HasForm(kSpell)
+				;A mod author has gone to the trouble of assuring us the spell is compatible.
+					bSpellIsAllowed = True
+					sReason += "Compatibility_SpellList_Safe (" + sSpellSource + "), "
+				Else
+					;Spell's source is not allowed.
+					bSpellIsAllowed = False
+					bDone = True
+					sReason += "Blocked source (" + sSpellSource + ")"
+				EndIf
+			EndIf
+
+			If !bDone
+
+				If bDawnguard
+					Spell kDLC01SummonSoulHorse = Game.GetFormFromFile(0x0200C600, "Dawnguard.esm") as Spell
+					If kSpell == kDLC01SummonSoulHorse
+						bSpellIsAllowed = False
+						bDone = True
+						sReason += "Player-only (kDLC01SummonSoulHorse)"
+					EndIf
+				EndIf
+
+				MagicEffect[] kMagicEffects = kSpell.GetMagicEffects()
+				Int iDeliveryType 			= kMagicEffects[0].GetDeliveryType()
+				Int iCastingType 			= kMagicEffects[0].GetCastingType()
+				Bool bIsHostile				= kSpell.IsHostile()
+				Perk kSpellPerk				= kSpell.GetPerk()
+
+				If iDeliveryType == 0 && iCastingType > 0 && !bIsHostile
+					If bAllowHealing && !bDone
+						If kMagicEffects[0].HasKeywordString("MagicRestoreHealth")
+							bSpellIsAllowed = True
+							bDone = True
+							sReason += "AllowHealing + Self-targeted MagicRestoreHealth, "
+						EndIf
+					EndIf
+
+					If bAllowDefense && !bDone
+						If kMagicEffects[0].HasKeywordString("MagicArmorSpell")
+							bSpellIsAllowed = True
+							bDone = True
+							sReason += "AllowDefense + Self-targeted MagicArmorSpell, "
+						EndIf
+					EndIf
+				EndIf
+
+				If !bDone
+					String sMagicSchool = kMagicEffects[0].GetAssociatedSkill()
+					If sMagicSchool
+						bSpellIsAllowed = GetCharConfigInt(asSID,"Magic.Allow" + sMagicSchool) as Bool
+					Else
+						bSpellIsAllowed = GetCharConfigInt(asSID,"Magic.AllowOther") as Bool
+					EndIf
+					If sMagicSchool 
+						If bSpellIsAllowed
+							sReason += "Allowed school (" + sMagicSchool + "), "
+						Else
+							bDone = True
+							sReason += "Blocked school (" + sMagicSchool + ")"
+						EndIf
+					EndIf
+				EndIf				
+
+				If !bDone && bBlockWallOfs
+					If StringUtil.Find(sSpellName,"Wall of ") == 0
+						bSpellIsAllowed = False
+						bDone = True
+						sReason += "Blocked wall spell"
+					EndIf
+				EndIf
+			EndIf
+
 			If bSpellIsAllowed
-				akAllowedSpells[i] = kSpell
+				kAllowedSpells[i] = kSpell
 				iAdded += 1
 				JArray.AddForm(JAllowed,kSpell)
-				DebugTraceAPIDopp(asSID,"Allowed " + kSpell.GetName() + ": " + sReason)
+				DebugTraceAPIDopp(asSID,"Allowed " + sSpellNames[i] + ": " + sReason)
 			Else
 				iSkipped += 1
 				JArray.AddForm(JSkipped,kSpell)
-				DebugTraceAPIDopp(asSID,"Skipped " + kSpell.GetName() + ": " + sReason)
+				DebugTraceAPIDopp(asSID,"Skipped " + sSpellNames[i] + ": " + sReason)
 			EndIf
+
 		Else
 			;DebugTraceAPIDopp(asSID,"Couldn't create Spell from " + JArray.GetForm(jSpells,i) + "!")
 		EndIf
 	EndWhile
 	If bUseActorBase 
 		;Use FFUtils function to add the spell to the ActorBase rather than the Actor.
-		DebugTraceAPIDopp(asSID,"Adding " + akAllowedSpells.Length + " spells to ActorBase using SetSpellList!")
-		FFUtils.SetSpellList(kActorBase,akAllowedSpells)
+		DebugTraceAPIDopp(asSID,"Adding " + kAllowedSpells.Length + " spells to ActorBase using SetSpellList!")
+		FFUtils.SetSpellList(kActorBase,kAllowedSpells)
+		Armor vFFC_DummyArmor = (akActor as vFFC_Doppelganger).vFFC_DummyArmor
+		akActor.AddItem(vFFC_DummyArmor, 1, True)
+		akActor.RemoveItem(vFFC_DummyArmor, 1)
 	Else 
 		;Add spells in the traditional way.
 		i = JArray.Count(JAllowed)

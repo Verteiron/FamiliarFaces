@@ -1854,6 +1854,28 @@ String[] Function JObjToArrayStr(Int ajObj)
 	Return sReturn
 EndFunction
 
+Form[] Function JObjToArrayForm(Int ajObj)
+	Form[] kReturn
+	Int jFormArray
+	If JValue.IsMap(ajObj)
+		jFormArray = JArray.Sort(JMap.AllKeys(ajObj))
+	ElseIf jValue.IsArray(ajObj)
+		jFormArray = ajObj
+	EndIf
+	If jFormArray
+		Int i = JArray.Count(jFormArray)
+		DebugTrace("JObjToArrayForm: Converting " + i + " jValues to an array of forms...")
+		kReturn = Utility.CreateFormArray(i, None)
+		While i > 0
+			i -= 1
+			kReturn[i] = JArray.GetForm(jFormArray,i)
+			DebugTrace("JObjToArrayForm:  Added " + kReturn[i] + " at index " + i + "!")
+		EndWhile
+	EndIf
+	DebugTrace("JObjToArrayForm: Done!")
+	Return kReturn
+EndFunction
+
 String Function GetAVName(Int iAVIndex)
 	If !_jAVNames
 		DebugTrace("Pulling AVNames from registry...")
