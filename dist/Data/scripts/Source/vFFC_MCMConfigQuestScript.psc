@@ -140,12 +140,12 @@ Event OnPageReset(string a_page)
 			PushPanel("PANEL_CHAR_PICKER")
 			PushPanel("PANEL_CHAR_INFO")
 		EndIf
+		DisplayPanels()
 	ElseIf a_page == Pages[7]
 		AddTextOptionST("OPTION_TEXT_PLAYER_SAVE", "Save player", "right now!")
 	Else
 
 	EndIf
-	DisplayPanels()
 EndEvent
 
 ; === Panel display functions ===--
