@@ -246,6 +246,9 @@ Int Function UpdateAppearance(String asSID, Actor akActor) Global
 	Race kRace = vFF_API_Character.GetCharacterRace(asSID) as Race
 	String sCharacterName = vFF_API_Character.GetCharacterName(asSID)
 	ActorBase kActorBase = akActor.GetActorBase()
+	If !NiOverride.HasOverlays(akActor)
+		NiOverride.AddOverlays(akActor)
+	EndIf
 	If kRace && sCharacterName
 		Bool bInvulnerableState = kActorBase.IsInvulnerable()
 		kActorBase.SetInvulnerable(True)
@@ -322,24 +325,98 @@ Int Function UpdateNIOverlays(String asSID, Actor akActor) Global
 	Int jCharacterData = vFF_API_Character.GetCharacterJMap(asSID)
 	Int jOverlayData = JValue.SolveObj(jCharacterData,".NIOverrideData")
 
-	If !jOverlayData
-		Return 0 
+	If jOverlayData
+		;Use old system to apply overlays
+		If !NiOverride.HasOverlays(akActor)
+			NiOverride.AddOverlays(akActor)
+		EndIf
+
+		
+		NiOverride.RevertOverlays(akActor)
+		ApplyNIOverlayOLD(akActor,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
+		ApplyNIOverlayOLD(akActor,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
+		ApplyNIOverlayOLD(akActor,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
+		ApplyNIOverlayOLD(akActor,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
+		Return 1
 	EndIf
 
-	If !NiOverride.HasOverlays(akActor)
-		NiOverride.AddOverlays(akActor)
+	Int jOverrides = JValue.SolveObj(jCharacterData,".CharGenData.overrides")
+	
+	Int iCount = JArray.Count(jOverrides)
+	If iCount
+		If !NiOverride.HasOverlays(akActor)
+			NiOverride.AddOverlays(akActor)
+		EndIf
 	EndIf
 	
-	NiOverride.RevertOverlays(akActor)
-	ApplyNIOverlay(akActor,JMap.GetObj(jOverlayData,"BodyOverlays"),"Body [Ovl")
-	ApplyNIOverlay(akActor,JMap.GetObj(jOverlayData,"HandOverlays"),"Hand [Ovl")
-	ApplyNIOverlay(akActor,JMap.GetObj(jOverlayData,"FeetOverlays"),"Feet [Ovl")
-	ApplyNIOverlay(akActor,JMap.GetObj(jOverlayData,"FaceOverlays"),"Face [Ovl")
+	Bool bIsFemale = akActor.GetActorBase().GetSex() as Bool
+	DebugTraceAPIDopp(asSID,"UpdateNIOverlays: Found " + iCount + " overlays!")	
+	Int i = 0
+	While i < iCount
+		Int jOverrideNode 	= JArray.GetObj(jOverrides,i)
+		String sNodeName 	= JValue.solveStr(jOverrideNode,".node")
+		Int jNodeValues 	= JValue.solveObj(jOverrideNode,".values")
+		Int iValueCount		= JArray.Count(jNodeValues)
+		DebugTraceAPIDopp(asSID,"UpdateNIOverlays: Found " + iValueCount + " values for " + sNodeName)
+		Int j = 0
+		While j < iValueCount
+			Int jNodeValue 	= JArray.getObj(jNodeValues,j)
+			Int iNodeIndex 	= JValue.solveInt(jNodeValue,".index")
+			Int iNodeType 	= JValue.solveInt(jNodeValue,".type")
+			Int iNodeKey 	= JValue.solveInt(jNodeValue,".key")
+
+			Float 	fNodeValue
+			Int 	iNodeValue
+			String 	sNodeValue
+			If iNodeType == 2 ; string
+				sNodeValue = JValue.solveStr(jNodeValue,".data")
+				NiOverride.AddNodeOverrideString(akActor, bIsFemale, sNodeName, iNodeKey, iNodeIndex, sNodeValue, True)
+			ElseIf iNodeType == 3 ; int
+				iNodeValue = JValue.solveInt(jNodeValue,".data")
+				NiOverride.AddNodeOverrideInt(akActor, bIsFemale, sNodeName, iNodeKey, iNodeIndex, iNodeValue, True)
+			ElseIf iNodeType == 4 ; float
+				fNodeValue = JValue.solveFlt(jNodeValue,".data")
+				NiOverride.AddNodeOverrideFloat(akActor, bIsFemale, sNodeName, iNodeKey, iNodeIndex, fNodeValue, True)
+			EndIf
+			j += 1
+		EndWhile
+		
+		i += 1
+	EndWhile
+ ; 	"overrides": [
+ ;      {
+ ;        "node": "Body [Ovl0]",
+ ;        "values": [
+ ;          {
+ ;            "data": 1949307143,
+ ;            "index": -1,
+ ;            "key": 7,
+ ;            "type": 3
+ ;          },
+ ;          {
+ ;            "data": 0.45490196347236633,
+ ;            "index": -1,
+ ;            "key": 8,
+ ;            "type": 4
+ ;          },
+ ;          {
+ ;            "data": "Actors\\Character\\Overlays\\FreckleMania\\Body\\BodyBigStandard.dds",
+ ;            "index": 0,
+ ;            "key": 9,
+ ;            "type": 2
+ ;          }
+ ;        ]
+ ;      }
+ ;    ]
 
 	Return 1
 EndFunction
 
 Function ApplyNIOverlay(Actor akActor, Int ajLayers, String asNodeTemplate) Global
+
+EndFunction
+
+Function ApplyNIOverlayOLD(Actor akActor, Int ajLayers, String asNodeTemplate) Global
 	If !akActor
 		Return
 	EndIf
