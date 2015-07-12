@@ -413,6 +413,9 @@ Function RegisterForModEvents()
 EndFunction
 
 Event OnTrophyManagerReady(Form akSender)
+	If !IsRunning() || !Self
+		Return
+	EndIf
 	If !TrophyManager && akSender as vFFP_TrophyManager
 		TrophyManager = akSender as vFFP_TrophyManager
 	;	TrophyManager.ThreadCount += 1

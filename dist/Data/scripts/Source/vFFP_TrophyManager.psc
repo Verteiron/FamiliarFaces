@@ -45,7 +45,8 @@ Float			fLastRegTime
 
 Event OnInit()
 	If IsRunning()
-		SetRegObj("Trophies",0)
+		DebugTrace("OnInit, resetting trophy info!")
+		SetRegObj("Trophies",JMap.Object())
 		SetSessionObj("TrophyDisplayTargets",JFormMap.Object())
 		fLastRegTime = GetCurrentRealTime()
 		RegisterForSingleUpdate(5)
@@ -77,6 +78,10 @@ Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 	fLastRegTime = GetCurrentRealTime()
 	ReadyToDisplay = False
 	DebugTrace("Registering " + akTrophyform + " (" + asTrophyName + ")...")
+	If !akTrophyForm as vFFP_TrophyBase
+		DebugTrace("Error! Invalid TrophyForm sent!",2)
+		Return
+	EndIf
 	vFFP_TrophyBase kTrophy = akTrophyForm as vFFP_TrophyBase
 	Int jTrophy = JMap.Object()
 	JMap.SetStr(jTrophy,"Name",asTrophyName)
@@ -90,8 +95,9 @@ Event OnTrophyRegister(String asTrophyName, Form akTrophyForm)
 	JMap.SetInt(jTrophy,"Extras",kTrophy.TrophyExtras)
 	JMap.SetInt(jTrophy,"Flags",kTrophy.TrophyFlags)
 	JMap.SetInt(jTrophy,"Enabled",kTrophy.Enabled as Int)
+	JValue.WriteToFile(jTrophy,FFUtils.userDirectory() + "trophies/" + asTrophyName + ".json")
 	SetRegObj("Trophies." + asTrophyName,jTrophy)
-
+	DebugTrace("Registered " + asTrophyName + " successfully!")
 	RegisterForSingleUpdate(2)
 EndEvent
 
@@ -121,6 +127,7 @@ Int Function PlaceTrophies(ObjectReference akTargetObject, String sCharacterID)
 		DebugTrace("(" + i + "/" + (iCount - 1) + "): Checking trophy " + sTrophyName + " for " + sCharacterID + "...")
 		vFFP_TrophyBase kTrophyBase = GetRegForm("Trophies." + sTrophyName + ".Form") as vFFP_TrophyBase
 		Int iTrophyFlags = JMap.GetInt(jCharacterTrophies,sTrophyName)
+		DebugTrace("(" + i + "/" + (iCount - 1) + "): " + sTrophyName + " TrophyBase is " + kTrophyBase + ", flags are " + iTrophyFlags)
 		If kTrophyBase && iTrophyFlags
 			DebugTrace("(" + i + "/" + (iCount - 1) + "): Placing trophy " + sTrophyName + " with flags: " + iTrophyFlags + " for " + sCharacterID)
 			kTrophyBase._Place(akTargetObject,iTrophyFlags,sCharacterID)

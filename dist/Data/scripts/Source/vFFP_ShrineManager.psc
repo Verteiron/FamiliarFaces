@@ -81,7 +81,7 @@ EndEvent
 Event OnAlcoveSync(Int aiAlcoveIndex, Form akAlcoveForm)
 	DebugTrace("Synchronizing Alcove " + aiAlcoveIndex + " " + akAlcoveform + "...")
 	vFFP_AlcoveController kAlcove = akAlcoveForm as vFFP_AlcoveController
-	String sTestID = vFF_API_Character.GetSIDsByName("Ciara")[0]
+	String sTestID = vFF_API_Character.GetSIDsByName("Tagaerys")[0]
 	kAlcove.AlcoveCharacterID = sTestID
 	kAlcove.CheckForCharacterActor()
 EndEvent

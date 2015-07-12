@@ -1211,7 +1211,6 @@ Int Function SavePlayerData()
 	While (!_bSavedEquipment || !_bSavedPerks || !_bSavedInventory || !_bSavedSpells) 
 		WaitMenuMode(0.5)
 	EndWhile
-
 	JValue.WriteToFile(GetRegObj(sRegKey),"Data/vFFC/" + sPlayerName + ".char.json")
 	StopTimer("SavePlayerData")
 	GotoState("")
